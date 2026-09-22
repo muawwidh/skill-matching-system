@@ -1,0 +1,27 @@
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.coverage
+coverage.xml
+htmlcov/
+*.log
+
+# Node
+node_modules/
+dist/
+
+# Runtime data
+uploads/
+storage/
+*.db
+*.sqlite
+*.sqlite3
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
