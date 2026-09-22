@@ -1,0 +1,6 @@
+{
+  "occupations": [
+    {"code":"15-1252.00","external_id":"ONET:15-1252.00","title":"Software Developers","description":"Research, design, and develop computer and network software.","job_zone":4,"alternative_labels":["Software Engineer","Application Developer"]},
+    {"code":"15-2051.00","external_id":"ONET:15-2051.00","title":"Data Scientists","description":"Develop and implement methods to analyze large and complex data sets.","job_zone":4,"alternative_labels":["Data Science Specialist"]}
+  ]
+}

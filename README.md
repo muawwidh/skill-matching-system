@@ -21,6 +21,10 @@ The early matching baseline compares reviewed candidate and job skills, stores m
 shows required and preferred skill gaps. Taxonomy-aware, semantic, weighted matching remains part of
 the later taxonomy, dense retrieval, and matching phases.
 
+Phase 4 adds versioned local ESCO and O*NET storage, official CSV/JSON import endpoints, O*NET-SOC
+occupations, ESCO-O*NET mappings, taxonomy search, exact and fuzzy term linking, confidence-based
+automatic approval, and an administrator mapping-review interface.
+
 ## Architecture
 
 Frontend -> API routes -> Services -> Repositories -> Database / NLP / Matching / Taxonomy modules.
@@ -97,6 +101,19 @@ pip install -r requirements/dev.txt
 pytest
 ```
 
+## Taxonomy Administration
+
+Grant an existing account the researcher or administrator role:
+
+```bash
+docker compose exec backend python -m app.utils.manage_role you@example.com researcher
+```
+
+Sign in again after changing the role, then open `http://localhost:5173/taxonomy`. Import official
+ESCO and O*NET CSV, TSV, or JSON releases with their published version numbers. The bundled sample
+button is intended only for development and automated tests; official imported releases are the main
+taxonomy source used by the linker.
+
 ## Environment Variables
 
 Key variables are documented in `.env.example`.
@@ -145,21 +162,32 @@ Implemented Phase 2 endpoints:
 - `GET /jobs/{job_id}/extracted-skills`
 - `PUT /jobs/{job_id}/extracted-skills/{skill_id}`
 - `GET /admin/logs`
+- `GET /admin/mappings/review`
+- `GET /taxonomy/search`
+- `GET /taxonomy/concepts/{concept_id}`
+- `GET /taxonomy/occupations/{occupation_id}`
+- `GET /taxonomy/versions`
+- `GET /taxonomy/mappings`
+- `POST /taxonomy/import/esco`
+- `POST /taxonomy/import/onet`
+- `POST /taxonomy/import/mappings`
+- `POST /taxonomy/import/sample`
+- `POST /taxonomy/link`
+- `PUT /taxonomy/link/{candidate_id}/approve`
 - `GET /matches/recommendations`
 - `POST /matches/recommendations/refresh`
 - `POST /matches/jobs/{job_id}`
 
 ## Known Limitations
 
-Phases 1, 2, and 3 are implemented. An early exact-skill matching baseline is also available.
-Taxonomy import, dense retrieval, complete weighted matching, evaluation, and candidate data deletion
-are prepared as clean module boundaries and should be implemented in later phases.
+Phases 1 through 4 are implemented. An early exact-skill matching baseline is also available. Dense
+retrieval, complete weighted matching, evaluation, and candidate data deletion are prepared as clean
+module boundaries and should be implemented in later phases.
 
 ## Future Improvements
 
-1. Phase 4: local ESCO/O*NET import and taxonomy linking.
-2. Phase 5: embeddings and vector retrieval.
-3. Phase 6: weighted matching and skill gap explanations.
-4. Phase 7: recommendation experience.
-5. Phase 8: evaluation metrics and export.
-6. Phase 9: privacy controls, retention, audit logs, and production deployment hardening.
+1. Phase 5: embeddings and vector retrieval.
+2. Phase 6: weighted matching and skill gap explanations.
+3. Phase 7: recommendation experience.
+4. Phase 8: evaluation metrics and export.
+5. Phase 9: privacy controls, retention, audit logs, and production deployment hardening.

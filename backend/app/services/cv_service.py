@@ -11,6 +11,7 @@ from app.services.document_parser_service import DocumentParserService
 from app.nlp.skill_extractor import SkillExtractor
 from app.services.section_detection_service import SectionDetectionService
 from app.services.text_cleaning_service import TextCleaningService
+from app.services.taxonomy_service import TaxonomyService
 
 
 class CvService:
@@ -123,6 +124,7 @@ class CvService:
             document_kind="candidate",
         )
         self.repository.replace_candidate_terms(document, terms)
+        TaxonomyService(self.db).link_document_if_taxonomy_available("candidate", document.id)
         document.status = "processed"
         document.error_message = ""
         document.processed_at = datetime.now(timezone.utc)

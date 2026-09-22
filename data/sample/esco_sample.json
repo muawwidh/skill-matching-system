@@ -1,0 +1,12 @@
+{
+  "concepts": [
+    {"external_id":"http://data.europa.eu/esco/skill/sample-python","preferred_label":"Python (computer programming)","alternative_labels":["Python","Python programming"],"description":"Use the Python programming language to develop software.","concept_type":"skill"},
+    {"external_id":"http://data.europa.eu/esco/skill/sample-rest-api","preferred_label":"develop REST APIs","alternative_labels":["REST API development","REST APIs"],"description":"Design and implement APIs using REST principles.","concept_type":"skill"},
+    {"external_id":"http://data.europa.eu/esco/skill/sample-sql","preferred_label":"SQL","alternative_labels":["Structured Query Language"],"description":"Use SQL to query and manage relational databases.","concept_type":"skill"},
+    {"external_id":"http://data.europa.eu/esco/skill/sample-git","preferred_label":"use version control software","alternative_labels":["Git","version control"],"description":"Use version control tools to manage source code changes.","concept_type":"skill"},
+    {"external_id":"http://data.europa.eu/esco/skill/sample-docker","preferred_label":"containerisation software","alternative_labels":["Docker","containerization"],"description":"Use software containers to package and deploy applications.","concept_type":"skill"},
+    {"external_id":"http://data.europa.eu/esco/skill/sample-fastapi","preferred_label":"FastAPI","alternative_labels":["Fast API"],"description":"Develop web APIs using the FastAPI Python framework.","concept_type":"skill"},
+    {"external_id":"http://data.europa.eu/esco/occupation/sample-software-developer","preferred_label":"software developer","alternative_labels":["software engineer","application developer"],"description":"Design, implement, test and maintain software systems.","concept_type":"occupation"},
+    {"external_id":"http://data.europa.eu/esco/occupation/sample-data-scientist","preferred_label":"data scientist","alternative_labels":["data science specialist"],"description":"Analyse complex data using statistical and computational methods.","concept_type":"occupation"}
+  ]
+}

@@ -10,6 +10,7 @@ from app.schemas.documents import JobCreate, JobUpdate
 from app.nlp.skill_extractor import SkillExtractor
 from app.services.section_detection_service import SectionDetectionService
 from app.services.text_cleaning_service import TextCleaningService
+from app.services.taxonomy_service import TaxonomyService
 
 
 class JobService:
@@ -93,6 +94,7 @@ class JobService:
             document_kind="job",
         )
         self.repository.replace_job_terms(job, terms)
+        TaxonomyService(self.db).link_document_if_taxonomy_available("job", job.id)
         job.status = "processed"
         job.error_message = ""
         job.processed_at = datetime.now(timezone.utc)

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import admin, auth, candidates, cvs, health, jobs, matches
+from app.api.routes import admin, auth, candidates, cvs, health, jobs, matches, taxonomy
 from app.core.config import settings
 
 
@@ -26,6 +26,7 @@ def create_app() -> FastAPI:
     app.include_router(cvs.router, prefix="/cvs", tags=["cvs"])
     app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
     app.include_router(matches.router, prefix="/matches", tags=["matches"])
+    app.include_router(taxonomy.router, prefix="/taxonomy", tags=["taxonomy"])
     app.include_router(admin.router, prefix="/admin", tags=["administration"])
     return app
 

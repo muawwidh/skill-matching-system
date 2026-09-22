@@ -1,0 +1,6 @@
+{
+  "mappings": [
+    {"esco_external_id":"http://data.europa.eu/esco/occupation/sample-software-developer","onet_code":"15-1252.00","mapping_type":"close_match","confidence_score":0.95,"source":"bundled sample"},
+    {"esco_external_id":"http://data.europa.eu/esco/occupation/sample-data-scientist","onet_code":"15-2051.00","mapping_type":"exact_match","confidence_score":0.98,"source":"bundled sample"}
+  ]
+}

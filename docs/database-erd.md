@@ -1,6 +1,7 @@
 # Database ERD
 
-Phases 1 and 2 create the authentication and document processing foundation.
+Phases 1 through 4 create the authentication, document processing, extraction, matching baseline,
+and taxonomy foundation.
 
 ```mermaid
 erDiagram
@@ -14,6 +15,14 @@ erDiagram
   JOBS ||--o{ JOB_SECTIONS : contains
   JOBS ||--o{ EXTRACTED_JOB_TERMS : produces
   JOBS ||--o{ JOB_SKILLS : reviews
+  TAXONOMY_SOURCES ||--o{ TAXONOMY_VERSIONS : publishes
+  TAXONOMY_VERSIONS ||--o{ TAXONOMY_CONCEPTS : contains
+  TAXONOMY_CONCEPTS ||--o{ TAXONOMY_LABELS : names
+  TAXONOMY_VERSIONS ||--o{ OCCUPATIONS : contains
+  TAXONOMY_CONCEPTS ||--o{ TAXONOMY_LINK_CANDIDATES : proposed_for
+  TAXONOMY_CONCEPTS ||--o{ APPROVED_TAXONOMY_LINKS : approved_for
+  TAXONOMY_CONCEPTS ||--o{ ESCO_ONET_MAPPINGS : maps
+  OCCUPATIONS ||--o{ ESCO_ONET_MAPPINGS : maps
 
   USERS {
     uuid id PK
@@ -138,7 +147,78 @@ erDiagram
     string requirement_type
     string review_status
   }
+
+  TAXONOMY_SOURCES {
+    uuid id PK
+    string code
+    string name
+    string homepage_url
+  }
+
+  TAXONOMY_VERSIONS {
+    uuid id PK
+    uuid source_id FK
+    string version
+    string release_date
+    string checksum
+    string status
+    boolean is_sample
+  }
+
+  TAXONOMY_CONCEPTS {
+    uuid id PK
+    uuid taxonomy_version_id FK
+    string external_id
+    string preferred_label
+    string normalized_label
+    string concept_type
+  }
+
+  TAXONOMY_LABELS {
+    uuid id PK
+    uuid concept_id FK
+    string label
+    string normalized_label
+    string label_type
+  }
+
+  OCCUPATIONS {
+    uuid id PK
+    uuid taxonomy_version_id FK
+    uuid concept_id FK
+    string code
+    string title
+    integer job_zone
+  }
+
+  TAXONOMY_LINK_CANDIDATES {
+    uuid id PK
+    uuid concept_id FK
+    uuid extracted_term_id
+    string term_source
+    string match_method
+    float confidence_score
+    string review_status
+  }
+
+  APPROVED_TAXONOMY_LINKS {
+    uuid id PK
+    uuid concept_id FK
+    uuid extracted_term_id
+    string term_source
+    string approval_source
+    datetime approved_at
+  }
+
+  ESCO_ONET_MAPPINGS {
+    uuid id PK
+    uuid esco_concept_id FK
+    uuid onet_occupation_id FK
+    string mapping_type
+    float confidence_score
+    string version
+  }
 ```
 
-Taxonomy, matching, and evaluation tables are reserved for the later phases described in the source
-requirements.
+Dense retrieval, detailed score components, and evaluation tables are reserved for the later phases
+described in the source requirements.

@@ -17,3 +17,8 @@ flowchart LR
 Phase 1 implements the application shell, authentication, role-aware dependencies, database setup,
 and deployment scaffolding. Later phases should extend the existing service and repository boundaries
 instead of placing business logic in route handlers.
+
+Taxonomy processing follows the same boundary: taxonomy routes call `TaxonomyService`, which uses
+`TaxonomyRepository` for versioned local ESCO/O*NET storage. `TaxonomyFileParser` adapts official file
+formats into domain records, while `TaxonomyLinker` ranks concept candidates independently of HTTP and
+database concerns. See `docs/taxonomy-integration.md`.

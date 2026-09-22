@@ -9,6 +9,7 @@ import { JobsPage } from "./pages/JobsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { TaxonomyPage } from "./pages/TaxonomyPage";
 
 function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -28,6 +29,7 @@ export function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/cvs" element={<CvsPage />} />
           <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/taxonomy" element={<TaxonomyPage />} />
         </Route>
       </Routes>
     </AuthProvider>

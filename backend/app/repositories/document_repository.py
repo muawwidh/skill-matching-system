@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import (
+    ApprovedTaxonomyLink,
     CandidateJobMatch,
     CandidateProfile,
     CandidateSkill,
@@ -15,6 +16,7 @@ from app.db.models import (
     JobSection,
     JobSkill,
     ProcessingLog,
+    TaxonomyLinkCandidate,
 )
 from app.nlp.skill_extractor import ExtractedTerm
 from app.services.section_detection_service import DetectedSection
@@ -91,6 +93,14 @@ class DocumentRepository:
         )
 
     def delete_cv_document(self, document: CvDocument) -> None:
+        term_ids = list(
+            self.db.scalars(
+                select(ExtractedCandidateTerm.id).where(
+                    ExtractedCandidateTerm.cv_document_id == document.id
+                )
+            )
+        )
+        self._delete_taxonomy_links("candidate", term_ids)
         self.db.delete(document)
         self.db.flush()
 
@@ -115,6 +125,22 @@ class DocumentRepository:
         document: CvDocument,
         terms: list[ExtractedTerm],
     ) -> None:
+        previous_term_ids = list(
+            self.db.scalars(
+                select(ExtractedCandidateTerm.id).where(
+                    ExtractedCandidateTerm.cv_document_id == document.id
+                )
+            )
+        )
+        if previous_term_ids:
+            self.db.query(ApprovedTaxonomyLink).filter(
+                ApprovedTaxonomyLink.term_source == "candidate",
+                ApprovedTaxonomyLink.extracted_term_id.in_(previous_term_ids),
+            ).delete(synchronize_session=False)
+            self.db.query(TaxonomyLinkCandidate).filter(
+                TaxonomyLinkCandidate.term_source == "candidate",
+                TaxonomyLinkCandidate.extracted_term_id.in_(previous_term_ids),
+            ).delete(synchronize_session=False)
         self.db.query(CandidateSkill).filter(
             CandidateSkill.candidate_profile_id == document.candidate_profile_id,
             CandidateSkill.source == "extraction",
@@ -293,8 +319,26 @@ class DocumentRepository:
         return job
 
     def delete_job(self, job: Job) -> None:
+        term_ids = list(
+            self.db.scalars(
+                select(ExtractedJobTerm.id).where(ExtractedJobTerm.job_id == job.id)
+            )
+        )
+        self._delete_taxonomy_links("job", term_ids)
         self.db.delete(job)
         self.db.flush()
+
+    def _delete_taxonomy_links(self, term_source: str, term_ids: list[UUID]) -> None:
+        if not term_ids:
+            return
+        self.db.query(ApprovedTaxonomyLink).filter(
+            ApprovedTaxonomyLink.term_source == term_source,
+            ApprovedTaxonomyLink.extracted_term_id.in_(term_ids),
+        ).delete(synchronize_session=False)
+        self.db.query(TaxonomyLinkCandidate).filter(
+            TaxonomyLinkCandidate.term_source == term_source,
+            TaxonomyLinkCandidate.extracted_term_id.in_(term_ids),
+        ).delete(synchronize_session=False)
 
     def replace_job_sections(self, job: Job, sections: list[DetectedSection]) -> None:
         job.sections.clear()
@@ -313,6 +357,20 @@ class DocumentRepository:
         self.db.flush()
 
     def replace_job_terms(self, job: Job, terms: list[ExtractedTerm]) -> None:
+        previous_term_ids = list(
+            self.db.scalars(
+                select(ExtractedJobTerm.id).where(ExtractedJobTerm.job_id == job.id)
+            )
+        )
+        if previous_term_ids:
+            self.db.query(ApprovedTaxonomyLink).filter(
+                ApprovedTaxonomyLink.term_source == "job",
+                ApprovedTaxonomyLink.extracted_term_id.in_(previous_term_ids),
+            ).delete(synchronize_session=False)
+            self.db.query(TaxonomyLinkCandidate).filter(
+                TaxonomyLinkCandidate.term_source == "job",
+                TaxonomyLinkCandidate.extracted_term_id.in_(previous_term_ids),
+            ).delete(synchronize_session=False)
         self.db.query(JobSkill).filter(
             JobSkill.job_id == job.id,
             JobSkill.source == "extraction",

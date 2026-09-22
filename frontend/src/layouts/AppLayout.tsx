@@ -1,4 +1,4 @@
-import { ClipboardList, FileUp, LogOut, ScrollText, ShieldCheck } from "lucide-react";
+import { ClipboardList, Database, FileUp, LogOut, ScrollText, ShieldCheck } from "lucide-react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../features/auth/AuthProvider";
@@ -6,6 +6,7 @@ import { useAuth } from "../features/auth/AuthProvider";
 export function AppLayout() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const isTaxonomyAdmin = user?.roles.some((role) => role.name === "admin" || role.name === "researcher");
 
   function handleSignOut() {
     signOut();
@@ -31,6 +32,12 @@ export function AppLayout() {
               <ScrollText size={16} aria-hidden="true" />
               Jobs
             </Link>
+            {isTaxonomyAdmin ? (
+              <Link className="flex items-center gap-1 text-slate-600 hover:text-ink" to="/taxonomy">
+                <Database size={16} aria-hidden="true" />
+                Taxonomy
+              </Link>
+            ) : null}
             <Link className="text-slate-600 hover:text-ink" to="/about">
               About
             </Link>

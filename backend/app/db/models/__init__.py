@@ -12,6 +12,17 @@ from app.db.models.documents import (
     JobSkill,
     ProcessingLog,
 )
+from app.db.models.taxonomy import (
+    ApprovedTaxonomyLink,
+    EscoOnetMapping,
+    Occupation,
+    TaxonomyConcept,
+    TaxonomyLabel,
+    TaxonomyLinkCandidate,
+    TaxonomyRelationship,
+    TaxonomySource,
+    TaxonomyVersion,
+)
 
 __all__ = [
     "CandidateProfile",
@@ -25,8 +36,17 @@ __all__ = [
     "JobSection",
     "JobSkill",
     "ProcessingLog",
+    "ApprovedTaxonomyLink",
+    "EscoOnetMapping",
+    "Occupation",
     "RefreshToken",
     "Role",
+    "TaxonomyConcept",
+    "TaxonomyLabel",
+    "TaxonomyLinkCandidate",
+    "TaxonomyRelationship",
+    "TaxonomySource",
+    "TaxonomyVersion",
     "User",
     "user_roles",
 ]
