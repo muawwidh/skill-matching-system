@@ -1,4 +1,7 @@
 from pathlib import Path
+from hashlib import sha256
+import csv
+from time import perf_counter
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -7,6 +10,12 @@ from sqlalchemy.orm import Session
 from app.db.models import TaxonomyConcept, User
 from app.repositories.taxonomy_repository import TaxonomyRepository
 from app.schemas.taxonomy import (
+    TaxonomyReviewEventRead,
+    TaxonomyReviewGroup,
+    TaxonomyReviewPage,
+    TaxonomySelectionRead,
+    OnetDataRecordRead,
+    TaxonomyRelationshipRead,
     EscoOnetMappingRead,
     OccupationRead,
     TaxonomyConceptRead,
@@ -18,6 +27,7 @@ from app.schemas.taxonomy import (
 from app.taxonomy.importer import TaxonomyFileParser, normalized_alternatives
 from app.taxonomy.linker import TaxonomyLinker
 from app.taxonomy.normalization import normalize_taxonomy_text
+from app.taxonomy.packages import LIMITS, OfficialPackageParser
 
 
 SOURCE_DETAILS = {
@@ -42,6 +52,17 @@ class TaxonomyService:
         self.linker = TaxonomyLinker()
 
     def import_release(
+        self, source_code: str, version: str, release_date: str, filename: str,
+        content: bytes, is_sample: bool = False,
+    ) -> TaxonomyImportResult:
+        """Own the transaction, including rollback after replacement has begun."""
+        try:
+            return self._import_release(source_code, version, release_date, filename, content, is_sample)
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def _import_release(
         self,
         source_code: str,
         version: str,
@@ -55,14 +76,23 @@ class TaxonomyService:
             raise HTTPException(status_code=400, detail="Supported taxonomy sources are ESCO and ONET.")
         if not version.strip():
             raise HTTPException(status_code=400, detail="A taxonomy version is required.")
+        started = perf_counter()
+        package = None
         try:
-            parsed = self.parser.parse(filename, content, source_code)
-        except (UnicodeDecodeError, ValueError) as exc:
+            if len(content) > LIMITS.upload:
+                raise ValueError("Taxonomy upload exceeds byte limit.")
+            if Path(filename).suffix.lower() == ".zip":
+                package = OfficialPackageParser().parse(content, source_code, version.strip())
+                parsed = package.taxonomy
+            else:
+                parsed = self.parser.parse(filename, content, source_code)
+        except (UnicodeDecodeError, ValueError, csv.Error) as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not parsed.concepts and not parsed.occupations:
             raise HTTPException(status_code=400, detail="The import file contains no usable concepts or occupations.")
 
         name, homepage, description = SOURCE_DETAILS[source_code]
+        self.repository.lock_source(source_code)
         source = self.repository.get_or_create_source(source_code, name, homepage, description)
         taxonomy_version = self.repository.replace_version(
             source=source,
@@ -72,6 +102,18 @@ class TaxonomyService:
             checksum=self.parser.checksum(content),
             is_sample=is_sample,
         )
+        if package is not None:
+            self.repository.persist_package(taxonomy_version, package)
+            package.report["duration_seconds"] = round(perf_counter() - started, 3)
+            taxonomy_version.import_report = dict(package.report)
+            self.db.commit()
+            return TaxonomyImportResult(
+                source_code=source_code, version=version.strip(),
+                concepts_imported=len(parsed.concepts) + len(parsed.occupations),
+                occupations_imported=len(parsed.occupations), is_sample=is_sample,
+                relationships_imported=len(package.relationships),
+                structured_records_imported=len(package.records), import_report=package.report,
+            )
         concepts_by_external_id: dict[str, TaxonomyConcept] = {}
         for record in parsed.concepts:
             concept = self.repository.add_concept(
@@ -180,6 +222,18 @@ class TaxonomyService:
             raise HTTPException(status_code=404, detail="Taxonomy concept not found.")
         return self._concept_read(concept)
 
+    def relationships(self, concept_id: UUID, limit: int, offset: int) -> list[TaxonomyRelationshipRead]:
+        self.get_concept(concept_id)
+        return [TaxonomyRelationshipRead.model_validate(item)
+                for item in self.repository.concept_relationships(concept_id, limit, offset)]
+
+    def occupation_data(self, occupation_id: UUID, limit: int, offset: int) -> list[OnetDataRecordRead]:
+        occupation = self.repository.get_occupation(occupation_id)
+        if not occupation:
+            raise HTTPException(status_code=404, detail="Occupation not found.")
+        return [OnetDataRecordRead.model_validate(item)
+                for item in self.repository.occupation_records(occupation, limit, offset)]
+
     def get_occupation(self, occupation_id: UUID) -> OccupationRead:
         occupation = self.repository.get_occupation(occupation_id)
         if not occupation:
@@ -206,6 +260,8 @@ class TaxonomyService:
                 imported_at=item.imported_at,
                 source_code=item.source.code,
                 source_name=item.source.name,
+                checksum=item.checksum,
+                import_report=item.import_report,
             )
             for item in self.repository.list_versions()
         ]
@@ -281,24 +337,97 @@ class TaxonomyService:
         review_status: str,
         concept_id: UUID | None,
         user: User,
+        replace_selection: bool = False,
+        expected_selection_token: str | None = None,
     ) -> TaxonomyLinkCandidateRead:
-        candidate = self.repository.get_link_candidate(candidate_id)
-        if not candidate:
-            raise HTTPException(status_code=404, detail="Taxonomy link candidate not found.")
-        if concept_id and concept_id != candidate.concept_id:
-            concept = self.repository.get_concept(concept_id)
-            if not concept:
-                raise HTTPException(status_code=404, detail="Replacement taxonomy concept not found.")
-            candidate.concept_id = concept.id
-            candidate.concept = concept
-            candidate.match_method = "human_correction"
-            candidate.confidence_score = 1.0
-        if review_status == "approved":
-            self.repository.approve_candidate(candidate, "human_review", user.id)
-        else:
-            self.repository.reject_candidate(candidate, user.id)
-        self.db.commit()
-        return self._candidate_read(self.repository.get_link_candidate(candidate.id))
+        try:
+            candidate = self.repository.get_link_candidate(candidate_id)
+            if not candidate:
+                raise HTTPException(status_code=404, detail="Taxonomy link candidate not found.")
+            self.repository.lock_term(candidate.term_source, candidate.extracted_term_id)
+            candidate = self.repository.get_link_candidate(candidate_id)
+            if not candidate:
+                raise HTTPException(status_code=409, detail="Suggestions changed. Refresh the review list.")
+            if review_status not in {"approved", "rejected"}:
+                raise HTTPException(status_code=400, detail="Invalid review status.")
+            selected = self.repository.selected_link(candidate.term_source, candidate.extracted_term_id)
+            token = self._selection_token(selected)
+            if expected_selection_token is not None and expected_selection_token != token:
+                raise HTTPException(status_code=409, detail="Selection changed. Refresh before reviewing.")
+            target_concept = concept_id or candidate.concept_id
+            replacing = selected and (selected.link_candidate_id != candidate.id or selected.concept_id != target_concept)
+            if review_status == "approved" and replacing and (not replace_selection or expected_selection_token != token):
+                raise HTTPException(status_code=409, detail="A selection already exists. Explicitly confirm its replacement.")
+            before = self._review_snapshot(candidate.term_source, candidate.extracted_term_id)
+            if target_concept != candidate.concept_id:
+                if review_status != "approved":
+                    raise HTTPException(status_code=400, detail="Concept correction requires approval.")
+                concept = self.repository.get_concept(target_concept)
+                if not concept:
+                    raise HTTPException(status_code=404, detail="Replacement taxonomy concept not found.")
+                if any(item.concept_id == target_concept for item in self.repository.term_candidates(
+                        candidate.term_source, candidate.extracted_term_id)):
+                    raise HTTPException(status_code=409, detail="That concept is already an alternative. Select that suggestion.")
+                candidate.concept_id = concept.id
+                candidate.concept = concept
+                candidate.match_method = "human_correction"
+                candidate.confidence_score = 1.0
+            if review_status == "approved":
+                self.repository.approve_candidate(candidate, "human_review", user.id)
+            else:
+                self.repository.reject_candidate(candidate, user.id)
+            after = self._review_snapshot(candidate.term_source, candidate.extracted_term_id)
+            if before != after:
+                action = "replaced" if review_status == "approved" and replacing else review_status
+                self.repository.record_review(candidate, action, user.id, before, after)
+            self.db.commit()
+            return self._candidate_read(self.repository.get_link_candidate(candidate.id))
+        except Exception:
+            self.db.rollback()
+            raise
+
+    @staticmethod
+    def _selection_token(selected) -> str | None:
+        if not selected:
+            return None
+        value = f"{selected.id}:{selected.link_candidate_id}:{selected.concept_id}:{selected.approved_at.isoformat()}"
+        return sha256(value.encode()).hexdigest()
+
+    def _review_snapshot(self, term_source: str, term_id: UUID) -> dict:
+        selected = self.repository.selected_link(term_source, term_id)
+        return {
+            "selection": None if not selected else {
+                "candidate_id": str(selected.link_candidate_id) if selected.link_candidate_id else None,
+                "concept_id": str(selected.concept_id), "label": selected.concept.preferred_label,
+                "approved_by": str(selected.approved_by) if selected.approved_by else None,
+                "approved_at": selected.approved_at.isoformat(), "source": selected.approval_source,
+            },
+            "candidates": [{"id": str(item.id), "concept_id": str(item.concept_id),
+                "label": item.concept.preferred_label, "status": item.review_status,
+                "reviewed_by": str(item.reviewed_by) if item.reviewed_by else None,
+                "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None,
+                "match_method": item.match_method, "confidence": item.confidence_score}
+                for item in self.repository.term_candidates(term_source, term_id)],
+        }
+
+    def review_groups(self, state: str, query: str, limit: int, offset: int) -> TaxonomyReviewPage:
+        terms = self.repository.review_terms(state, query.strip(), limit + 1, offset)
+        groups = []
+        for term_source, term_id in terms[:limit]:
+            candidates = self.repository.term_candidates(term_source, term_id)
+            selected = self.repository.selected_link(term_source, term_id)
+            approved_ids = {item.id for item in candidates if item.review_status == "approved"}
+            expected_ids = {selected.link_candidate_id} if selected else set()
+            groups.append(TaxonomyReviewGroup(term_source=term_source, extracted_term_id=term_id,
+                raw_text=candidates[0].raw_text, inconsistent=approved_ids != expected_ids,
+                selection=TaxonomySelectionRead(candidate_id=selected.link_candidate_id,
+                    concept=self._concept_read(selected.concept), token=self._selection_token(selected)) if selected else None,
+                candidates=[self._candidate_read(item) for item in candidates]))
+        return TaxonomyReviewPage(items=groups, has_more=len(terms) > limit)
+
+    def review_history(self, term_source: str, term_id: UUID, limit: int, offset: int) -> list[TaxonomyReviewEventRead]:
+        return [TaxonomyReviewEventRead.model_validate(item)
+                for item in self.repository.review_history(term_source, term_id, limit, offset)]
 
     @staticmethod
     def _concept_read(concept: TaxonomyConcept) -> TaxonomyConceptRead:

@@ -1,0 +1,3 @@
+O*NET-SOC Code	Task ID	Scale ID	Category	Data Value	N	Standard Error	Lower CI Bound	Upper CI Bound	Recommend Suppress	Date	Domain Source
+11-1011.00	8823	FT	1	5.92	76	4.2651	1.3474	22.4442	N	08/2023	Incumbent
+11-1011.00	8823	FT	2	15.98	76	5.6031	7.6477	30.3982	N	08/2023	Incumbent

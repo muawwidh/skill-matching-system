@@ -1,0 +1,160 @@
+{
+  "sha256": "41646407885a18ddc24dab3f7e0119d92f697f0334a3c8c0314ad17a88a18129",
+  "contract": "ESCO-1.2.1-en-csv",
+  "datasets": {
+    "skills_en.csv": {
+      "input": 13960,
+      "inserted": 13939,
+      "merged_duplicate_rows": 21,
+      "verified_database_count": 13939
+    },
+    "ISCOGroups_en.csv": {
+      "input": 619,
+      "inserted": 619,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 619
+    },
+    "occupations_en.csv": {
+      "input": 3043,
+      "inserted": 3039,
+      "merged_duplicate_rows": 4,
+      "verified_database_count": 3039
+    },
+    "skillGroups_en.csv": {
+      "input": 640,
+      "inserted": 640,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 640
+    },
+    "skillSkillRelations_en.csv": {
+      "input": 5818,
+      "inserted": 5818,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 5818
+    },
+    "occupationSkillRelations_en.csv": {
+      "input": 126051,
+      "inserted": 126051,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 126051
+    },
+    "broaderRelationsOccPillar_en.csv": {
+      "input": 3648,
+      "inserted": 3648,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 3648
+    },
+    "broaderRelationsSkillPillar_en.csv": {
+      "input": 20819,
+      "inserted": 20819,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 20819
+    }
+  },
+  "member_sha256": {
+    "skills_en.csv": "d03b10efca94b4bcfa260a992cfde89c375f0fa12095d6662a663cfd2f9f2950",
+    "ISCOGroups_en.csv": "7a829bb6fddccbdb028d3ae69d822f2f1ba581522667f6185949c6d0788eaa1c",
+    "dictionary_en.csv": "f20857239063a52af0a7668ae5b178144cb33ff626519fb50451457d59b54fec",
+    "occupations_en.csv": "8034348d84b6d1dd24a5bcf9609186ecbba0a85457ee2eacd65bddec33a51b4a",
+    "skillGroups_en.csv": "644b68a174299eb05336eec36e0716c4671a0c6bdd4ac268803ecd6533dc739d",
+    "greenShareOcc_en.csv": "b181bde83460dbd766268893dd6db4393006c15d788ae4c0f3f41c49719ab16a",
+    "conceptSchemes_en.csv": "4e5b4800e6cdc2013df0f22dfff72c0499cdce8bf9cfa333d6c4c14879dce517",
+    "skillsHierarchy_en.csv": "295133872c6be7b7560de943efa4a6aab833a1b15af4d60c03b050ab0a75edcb",
+    "skillSkillRelations_en.csv": "64a5f8fb7b8dda4932ff06db4738ce1beed3906e45a49b14453349056c609439",
+    "greenSkillsCollection_en.csv": "502eaee4f496e7576ee078a76d5da03fa14f5476f740ca965ca2ef596d9683ab",
+    "digCompSkillsCollection_en.csv": "814108ed9bc93268abc6d717bbd36f876a73180da2ff1a89b4f867c50e1ae9d4",
+    "digitalSkillsCollection_en.csv": "9f2ee9179f0720826cbfc65627bd3642926ba4dfb3bf29250f22cb232c225b1e",
+    "languageSkillsCollection_en.csv": "93b2ca9ef1300a34c2262753e33dbcf6a3a17ad7d2afe435849649818ec6cf33",
+    "occupationSkillRelations_en.csv": "e1a46511f0ef4d505f106f1d41f528ef76d289f93e59d4d0cbaac38986102c44",
+    "researchSkillsCollection_en.csv": "fd9b6bd45df2bad68e50d963ac366b5c7dec2917e178e69003b6d94bb1e41d13",
+    "broaderRelationsOccPillar_en.csv": "b6b457a7b248e87734a5ef01f59f0bd4d083b6ad5e9251f6ed4cce51d69c6383",
+    "broaderRelationsSkillPillar_en.csv": "56b70f4852b1f53c6192c979310c34c93f95436621d907083cf0d55b51d8e42d",
+    "transversalSkillsCollection_en.csv": "40bd1884f1c62b91ab86b6c87d7fab11b082c17b425975d0d178d1b5cb5e01ca",
+    "researchOccupationsCollection_en.csv": "85993f6460b6bb008985cd40341c3d373fac9989d854f76d2d3c6fc8dc2d6d1a"
+  },
+  "skipped_files": [
+    "conceptSchemes_en.csv",
+    "dictionary_en.csv",
+    "digCompSkillsCollection_en.csv",
+    "digitalSkillsCollection_en.csv",
+    "greenShareOcc_en.csv",
+    "greenSkillsCollection_en.csv",
+    "languageSkillsCollection_en.csv",
+    "researchOccupationsCollection_en.csv",
+    "researchSkillsCollection_en.csv",
+    "skillsHierarchy_en.csv",
+    "transversalSkillsCollection_en.csv"
+  ],
+  "unresolved_references": [],
+  "missing_optional_files": [],
+  "relationships_resolved": 156336,
+  "source": "ESCO",
+  "version": "1.2.1",
+  "provenance": "User-provided complete extracted ESCO v1.2.1 English CSV folder; version declared by user and folder, no embedded release manifest; reconstructed ZIP with unchanged member bytes",
+  "archive_reconstructed_from_directory": true,
+  "verified_at": "2026-10-01T12:16:03.805030+00:00",
+  "migration_revision": "0006_official_taxonomy",
+  "postgresql_version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "database_checks": {
+    "cross_version_relationships": 0,
+    "concepts": 18237,
+    "occupations": 0,
+    "relationship_types": {
+      "broader": 24467,
+      "essential": 67789,
+      "optional": 64080
+    },
+    "relationship_examples": [
+      {
+        "relationship_type": "broader",
+        "source_uri": "http://data.europa.eu/esco/isced-f/00",
+        "target_uri": "http://data.europa.eu/esco/skill/c46fcb45-5c14-4ffa-abed-5a43f104bb22",
+        "metadata_json": {
+          "source": {
+            "broaderUri": "http://data.europa.eu/esco/skill/c46fcb45-5c14-4ffa-abed-5a43f104bb22",
+            "conceptUri": "http://data.europa.eu/esco/isced-f/00",
+            "broaderType": "SkillGroup",
+            "conceptType": "SkillGroup",
+            "broaderLabel": "knowledge",
+            "conceptLabel": "generic programmes and qualifications"
+          },
+          "dataset": "broaderRelationsSkillPillar_en.csv"
+        }
+      },
+      {
+        "relationship_type": "essential",
+        "source_uri": "http://data.europa.eu/esco/occupation/00030d09-2b3a-4efd-87cc-c4ea39d27c34",
+        "target_uri": "http://data.europa.eu/esco/skill/05bc7677-5a64-4e0c-ade3-0140348d4125",
+        "metadata_json": {
+          "source": {
+            "skillUri": "http://data.europa.eu/esco/skill/05bc7677-5a64-4e0c-ade3-0140348d4125",
+            "skillType": "skill/competence",
+            "skillLabel": "organise rehearsals",
+            "relationType": "essential",
+            "occupationUri": "http://data.europa.eu/esco/occupation/00030d09-2b3a-4efd-87cc-c4ea39d27c34",
+            "occupationLabel": "technical director"
+          },
+          "dataset": "occupationSkillRelations_en.csv"
+        }
+      },
+      {
+        "relationship_type": "optional",
+        "source_uri": "http://data.europa.eu/esco/occupation/00030d09-2b3a-4efd-87cc-c4ea39d27c34",
+        "target_uri": "http://data.europa.eu/esco/skill/a2dfc063-7b24-4258-a778-d395c41d4966",
+        "metadata_json": {
+          "source": {
+            "skillUri": "http://data.europa.eu/esco/skill/a2dfc063-7b24-4258-a778-d395c41d4966",
+            "skillType": "skill/competence",
+            "skillLabel": "write technical riders",
+            "relationType": "optional",
+            "occupationUri": "http://data.europa.eu/esco/occupation/00030d09-2b3a-4efd-87cc-c4ea39d27c34",
+            "occupationLabel": "technical director"
+          },
+          "dataset": "occupationSkillRelations_en.csv"
+        }
+      }
+    ]
+  },
+  "elapsed_seconds": 60.23,
+  "verified": true
+}

@@ -1,0 +1,3 @@
+occupationUri,occupationLabel,relationType,skillType,skillUri,skillLabel
+http://data.europa.eu/esco/occupation/00030d09-2b3a-4efd-87cc-c4ea39d27c34,technical director,essential,knowledge,http://data.europa.eu/esco/skill/fed5b267-73fa-461d-9f69-827c78beb39d,theatre techniques
+http://data.europa.eu/esco/occupation/00030d09-2b3a-4efd-87cc-c4ea39d27c34,technical director,optional,skill/competence,http://data.europa.eu/esco/skill/a2dfc063-7b24-4258-a778-d395c41d4966,write technical riders

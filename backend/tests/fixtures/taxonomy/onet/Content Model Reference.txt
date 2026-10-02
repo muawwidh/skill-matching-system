@@ -1,0 +1,6 @@
+Element ID	Element Name	Description
+1.A.1.a.1	Oral Comprehension	The ability to listen to and understand information and ideas presented through spoken words and sentences.
+2.A.1.a	Reading Comprehension	Understanding written sentences and paragraphs in work-related documents.
+2.C.1.a	Administration and Management	Knowledge of business and management principles involved in strategic planning, resource allocation, human resources modeling, leadership technique, production methods, and coordination of people and resources.
+2.D.1	Required Level of Education	The level of education required to perform a job.
+4.A.1.a.1	Getting Information	Observing, receiving, and otherwise obtaining information from all relevant sources.

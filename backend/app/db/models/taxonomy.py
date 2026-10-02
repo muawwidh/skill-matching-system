@@ -1,7 +1,8 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, ForeignKeyConstraint, Index, Integer, Numeric, String, Text, UniqueConstraint
+from decimal import Decimal
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -35,6 +36,7 @@ class TaxonomyVersion(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(40), default="active", nullable=False)
     is_sample: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    import_report: Mapped[dict] = mapped_column(JsonColumn, default=dict, nullable=False)
 
     source: Mapped[TaxonomySource] = relationship(lazy="selectin")
 
@@ -43,6 +45,7 @@ class TaxonomyConcept(TimestampMixin, Base):
     __tablename__ = "taxonomy_concepts"
     __table_args__ = (
         UniqueConstraint("taxonomy_version_id", "external_id", name="uq_taxonomy_concept_external"),
+        UniqueConstraint("id", "taxonomy_version_id", name="uq_concept_id_version"),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -82,6 +85,12 @@ class TaxonomyLabel(TimestampMixin, Base):
 class TaxonomyRelationship(TimestampMixin, Base):
     __tablename__ = "taxonomy_relationships"
     __table_args__ = (
+        ForeignKeyConstraint(["source_concept_id", "taxonomy_version_id"],
+                             ["taxonomy_concepts.id", "taxonomy_concepts.taxonomy_version_id"],
+                             name="fk_relationship_source_version", ondelete="CASCADE"),
+        ForeignKeyConstraint(["target_concept_id", "taxonomy_version_id"],
+                             ["taxonomy_concepts.id", "taxonomy_concepts.taxonomy_version_id"],
+                             name="fk_relationship_target_version", ondelete="CASCADE"),
         UniqueConstraint(
             "source_concept_id", "target_concept_id", "relationship_type",
             name="uq_taxonomy_relationship",
@@ -89,6 +98,7 @@ class TaxonomyRelationship(TimestampMixin, Base):
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    taxonomy_version_id: Mapped[UUID] = mapped_column(ForeignKey("taxonomy_versions.id", ondelete="CASCADE"))
     source_concept_id: Mapped[UUID] = mapped_column(
         ForeignKey("taxonomy_concepts.id", ondelete="CASCADE")
     )
@@ -96,6 +106,29 @@ class TaxonomyRelationship(TimestampMixin, Base):
         ForeignKey("taxonomy_concepts.id", ondelete="CASCADE")
     )
     relationship_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    metadata_json: Mapped[dict] = mapped_column(JsonColumn, default=dict, nullable=False)
+
+
+class OnetDataRecord(TimestampMixin, Base):
+    __tablename__ = "onet_data_records"
+    __table_args__ = (
+        UniqueConstraint("taxonomy_version_id", "dataset", "record_key", name="uq_onet_record"),
+        ForeignKeyConstraint(["taxonomy_version_id", "occupation_code"],
+                             ["occupations.taxonomy_version_id", "occupations.code"],
+                             name="fk_onet_record_occupation", ondelete="CASCADE"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    taxonomy_version_id: Mapped[UUID] = mapped_column(ForeignKey("taxonomy_versions.id", ondelete="CASCADE"), index=True)
+    dataset: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
+    record_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    occupation_code: Mapped[str] = mapped_column(String(100), nullable=True, index=True)
+    element_id: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    scale_id: Mapped[str] = mapped_column(String(20), default="", nullable=False)
+    task_id: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    category: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    numeric_value: Mapped[Decimal] = mapped_column(Numeric(), nullable=True)
+    source_data: Mapped[dict] = mapped_column(JsonColumn, nullable=False)
 
 
 class Occupation(TimestampMixin, Base):
@@ -193,3 +226,18 @@ class ApprovedTaxonomyLink(TimestampMixin, Base):
     approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     concept: Mapped[TaxonomyConcept] = relationship(lazy="selectin")
+
+
+class TaxonomyReviewEvent(Base):
+    __tablename__ = "taxonomy_review_events"
+    __table_args__ = (Index("ix_taxonomy_review_event_term", "term_source", "extracted_term_id", "created_at"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    term_source: Mapped[str] = mapped_column(String(40), nullable=False)
+    extracted_term_id: Mapped[UUID] = mapped_column(nullable=False)
+    candidate_id: Mapped[UUID] = mapped_column(nullable=False)
+    action: Mapped[str] = mapped_column(String(40), nullable=False)
+    reviewer_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    before_state: Mapped[dict] = mapped_column(JsonColumn, nullable=False)
+    after_state: Mapped[dict] = mapped_column(JsonColumn, nullable=False)

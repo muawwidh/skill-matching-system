@@ -8,6 +8,7 @@ from app.db.models import User
 from app.db.session import get_db
 from app.schemas.documents import (
     CandidateSkillRead,
+    CandidateSkillGroup,
     CandidateSkillReviewRequest,
     CvDocumentRead,
     CvPasteRequest,
@@ -99,4 +100,13 @@ def review_cv_extracted_skills(
     db: Session = Depends(get_db),
 ) -> list[CandidateSkillRead]:
     CvService(db).get_my_cv(current_user, document_id)
-    return SkillService(db).review_my_candidate_skills(current_user, payload)
+    return SkillService(db).review_my_candidate_skills(current_user, payload, document_id)
+
+
+@router.get("/{document_id}/skill-groups", response_model=list[CandidateSkillGroup])
+def get_cv_skill_groups(
+    document_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[CandidateSkillGroup]:
+    return SkillService(db).grouped_cv_skills(current_user, document_id)

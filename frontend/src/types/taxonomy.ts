@@ -56,3 +56,27 @@ export type TaxonomyImportResult = {
   mappings_imported: number;
   is_sample: boolean;
 };
+
+export type TaxonomyReviewGroup = {
+  term_source: "candidate" | "job";
+  extracted_term_id: string;
+  raw_text: string;
+  inconsistent: boolean;
+  selection: { candidate_id: string | null; concept: TaxonomyConcept; token: string } | null;
+  candidates: TaxonomyLinkCandidate[];
+};
+
+export type TaxonomyReviewEvent = {
+  id: string;
+  candidate_id: string;
+  action: string;
+  reviewer_id: string | null;
+  created_at: string;
+  before_state: ReviewSnapshot;
+  after_state: ReviewSnapshot;
+};
+
+type ReviewSnapshot = {
+  selection: { candidate_id: string | null; label: string } | null;
+  candidates: { id: string; label: string; status: string }[];
+};

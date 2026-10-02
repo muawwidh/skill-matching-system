@@ -1,0 +1,5 @@
+Scale ID	Scale Name	Minimum	Maximum
+FT	Frequency of Task (Categories 1-7)	0	100
+IM	Importance	1	5
+LV	Level	0	7
+RL	Required Level Of Education (Categories 1-12)	0	100

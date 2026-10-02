@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -14,6 +15,8 @@ class TaxonomyVersionRead(BaseModel):
     imported_at: datetime
     source_code: str
     source_name: str
+    checksum: str
+    import_report: dict = Field(default_factory=dict)
 
 
 class TaxonomyConceptRead(BaseModel):
@@ -58,6 +61,31 @@ class TaxonomyImportResult(BaseModel):
     occupations_imported: int
     mappings_imported: int = 0
     is_sample: bool
+    relationships_imported: int = 0
+    structured_records_imported: int = 0
+    import_report: dict = Field(default_factory=dict)
+
+
+class TaxonomyRelationshipRead(BaseModel):
+    model_config = {"from_attributes": True}
+    id: UUID
+    taxonomy_version_id: UUID
+    source_concept_id: UUID
+    target_concept_id: UUID
+    relationship_type: str
+    metadata_json: dict
+
+
+class OnetDataRecordRead(BaseModel):
+    model_config = {"from_attributes": True}
+    dataset: str
+    occupation_code: str | None
+    element_id: str
+    scale_id: str
+    task_id: str
+    category: str
+    numeric_value: Decimal | None
+    source_data: dict
 
 
 class TaxonomyLinkRequest(BaseModel):
@@ -87,3 +115,36 @@ class TaxonomyLinkRunResult(BaseModel):
 class TaxonomyLinkReview(BaseModel):
     status: str = Field(pattern="^(approved|rejected)$")
     concept_id: UUID | None = None
+    replace_selection: bool = False
+    expected_selection_token: str | None = Field(default=None, max_length=64)
+
+
+class TaxonomySelectionRead(BaseModel):
+    candidate_id: UUID | None
+    concept: TaxonomyConceptRead
+    token: str
+
+
+class TaxonomyReviewGroup(BaseModel):
+    term_source: str
+    extracted_term_id: UUID
+    raw_text: str
+    selection: TaxonomySelectionRead | None
+    inconsistent: bool
+    candidates: list[TaxonomyLinkCandidateRead]
+
+
+class TaxonomyReviewPage(BaseModel):
+    items: list[TaxonomyReviewGroup]
+    has_more: bool
+
+
+class TaxonomyReviewEventRead(BaseModel):
+    model_config = {"from_attributes": True}
+    id: UUID
+    candidate_id: UUID
+    action: str
+    reviewer_id: UUID | None
+    created_at: datetime
+    before_state: dict
+    after_state: dict

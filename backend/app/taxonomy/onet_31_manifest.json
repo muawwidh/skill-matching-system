@@ -1,0 +1,774 @@
+{
+  "contract": "ONET-31.0-csv",
+  "version": "31.0",
+  "encoding": "utf-8-sig",
+  "archive_sha256": "55033fc68b4c13ec23e7f74dc6378660f6e854e75d55d6e333ae0a761d3987cd",
+  "required_metadata": [
+    "Read Me.txt"
+  ],
+  "datasets": {
+    "abilities.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Not Relevant",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "abilities_to_work_activities.csv": {
+      "headers": [
+        "Abilities Element ID",
+        "Abilities Element Name",
+        "Work Activities Element ID",
+        "Work Activities Element Name"
+      ],
+      "identity": [
+        "Abilities Element ID",
+        "Work Activities Element ID"
+      ],
+      "required": true
+    },
+    "abilities_to_work_context.csv": {
+      "headers": [
+        "Abilities Element ID",
+        "Abilities Element Name",
+        "Work Context Element ID",
+        "Work Context Element Name"
+      ],
+      "identity": [
+        "Abilities Element ID",
+        "Work Context Element ID"
+      ],
+      "required": true
+    },
+    "career_interest_type_keywords.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Keyword",
+        "Keyword Type"
+      ],
+      "identity": [
+        "Element ID",
+        "Keyword",
+        "Keyword Type"
+      ],
+      "required": true
+    },
+    "career_interest_types.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "content_model_reference.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Description"
+      ],
+      "identity": [
+        "Element ID"
+      ],
+      "required": true
+    },
+    "education.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "education_categories.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Category Description"
+      ],
+      "identity": [
+        "Element ID",
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "emerging_tasks.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Task",
+        "Category",
+        "Original Task ID",
+        "Original Task",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Task",
+        "Category",
+        "Original Task ID"
+      ],
+      "required": true
+    },
+    "essential_skills.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Not Relevant",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "essential_skills_to_work_activities.csv": {
+      "headers": [
+        "Essential Skills Element ID",
+        "Essential Skills Element Name",
+        "Work Activities Element ID",
+        "Work Activities Element Name"
+      ],
+      "identity": [
+        "Essential Skills Element ID",
+        "Work Activities Element ID"
+      ],
+      "required": true
+    },
+    "essential_skills_to_work_context.csv": {
+      "headers": [
+        "Essential Skills Element ID",
+        "Essential Skills Element Name",
+        "Work Context Element ID",
+        "Work Context Element Name"
+      ],
+      "identity": [
+        "Essential Skills Element ID",
+        "Work Context Element ID"
+      ],
+      "required": true
+    },
+    "gwas_to_iwas.csv": {
+      "headers": [
+        "GWA Element ID",
+        "GWA Element Name",
+        "IWA Element ID",
+        "IWA Element Name"
+      ],
+      "identity": [
+        "GWA Element ID",
+        "IWA Element ID"
+      ],
+      "required": true
+    },
+    "gwas_to_iwas_to_dwas.csv": {
+      "headers": [
+        "GWA Element ID",
+        "GWA Element Name",
+        "IWA Element ID",
+        "IWA Element Name",
+        "DWA Element ID",
+        "DWA Element Name"
+      ],
+      "identity": [
+        "GWA Element ID",
+        "IWA Element ID",
+        "DWA Element ID"
+      ],
+      "required": true
+    },
+    "interests_illustrative_activities.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Interest Type",
+        "Activity"
+      ],
+      "identity": [
+        "Element ID",
+        "Interest Type",
+        "Activity"
+      ],
+      "required": true
+    },
+    "interests_illustrative_occupations.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Interest Type",
+        "O*NET-SOC Code",
+        "Title"
+      ],
+      "identity": [
+        "Element ID",
+        "Interest Type",
+        "O*NET-SOC Code"
+      ],
+      "required": true
+    },
+    "job_titles.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Job Title",
+        "Short Title",
+        "Source(s)"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Job Title",
+        "Short Title",
+        "Source(s)"
+      ],
+      "required": true
+    },
+    "job_zone_reference.csv": {
+      "headers": [
+        "Job Zone",
+        "Name",
+        "Experience",
+        "Education",
+        "Job Training",
+        "Examples",
+        "SVP Range"
+      ],
+      "identity": [
+        "Job Zone"
+      ],
+      "required": true
+    },
+    "job_zones.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Job Zone",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code"
+      ],
+      "required": true
+    },
+    "knowledge.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Not Relevant",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "level_scale_anchors.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Anchor Value",
+        "Anchor Description"
+      ],
+      "identity": [
+        "Element ID",
+        "Scale ID",
+        "Anchor Value"
+      ],
+      "required": true
+    },
+    "occupation_data.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Description"
+      ],
+      "identity": [
+        "O*NET-SOC Code"
+      ],
+      "required": true
+    },
+    "occupation_level_metadata.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Item",
+        "Response",
+        "N",
+        "Percent",
+        "Date"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Item",
+        "Response",
+        "Date"
+      ],
+      "required": true
+    },
+    "related_occupations.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Related O*NET-SOC Code",
+        "Related Title",
+        "Relatedness Tier",
+        "Index"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Related O*NET-SOC Code"
+      ],
+      "required": true
+    },
+    "sample_of_reported_titles.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Reported Job Title",
+        "Shown in My Next Move"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Reported Job Title"
+      ],
+      "required": true
+    },
+    "scales_reference.csv": {
+      "headers": [
+        "Scale ID",
+        "Scale Name",
+        "Minimum",
+        "Maximum"
+      ],
+      "identity": [
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "software_skills.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Workplace Example",
+        "Element ID",
+        "Element Name",
+        "Hot Technology",
+        "In Demand"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Workplace Example"
+      ],
+      "required": true
+    },
+    "specific_interest_areas.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "specific_interest_areas_to_career_interest_types.csv": {
+      "headers": [
+        "Specific Interest Areas Element ID",
+        "Specific Interest Areas Element Name",
+        "Career Interest Types Element ID",
+        "Career Interest Types Element Name"
+      ],
+      "identity": [
+        "Specific Interest Areas Element ID",
+        "Career Interest Types Element ID"
+      ],
+      "required": true
+    },
+    "survey_booklet_locations.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Survey Item Number",
+        "Scale ID",
+        "Scale Name"
+      ],
+      "identity": [
+        "Element ID",
+        "Scale ID",
+        "Survey Item Number"
+      ],
+      "required": true
+    },
+    "task_categories.csv": {
+      "headers": [
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Category Description"
+      ],
+      "identity": [
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "task_ratings.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Task ID",
+        "Task",
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Task ID",
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "task_statements.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Task ID",
+        "Task",
+        "Task Type",
+        "Incumbents Responding",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Task ID"
+      ],
+      "required": true
+    },
+    "tasks_to_dwas.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Task ID",
+        "Task",
+        "DWA Element ID",
+        "DWA Element Name",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Task ID",
+        "DWA Element ID"
+      ],
+      "required": true
+    },
+    "training_and_experience.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "training_and_experience_categories.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Category Description"
+      ],
+      "identity": [
+        "Element ID",
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "transferable_skills.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Not Relevant",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "transferable_skills_to_work_activities.csv": {
+      "headers": [
+        "Transferable Skills Element ID",
+        "Transferable Skills Element Name",
+        "Work Activities Element ID",
+        "Work Activities Element Name"
+      ],
+      "identity": [
+        "Transferable Skills Element ID",
+        "Work Activities Element ID"
+      ],
+      "required": true
+    },
+    "transferable_skills_to_work_context.csv": {
+      "headers": [
+        "Transferable Skills Element ID",
+        "Transferable Skills Element Name",
+        "Work Context Element ID",
+        "Work Context Element Name"
+      ],
+      "identity": [
+        "Transferable Skills Element ID",
+        "Work Context Element ID"
+      ],
+      "required": true
+    },
+    "work_activities.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Not Relevant",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "work_context.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Data Value",
+        "N",
+        "Standard Error",
+        "Lower CI Bound",
+        "Upper CI Bound",
+        "Recommend Suppress",
+        "Not Relevant",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "work_context_categories.csv": {
+      "headers": [
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Category",
+        "Category Description"
+      ],
+      "identity": [
+        "Element ID",
+        "Scale ID",
+        "Category"
+      ],
+      "required": true
+    },
+    "work_styles.csv": {
+      "headers": [
+        "O*NET-SOC Code",
+        "Title",
+        "Element ID",
+        "Element Name",
+        "Scale ID",
+        "Scale Name",
+        "Data Value",
+        "Date",
+        "Domain Source"
+      ],
+      "identity": [
+        "O*NET-SOC Code",
+        "Element ID",
+        "Scale ID"
+      ],
+      "required": true
+    },
+    "work_styles_to_work_activities.csv": {
+      "headers": [
+        "Work Styles Element ID",
+        "Work Styles Element Name",
+        "Work Activities Element ID",
+        "Work Activities Element Name"
+      ],
+      "identity": [
+        "Work Styles Element ID",
+        "Work Activities Element ID"
+      ],
+      "required": true
+    },
+    "work_styles_to_work_context.csv": {
+      "headers": [
+        "Work Styles Element ID",
+        "Work Styles Element Name",
+        "Work Context Element ID",
+        "Work Context Element Name"
+      ],
+      "identity": [
+        "Work Styles Element ID",
+        "Work Context Element ID"
+      ],
+      "required": true
+    }
+  }
+}

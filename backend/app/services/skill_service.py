@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -5,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models import CandidateSkill, JobSkill, User
 from app.repositories.document_repository import DocumentRepository
-from app.schemas.documents import CandidateSkillReviewRequest, JobSkillUpdate
+from app.schemas.documents import (CandidateSkillRead, CandidateSkillGroup, CandidateSkillTaxonomy,
+                                   CandidateSkillReviewRequest, JobSkillUpdate)
 
 
 class SkillService:
@@ -29,10 +31,15 @@ class SkillService:
         self,
         user: User,
         payload: CandidateSkillReviewRequest,
+        document_id: UUID | None = None,
     ) -> list[CandidateSkill]:
         profile = self.repository.get_or_create_candidate_profile(user.id)
         submitted_ids = {item.id for item in payload.skills if item.id}
-        existing_skills = {skill.id: skill for skill in self.repository.list_candidate_skills(profile.id)}
+        skills = (self.list_my_cv_skills(user, document_id) if document_id else
+                  self.repository.list_candidate_skills(profile.id))
+        existing_skills = {skill.id: skill for skill in skills}
+        if not submitted_ids <= existing_skills.keys():
+            raise HTTPException(status_code=404, detail="Skill not found.")
 
         for skill_id, skill in existing_skills.items():
             if skill_id not in submitted_ids and skill.source == "manual_review":
@@ -70,7 +77,34 @@ class SkillService:
             {"skill_count": len(payload.skills)},
         )
         self.db.commit()
-        return self.repository.list_candidate_skills(profile.id)
+        return (self.list_my_cv_skills(user, document_id) if document_id else
+                self.repository.list_candidate_skills(profile.id))
+
+    def grouped_cv_skills(self, user: User, document_id: UUID) -> list[CandidateSkillGroup]:
+        skills = self.list_my_cv_skills(user, document_id)
+        identities = self.repository.candidate_skill_taxonomies(skills)
+        groups: dict[str, CandidateSkillGroup] = {}
+        for skill in skills:
+            taxonomy = None
+            identity = identities.get(skill.extracted_term_id)
+            if identity:
+                concept, term = identity
+                # Pre-existing corrections may still refer to an old extracted term.
+                if (skill.raw_text, skill.normalized_text, skill.skill_type) == (
+                        term.raw_text, term.normalized_text, term.term_type):
+                    release = concept.taxonomy_version
+                    taxonomy = CandidateSkillTaxonomy(concept_id=concept.id, release_id=release.id,
+                        external_id=concept.external_id, preferred_label=concept.preferred_label,
+                        source=release.source.code, version=release.version)
+            # Match the existing extraction/save normalization, without fuzzy/alias equivalence.
+            key = (f"taxonomy:{taxonomy.release_id}:{taxonomy.concept_id}" if taxonomy else
+                   "unlinked:" + json.dumps([skill.skill_type, skill.normalized_text.lower()]))
+            if key not in groups:
+                groups[key] = CandidateSkillGroup(key=key,
+                    label=taxonomy.preferred_label if taxonomy else skill.normalized_text,
+                    taxonomy=taxonomy, occurrences=[])
+            groups[key].occurrences.append(CandidateSkillRead.model_validate(skill))
+        return list(groups.values())
 
     def list_job_skills(self, job_id: UUID) -> list[JobSkill]:
         if not self.repository.get_job(job_id):

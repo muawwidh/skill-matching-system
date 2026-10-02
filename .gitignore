@@ -21,7 +21,15 @@ storage/
 *.sqlite
 *.sqlite3
 
+# Local taxonomy packages and database backups
+/esco-*.zip
+/phase4-*.dump
+db_31_0_csv.zip
+/ESCO dataset - v1.2.1 - classification - en - csv/
+
 # OS/editor
 .DS_Store
 .idea/
 .vscode/
+
+/phase4-before-upgrade-*.dump

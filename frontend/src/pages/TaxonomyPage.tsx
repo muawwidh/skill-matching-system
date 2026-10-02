@@ -1,18 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Database, FileUp, Search, X } from "lucide-react";
+import { Database, FileUp, Search } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { Navigate } from "react-router-dom";
 
 import {
   importBundledTaxonomySample,
   importTaxonomyRelease,
-  listPendingTaxonomyLinks,
   listTaxonomyMappings,
   listTaxonomyVersions,
-  reviewTaxonomyLink,
   searchTaxonomy,
 } from "../api/taxonomy";
 import { useAuth } from "../features/auth/AuthProvider";
+import { TaxonomyReviewPanel } from "../components/TaxonomyReviewPanel";
 
 type ImportSource = "esco" | "onet" | "mappings";
 
@@ -35,11 +34,6 @@ export function TaxonomyPage() {
   const mappingsQuery = useQuery({
     queryKey: ["taxonomy", "mappings"],
     queryFn: () => listTaxonomyMappings(accessToken as string),
-    enabled: Boolean(accessToken && isTaxonomyAdmin),
-  });
-  const reviewQuery = useQuery({
-    queryKey: ["taxonomy", "review"],
-    queryFn: () => listPendingTaxonomyLinks(accessToken as string),
     enabled: Boolean(accessToken && isTaxonomyAdmin),
   });
   const searchQuery = useQuery({
@@ -69,11 +63,6 @@ export function TaxonomyPage() {
       setFile(null);
       refreshTaxonomyData();
     },
-  });
-  const reviewMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "approved" | "rejected" }) =>
-      reviewTaxonomyLink(accessToken as string, id, status),
-    onSuccess: refreshTaxonomyData,
   });
 
   if (user && !isTaxonomyAdmin) {
@@ -132,7 +121,7 @@ export function TaxonomyPage() {
           </label>
           <label className="text-sm font-medium text-slate-700">
             Version
-            <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" onChange={(event) => setVersion(event.target.value)} placeholder="e.g. ESCO 1.2.0" value={version} />
+            <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" onChange={(event) => setVersion(event.target.value)} placeholder={source === "esco" ? "1.2.1" : source === "onet" ? "29.0 or 31.0" : "Mapping version"} value={version} />
           </label>
           <label className="text-sm font-medium text-slate-700">
             Release date
@@ -140,7 +129,7 @@ export function TaxonomyPage() {
           </label>
           <label className="text-sm font-medium text-slate-700 md:col-span-1">
             Import file
-            <input accept=".json,.csv,.tsv,.txt" className="mt-1 block w-full text-sm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} type="file" />
+            <input accept={source === "mappings" ? ".json,.csv,.tsv,.txt" : ".zip,.json,.csv,.tsv,.txt"} className="mt-1 block w-full text-sm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} type="file" />
           </label>
           <div className="flex items-end">
             <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-ocean px-3 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={!file || !version.trim() || importMutation.isPending} type="submit">
@@ -148,6 +137,7 @@ export function TaxonomyPage() {
             </button>
           </div>
         </form>
+        {source === "onet" ? <p className="text-sm text-slate-600">Official packages: O*NET 29.0 TXT ZIP or O*NET 31.0 CSV ZIP. No 31.0 TXT support.</p> : null}
         {sampleMutation.error || importMutation.error ? <p className="mt-3 text-sm text-red-700">{(sampleMutation.error ?? importMutation.error)?.message}</p> : null}
 
         <div className="mt-4 overflow-x-auto">
@@ -170,14 +160,7 @@ export function TaxonomyPage() {
         </div>
       </section>
 
-      <section className="border-t border-slate-200 pt-6">
-        <h2 className="text-lg font-semibold text-ink">Links awaiting review</h2>
-        <p className="mt-1 text-sm text-slate-600">Medium-confidence candidates remain unlinked until an administrator or researcher approves them.</p>
-        <div className="mt-4 space-y-3">
-          {(reviewQuery.data ?? []).map((item) => <article className="rounded-md border border-slate-200 bg-white p-4" key={item.id}><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-medium text-ink">{item.raw_text} <span className="font-normal text-slate-400">→</span> {item.concept.preferred_label}</p><p className="mt-1 text-xs text-slate-500">{item.term_source} · {item.match_method.replace(/_/g, " ")} · {Math.round(item.confidence_score * 100)}% · {item.concept.source_code}</p></div><div className="flex gap-2"><button className="inline-flex h-9 items-center gap-1 rounded-md border border-ocean px-3 text-sm font-medium text-ocean" onClick={() => reviewMutation.mutate({ id: item.id, status: "approved" })} type="button"><Check size={16} aria-hidden="true" />Approve</button><button className="inline-flex h-9 items-center gap-1 rounded-md border border-red-300 px-3 text-sm font-medium text-red-700" onClick={() => reviewMutation.mutate({ id: item.id, status: "rejected" })} type="button"><X size={16} aria-hidden="true" />Reject</button></div></div></article>)}
-          {!reviewQuery.isLoading && (reviewQuery.data?.length ?? 0) === 0 ? <p className="text-sm text-slate-500">No mappings currently require review.</p> : null}
-        </div>
-      </section>
+      {accessToken && isTaxonomyAdmin ? <TaxonomyReviewPanel accessToken={accessToken} /> : null}
 
       <section className="border-t border-slate-200 pt-6">
         <h2 className="text-lg font-semibold text-ink">ESCO–O*NET occupation mappings</h2>

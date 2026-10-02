@@ -1,0 +1,488 @@
+{
+  "sha256": "55033fc68b4c13ec23e7f74dc6378660f6e854e75d55d6e333ae0a761d3987cd",
+  "contract": "ONET-31.0-csv",
+  "datasets": {
+    "abilities.csv": {
+      "input": 94640,
+      "inserted": 94640,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 94640,
+      "all_source_fields_equal": true
+    },
+    "education.csv": {
+      "input": 11495,
+      "inserted": 11495,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 11495,
+      "all_source_fields_equal": true
+    },
+    "job_zones.csv": {
+      "input": 923,
+      "inserted": 923,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 923,
+      "all_source_fields_equal": true
+    },
+    "knowledge.csv": {
+      "input": 60060,
+      "inserted": 60060,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 60060,
+      "all_source_fields_equal": true
+    },
+    "job_titles.csv": {
+      "input": 54269,
+      "inserted": 54269,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 54269,
+      "all_source_fields_equal": true
+    },
+    "work_styles.csv": {
+      "input": 37422,
+      "inserted": 37422,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 37422,
+      "all_source_fields_equal": true
+    },
+    "gwas_to_iwas.csv": {
+      "input": 332,
+      "inserted": 332,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 332,
+      "all_source_fields_equal": true
+    },
+    "task_ratings.csv": {
+      "input": 165780,
+      "inserted": 165780,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 165780,
+      "all_source_fields_equal": true
+    },
+    "work_context.csv": {
+      "input": 305389,
+      "inserted": 305389,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 305389,
+      "all_source_fields_equal": true
+    },
+    "tasks_to_dwas.csv": {
+      "input": 24087,
+      "inserted": 24087,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 24087,
+      "all_source_fields_equal": true
+    },
+    "emerging_tasks.csv": {
+      "input": 338,
+      "inserted": 338,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 338,
+      "all_source_fields_equal": true
+    },
+    "occupation_data.csv": {
+      "input": 1016,
+      "inserted": 1016,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 1016,
+      "all_source_fields_equal": true
+    },
+    "software_skills.csv": {
+      "input": 31821,
+      "inserted": 31821,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 31821,
+      "all_source_fields_equal": true
+    },
+    "task_categories.csv": {
+      "input": 7,
+      "inserted": 7,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 7,
+      "all_source_fields_equal": true
+    },
+    "task_statements.csv": {
+      "input": 18838,
+      "inserted": 18838,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 18838,
+      "all_source_fields_equal": true
+    },
+    "work_activities.csv": {
+      "input": 74702,
+      "inserted": 74702,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 74702,
+      "all_source_fields_equal": true
+    },
+    "essential_skills.csv": {
+      "input": 18200,
+      "inserted": 18200,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 18200,
+      "all_source_fields_equal": true
+    },
+    "scales_reference.csv": {
+      "input": 33,
+      "inserted": 33,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 33,
+      "all_source_fields_equal": true
+    },
+    "job_zone_reference.csv": {
+      "input": 4,
+      "inserted": 4,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 4,
+      "all_source_fields_equal": true
+    },
+    "level_scale_anchors.csv": {
+      "input": 483,
+      "inserted": 483,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 483,
+      "all_source_fields_equal": true
+    },
+    "related_occupations.csv": {
+      "input": 18460,
+      "inserted": 18460,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 18460,
+      "all_source_fields_equal": true
+    },
+    "transferable_skills.csv": {
+      "input": 45500,
+      "inserted": 45500,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 45500,
+      "all_source_fields_equal": true
+    },
+    "education_categories.csv": {
+      "input": 24,
+      "inserted": 24,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 24,
+      "all_source_fields_equal": true
+    },
+    "gwas_to_iwas_to_dwas.csv": {
+      "input": 2087,
+      "inserted": 2087,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 2087,
+      "all_source_fields_equal": true
+    },
+    "career_interest_types.csv": {
+      "input": 8307,
+      "inserted": 8307,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 8307,
+      "all_source_fields_equal": true
+    },
+    "content_model_reference.csv": {
+      "input": 3006,
+      "inserted": 3006,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 3006,
+      "all_source_fields_equal": true
+    },
+    "specific_interest_areas.csv": {
+      "input": 73062,
+      "inserted": 73062,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 73062,
+      "all_source_fields_equal": true
+    },
+    "training_and_experience.csv": {
+      "input": 26812,
+      "inserted": 26812,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 26812,
+      "all_source_fields_equal": true
+    },
+    "work_context_categories.csv": {
+      "input": 281,
+      "inserted": 281,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 281,
+      "all_source_fields_equal": true
+    },
+    "survey_booklet_locations.csv": {
+      "input": 211,
+      "inserted": 211,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 211,
+      "all_source_fields_equal": true
+    },
+    "abilities_to_work_context.csv": {
+      "input": 139,
+      "inserted": 139,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 139,
+      "all_source_fields_equal": true
+    },
+    "occupation_level_metadata.csv": {
+      "input": 32280,
+      "inserted": 32280,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 32280,
+      "all_source_fields_equal": true
+    },
+    "sample_of_reported_titles.csv": {
+      "input": 8189,
+      "inserted": 8189,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 8189,
+      "all_source_fields_equal": true
+    },
+    "work_styles_to_work_context.csv": {
+      "input": 266,
+      "inserted": 266,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 266,
+      "all_source_fields_equal": true
+    },
+    "abilities_to_work_activities.csv": {
+      "input": 381,
+      "inserted": 381,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 381,
+      "all_source_fields_equal": true
+    },
+    "career_interest_type_keywords.csv": {
+      "input": 75,
+      "inserted": 75,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 75,
+      "all_source_fields_equal": true
+    },
+    "work_styles_to_work_activities.csv": {
+      "input": 303,
+      "inserted": 303,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 303,
+      "all_source_fields_equal": true
+    },
+    "essential_skills_to_work_context.csv": {
+      "input": 39,
+      "inserted": 39,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 39,
+      "all_source_fields_equal": true
+    },
+    "interests_illustrative_activities.csv": {
+      "input": 188,
+      "inserted": 188,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 188,
+      "all_source_fields_equal": true
+    },
+    "interests_illustrative_occupations.csv": {
+      "input": 186,
+      "inserted": 186,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 186,
+      "all_source_fields_equal": true
+    },
+    "training_and_experience_categories.csv": {
+      "input": 29,
+      "inserted": 29,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 29,
+      "all_source_fields_equal": true
+    },
+    "essential_skills_to_work_activities.csv": {
+      "input": 110,
+      "inserted": 110,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 110,
+      "all_source_fields_equal": true
+    },
+    "transferable_skills_to_work_context.csv": {
+      "input": 57,
+      "inserted": 57,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 57,
+      "all_source_fields_equal": true
+    },
+    "transferable_skills_to_work_activities.csv": {
+      "input": 122,
+      "inserted": 122,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 122,
+      "all_source_fields_equal": true
+    },
+    "specific_interest_areas_to_career_interest_types.csv": {
+      "input": 53,
+      "inserted": 53,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 53,
+      "all_source_fields_equal": true
+    }
+  },
+  "attribution": "O*NET 31.0 Database, National Center for O*NET Development, CC BY 4.0",
+  "license_url": "https://www.onetcenter.org/license_db.html",
+  "member_sha256": {
+    "Read Me.txt": "d00e6ebd9fcd3204efa4d8c01b08eb853e593341b9823b100b6bd2320ba5fb3d",
+    "abilities.csv": "7e9cd79791ce6014e1d26d0a449ae5b1e7aa7ef52d39b3934c3bb8d438104b88",
+    "education.csv": "e7a34cc44793ab1d56078fe52414e609b7beb9e276f5e2454df6bd41a8ccb68f",
+    "job_zones.csv": "093f01891ac2e602a8cc6c859ecb619b5bc00eb50cd3f3c1134c05b704481944",
+    "knowledge.csv": "88092e17d16096cdebe292fee4389deb460edda24ae8b4637212c69c71562f55",
+    "job_titles.csv": "75a3b46d6edc5996117c10c9ed488c9a06f7495d02969e9d12873ab14a21540c",
+    "work_styles.csv": "a3e5331df515dbc9ede284667e72189a4f24c8a8af80f61bae908596ea48c926",
+    "gwas_to_iwas.csv": "22eb4c388a320f49ce527fb288c5fc3e1ad99dc1afa8083bad419d4ae642a91a",
+    "task_ratings.csv": "52ee4ad320f1ca3c3865795aefc7393d422a9bfbfea3a5b5d9eaf2928c10eafe",
+    "work_context.csv": "599f6bff23cbc3e7d8915e25c0167324b1e00c4117bcbcd9a0c754fe47cb4fd7",
+    "tasks_to_dwas.csv": "15624d31acb85627736a87dc7c485edffe30361262571c8242fad4ae9e7678a6",
+    "emerging_tasks.csv": "7b7f304c456617083150cb7b09eb2be885dc11351fce1dbcc33bf0839d6dbfac",
+    "occupation_data.csv": "a09eae1d6609686e44e05b7290993a1c8b523d8ca224bc0eedc194c855c3ee02",
+    "software_skills.csv": "6aabb96b464288db849580e6510530efff3f80e25dde2bb23f1fc36bb526b016",
+    "task_categories.csv": "675ee2007335624ab2df2b292669a690486d942415216fa24a8f523f7ab12bf9",
+    "task_statements.csv": "4568e14d8db6f05551ad37e056e909b13ebae4a26bcb5ff915bb5f281d582c57",
+    "work_activities.csv": "6c266205b2926c0c854a7a577aae29fe492c71bb0df7e197adca830b58fe4ea1",
+    "essential_skills.csv": "68c4d31d8c55077238395dca40cc4e6d32e6a608b5474bb8264b1f98ae415bd7",
+    "scales_reference.csv": "bcba23858ce21ecaacbde303a8993e35d46724b4afb8c9ec2b10e04f42adcfc9",
+    "job_zone_reference.csv": "75e21c0bbe0ec4d70428863b6930fbff0e279537faba1e630d7f2105ba2b6038",
+    "level_scale_anchors.csv": "7205657fb54280827d6902b94e06f95ef0b9ed10f1f9f8ed3f02779d4c7a9573",
+    "related_occupations.csv": "fc2a719a21dbd3805ddfb6d510c013c9e0c366b46273701b88c683a50ef3fe6b",
+    "transferable_skills.csv": "f17d0419e818a3bf2f55076510c76c4aef01cc8f5aee2670d2f44f6f44ac60f7",
+    "education_categories.csv": "84b259f9e661d81356afd6f6080535dd0047f363887a574e747d612ee4adddac",
+    "gwas_to_iwas_to_dwas.csv": "ae4e9f166187bfe8e6328a21470689ed188e7ed831090ace2a21c66cebb31a49",
+    "career_interest_types.csv": "19f452d51b81a4d59389b500f85baf252563858f596124fe446dd436a9f41206",
+    "content_model_reference.csv": "370033744006dbd5df048431d42a402f6741a00a229b6d0f4e4f4249b6399c04",
+    "specific_interest_areas.csv": "3c59c823f228d4ee5e066560a4fc39676c5cfd956355ad9d19bf8f552f87f0eb",
+    "training_and_experience.csv": "2d2689f6b53e7570ef0aa5f7b8ea5511b9f0ea6adddf8ce3681d7dd52b941138",
+    "work_context_categories.csv": "1a6ca4b051a94aad61b931c06bc62d16a5527cd4009a94b9effa3d470399ca4a",
+    "survey_booklet_locations.csv": "13e36d83dcab3cc8a43ede45dbb583bfaad5e3f2630896a1798ae9ad4b3fe61a",
+    "abilities_to_work_context.csv": "282a94b4b4b7dacb4f4dc5d9df9171489846a77d1062c5f82ecc5df8b0380033",
+    "occupation_level_metadata.csv": "91b939ab752663ab727c35ba1aef23923eae0dd54102d50fce215f163e606a60",
+    "sample_of_reported_titles.csv": "5d76040b7b0602ea217660648f8363e7980edd1870f96574a2eeaa6a822d2666",
+    "work_styles_to_work_context.csv": "775978c5d3289910af944a6489e089172c3fb0913baf3ad07a16a5c6138d143c",
+    "abilities_to_work_activities.csv": "707c6c05f79e92d07dc6e25d40b1de48fb229755529116c518f26d31f076b0f1",
+    "career_interest_type_keywords.csv": "9aa5e9d2a125fc2ff5fadf099365c09d04791c5f70236eb9e1ba3b995bab39a2",
+    "work_styles_to_work_activities.csv": "dc15468de34052d8c38b49f8af7dfafd09a1a95196757223da2d3db130205f8c",
+    "essential_skills_to_work_context.csv": "a6131473197f3ad73512c0cd42b8f79289873356ac21b1864ede0ececa033dc9",
+    "interests_illustrative_activities.csv": "f2602bb57b1dff64fa91b198685ddf66b6dfdbaa3e83d3c3c606e7a5615ff82c",
+    "interests_illustrative_occupations.csv": "7cd40acf015e603e98f30a599532dbcc56bd2666c0c3b9749ad250719ac454c5",
+    "training_and_experience_categories.csv": "fcb51e8552199ae2b6b70eb6f1c14f2323c3d90338ea962eea042694569f59ef",
+    "essential_skills_to_work_activities.csv": "0b733f28263c6b2975ecb07641ef9f8f03a1d038dcd15746b1a37463e9d12fb1",
+    "transferable_skills_to_work_context.csv": "e1741b50d4439026e1e5038e93d0f3dfefc1972777bb212edcecda7bb3dca6a9",
+    "transferable_skills_to_work_activities.csv": "936228f125d4611116bd1f06954e1958538578fdcf000df7468796652c5d03d8",
+    "specific_interest_areas_to_career_interest_types.csv": "a8353fb7aa28042b04be9d75e8456c8a101fb87900107e94d71e67991fa73b79"
+  },
+  "skipped_files": [
+    "Read Me.txt"
+  ],
+  "skipped_reasons": {
+    "Read Me.txt": "release metadata validated; not a data table"
+  },
+  "imported_datasets": [
+    "abilities.csv",
+    "abilities_to_work_activities.csv",
+    "abilities_to_work_context.csv",
+    "career_interest_type_keywords.csv",
+    "career_interest_types.csv",
+    "content_model_reference.csv",
+    "education.csv",
+    "education_categories.csv",
+    "emerging_tasks.csv",
+    "essential_skills.csv",
+    "essential_skills_to_work_activities.csv",
+    "essential_skills_to_work_context.csv",
+    "gwas_to_iwas.csv",
+    "gwas_to_iwas_to_dwas.csv",
+    "interests_illustrative_activities.csv",
+    "interests_illustrative_occupations.csv",
+    "job_titles.csv",
+    "job_zone_reference.csv",
+    "job_zones.csv",
+    "knowledge.csv",
+    "level_scale_anchors.csv",
+    "occupation_data.csv",
+    "occupation_level_metadata.csv",
+    "related_occupations.csv",
+    "sample_of_reported_titles.csv",
+    "scales_reference.csv",
+    "software_skills.csv",
+    "specific_interest_areas.csv",
+    "specific_interest_areas_to_career_interest_types.csv",
+    "survey_booklet_locations.csv",
+    "task_categories.csv",
+    "task_ratings.csv",
+    "task_statements.csv",
+    "tasks_to_dwas.csv",
+    "training_and_experience.csv",
+    "training_and_experience_categories.csv",
+    "transferable_skills.csv",
+    "transferable_skills_to_work_activities.csv",
+    "transferable_skills_to_work_context.csv",
+    "work_activities.csv",
+    "work_context.csv",
+    "work_context_categories.csv",
+    "work_styles.csv",
+    "work_styles_to_work_activities.csv",
+    "work_styles_to_work_context.csv"
+  ],
+  "unresolved_references": [],
+  "missing_optional_files": [],
+  "relationships_resolved": 20262,
+  "relationship_source_rows_resolved": {
+    "gwas_to_iwas.csv": 332,
+    "tasks_to_dwas.csv": 24087,
+    "related_occupations.csv": 18460,
+    "gwas_to_iwas_to_dwas.csv": 2087,
+    "abilities_to_work_context.csv": 139,
+    "work_styles_to_work_context.csv": 266,
+    "abilities_to_work_activities.csv": 381,
+    "work_styles_to_work_activities.csv": 303,
+    "essential_skills_to_work_context.csv": 39,
+    "essential_skills_to_work_activities.csv": 110,
+    "transferable_skills_to_work_context.csv": 57,
+    "transferable_skills_to_work_activities.csv": 122,
+    "specific_interest_areas_to_career_interest_types.csv": 53
+  },
+  "database_checks": {
+    "concepts": 4022,
+    "occupations": 1016,
+    "relationships": 20262,
+    "all_relationship_directions_verified": true,
+    "relationship_types": {
+      "gwas_to_iwas": 332,
+      "abilities_to_work_activities": 381,
+      "abilities_to_work_context": 139,
+      "essential_skills_to_work_activities": 110,
+      "essential_skills_to_work_context": 39,
+      "related_occupations": 18460,
+      "work_styles_to_work_context": 266,
+      "specific_interest_areas_to_career_interest_types": 53,
+      "work_styles_to_work_activities": 303,
+      "transferable_skills_to_work_activities": 122,
+      "transferable_skills_to_work_context": 57
+    },
+    "negative_wi_rows": 1983
+  },
+  "migration_revision": "0007_taxonomy_review_audit",
+  "postgresql_version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "verified": true,
+  "source": "ONET",
+  "version": "31.0",
+  "supplied_archive": "db_31_0_csv.zip",
+  "archive_reconstructed_from_directory": false,
+  "provenance": "User-supplied official O*NET 31.0 CSV ZIP; embedded Read Me.txt identifies August 2026",
+  "verified_at": "2026-10-01T20:34:13.601935+00:00",
+  "runs": [
+    {
+      "stage": "initial_import",
+      "all_datasets_reconciled": true,
+      "all_source_fields_equal": true,
+      "elapsed_seconds": 74.576
+    },
+    {
+      "stage": "same_version_replacement",
+      "all_datasets_reconciled": true,
+      "all_source_fields_equal": true,
+      "elapsed_seconds": 101.42
+    }
+  ],
+  "replacement_verified": true,
+  "elapsed_seconds": 176.141,
+  "isolated_schema_removed": true
+}

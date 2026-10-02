@@ -116,6 +116,22 @@ class CandidateSkillRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class CandidateSkillTaxonomy(BaseModel):
+    concept_id: UUID
+    release_id: UUID
+    external_id: str
+    preferred_label: str
+    source: str
+    version: str
+
+
+class CandidateSkillGroup(BaseModel):
+    key: str
+    label: str
+    taxonomy: CandidateSkillTaxonomy | None = None
+    occurrences: list[CandidateSkillRead]
+
+
 class CandidateSkillUpsert(BaseModel):
     id: UUID | None = None
     raw_text: str = Field(min_length=1, max_length=255)

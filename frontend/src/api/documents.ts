@@ -1,6 +1,7 @@
 import { apiRequest } from "./client";
 import type {
   CandidateSkill,
+  CandidateSkillGroup,
   CandidateJobMatch,
   CvDocument,
   Job,
@@ -61,6 +62,10 @@ export function listProcessingLogs(accessToken: string) {
 
 export function listCvSkills(accessToken: string, cvId: string) {
   return apiRequest<CandidateSkill[]>(`/cvs/${cvId}/extracted-skills`, { accessToken });
+}
+
+export function listCvSkillGroups(accessToken: string, cvId: string) {
+  return apiRequest<CandidateSkillGroup[]>(`/cvs/${cvId}/skill-groups`, { accessToken });
 }
 
 export function reviewCvSkills(accessToken: string, cvId: string, skills: CandidateSkill[]) {

@@ -1,0 +1,3 @@
+O*NET-SOC Code	Task ID	Task	Task Type	Incumbents Responding	Date	Domain Source
+11-1011.00	8823	Direct or coordinate an organization's financial or budget activities to fund operations, maximize investments, or increase efficiency.	Core	95	08/2023	Incumbent
+11-1011.00	8824	Confer with board members, organization officials, or staff members to discuss issues, coordinate activities, or resolve problems.	Core	95	08/2023	Incumbent

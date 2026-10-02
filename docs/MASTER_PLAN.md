@@ -74,6 +74,8 @@ Develop and evaluate a full-stack application that:
 - occupation information
 - ESCO–O*NET mappings
 - official taxonomy import
+- pinned native contracts: ESCO 1.2.1 English CSV, O*NET 29.0 TXT and O*NET 31.0 CSV packages;
+  other releases require explicit implementation and full-package verification
 - development samples
 - taxonomy search/details
 - exact linking

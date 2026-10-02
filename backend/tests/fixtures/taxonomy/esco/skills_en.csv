@@ -1,0 +1,43 @@
+conceptType,conceptUri,skillType,reuseLevel,preferredLabel,altLabels,hiddenLabels,status,modifiedDate,scopeNote,definition,inScheme,description
+KnowledgeSkillCompetence,http://data.europa.eu/esco/skill/00064735-8fad-454b-90c7-ed858cc993f2,skill/competence,occupation-specific,supervise correctional procedures,"manage prison procedures
+monitor correctional procedures
+oversee prison procedures
+oversee correctional procedures
+manage correctional procedures
+monitor prison procedures",,released,2023-11-30T15:04:00.689Z,,,"http://data.europa.eu/esco/concept-scheme/skills,
+http://data.europa.eu/esco/concept-scheme/member-skills","Supervise the operations of a correctional facility or other correctional procedures, ensuring that they are compliant with legal regulations, and ensure that the staff complies with regulations, and aim to improve the facility's efficiency and safety."
+KnowledgeSkillCompetence,http://data.europa.eu/esco/skill/06670261-ea6b-4b52-a915-c7d4ff837f74,skill/competence,cross-sector,identify statistical patterns,"identify statistical pattern
+identifying statistical patterns
+examine statistical patterns
+evaluate statistical patterns
+determine statistical patterns
+assess statistical patterns",,released,2024-02-09T17:29:15.235Z,,,"http://data.europa.eu/esco/concept-scheme/skills,
+http://data.europa.eu/esco/concept-scheme/member-skills",Analyse statistical data in order to find patterns and trends in the data or between variables.
+KnowledgeSkillCompetence,http://data.europa.eu/esco/skill/57231a22-4da7-49c8-97b8-75672feadf1e,skill/competence,cross-sector,manage quantitative data,"gather data
+manage data quantitatively
+organise data
+handle numerical data
+process data
+present data
+interpret data
+managing quantitative data",,released,2024-02-09T17:29:13.7Z,"Excludes <a resource=""http://data.europa.eu/esco/skill/9af1bd12-01bd-4d6a-947b-69e64f23150a"" typeOf=""http://data.europa.eu/esco/model#Skill"" href=""http://data.europa.eu/esco/skill/9af1bd12-01bd-4d6a-947b-69e64f23150a""><span property=""http://www.w3.org/2000/01/rdf-schema#label"" xml:lang=""en"">process qualitative information</span></a>.",,"http://data.europa.eu/esco/concept-scheme/skills,
+http://data.europa.eu/esco/concept-scheme/member-skills,
+http://data.europa.eu/esco/concept-scheme/6c930acd-c104-4ece-acf7-f44fd7333036","Gather, process and present quantitative data. Use the appropriate programs and methods for validating, organising and interpreting data."
+KnowledgeSkillCompetence,http://data.europa.eu/esco/skill/a2dfc063-7b24-4258-a778-d395c41d4966,skill/competence,sector-specific,write technical riders,"contribute to the creation of technical riders
+collaborate for the creation of technical riders
+participate in the creation of technical riders
+participate in the writing of technical riders",,released,2023-11-14T13:30:24.395Z,,,"http://data.europa.eu/esco/concept-scheme/skills,
+http://data.europa.eu/esco/concept-scheme/member-skills","Participate in all aspects of the creation of technical riders. Create, or help create, cues for the technical crew in coordination with creators, directors and designers team. Verify that the crew understand the cues. Write a list of technical specifications. Indicate the performance schedule and specify needs related to staging the production."
+KnowledgeSkillCompetence,http://data.europa.eu/esco/skill/d4a0744a-508b-4a5e-97a5-ad1fc7f55e6e,knowledge,cross-sector,correctional procedures,"correctional policies
+penal institution methods
+penal institution policies
+penal institution processes
+correctional measures
+correctional methods
+penal institution measures
+correctional processes",,released,2023-02-22T20:45:58.923Z,,,"http://data.europa.eu/esco/concept-scheme/skills,
+http://data.europa.eu/esco/concept-scheme/member-skills","The legal regulations and policies concerning the operations of correctional facilities, and other correctional procedures."
+KnowledgeSkillCompetence,http://data.europa.eu/esco/skill/fed5b267-73fa-461d-9f69-827c78beb39d,knowledge,sector-specific,theatre techniques,"theatre technique
+theatre approaches
+theatre methods",,released,2023-02-24T10:48:31.243Z,,,"http://data.europa.eu/esco/concept-scheme/skills,
+http://data.europa.eu/esco/concept-scheme/member-skills",The techniques that facilitate a successful presentation of a play.

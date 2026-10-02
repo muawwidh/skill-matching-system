@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { listCvSkills, listJobSkills, reviewCvSkills } from "../api/documents";
 import type { CandidateSkill, JobSkill } from "../types/documents";
+import { CandidateSkillGroups } from "./CandidateSkillGroups";
 
 type SkillReviewPanelProps = {
   accessToken: string;
@@ -12,6 +13,12 @@ type SkillReviewPanelProps = {
 };
 
 export function SkillReviewPanel({ accessToken, ownerId, ownerType }: SkillReviewPanelProps) {
+  return ownerType === "cv"
+    ? <CandidateSkillGroups key={ownerId} accessToken={accessToken} cvId={ownerId} />
+    : <OccurrenceReviewPanel accessToken={accessToken} ownerId={ownerId} ownerType={ownerType} />;
+}
+
+function OccurrenceReviewPanel({ accessToken, ownerId, ownerType }: SkillReviewPanelProps) {
   const queryClient = useQueryClient();
   const [candidateSkills, setCandidateSkills] = useState<CandidateSkill[]>([]);
   const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});

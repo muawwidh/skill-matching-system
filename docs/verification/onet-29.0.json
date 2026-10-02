@@ -1,0 +1,238 @@
+{
+  "sha256": "ebf4237f614f9d34ad83edd837da3eac19dec280998bfeea5b73f740fab34777",
+  "contract": "ONET-29.0-txt",
+  "datasets": {
+    "Skills.txt": {
+      "input": 61530,
+      "inserted": 61530,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 61530
+    },
+    "Abilities.txt": {
+      "input": 91416,
+      "inserted": 91416,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 91416
+    },
+    "Job Zones.txt": {
+      "input": 923,
+      "inserted": 923,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 923
+    },
+    "Knowledge.txt": {
+      "input": 58014,
+      "inserted": 58014,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 58014
+    },
+    "Tools Used.txt": {
+      "input": 41650,
+      "inserted": 41650,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 41650
+    },
+    "Task Ratings.txt": {
+      "input": 158751,
+      "inserted": 158751,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 158751
+    },
+    "Occupation Data.txt": {
+      "input": 1016,
+      "inserted": 1016,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 1016
+    },
+    "Task Categories.txt": {
+      "input": 7,
+      "inserted": 7,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 7
+    },
+    "Task Statements.txt": {
+      "input": 18796,
+      "inserted": 18796,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 18796
+    },
+    "Work Activities.txt": {
+      "input": 72078,
+      "inserted": 72078,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 72078
+    },
+    "Alternate Titles.txt": {
+      "input": 55120,
+      "inserted": 55120,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 55120
+    },
+    "Scales Reference.txt": {
+      "input": 29,
+      "inserted": 29,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 29
+    },
+    "Technology Skills.txt": {
+      "input": 32470,
+      "inserted": 32470,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 32470
+    },
+    "Job Zone Reference.txt": {
+      "input": 5,
+      "inserted": 5,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 5
+    },
+    "Content Model Reference.txt": {
+      "input": 627,
+      "inserted": 627,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 627
+    },
+    "Education, Training, and Experience.txt": {
+      "input": 36209,
+      "inserted": 36209,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 36209
+    },
+    "Education, Training, and Experience Categories.txt": {
+      "input": 41,
+      "inserted": 41,
+      "merged_duplicate_rows": 0,
+      "verified_database_count": 41
+    }
+  },
+  "member_sha256": {
+    "Skills.txt": "52e042e9cfc3352a2da28a39a164cfd8244267e9fd3d0ee027c2d4228919e23d",
+    "Read Me.txt": "b05f59fec852cb56e9ecc2dac096c5f7c548670676a079e999929e9ab2e0f286",
+    "Abilities.txt": "f08d3c0fb458212f733502f7bc4dee8487b5d806fda7c3cd2a134b6f47879a15",
+    "Interests.txt": "fcf714f700c1f974f7761b9e22b9d1e068e0d83329dea747c1099d691a97aaee",
+    "Job Zones.txt": "82951277d61ee9040f6cb269eaf420139018a90ef50e63bbe1e72c41b091f22d",
+    "Knowledge.txt": "89b74e941d4013fa3b8572c0c9631cce07d2bda5ab97ddbd38a1d23ad8005278",
+    "Tools Used.txt": "ac6aaa73d717936ca46a56fd944f5bc01225e8b3709e3978d960bfadbe191433",
+    "Work Styles.txt": "d7b940f4a4d9f7be0afbb138ad054954653c7fe549e64195ae06e1269cbf2c06",
+    "Work Values.txt": "3aac674a8c4a984ad513a45ece814d52825f24e0a7fbe00b7aee7cb4588a05ae",
+    "Task Ratings.txt": "7c37d400c0f64bb369785430d42cb673c85fb8499c46c54870ebd54febeeb204",
+    "Work Context.txt": "f537357f5ce0a55e83067c6a091f3f0a12b93c51e01215bda27f8e3cc44bea82",
+    "DWA Reference.txt": "e38a5b529a06d6803dd80d119f2bff4e1ce9507724ffd648d1f7b20983ab9d18",
+    "IWA Reference.txt": "21aea17a4ac775fc2a4e3cae359a681f001f1696692af80c993dffcb764503cf",
+    "Tasks to DWAs.txt": "6cb7098b09a6a03cc730b544bd7a17b1eac5d0b5beda947c4f901c42f5a713d6",
+    "Emerging Tasks.txt": "3895f0aeb4a068b0fc0944b987a9a8d53c80b72989d2bde6bc8eba5a3577e2b1",
+    "Occupation Data.txt": "63e6029d3d30ff5c7cf39b5304a733b77a409e01c65ae7095fe92f6d18d74a66",
+    "RIASEC Keywords.txt": "5a52434b5ff428e96e7b698ecde04fbfe6d655cabff17d9905046e9f65e09a4e",
+    "Task Categories.txt": "809617e3686a71d00357b957ce6238e3b542a008d6f61b1a724b27e7be091aca",
+    "Task Statements.txt": "fecdcda81a4b8a28e750a6c75ed8bf2d0a9b71186e5be37eec8dc6cef7985d1a",
+    "Work Activities.txt": "da89c8fb2ecf1d2da7a27b29201a94241df4eca18cc1b1e7bc363b3fbd66ca34",
+    "Alternate Titles.txt": "6d2c22fa87d099b0d6e7bf2ac4d796ddc67bc205df629c461528cd72f00e694a",
+    "Scales Reference.txt": "d7cc3862ee6b90d413f4c13458aa91f63a8a967fea1932774622de1383c78d2c",
+    "UNSPSC Reference.txt": "07c0e9fe5fbaa894fe898dbe7e715b94b162fb1b3ebd6f98cc4ed55c4d92ebb0",
+    "Technology Skills.txt": "ca8bd2256a12dea977d19544c9b406df8de198e601e56c8663ab740a0be0efec",
+    "Job Zone Reference.txt": "0d705299759ff75785a3c503dc39da21db26ec652afac145c65736149d3744ea",
+    "Level Scale Anchors.txt": "ea67ca593c76a1a32f2e0adeb81eae63526076be8ceff4e2178c055247e1d1e9",
+    "Related Occupations.txt": "0a47ee591213b75c30ac07848609707ffd8a5d2a3993065fd6d2a5d1c6a853da",
+    "Skills to Work Context.txt": "ed47f7a6e5fb2704b2b349574a36e440f51a3f606799e03e8609d8e343d525f5",
+    "Content Model Reference.txt": "a543959cbd6e472d6acc328734ee417a4b181eadb97a2c71ad0349104f6a69f9",
+    "Work Context Categories.txt": "68a59c513a1f6764441576b016dbee15604809bbcb6a974ec2de029cbc9b23fe",
+    "Survey Booklet Locations.txt": "76bc0a30ca71f60cc4df04f7353d4cce93680460773141f10e4671ac298622b0",
+    "Abilities to Work Context.txt": "754696266fdd689a61fe45a867cf65399703fd70cfbcf63ca6f758fe64574a62",
+    "Basic Interests to RIASEC.txt": "bde27834cd713d2f4b2478ba9579d87a9643c98097081f987d2dd79fc8f75a80",
+    "Occupation Level Metadata.txt": "73388d40ba00fc17df5dae8f47ce5bf90ec9d5c503341914cccbf83558462900",
+    "Sample of Reported Titles.txt": "1dc196a136318ae1ed32c212bd90398a68245b0d6169cb957b3e2f415e2fe00e",
+    "Skills to Work Activities.txt": "a68cb4e7f6ddff0d8da7fed9e93a41e84ff6145bab852aec9dabbe4f5172d257",
+    "Abilities to Work Activities.txt": "4dba1398587d0163b36a4c9259d59d90e35ae2d508da0e30f4f31ed0a4d98be7",
+    "Interests Illustrative Activities.txt": "fc7ce369552a445cfcf3f1eb6020e1d8316bfdbb441877498263e25c23d5c6b5",
+    "Interests Illustrative Occupations.txt": "0d06beef6cd6e47eb8e15e820f9aec65dd00b0273fa37d1dc0dd41dddf945023",
+    "Education, Training, and Experience.txt": "d475924c29ca5ad1704c2b539b745e484ea673d8c78c4610cde1cabcaa099107",
+    "Education, Training, and Experience Categories.txt": "9276926ce21572ba39b8ec04aba1c884770aa514e2e0e50b9e375461aed35b52"
+  },
+  "skipped_files": [
+    "Abilities to Work Activities.txt",
+    "Abilities to Work Context.txt",
+    "Basic Interests to RIASEC.txt",
+    "DWA Reference.txt",
+    "Emerging Tasks.txt",
+    "IWA Reference.txt",
+    "Interests Illustrative Activities.txt",
+    "Interests Illustrative Occupations.txt",
+    "Interests.txt",
+    "Level Scale Anchors.txt",
+    "Occupation Level Metadata.txt",
+    "RIASEC Keywords.txt",
+    "Read Me.txt",
+    "Related Occupations.txt",
+    "Sample of Reported Titles.txt",
+    "Skills to Work Activities.txt",
+    "Skills to Work Context.txt",
+    "Survey Booklet Locations.txt",
+    "Tasks to DWAs.txt",
+    "UNSPSC Reference.txt",
+    "Work Context Categories.txt",
+    "Work Context.txt",
+    "Work Styles.txt",
+    "Work Values.txt"
+  ],
+  "unresolved_references": [],
+  "missing_optional_files": [],
+  "relationships_resolved": 0,
+  "source": "ONET",
+  "version": "29.0",
+  "provenance": "https://www.onetcenter.org/dl_files/database/db_29_0_text.zip",
+  "archive_reconstructed_from_directory": false,
+  "verified_at": "2026-10-01T12:16:41.400241+00:00",
+  "migration_revision": "0006_official_taxonomy",
+  "postgresql_version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "database_checks": {
+    "cross_version_relationships": 0,
+    "concepts": 1224,
+    "occupations": 1016,
+    "rating_examples": [
+      {
+        "occupation_code": "11-1011.00",
+        "element_id": "2.A.1.a",
+        "scale_id": "IM",
+        "numeric_value": "4.12",
+        "source_data": {
+          "N": "8",
+          "Date": "08/2023",
+          "Scale ID": "IM",
+          "Data Value": "4.12",
+          "Element ID": "2.A.1.a",
+          "Element Name": "Reading Comprehension",
+          "Not Relevant": "n/a",
+          "Domain Source": "Analyst",
+          "Lower CI Bound": "3.8800",
+          "O*NET-SOC Code": "11-1011.00",
+          "Standard Error": "0.1250",
+          "Upper CI Bound": "4.3700",
+          "Recommend Suppress": "N"
+        }
+      },
+      {
+        "occupation_code": "11-1011.00",
+        "element_id": "2.A.1.a",
+        "scale_id": "LV",
+        "numeric_value": "4.62",
+        "source_data": {
+          "N": "8",
+          "Date": "08/2023",
+          "Scale ID": "LV",
+          "Data Value": "4.62",
+          "Element ID": "2.A.1.a",
+          "Element Name": "Reading Comprehension",
+          "Not Relevant": "N",
+          "Domain Source": "Analyst",
+          "Lower CI Bound": "4.2664",
+          "O*NET-SOC Code": "11-1011.00",
+          "Standard Error": "0.1830",
+          "Upper CI Bound": "4.9836",
+          "Recommend Suppress": "N"
+        }
+      }
+    ]
+  },
+  "elapsed_seconds": 39.21,
+  "verified": true
+}

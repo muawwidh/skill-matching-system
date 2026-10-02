@@ -17,6 +17,7 @@ from app.db.models import (
     JobSkill,
     ProcessingLog,
     TaxonomyLinkCandidate,
+    TaxonomyConcept,
 )
 from app.nlp.skill_extractor import ExtractedTerm
 from app.services.section_detection_service import DetectedSection
@@ -220,6 +221,18 @@ class DocumentRepository:
             )
         )
 
+    def candidate_skill_taxonomies(
+        self, skills: list[CandidateSkill]
+    ) -> dict[UUID, tuple[TaxonomyConcept, ExtractedCandidateTerm]]:
+        term_ids = [skill.extracted_term_id for skill in skills if skill.extracted_term_id]
+        if not term_ids:
+            return {}
+        rows = self.db.execute(select(ApprovedTaxonomyLink, ExtractedCandidateTerm).join(
+            ExtractedCandidateTerm, ExtractedCandidateTerm.id == ApprovedTaxonomyLink.extracted_term_id
+        ).where(ApprovedTaxonomyLink.term_source == "candidate",
+                ApprovedTaxonomyLink.extracted_term_id.in_(term_ids)))
+        return {term.id: (link.concept, term) for link, term in rows}
+
     def create_candidate_skill(
         self,
         candidate_profile_id: UUID,
@@ -252,6 +265,17 @@ class DocumentRepository:
         evidence_sentence: str,
         review_status: str,
     ) -> CandidateSkill:
+        if skill.extracted_term_id and (skill.raw_text, skill.normalized_text, skill.skill_type) != (
+                raw_text, normalized_text, skill_type):
+            # A correction invalidates this occurrence's mapping, not its evidence or audit history.
+            from app.repositories.taxonomy_repository import TaxonomyRepository
+
+            TaxonomyRepository(self.db).replace_link_candidates("candidate", skill.extracted_term_id)
+            term = self.db.get(ExtractedCandidateTerm, skill.extracted_term_id)
+            if term:
+                term.raw_text = raw_text
+                term.normalized_text = normalized_text
+                term.term_type = skill_type
         skill.raw_text = raw_text
         skill.normalized_text = normalized_text
         skill.skill_type = skill_type

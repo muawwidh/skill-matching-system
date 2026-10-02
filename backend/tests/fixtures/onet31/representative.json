@@ -1,0 +1,4870 @@
+{
+  "work_context.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Scale ID": "CX",
+      "Scale Name": "Context",
+      "Category": "",
+      "Data Value": "3.07",
+      "N": "37",
+      "Standard Error": "0.2851",
+      "Lower CI Bound": "2.4923",
+      "Upper CI Bound": "3.6486",
+      "Recommend Suppress": "N",
+      "Not Relevant": "",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Data Value": "0.13",
+      "N": "37",
+      "Standard Error": "0.1370",
+      "Lower CI Bound": "0.0160",
+      "Upper CI Bound": "1.0770",
+      "Recommend Suppress": "N",
+      "Not Relevant": "",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    }
+  ],
+  "abilities.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.A.1.a.1",
+      "Element Name": "Oral Comprehension",
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Data Value": "4.62",
+      "N": "8",
+      "Standard Error": "0.1830",
+      "Lower CI Bound": "4.2664",
+      "Upper CI Bound": "4.9836",
+      "Recommend Suppress": "N",
+      "Not Relevant": "",
+      "Date": "08/2023",
+      "Domain Source": "Analyst"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.A.1.a.1",
+      "Element Name": "Oral Comprehension",
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Data Value": "4.88",
+      "N": "8",
+      "Standard Error": "0.1250",
+      "Lower CI Bound": "4.6300",
+      "Upper CI Bound": "5.1200",
+      "Recommend Suppress": "N",
+      "Not Relevant": "N",
+      "Date": "08/2023",
+      "Domain Source": "Analyst"
+    }
+  ],
+  "abilities_to_work_activities.csv": [
+    {
+      "Abilities Element ID": "1.A.1.a.1",
+      "Abilities Element Name": "Oral Comprehension",
+      "Work Activities Element ID": "4.A.1.a.1",
+      "Work Activities Element Name": "Getting Information"
+    },
+    {
+      "Abilities Element ID": "1.A.1.a.1",
+      "Abilities Element Name": "Oral Comprehension",
+      "Work Activities Element ID": "4.A.1.a.2",
+      "Work Activities Element Name": "Monitoring Processes, Materials, or Surroundings"
+    }
+  ],
+  "abilities_to_work_context.csv": [
+    {
+      "Abilities Element ID": "1.A.1.a.1",
+      "Abilities Element Name": "Oral Comprehension",
+      "Work Context Element ID": "4.C.1.a.2.c",
+      "Work Context Element Name": "Public Speaking"
+    },
+    {
+      "Abilities Element ID": "1.A.1.a.1",
+      "Abilities Element Name": "Oral Comprehension",
+      "Work Context Element ID": "4.C.1.a.2.f",
+      "Work Context Element Name": "Telephone Conversations"
+    }
+  ],
+  "work_styles_to_work_activities.csv": [
+    {
+      "Work Styles Element ID": "1.D.1.a",
+      "Work Styles Element Name": "Innovation",
+      "Work Activities Element ID": "4.A.2.b.1",
+      "Work Activities Element Name": "Making Decisions and Solving Problems"
+    },
+    {
+      "Work Styles Element ID": "1.D.1.a",
+      "Work Styles Element Name": "Innovation",
+      "Work Activities Element ID": "4.A.2.b.2",
+      "Work Activities Element Name": "Thinking Creatively"
+    }
+  ],
+  "career_interest_type_keywords.csv": [
+    {
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Keyword": "Build",
+      "Keyword Type": "Action"
+    },
+    {
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Keyword": "Drive",
+      "Keyword Type": "Action"
+    }
+  ],
+  "career_interest_types.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Scale ID": "OI",
+      "Scale Name": "Occupational Interests",
+      "Data Value": "1.26",
+      "Date": "02/2026",
+      "Domain Source": "Machine Learning/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.B.1.b",
+      "Element Name": "Investigative",
+      "Scale ID": "OI",
+      "Scale Name": "Occupational Interests",
+      "Data Value": "3.05",
+      "Date": "02/2026",
+      "Domain Source": "Machine Learning/Expert"
+    }
+  ],
+  "content_model_reference.csv": [
+    {
+      "Element ID": "1",
+      "Element Name": "Worker Characteristics",
+      "Description": "Personal traits and abilities that affect how people learn and perform at work."
+    },
+    {
+      "Element ID": "1.A",
+      "Element Name": "Abilities",
+      "Description": "Natural talents and capabilities that affect how well someone can perform work."
+    },
+    {
+      "Element ID": "1.A.1.a.1",
+      "Element Name": "Oral Comprehension",
+      "Description": "The ability to listen to and understand information and ideas presented through spoken words and sentences."
+    },
+    {
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Description": "Work involves designing, building, or repairing of equipment, materials, or structures, engaging in physical activity, or working outdoors. Realistic occupations are often associated with engineering, mechanics and electronics, construction, woodworking, transportation, machine operation, agriculture, animal services, physical or manual labor, athletics, or protective services."
+    },
+    {
+      "Element ID": "1.B.1.b",
+      "Element Name": "Investigative",
+      "Description": "Work involves studying and researching non-living objects, living organisms, disease or other forms of impairment, or human behavior. Investigative occupations are often associated with physical, life, medical, or social sciences, and can be found in the fields of humanities, mathematics/statistics, information technology, or health care service."
+    },
+    {
+      "Element ID": "1.B.3.a",
+      "Element Name": "Mechanics/Electronics",
+      "Description": "Work involves maintaining and repairing of machinery, such as automotive engines, electronic equipment, computers, and communication systems."
+    },
+    {
+      "Element ID": "1.B.3.b",
+      "Element Name": "Construction/Woodwork",
+      "Description": "Work involves constructing, installing, or repairing structures and fixtures made of wood."
+    },
+    {
+      "Element ID": "1.D.1.a",
+      "Element Name": "Innovation",
+      "Description": "A tendency to be inventive, to be imaginative, and to adopt new perspectives on ways to accomplish work."
+    },
+    {
+      "Element ID": "1.D.1.b",
+      "Element Name": "Achievement Orientation",
+      "Description": "A tendency to establish and maintain personally challenging work-related goals, set high work-related standards, and exert high effort toward meeting those goals and standards."
+    },
+    {
+      "Element ID": "1.D.1.c",
+      "Element Name": "Intellectual Curiosity",
+      "Description": "A tendency to seek out and acquire new work-related knowledge and obtain a deep understanding of work-related subjects."
+    },
+    {
+      "Element ID": "1.D.1.d",
+      "Element Name": "Tolerance for Ambiguity",
+      "Description": "A tendency to be comfortable with ambiguity and uncertainty at work."
+    },
+    {
+      "Element ID": "1.D.1.e",
+      "Element Name": "Initiative",
+      "Description": "A tendency to be proactive and take on extra responsibilities and tasks that may fall outside of one's required work role."
+    },
+    {
+      "Element ID": "1.D.1.f",
+      "Element Name": "Adaptability",
+      "Description": "A tendency to be open to and comfortable with change, new experiences, or ideas at work."
+    },
+    {
+      "Element ID": "1.D.1.g",
+      "Element Name": "Self-Confidence",
+      "Description": "A tendency to believe in one's work-related capabilities and ability to control one's work-related outcomes."
+    },
+    {
+      "Element ID": "1.D.1.h",
+      "Element Name": "Perseverance",
+      "Description": "A tendency to exhibit determination and resolve to perform or complete tasks in the face of difficult circumstances or obstacles at work."
+    },
+    {
+      "Element ID": "1.D.1.i",
+      "Element Name": "Leadership Orientation",
+      "Description": "A tendency to lead, take charge, offer opinions, and provide direction at work."
+    },
+    {
+      "Element ID": "1.D.2.a",
+      "Element Name": "Humility",
+      "Description": "A tendency to be modest and humble when interacting with others at work."
+    },
+    {
+      "Element ID": "1.D.2.b",
+      "Element Name": "Sincerity",
+      "Description": "A tendency to be genuine and sincere in interactions with others at work, without concern for personal gain or self-interest."
+    },
+    {
+      "Element ID": "1.D.2.c",
+      "Element Name": "Empathy",
+      "Description": "A tendency to show concern for others and be sensitive to others' needs and feelings at work."
+    },
+    {
+      "Element ID": "1.D.2.d",
+      "Element Name": "Cooperation",
+      "Description": "A tendency to be pleasant, helpful, and willing to assist others at work."
+    },
+    {
+      "Element ID": "1.D.2.e",
+      "Element Name": "Optimism",
+      "Description": "A tendency to exhibit a positive attitude and positive emotions at work, even under difficult circumstances."
+    },
+    {
+      "Element ID": "1.D.2.f",
+      "Element Name": "Social Orientation",
+      "Description": "A tendency to seek out, enjoy, and be energized by social interaction at work."
+    },
+    {
+      "Element ID": "1.D.3.a",
+      "Element Name": "Cautiousness",
+      "Description": "A tendency to be careful, deliberate, and risk-avoidant when making work-related decisions or doing work."
+    },
+    {
+      "Element ID": "1.D.3.b",
+      "Element Name": "Attention to Detail",
+      "Description": "A tendency to be detail-oriented, organized, and thorough in completing work."
+    },
+    {
+      "Element ID": "1.D.3.c",
+      "Element Name": "Dependability",
+      "Description": "A tendency to be reliable, responsible, and consistent in meeting work-related obligations."
+    },
+    {
+      "Element ID": "1.D.3.d",
+      "Element Name": "Integrity",
+      "Description": "A tendency to be honest and ethical at work."
+    },
+    {
+      "Element ID": "1.D.4.a",
+      "Element Name": "Stress Tolerance",
+      "Description": "A tendency to cope and function effectively in stressful situations at work."
+    },
+    {
+      "Element ID": "1.D.4.b",
+      "Element Name": "Self-Control",
+      "Description": "A tendency to remain calm and composed and to manage emotions effectively in response to criticism or difficult situations at work."
+    },
+    {
+      "Element ID": "2.A.1.a",
+      "Element Name": "Reading Comprehension",
+      "Description": "Understanding written sentences and paragraphs in work-related documents."
+    },
+    {
+      "Element ID": "2.A.1.b",
+      "Element Name": "Active Listening",
+      "Description": "Giving full attention to what other people are saying, taking time to understand the points being made, asking questions as appropriate, and not interrupting at inappropriate times."
+    },
+    {
+      "Element ID": "2.B.1.a",
+      "Element Name": "Social Perceptiveness",
+      "Description": "Being aware of others' reactions and understanding why they react as they do."
+    },
+    {
+      "Element ID": "2.C.1.a",
+      "Element Name": "Administration and Management",
+      "Description": "Knowledge of business and management principles involved in strategic planning, resource allocation, human resources modeling, leadership technique, production methods, and coordination of people and resources."
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Description": "The level of education required to perform a job."
+    },
+    {
+      "Element ID": "2.D.4.a",
+      "Element Name": "Job-Related Professional Certification",
+      "Description": "Possession of an occupational or industry certification to perform the job."
+    },
+    {
+      "Element ID": "2.E.5.b",
+      "Element Name": "Document management software",
+      "Description": "Software to store, organize, or search documents or files from other software or from paper copies."
+    },
+    {
+      "Element ID": "2.E.6.f",
+      "Element Name": "Data base user interface and query software",
+      "Description": "Software to query, present, or edit information stored in a database sytem."
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Description": "Amount of related work experience required to get hired for the job?"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Description": "Amount of on-site or in-plant training (e.g., organized class room instruction) required to perform the job?"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Description": "Amount of on the job training required to perform the job?"
+    },
+    {
+      "Element ID": "3.A.4.a",
+      "Element Name": "Job-related Apprenticeship",
+      "Description": "Completion of a job-related apprenticeship to perform the job."
+    },
+    {
+      "Element ID": "4.A.1.a.1",
+      "Element Name": "Getting Information",
+      "Description": "Observing, receiving, and otherwise obtaining information from all relevant sources."
+    },
+    {
+      "Element ID": "4.A.1.a.1.a",
+      "Element Name": "Study details of artistic productions.",
+      "Description": ""
+    },
+    {
+      "Element ID": "4.A.1.a.1.a.1",
+      "Element Name": "Review art or design materials.",
+      "Description": ""
+    },
+    {
+      "Element ID": "4.A.1.a.1.a.2",
+      "Element Name": "Study details of musical compositions.",
+      "Description": ""
+    },
+    {
+      "Element ID": "4.A.1.a.1.b",
+      "Element Name": "Read documents or materials to inform work processes.",
+      "Description": ""
+    },
+    {
+      "Element ID": "4.A.1.a.2",
+      "Element Name": "Monitoring Processes, Materials, or Surroundings",
+      "Description": "Monitoring and reviewing information from materials, events, or the environment, to detect or assess problems."
+    },
+    {
+      "Element ID": "4.A.2.a.4.i.3",
+      "Element Name": "Analyze impact of legal or regulatory changes.",
+      "Description": ""
+    },
+    {
+      "Element ID": "4.A.2.b.1",
+      "Element Name": "Making Decisions and Solving Problems",
+      "Description": "Analyzing information and evaluating results to choose the best solution and solve problems."
+    },
+    {
+      "Element ID": "4.A.2.b.2",
+      "Element Name": "Thinking Creatively",
+      "Description": "Developing, designing, or creating new applications, ideas, relationships, systems, or products, including artistic contributions."
+    },
+    {
+      "Element ID": "4.A.4.a.1",
+      "Element Name": "Interpreting the Meaning of Information for Others",
+      "Description": "Translating or explaining what information means and how it can be used."
+    },
+    {
+      "Element ID": "4.A.4.a.3",
+      "Element Name": "Communicating with People Outside the Organization",
+      "Description": "Communicating with people outside the organization, representing the organization to customers, the public, government, and other external sources. This information can be exchanged in person, in writing, or by telephone or e-mail."
+    },
+    {
+      "Element ID": "4.A.4.b.6.h.4",
+      "Element Name": "Advise others on legal or regulatory compliance matters.",
+      "Description": ""
+    },
+    {
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Description": "How frequently does your job require public speaking (one speaker with an audience)?"
+    },
+    {
+      "Element ID": "4.C.1.a.2.f",
+      "Element Name": "Telephone Conversations",
+      "Description": "How often do you have telephone conversations in this job?"
+    },
+    {
+      "Element ID": "4.C.1.a.2.h",
+      "Element Name": "E-Mail",
+      "Description": "How frequently does your job require you to use E-mail?"
+    },
+    {
+      "Element ID": "4.C.1.a.2.j",
+      "Element Name": "Written Letters and Memos",
+      "Description": "How frequently does your job require written letters and memos?"
+    },
+    {
+      "Element ID": "4.C.1.a.2.l",
+      "Element Name": "Face-to-Face Discussions with Individuals and Within Teams",
+      "Description": "How frequently does your job require face-to-face discussions with individuals and within teams?"
+    },
+    {
+      "Element ID": "4.C.1.a.4",
+      "Element Name": "Contact With Others",
+      "Description": "How much does this job require the worker to be in contact with others (face-to-face, by telephone, or otherwise) in order to perform it?"
+    },
+    {
+      "Element ID": "4.C.1.b.1.e",
+      "Element Name": "Work With or Contribute to a Work Group or Team",
+      "Description": "How important is it to work with or contribute to a work group or team in this job?"
+    },
+    {
+      "Element ID": "4.C.1.b.1.f",
+      "Element Name": "Deal With External Customers or the Public in General",
+      "Description": "How important is it to deal with external customers (as in retail sales) or the public in general (as in police work) in this job?"
+    },
+    {
+      "Element ID": "4.C.1.b.1.g",
+      "Element Name": "Coordinate or Lead Others in Accomplishing Work Activities",
+      "Description": "How important is it to coordinate or lead others (not as a supervisor or team leader) in accomplishing work activities in this job?"
+    },
+    {
+      "Element ID": "4.C.1.c.1",
+      "Element Name": "Health and Safety of Other Workers",
+      "Description": "How much responsibility is there for the health and safety of others in this job?"
+    },
+    {
+      "Element ID": "4.C.1.c.2",
+      "Element Name": "Work Outcomes and Results of Other Workers",
+      "Description": "How responsible is the worker for work outcomes and results of other workers?"
+    },
+    {
+      "Element ID": "4.C.1.d.1",
+      "Element Name": "Conflict Situations",
+      "Description": "How frequently are there conflict situations the employee has to face in this job?"
+    },
+    {
+      "Element ID": "4.C.1.d.2",
+      "Element Name": "Dealing With Unpleasant, Angry, or Discourteous People",
+      "Description": "How frequently does the worker have to deal with unpleasant, angry, or discourteous individuals as part of the job requirements?"
+    },
+    {
+      "Element ID": "4.C.1.d.3",
+      "Element Name": "Dealing with Violent or Physically Aggressive People",
+      "Description": "How frequently does this job require the worker to deal with physical aggression of violent individuals?"
+    },
+    {
+      "Element ID": "4.C.2.a.1.a",
+      "Element Name": "Indoors, Environmentally Controlled",
+      "Description": "How often does this job require working indoors in an environmentally controlled environment (like a warehouse with air conditioning)?"
+    },
+    {
+      "Element ID": "4.C.2.a.1.b",
+      "Element Name": "Indoors, Not Environmentally Controlled",
+      "Description": "How often does this job require working in an environment that is not environmentally controlled (like a warehouse without air conditioning)?"
+    },
+    {
+      "Element ID": "4.C.2.a.1.c",
+      "Element Name": "Outdoors, Exposed to All Weather Conditions",
+      "Description": "How often does this job require working outdoors, exposed to all weather conditions?"
+    },
+    {
+      "Element ID": "4.C.2.a.1.d",
+      "Element Name": "Outdoors, Under Cover",
+      "Description": "How often does this job require working outdoors, under cover (like in an open shed)?"
+    },
+    {
+      "Element ID": "4.C.2.a.1.e",
+      "Element Name": "In an Open Vehicle or Operating Equipment",
+      "Description": "How often does this job require working in an open vehicle or operating equipment (like a tractor)?"
+    },
+    {
+      "Element ID": "4.C.2.a.1.f",
+      "Element Name": "In an Enclosed Vehicle or Operate Enclosed Equipment",
+      "Description": "How often does this job require working in a closed vehicle or operate enclosed equipment (like a car)?"
+    },
+    {
+      "Element ID": "4.C.2.a.3",
+      "Element Name": "Physical Proximity",
+      "Description": "To what extent does this job require the worker to perform job tasks physically close to other people?"
+    },
+    {
+      "Element ID": "4.C.2.b.1.a",
+      "Element Name": "Exposed to Sounds, Noise Levels that are Distracting or Uncomfortable",
+      "Description": "How often does this job require working exposed to sounds and noise levels that are distracting or uncomfortable?"
+    },
+    {
+      "Element ID": "4.C.2.b.1.b",
+      "Element Name": "Exposed to Very Hot or Cold Temperatures",
+      "Description": "How often does this job require working in very hot (above 90 F degrees) or very cold (below 32 F degrees) temperatures?"
+    },
+    {
+      "Element ID": "4.C.2.b.1.c",
+      "Element Name": "Exposed to Extremely Bright or Inadequate Lighting Conditions",
+      "Description": "How often does this job require working in extremely bright or inadequate lighting conditions?"
+    },
+    {
+      "Element ID": "4.C.2.b.1.d",
+      "Element Name": "Exposed to Contaminants",
+      "Description": "How often does this job require working exposed to contaminants (such as pollutants, gases, dust or odors)?"
+    },
+    {
+      "Element ID": "4.C.2.b.1.e",
+      "Element Name": "Exposed to Cramped Work Space, Awkward Positions",
+      "Description": "How often does this job require working in cramped work spaces that requires getting into awkward positions?"
+    },
+    {
+      "Element ID": "4.C.2.b.1.f",
+      "Element Name": "Exposed to Whole Body Vibration",
+      "Description": "How often does this job require exposure to whole body vibration (like operating a jackhammer or earth moving equipment)?"
+    },
+    {
+      "Element ID": "4.C.2.c.1.a",
+      "Element Name": "Exposed to Radiation",
+      "Description": "How often does this job require exposure to radiation?"
+    },
+    {
+      "Element ID": "4.C.2.c.1.b",
+      "Element Name": "Exposed to Disease or Infections",
+      "Description": "How often does this job require exposure to disease/infections?"
+    },
+    {
+      "Element ID": "4.C.2.c.1.c",
+      "Element Name": "Exposed to High Places",
+      "Description": "How often does this job require exposure to high places?"
+    },
+    {
+      "Element ID": "4.C.2.c.1.d",
+      "Element Name": "Exposed to Hazardous Conditions",
+      "Description": "How often does this job require exposure to hazardous conditions?"
+    },
+    {
+      "Element ID": "4.C.2.c.1.e",
+      "Element Name": "Exposed to Hazardous Equipment",
+      "Description": "How often does this job require exposure to hazardous equipment?"
+    },
+    {
+      "Element ID": "4.C.2.c.1.f",
+      "Element Name": "Exposed to Minor Burns, Cuts, Bites, or Stings",
+      "Description": "How often does this job require exposure to minor burns, cuts, bites, or stings?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.a",
+      "Element Name": "Spend Time Sitting",
+      "Description": "How much does this job require sitting?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.b",
+      "Element Name": "Spend Time Standing",
+      "Description": "How much does this job require standing?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.c",
+      "Element Name": "Spend Time Climbing Ladders, Scaffolds, or Poles",
+      "Description": "How much does this job require climbing ladders, scaffolds, poles, etc.?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.d",
+      "Element Name": "Spend Time Walking or Running",
+      "Description": "How much does this job require walking or running?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.e",
+      "Element Name": "Spend Time Kneeling, Crouching, Stooping, or Crawling",
+      "Description": "How much does this job require kneeling, crouching, stooping or crawling?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.f",
+      "Element Name": "Spend Time Keeping or Regaining Balance",
+      "Description": "How much does this job require keeping or regaining your balance?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.g",
+      "Element Name": "Spend Time Using Your Hands to Handle, Control, or Feel Objects, Tools, or Controls",
+      "Description": "How much does this job require using your hands to handle, control, or feel objects, tools or controls?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.h",
+      "Element Name": "Spend Time Bending or Twisting Your Body",
+      "Description": "How much does this job require bending or twisting your body?"
+    },
+    {
+      "Element ID": "4.C.2.d.1.i",
+      "Element Name": "Spend Time Making Repetitive Motions",
+      "Description": "How much does this job require making repetitive motions?"
+    },
+    {
+      "Element ID": "4.C.2.e.1.d",
+      "Element Name": "Wear Common Protective or Safety Equipment such as Safety Shoes, Glasses, Gloves, Hearing Protection, Hard Hats, or Life Jackets",
+      "Description": "How often does this job require wearing common protective or safety equipment such as safety shoes, glasses, gloves, hearing protection, hard hats or life-jackets?"
+    },
+    {
+      "Element ID": "4.C.2.e.1.e",
+      "Element Name": "Wear Specialized Protective or Safety Equipment such as Breathing Apparatus, Safety Harness, Full Protection Suits, or Radiation Protection",
+      "Description": "How often does this job require wearing specialized protective or safety equipment such as breathing apparatus, safety harness, full protection suits, or radiation protection?"
+    },
+    {
+      "Element ID": "4.C.3.a.1",
+      "Element Name": "Consequence of Error",
+      "Description": "How serious would the result usually be if the worker made a mistake that was not easily correctable?"
+    },
+    {
+      "Element ID": "4.C.3.a.2.a",
+      "Element Name": "Impact of Decisions on Co-workers or Company Results",
+      "Description": "What results do your decisions usually have on other people or the image or reputation or financial resources of your employer?"
+    },
+    {
+      "Element ID": "4.C.3.a.2.b",
+      "Element Name": "Frequency of Decision Making",
+      "Description": "How often is the worker required to make decisions that affect other people, the financial resources, and/or the image and reputation of the organization?"
+    },
+    {
+      "Element ID": "4.C.3.a.4",
+      "Element Name": "Freedom to Make Decisions",
+      "Description": "How much decision making freedom, without supervision, does the job offer?"
+    },
+    {
+      "Element ID": "4.C.3.b.2",
+      "Element Name": "Degree of Automation",
+      "Description": "How automated is the job?"
+    },
+    {
+      "Element ID": "4.C.3.b.4",
+      "Element Name": "Importance of Being Exact or Accurate",
+      "Description": "How important is being very exact or highly accurate in performing this job?"
+    },
+    {
+      "Element ID": "4.C.3.b.7",
+      "Element Name": "Importance of Repeating Same Tasks",
+      "Description": "How important are continuous, repetitive, physical activities (like key entry) or mental activities (like checking entries in a ledger) to performing this job?"
+    },
+    {
+      "Element ID": "4.C.3.b.8",
+      "Element Name": "Determine Tasks, Priorities and Goals",
+      "Description": "How much freedom does the worker have in determining the tasks, priorities, or goals of the job?"
+    },
+    {
+      "Element ID": "4.C.3.c.1",
+      "Element Name": "Level of Competition",
+      "Description": "To what extent does this job require the worker to compete or to be aware of competitive pressures?"
+    },
+    {
+      "Element ID": "4.C.3.d.1",
+      "Element Name": "Time Pressure",
+      "Description": "How often does this job require the worker to meet strict deadlines?"
+    },
+    {
+      "Element ID": "4.C.3.d.3",
+      "Element Name": "Pace Determined by Speed of Equipment",
+      "Description": "How important is it to this job that the pace is determined by the speed of equipment or machinery? (This does not refer to keeping busy at all times on this job.)"
+    },
+    {
+      "Element ID": "4.C.3.d.4",
+      "Element Name": "Work Schedules",
+      "Description": "How regular are the work schedules for this job?"
+    },
+    {
+      "Element ID": "4.C.3.d.8",
+      "Element Name": "Duration of Typical Work Week",
+      "Description": "Number of hours typically worked in one week."
+    }
+  ],
+  "education.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "1",
+      "Data Value": "0.00",
+      "N": "28",
+      "Standard Error": "0.0000",
+      "Lower CI Bound": "",
+      "Upper CI Bound": "",
+      "Recommend Suppress": "N",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-2011.00",
+      "Title": "Advertising and Promotions Managers",
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "1",
+      "Data Value": "0.00",
+      "N": "16",
+      "Standard Error": "0.0000",
+      "Lower CI Bound": "",
+      "Upper CI Bound": "",
+      "Recommend Suppress": "N",
+      "Date": "08/2026",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "39-3091.00",
+      "Title": "Amusement and Recreation Attendants",
+      "Element ID": "2.D.4.a",
+      "Element Name": "Job-Related Professional Certification",
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Category": "",
+      "Data Value": "1.12",
+      "N": "22",
+      "Standard Error": "0.0649",
+      "Lower CI Bound": "1.0000",
+      "Upper CI Bound": "1.2517",
+      "Recommend Suppress": "N",
+      "Date": "08/2020",
+      "Domain Source": "Incumbent"
+    }
+  ],
+  "education_categories.csv": [
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "1",
+      "Category Description": "Less than a High School Diploma"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "2",
+      "Category Description": "High School Diploma or the equivalent (such as a GED)"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "3",
+      "Category Description": "Post-Secondary Certificate"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "4",
+      "Category Description": "Some College Courses"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "5",
+      "Category Description": "Associate's Degree or other 2-year degree"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "6",
+      "Category Description": "Bachelor's Degree"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "7",
+      "Category Description": "Post-Baccalaureate Certificate"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "8",
+      "Category Description": "Master's Degree"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "9",
+      "Category Description": "Post-Master's Certificate"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "10",
+      "Category Description": "First Professional Degree - awarded for completion of a program that: requires at least 2 years of college work before entrance into the program, includes a total of at least 6 academic years of work to complete, and provides all remaining academic requirements to begin practice in a profession."
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "11",
+      "Category Description": "Doctoral Degree"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "12",
+      "Category Description": "Post-Doctoral Training"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "1",
+      "Category Description": "Less than a High School Diploma"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "2",
+      "Category Description": "High School Diploma or the equivalent (such as a GED)"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "3",
+      "Category Description": "Post-Secondary Certificate"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "4",
+      "Category Description": "Some College Courses"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "5",
+      "Category Description": "Associate's Degree or other 2-year degree"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "6",
+      "Category Description": "Bachelor's Degree"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "7",
+      "Category Description": "Post-Baccalaureate Certificate"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "8",
+      "Category Description": "Master's Degree"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "9",
+      "Category Description": "Post-Master's Certificate"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "10",
+      "Category Description": "Doctor's Degree - Professional Practice (such as a J.D. for Law or an M.D. for Medicine)"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "11",
+      "Category Description": "Doctor's Degree - Research/Scholarship (such as a Ph.D.)"
+    },
+    {
+      "Element ID": "2.D.1",
+      "Element Name": "Required Level of Education",
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Category": "12",
+      "Category Description": "Post-Doctoral Training"
+    }
+  ],
+  "emerging_tasks.csv": [
+    {
+      "O*NET-SOC Code": "11-2021.00",
+      "Title": "Marketing Managers",
+      "Task": "Review and edit content for marketing materials.",
+      "Category": "New",
+      "Original Task ID": "",
+      "Original Task": "",
+      "Date": "08/2026",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-2022.00",
+      "Title": "Sales Managers",
+      "Task": "Coach staff on sales tactics.",
+      "Category": "New",
+      "Original Task ID": "",
+      "Original Task": "",
+      "Date": "08/2025",
+      "Domain Source": "Occupational Expert"
+    }
+  ],
+  "essential_skills.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "2.A.1.a",
+      "Element Name": "Reading Comprehension",
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Data Value": "4.12",
+      "N": "8",
+      "Standard Error": "0.1250",
+      "Lower CI Bound": "3.8800",
+      "Upper CI Bound": "4.3700",
+      "Recommend Suppress": "N",
+      "Not Relevant": "",
+      "Date": "08/2023",
+      "Domain Source": "Analyst"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "2.A.1.a",
+      "Element Name": "Reading Comprehension",
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Data Value": "4.62",
+      "N": "8",
+      "Standard Error": "0.1830",
+      "Lower CI Bound": "4.2664",
+      "Upper CI Bound": "4.9836",
+      "Recommend Suppress": "N",
+      "Not Relevant": "N",
+      "Date": "08/2023",
+      "Domain Source": "Analyst"
+    }
+  ],
+  "work_styles_to_work_context.csv": [
+    {
+      "Work Styles Element ID": "1.D.1.a",
+      "Work Styles Element Name": "Innovation",
+      "Work Context Element ID": "4.C.1.d.1",
+      "Work Context Element Name": "Conflict Situations"
+    },
+    {
+      "Work Styles Element ID": "1.D.1.a",
+      "Work Styles Element Name": "Innovation",
+      "Work Context Element ID": "4.C.3.a.4",
+      "Work Context Element Name": "Freedom to Make Decisions"
+    }
+  ],
+  "essential_skills_to_work_activities.csv": [
+    {
+      "Essential Skills Element ID": "2.A.1.a",
+      "Essential Skills Element Name": "Reading Comprehension",
+      "Work Activities Element ID": "4.A.1.a.1",
+      "Work Activities Element Name": "Getting Information"
+    },
+    {
+      "Essential Skills Element ID": "2.A.1.a",
+      "Essential Skills Element Name": "Reading Comprehension",
+      "Work Activities Element ID": "4.A.1.a.2",
+      "Work Activities Element Name": "Monitoring Processes, Materials, or Surroundings"
+    }
+  ],
+  "essential_skills_to_work_context.csv": [
+    {
+      "Essential Skills Element ID": "2.A.1.a",
+      "Essential Skills Element Name": "Reading Comprehension",
+      "Work Context Element ID": "4.C.1.a.2.h",
+      "Work Context Element Name": "E-Mail"
+    },
+    {
+      "Essential Skills Element ID": "2.A.1.b",
+      "Essential Skills Element Name": "Active Listening",
+      "Work Context Element ID": "4.C.1.a.2.c",
+      "Work Context Element Name": "Public Speaking"
+    }
+  ],
+  "gwas_to_iwas.csv": [
+    {
+      "GWA Element ID": "4.A.1.a.1",
+      "GWA Element Name": "Getting Information",
+      "IWA Element ID": "4.A.1.a.1.a",
+      "IWA Element Name": "Study details of artistic productions."
+    },
+    {
+      "GWA Element ID": "4.A.1.a.1",
+      "GWA Element Name": "Getting Information",
+      "IWA Element ID": "4.A.1.a.1.b",
+      "IWA Element Name": "Read documents or materials to inform work processes."
+    }
+  ],
+  "gwas_to_iwas_to_dwas.csv": [
+    {
+      "GWA Element ID": "4.A.1.a.1",
+      "GWA Element Name": "Getting Information",
+      "IWA Element ID": "4.A.1.a.1.a",
+      "IWA Element Name": "Study details of artistic productions.",
+      "DWA Element ID": "4.A.1.a.1.a.1",
+      "DWA Element Name": "Review art or design materials."
+    },
+    {
+      "GWA Element ID": "4.A.1.a.1",
+      "GWA Element Name": "Getting Information",
+      "IWA Element ID": "4.A.1.a.1.a",
+      "IWA Element Name": "Study details of artistic productions.",
+      "DWA Element ID": "4.A.1.a.1.a.2",
+      "DWA Element Name": "Study details of musical compositions."
+    }
+  ],
+  "interests_illustrative_activities.csv": [
+    {
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Interest Type": "Career Type",
+      "Activity": "Build kitchen cabinets."
+    },
+    {
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Interest Type": "Career Type",
+      "Activity": "Drive a truck to deliver packages to offices and homes."
+    }
+  ],
+  "interests_illustrative_occupations.csv": [
+    {
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Interest Type": "Career Type",
+      "O*NET-SOC Code": "17-3024.01",
+      "Title": "Robotics Technicians"
+    },
+    {
+      "Element ID": "1.B.1.a",
+      "Element Name": "Realistic",
+      "Interest Type": "Career Type",
+      "O*NET-SOC Code": "45-2091.00",
+      "Title": "Agricultural Equipment Operators"
+    }
+  ],
+  "job_titles.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Job Title": "Aeronautics Commission Director",
+      "Short Title": "",
+      "Source(s)": "08"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Job Title": "Agency Owner",
+      "Short Title": "",
+      "Source(s)": "10"
+    }
+  ],
+  "job_zone_reference.csv": [
+    {
+      "Job Zone": "2",
+      "Name": "Job Zone 1-2: Very Little to Some Preparation Needed",
+      "Experience": "Some occupations may need little or no previous experience; others require several months to a year of experience. For example, landscaping and groundskeeping workers might require very little training or previous experience, while agricultural equipment operators can benefit from on-the job training.",
+      "Education": "Usually requires a high school diploma or GED, though some occupations may not.",
+      "Job Training": "Ranges from a few days to one year of on-the-job training.",
+      "Examples": "These occupations involve following instructions and often involve using your knowledge and skills to help others. Examples include dishwashers, landscaping and groundskeeping workers, counter and rental clerks, dental laboratory technicians, and security guards.",
+      "SVP Range": "(Below 6.0)"
+    },
+    {
+      "Job Zone": "3",
+      "Name": "Job Zone Three: Medium Preparation Needed",
+      "Experience": "Previous work-related skill, knowledge, or experience is required for these occupations. For example, an electrician must have completed three or four years of apprenticeship or several years of vocational training, and often must have passed a licensing exam, in order to perform the job.",
+      "Education": "Most occupations in this zone require training in vocational schools, related on-the-job experience, or an associate's degree.",
+      "Job Training": "Employees in these occupations usually need one or two years of training involving both on-the-job experience and informal training with experienced workers. A recognized apprenticeship program may be associated with these occupations.",
+      "Examples": "These occupations usually involve using communication and organizational skills to coordinate, supervise, manage, or train others to accomplish goals. Examples include hydroelectric production managers, desktop publishers, electricians, agricultural technicians, barbers, court reporters and simultaneous captioners, and medical assistants.",
+      "SVP Range": "(6.0 to < 7.0)"
+    },
+    {
+      "Job Zone": "4",
+      "Name": "Job Zone Four: Considerable Preparation Needed",
+      "Experience": "A considerable amount of work-related skill, knowledge, or experience is needed for these occupations. For example, an accountant must complete four years of college and work for several years in accounting to be considered qualified.",
+      "Education": "Most of these occupations require a four-year bachelor's degree, but some do not.",
+      "Job Training": "Employees in these occupations usually need several years of work-related experience, on-the-job training, and/or vocational training.",
+      "Examples": "Many of these occupations involve coordinating, supervising, managing, or training others. Examples include real estate brokers, sales managers, database administrators, graphic designers, conservation scientists, art directors, and cost estimators.",
+      "SVP Range": "(7.0 to < 8.0)"
+    },
+    {
+      "Job Zone": "5",
+      "Name": "Job Zone Five: Extensive Preparation Needed",
+      "Experience": "Extensive skill, knowledge, and experience are needed for these occupations. Many require more than five years of experience. For example, surgeons must complete four years of college and an additional five to seven years of specialized medical training to be able to do their job.",
+      "Education": "Most of these occupations require graduate school. For example, they may require a master's degree, and some require a Ph.D., M.D., or J.D. (law degree).",
+      "Job Training": "Employees may need some on-the-job training, but most of these occupations assume that the person will already have the required skills, knowledge, work-related experience, and/or training.",
+      "Examples": "These occupations often involve coordinating, training, supervising, or managing the activities of others to accomplish goals. Very advanced communication and organizational skills are required. Examples include pharmacists, lawyers, astronomers, biologists, clergy, physician assistants, and veterinarians.",
+      "SVP Range": "(8.0 and above)"
+    }
+  ],
+  "job_zones.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Job Zone": "5",
+      "Date": "08/2023",
+      "Domain Source": "Analyst"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.03",
+      "Title": "Chief Sustainability Officers",
+      "Job Zone": "5",
+      "Date": "08/2021",
+      "Domain Source": "Analyst"
+    }
+  ],
+  "knowledge.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "2.C.1.a",
+      "Element Name": "Administration and Management",
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Data Value": "4.78",
+      "N": "28",
+      "Standard Error": "0.1102",
+      "Lower CI Bound": "4.5564",
+      "Upper CI Bound": "5.0000",
+      "Recommend Suppress": "N",
+      "Not Relevant": "",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "2.C.1.a",
+      "Element Name": "Administration and Management",
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Data Value": "6.50",
+      "N": "28",
+      "Standard Error": "0.2130",
+      "Lower CI Bound": "6.0666",
+      "Upper CI Bound": "6.9409",
+      "Recommend Suppress": "N",
+      "Not Relevant": "N",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    }
+  ],
+  "level_scale_anchors.csv": [
+    {
+      "Element ID": "1.A.1.a.1",
+      "Element Name": "Oral Comprehension",
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Anchor Value": "2",
+      "Anchor Description": "Understand a television commercial"
+    },
+    {
+      "Element ID": "1.A.1.a.1",
+      "Element Name": "Oral Comprehension",
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Anchor Value": "4",
+      "Anchor Description": "Understand a coach's oral instructions for a sport"
+    }
+  ],
+  "occupation_data.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Description": "Determine and formulate policies and provide overall direction of companies or private and public sector organizations within guidelines set up by a board of directors or similar governing body. Plan, direct, or coordinate operational activities at the highest level of management with the help of subordinate executives and staff managers."
+    },
+    {
+      "O*NET-SOC Code": "11-1011.03",
+      "Title": "Chief Sustainability Officers",
+      "Description": "Communicate and coordinate with management, shareholders, customers, and employees to address sustainability issues. Enact or oversee a corporate sustainability strategy."
+    },
+    {
+      "O*NET-SOC Code": "11-1021.00",
+      "Title": "General and Operations Managers",
+      "Description": "Plan, direct, or coordinate the operations of public or private sector organizations, overseeing multiple departments or locations. Duties and responsibilities include formulating policies, managing daily operations, and planning the use of materials and human resources, but are too diverse and general in nature to be classified in any one functional area of management or administration, such as personnel, purchasing, or administrative services. Usually manage through subordinate supervisors. Excludes First-Line Supervisors."
+    },
+    {
+      "O*NET-SOC Code": "11-2011.00",
+      "Title": "Advertising and Promotions Managers",
+      "Description": "Plan, direct, or coordinate advertising policies and programs or produce collateral materials, such as posters, contests, coupons, or giveaways, to create extra interest in the purchase of a product or service for a department, an entire organization, or on an account basis."
+    },
+    {
+      "O*NET-SOC Code": "11-2021.00",
+      "Title": "Marketing Managers",
+      "Description": "Plan, direct, or coordinate marketing policies and programs, such as determining the demand for products and services offered by a firm and its competitors, and identify potential customers. Develop pricing strategies with the goal of maximizing the firm's profits or share of the market while ensuring the firm's customers are satisfied. Oversee product development or monitor trends that indicate the need for new products and services."
+    },
+    {
+      "O*NET-SOC Code": "11-2022.00",
+      "Title": "Sales Managers",
+      "Description": "Plan, direct, or coordinate the actual distribution or movement of a product or service to the customer. Coordinate sales distribution by establishing sales territories, quotas, and goals and establish training programs for sales representatives. Analyze sales statistics gathered by staff to determine sales potential and inventory requirements and monitor the preferences of customers."
+    },
+    {
+      "O*NET-SOC Code": "11-2033.00",
+      "Title": "Fundraising Managers",
+      "Description": "Plan, direct, or coordinate activities to solicit and maintain funds for special projects or nonprofit organizations."
+    },
+    {
+      "O*NET-SOC Code": "11-3012.00",
+      "Title": "Administrative Services Managers",
+      "Description": "Plan, direct, or coordinate one or more administrative services of an organization, such as records and information management, mail distribution, and other office support services."
+    },
+    {
+      "O*NET-SOC Code": "13-1111.00",
+      "Title": "Management Analysts",
+      "Description": "Conduct organizational studies and evaluations, design systems and procedures, conduct work simplification and measurement studies, and prepare operations and procedures manuals to assist management in operating more efficiently and effectively. Includes program analysts and management consultants."
+    },
+    {
+      "O*NET-SOC Code": "13-2031.00",
+      "Title": "Budget Analysts",
+      "Description": "Examine budget estimates for completeness, accuracy, and conformance with procedures and regulations. Analyze budgeting and accounting reports."
+    },
+    {
+      "O*NET-SOC Code": "17-3024.01",
+      "Title": "Robotics Technicians",
+      "Description": "Build, install, test, or maintain robotic equipment or related automated production systems."
+    },
+    {
+      "O*NET-SOC Code": "27-1012.00",
+      "Title": "Craft Artists",
+      "Description": "Create or reproduce handmade objects for sale and exhibition using a variety of techniques, such as welding, weaving, pottery, and needlecraft."
+    },
+    {
+      "O*NET-SOC Code": "27-2011.00",
+      "Title": "Actors",
+      "Description": "Play parts in stage, television, radio, video, or film productions, or other settings for entertainment, information, or instruction. Interpret serious or comic role by speech, gesture, and body movement to entertain or inform audience. May dance and sing."
+    },
+    {
+      "O*NET-SOC Code": "27-3043.05",
+      "Title": "Poets, Lyricists and Creative Writers",
+      "Description": "Create original written works, such as scripts, essays, prose, poetry or song lyrics, for publication or performance."
+    },
+    {
+      "O*NET-SOC Code": "33-9031.00",
+      "Title": "Gambling Surveillance Officers and Gambling Investigators",
+      "Description": "Observe gambling operation for irregular activities such as cheating or theft by either employees or patrons. Investigate potential threats to gambling assets such as money, chips, and gambling equipment. Act as oversight and security agent for management and customers."
+    },
+    {
+      "O*NET-SOC Code": "33-9091.00",
+      "Title": "Crossing Guards and Flaggers",
+      "Description": "Guide or control vehicular or pedestrian traffic at such places as streets, schools, railroad crossings, or construction sites."
+    },
+    {
+      "O*NET-SOC Code": "35-9021.00",
+      "Title": "Dishwashers",
+      "Description": "Clean dishes, kitchen, food preparation equipment, or utensils."
+    },
+    {
+      "O*NET-SOC Code": "39-3091.00",
+      "Title": "Amusement and Recreation Attendants",
+      "Description": "Perform a variety of attending duties at amusement or recreation facility. May schedule use of recreation facilities, maintain and provide equipment to participants of sporting events or recreational pursuits, or operate amusement concessions and rides."
+    },
+    {
+      "O*NET-SOC Code": "39-3093.00",
+      "Title": "Locker Room, Coatroom, and Dressing Room Attendants",
+      "Description": "Provide personal items to patrons or customers in locker rooms, dressing rooms, or coatrooms."
+    },
+    {
+      "O*NET-SOC Code": "41-9012.00",
+      "Title": "Models",
+      "Description": "Model garments or other apparel and accessories for prospective buyers at fashion shows, private showings, or retail establishments. May pose for photos to be used in magazines or advertisements. May pose as subject for paintings, sculptures, and other types of artistic expression."
+    },
+    {
+      "O*NET-SOC Code": "41-9041.00",
+      "Title": "Telemarketers",
+      "Description": "Solicit donations or orders for goods or services over the telephone."
+    },
+    {
+      "O*NET-SOC Code": "41-9091.00",
+      "Title": "Door-to-Door Sales Workers, News and Street Vendors, and Related Workers",
+      "Description": "Sell goods or services door-to-door or on the street."
+    },
+    {
+      "O*NET-SOC Code": "45-2091.00",
+      "Title": "Agricultural Equipment Operators",
+      "Description": "Drive and control equipment to support agricultural activities such as tilling soil; planting, cultivating, and harvesting crops; feeding and herding livestock; or removing animal waste. May perform tasks such as crop baling or hay bucking. May operate stationary equipment to perform post-harvest tasks such as husking, shelling, threshing, and ginning."
+    },
+    {
+      "O*NET-SOC Code": "45-3031.00",
+      "Title": "Fishing and Hunting Workers",
+      "Description": "Hunt, trap, catch, or gather wild animals or aquatic animals and plants. May use nets, traps, or other equipment. May haul catch onto ship or other vessel."
+    },
+    {
+      "O*NET-SOC Code": "45-4021.00",
+      "Title": "Fallers",
+      "Description": "Use axes or chainsaws to fell trees using knowledge of tree characteristics and cutting techniques to control direction of fall and minimize tree damage."
+    },
+    {
+      "O*NET-SOC Code": "47-2021.00",
+      "Title": "Brickmasons and Blockmasons",
+      "Description": "Lay and bind building materials, such as brick, structural tile, concrete block, cinder block, glass block, and terra-cotta block, with mortar and other substances, to construct or repair walls, partitions, arches, sewers, and other structures."
+    },
+    {
+      "O*NET-SOC Code": "47-2082.00",
+      "Title": "Tapers",
+      "Description": "Seal joints between plasterboard or other wallboard to prepare wall surface for painting or papering."
+    },
+    {
+      "O*NET-SOC Code": "49-9045.00",
+      "Title": "Refractory Materials Repairers, Except Brickmasons",
+      "Description": "Build or repair equipment such as furnaces, kilns, cupolas, boilers, converters, ladles, soaking pits, and ovens, using refractory materials."
+    },
+    {
+      "O*NET-SOC Code": "51-6011.00",
+      "Title": "Laundry and Dry-Cleaning Workers",
+      "Description": "Operate or tend washing or dry-cleaning machines to wash or dry-clean industrial or household articles, such as cloth garments, suede, leather, furs, blankets, draperies, linens, rugs, and carpets. Includes spotters and dyers of these articles."
+    },
+    {
+      "O*NET-SOC Code": "51-9192.00",
+      "Title": "Cleaning, Washing, and Metal Pickling Equipment Operators and Tenders",
+      "Description": "Operate or tend machines to wash or clean products, such as barrels or kegs, glass items, tin plate, food, pulp, coal, plastic, or rubber, to remove impurities."
+    }
+  ],
+  "occupation_level_metadata.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Item": "Data Collection Mode",
+      "Response": "Paper",
+      "N": "95",
+      "Percent": "18.9",
+      "Date": "08/2023"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Item": "Data Collection Mode",
+      "Response": "Web",
+      "N": "95",
+      "Percent": "81.1",
+      "Date": "08/2023"
+    }
+  ],
+  "related_occupations.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Related O*NET-SOC Code": "11-1021.00",
+      "Related Title": "General and Operations Managers",
+      "Relatedness Tier": "Primary-Short",
+      "Index": "1"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Related O*NET-SOC Code": "13-1111.00",
+      "Related Title": "Management Analysts",
+      "Relatedness Tier": "Primary-Short",
+      "Index": "2"
+    }
+  ],
+  "sample_of_reported_titles.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Reported Job Title": "CEO (Chief Executive Officer)",
+      "Shown in My Next Move": "Y"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Reported Job Title": "Chief Diversity Officer (CDO)",
+      "Shown in My Next Move": "N"
+    }
+  ],
+  "scales_reference.csv": [
+    {
+      "Scale ID": "AO",
+      "Scale Name": "Automation",
+      "Minimum": "1",
+      "Maximum": "5"
+    },
+    {
+      "Scale ID": "CF",
+      "Scale Name": "Frequency",
+      "Minimum": "1",
+      "Maximum": "5"
+    },
+    {
+      "Scale ID": "CTP",
+      "Scale Name": "Context (Categories 1-3)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "CX",
+      "Scale Name": "Context",
+      "Minimum": "1",
+      "Maximum": "5"
+    },
+    {
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Minimum": "0",
+      "Maximum": "10"
+    },
+    {
+      "Scale ID": "DS",
+      "Scale Name": "Summary Display Rank",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Minimum": "1",
+      "Maximum": "5"
+    },
+    {
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Minimum": "0",
+      "Maximum": "7"
+    },
+    {
+      "Scale ID": "OI",
+      "Scale Name": "Occupational Interests",
+      "Minimum": "1",
+      "Maximum": "7"
+    },
+    {
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "RL",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "RQ",
+      "Scale Name": "Required Level Of Education (Categories 1-12)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Minimum": "0",
+      "Maximum": "100"
+    },
+    {
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Minimum": "-3",
+      "Maximum": "3"
+    }
+  ],
+  "software_skills.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Workplace Example": "Adobe Acrobat",
+      "Element ID": "2.E.5.b",
+      "Element Name": "Document management software",
+      "Hot Technology": "Y",
+      "In Demand": "N"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Workplace Example": "AdSense Tracker",
+      "Element ID": "2.E.6.f",
+      "Element Name": "Data base user interface and query software",
+      "Hot Technology": "N",
+      "In Demand": "N"
+    }
+  ],
+  "specific_interest_areas.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.B.3.a",
+      "Element Name": "Mechanics/Electronics",
+      "Scale ID": "DS",
+      "Scale Name": "Summary Display Rank",
+      "Data Value": "0.00",
+      "Date": "05/2026",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.B.3.a",
+      "Element Name": "Mechanics/Electronics",
+      "Scale ID": "OI",
+      "Scale Name": "Occupational Interests",
+      "Data Value": "1.17",
+      "Date": "05/2026",
+      "Domain Source": "AI/Expert"
+    }
+  ],
+  "work_context_categories.csv": [
+    {
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.c",
+      "Element Name": "Public Speaking",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.f",
+      "Element Name": "Telephone Conversations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.a.2.f",
+      "Element Name": "Telephone Conversations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.a.2.f",
+      "Element Name": "Telephone Conversations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.a.2.f",
+      "Element Name": "Telephone Conversations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.f",
+      "Element Name": "Telephone Conversations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.h",
+      "Element Name": "E-Mail",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.a.2.h",
+      "Element Name": "E-Mail",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.a.2.h",
+      "Element Name": "E-Mail",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.a.2.h",
+      "Element Name": "E-Mail",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.h",
+      "Element Name": "E-Mail",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.j",
+      "Element Name": "Written Letters and Memos",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.a.2.j",
+      "Element Name": "Written Letters and Memos",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.a.2.j",
+      "Element Name": "Written Letters and Memos",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.a.2.j",
+      "Element Name": "Written Letters and Memos",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.j",
+      "Element Name": "Written Letters and Memos",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.l",
+      "Element Name": "Face-to-Face Discussions with Individuals and Within Teams",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.a.2.l",
+      "Element Name": "Face-to-Face Discussions with Individuals and Within Teams",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.a.2.l",
+      "Element Name": "Face-to-Face Discussions with Individuals and Within Teams",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.a.2.l",
+      "Element Name": "Face-to-Face Discussions with Individuals and Within Teams",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.a.2.l",
+      "Element Name": "Face-to-Face Discussions with Individuals and Within Teams",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.1.a.4",
+      "Element Name": "Contact With Others",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "No contact with others"
+    },
+    {
+      "Element ID": "4.C.1.a.4",
+      "Element Name": "Contact With Others",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Occasional contact with others"
+    },
+    {
+      "Element ID": "4.C.1.a.4",
+      "Element Name": "Contact With Others",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Contact with others about half the time"
+    },
+    {
+      "Element ID": "4.C.1.a.4",
+      "Element Name": "Contact With Others",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Contact with others most of the time"
+    },
+    {
+      "Element ID": "4.C.1.a.4",
+      "Element Name": "Contact With Others",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Constant contact with others"
+    },
+    {
+      "Element ID": "4.C.1.b.1.e",
+      "Element Name": "Work With or Contribute to a Work Group or Team",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not important at all"
+    },
+    {
+      "Element ID": "4.C.1.b.1.e",
+      "Element Name": "Work With or Contribute to a Work Group or Team",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Fairly important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.e",
+      "Element Name": "Work With or Contribute to a Work Group or Team",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.e",
+      "Element Name": "Work With or Contribute to a Work Group or Team",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Very important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.e",
+      "Element Name": "Work With or Contribute to a Work Group or Team",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.f",
+      "Element Name": "Deal With External Customers or the Public in General",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not important at all"
+    },
+    {
+      "Element ID": "4.C.1.b.1.f",
+      "Element Name": "Deal With External Customers or the Public in General",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Fairly important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.f",
+      "Element Name": "Deal With External Customers or the Public in General",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.f",
+      "Element Name": "Deal With External Customers or the Public in General",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Very important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.f",
+      "Element Name": "Deal With External Customers or the Public in General",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.g",
+      "Element Name": "Coordinate or Lead Others in Accomplishing Work Activities",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not important at all"
+    },
+    {
+      "Element ID": "4.C.1.b.1.g",
+      "Element Name": "Coordinate or Lead Others in Accomplishing Work Activities",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Fairly important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.g",
+      "Element Name": "Coordinate or Lead Others in Accomplishing Work Activities",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.g",
+      "Element Name": "Coordinate or Lead Others in Accomplishing Work Activities",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Very important"
+    },
+    {
+      "Element ID": "4.C.1.b.1.g",
+      "Element Name": "Coordinate or Lead Others in Accomplishing Work Activities",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely important"
+    },
+    {
+      "Element ID": "4.C.1.c.1",
+      "Element Name": "Health and Safety of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "No responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.1",
+      "Element Name": "Health and Safety of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Limited responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.1",
+      "Element Name": "Health and Safety of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Moderate responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.1",
+      "Element Name": "Health and Safety of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "High responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.1",
+      "Element Name": "Health and Safety of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Very high responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.2",
+      "Element Name": "Work Outcomes and Results of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "No responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.2",
+      "Element Name": "Work Outcomes and Results of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Limited responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.2",
+      "Element Name": "Work Outcomes and Results of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Moderate responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.2",
+      "Element Name": "Work Outcomes and Results of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "High responsibility"
+    },
+    {
+      "Element ID": "4.C.1.c.2",
+      "Element Name": "Work Outcomes and Results of Other Workers",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Very high responsibility"
+    },
+    {
+      "Element ID": "4.C.1.d.1",
+      "Element Name": "Conflict Situations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.d.1",
+      "Element Name": "Conflict Situations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.d.1",
+      "Element Name": "Conflict Situations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.d.1",
+      "Element Name": "Conflict Situations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.d.1",
+      "Element Name": "Conflict Situations",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.1.d.2",
+      "Element Name": "Dealing With Unpleasant, Angry, or Discourteous People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.d.2",
+      "Element Name": "Dealing With Unpleasant, Angry, or Discourteous People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.d.2",
+      "Element Name": "Dealing With Unpleasant, Angry, or Discourteous People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.d.2",
+      "Element Name": "Dealing With Unpleasant, Angry, or Discourteous People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.d.2",
+      "Element Name": "Dealing With Unpleasant, Angry, or Discourteous People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.1.d.3",
+      "Element Name": "Dealing with Violent or Physically Aggressive People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.1.d.3",
+      "Element Name": "Dealing with Violent or Physically Aggressive People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.1.d.3",
+      "Element Name": "Dealing with Violent or Physically Aggressive People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.1.d.3",
+      "Element Name": "Dealing with Violent or Physically Aggressive People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.1.d.3",
+      "Element Name": "Dealing with Violent or Physically Aggressive People",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.a",
+      "Element Name": "Indoors, Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.a.1.a",
+      "Element Name": "Indoors, Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.a.1.a",
+      "Element Name": "Indoors, Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.a.1.a",
+      "Element Name": "Indoors, Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.a",
+      "Element Name": "Indoors, Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.b",
+      "Element Name": "Indoors, Not Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.a.1.b",
+      "Element Name": "Indoors, Not Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.a.1.b",
+      "Element Name": "Indoors, Not Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.a.1.b",
+      "Element Name": "Indoors, Not Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.b",
+      "Element Name": "Indoors, Not Environmentally Controlled",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.c",
+      "Element Name": "Outdoors, Exposed to All Weather Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.a.1.c",
+      "Element Name": "Outdoors, Exposed to All Weather Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.a.1.c",
+      "Element Name": "Outdoors, Exposed to All Weather Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.a.1.c",
+      "Element Name": "Outdoors, Exposed to All Weather Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.c",
+      "Element Name": "Outdoors, Exposed to All Weather Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.d",
+      "Element Name": "Outdoors, Under Cover",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.a.1.d",
+      "Element Name": "Outdoors, Under Cover",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.a.1.d",
+      "Element Name": "Outdoors, Under Cover",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.a.1.d",
+      "Element Name": "Outdoors, Under Cover",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.d",
+      "Element Name": "Outdoors, Under Cover",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.e",
+      "Element Name": "In an Open Vehicle or Operating Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.a.1.e",
+      "Element Name": "In an Open Vehicle or Operating Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.a.1.e",
+      "Element Name": "In an Open Vehicle or Operating Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.a.1.e",
+      "Element Name": "In an Open Vehicle or Operating Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.e",
+      "Element Name": "In an Open Vehicle or Operating Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.f",
+      "Element Name": "In an Enclosed Vehicle or Operate Enclosed Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.a.1.f",
+      "Element Name": "In an Enclosed Vehicle or Operate Enclosed Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.a.1.f",
+      "Element Name": "In an Enclosed Vehicle or Operate Enclosed Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.a.1.f",
+      "Element Name": "In an Enclosed Vehicle or Operate Enclosed Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.a.1.f",
+      "Element Name": "In an Enclosed Vehicle or Operate Enclosed Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.a.3",
+      "Element Name": "Physical Proximity",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "I don't work near other people (beyond 100 ft.)"
+    },
+    {
+      "Element ID": "4.C.2.a.3",
+      "Element Name": "Physical Proximity",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "I work with others but not closely (e.g., private office)"
+    },
+    {
+      "Element ID": "4.C.2.a.3",
+      "Element Name": "Physical Proximity",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Slightly close (e.g., shared office)"
+    },
+    {
+      "Element ID": "4.C.2.a.3",
+      "Element Name": "Physical Proximity",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Moderately close (at arm's length)"
+    },
+    {
+      "Element ID": "4.C.2.a.3",
+      "Element Name": "Physical Proximity",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Very close (near touching)"
+    },
+    {
+      "Element ID": "4.C.2.b.1.a",
+      "Element Name": "Exposed to Sounds, Noise Levels that are Distracting or Uncomfortable",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.b.1.a",
+      "Element Name": "Exposed to Sounds, Noise Levels that are Distracting or Uncomfortable",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.b.1.a",
+      "Element Name": "Exposed to Sounds, Noise Levels that are Distracting or Uncomfortable",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.b.1.a",
+      "Element Name": "Exposed to Sounds, Noise Levels that are Distracting or Uncomfortable",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.a",
+      "Element Name": "Exposed to Sounds, Noise Levels that are Distracting or Uncomfortable",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.b",
+      "Element Name": "Exposed to Very Hot or Cold Temperatures",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.b.1.b",
+      "Element Name": "Exposed to Very Hot or Cold Temperatures",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.b.1.b",
+      "Element Name": "Exposed to Very Hot or Cold Temperatures",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.b.1.b",
+      "Element Name": "Exposed to Very Hot or Cold Temperatures",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.b",
+      "Element Name": "Exposed to Very Hot or Cold Temperatures",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.c",
+      "Element Name": "Exposed to Extremely Bright or Inadequate Lighting Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.b.1.c",
+      "Element Name": "Exposed to Extremely Bright or Inadequate Lighting Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.b.1.c",
+      "Element Name": "Exposed to Extremely Bright or Inadequate Lighting Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.b.1.c",
+      "Element Name": "Exposed to Extremely Bright or Inadequate Lighting Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.c",
+      "Element Name": "Exposed to Extremely Bright or Inadequate Lighting Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.d",
+      "Element Name": "Exposed to Contaminants",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.b.1.d",
+      "Element Name": "Exposed to Contaminants",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.b.1.d",
+      "Element Name": "Exposed to Contaminants",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.b.1.d",
+      "Element Name": "Exposed to Contaminants",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.d",
+      "Element Name": "Exposed to Contaminants",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.e",
+      "Element Name": "Exposed to Cramped Work Space, Awkward Positions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.b.1.e",
+      "Element Name": "Exposed to Cramped Work Space, Awkward Positions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.b.1.e",
+      "Element Name": "Exposed to Cramped Work Space, Awkward Positions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.b.1.e",
+      "Element Name": "Exposed to Cramped Work Space, Awkward Positions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.e",
+      "Element Name": "Exposed to Cramped Work Space, Awkward Positions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.f",
+      "Element Name": "Exposed to Whole Body Vibration",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.b.1.f",
+      "Element Name": "Exposed to Whole Body Vibration",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.b.1.f",
+      "Element Name": "Exposed to Whole Body Vibration",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.b.1.f",
+      "Element Name": "Exposed to Whole Body Vibration",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.b.1.f",
+      "Element Name": "Exposed to Whole Body Vibration",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.a",
+      "Element Name": "Exposed to Radiation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.c.1.a",
+      "Element Name": "Exposed to Radiation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.c.1.a",
+      "Element Name": "Exposed to Radiation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.c.1.a",
+      "Element Name": "Exposed to Radiation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.a",
+      "Element Name": "Exposed to Radiation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.b",
+      "Element Name": "Exposed to Disease or Infections",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.c.1.b",
+      "Element Name": "Exposed to Disease or Infections",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.c.1.b",
+      "Element Name": "Exposed to Disease or Infections",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.c.1.b",
+      "Element Name": "Exposed to Disease or Infections",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.b",
+      "Element Name": "Exposed to Disease or Infections",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.c",
+      "Element Name": "Exposed to High Places",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.c.1.c",
+      "Element Name": "Exposed to High Places",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.c.1.c",
+      "Element Name": "Exposed to High Places",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.c.1.c",
+      "Element Name": "Exposed to High Places",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.c",
+      "Element Name": "Exposed to High Places",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.d",
+      "Element Name": "Exposed to Hazardous Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.c.1.d",
+      "Element Name": "Exposed to Hazardous Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.c.1.d",
+      "Element Name": "Exposed to Hazardous Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.c.1.d",
+      "Element Name": "Exposed to Hazardous Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.d",
+      "Element Name": "Exposed to Hazardous Conditions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.e",
+      "Element Name": "Exposed to Hazardous Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.c.1.e",
+      "Element Name": "Exposed to Hazardous Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.c.1.e",
+      "Element Name": "Exposed to Hazardous Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.c.1.e",
+      "Element Name": "Exposed to Hazardous Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.e",
+      "Element Name": "Exposed to Hazardous Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.f",
+      "Element Name": "Exposed to Minor Burns, Cuts, Bites, or Stings",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.c.1.f",
+      "Element Name": "Exposed to Minor Burns, Cuts, Bites, or Stings",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.c.1.f",
+      "Element Name": "Exposed to Minor Burns, Cuts, Bites, or Stings",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.c.1.f",
+      "Element Name": "Exposed to Minor Burns, Cuts, Bites, or Stings",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.c.1.f",
+      "Element Name": "Exposed to Minor Burns, Cuts, Bites, or Stings",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.d.1.a",
+      "Element Name": "Spend Time Sitting",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.a",
+      "Element Name": "Spend Time Sitting",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.a",
+      "Element Name": "Spend Time Sitting",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.a",
+      "Element Name": "Spend Time Sitting",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.a",
+      "Element Name": "Spend Time Sitting",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.b",
+      "Element Name": "Spend Time Standing",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.b",
+      "Element Name": "Spend Time Standing",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.b",
+      "Element Name": "Spend Time Standing",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.b",
+      "Element Name": "Spend Time Standing",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.b",
+      "Element Name": "Spend Time Standing",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.c",
+      "Element Name": "Spend Time Climbing Ladders, Scaffolds, or Poles",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.c",
+      "Element Name": "Spend Time Climbing Ladders, Scaffolds, or Poles",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.c",
+      "Element Name": "Spend Time Climbing Ladders, Scaffolds, or Poles",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.c",
+      "Element Name": "Spend Time Climbing Ladders, Scaffolds, or Poles",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.c",
+      "Element Name": "Spend Time Climbing Ladders, Scaffolds, or Poles",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.d",
+      "Element Name": "Spend Time Walking or Running",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.d",
+      "Element Name": "Spend Time Walking or Running",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.d",
+      "Element Name": "Spend Time Walking or Running",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.d",
+      "Element Name": "Spend Time Walking or Running",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.d",
+      "Element Name": "Spend Time Walking or Running",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.e",
+      "Element Name": "Spend Time Kneeling, Crouching, Stooping, or Crawling",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.e",
+      "Element Name": "Spend Time Kneeling, Crouching, Stooping, or Crawling",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.e",
+      "Element Name": "Spend Time Kneeling, Crouching, Stooping, or Crawling",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.e",
+      "Element Name": "Spend Time Kneeling, Crouching, Stooping, or Crawling",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.e",
+      "Element Name": "Spend Time Kneeling, Crouching, Stooping, or Crawling",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.f",
+      "Element Name": "Spend Time Keeping or Regaining Balance",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.f",
+      "Element Name": "Spend Time Keeping or Regaining Balance",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.f",
+      "Element Name": "Spend Time Keeping or Regaining Balance",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.f",
+      "Element Name": "Spend Time Keeping or Regaining Balance",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.f",
+      "Element Name": "Spend Time Keeping or Regaining Balance",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.g",
+      "Element Name": "Spend Time Using Your Hands to Handle, Control, or Feel Objects, Tools, or Controls",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.g",
+      "Element Name": "Spend Time Using Your Hands to Handle, Control, or Feel Objects, Tools, or Controls",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.g",
+      "Element Name": "Spend Time Using Your Hands to Handle, Control, or Feel Objects, Tools, or Controls",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.g",
+      "Element Name": "Spend Time Using Your Hands to Handle, Control, or Feel Objects, Tools, or Controls",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.g",
+      "Element Name": "Spend Time Using Your Hands to Handle, Control, or Feel Objects, Tools, or Controls",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.h",
+      "Element Name": "Spend Time Bending or Twisting Your Body",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.h",
+      "Element Name": "Spend Time Bending or Twisting Your Body",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.h",
+      "Element Name": "Spend Time Bending or Twisting Your Body",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.h",
+      "Element Name": "Spend Time Bending or Twisting Your Body",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.h",
+      "Element Name": "Spend Time Bending or Twisting Your Body",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.d.1.i",
+      "Element Name": "Spend Time Making Repetitive Motions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.d.1.i",
+      "Element Name": "Spend Time Making Repetitive Motions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Less than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.i",
+      "Element Name": "Spend Time Making Repetitive Motions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "About half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.i",
+      "Element Name": "Spend Time Making Repetitive Motions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "More than half the time"
+    },
+    {
+      "Element ID": "4.C.2.d.1.i",
+      "Element Name": "Spend Time Making Repetitive Motions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Continually or almost continually"
+    },
+    {
+      "Element ID": "4.C.2.e.1.d",
+      "Element Name": "Wear Common Protective or Safety Equipment such as Safety Shoes, Glasses, Gloves, Hearing Protection, Hard Hats, or Life Jackets",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.e.1.d",
+      "Element Name": "Wear Common Protective or Safety Equipment such as Safety Shoes, Glasses, Gloves, Hearing Protection, Hard Hats, or Life Jackets",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.e.1.d",
+      "Element Name": "Wear Common Protective or Safety Equipment such as Safety Shoes, Glasses, Gloves, Hearing Protection, Hard Hats, or Life Jackets",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.e.1.d",
+      "Element Name": "Wear Common Protective or Safety Equipment such as Safety Shoes, Glasses, Gloves, Hearing Protection, Hard Hats, or Life Jackets",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.e.1.d",
+      "Element Name": "Wear Common Protective or Safety Equipment such as Safety Shoes, Glasses, Gloves, Hearing Protection, Hard Hats, or Life Jackets",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.2.e.1.e",
+      "Element Name": "Wear Specialized Protective or Safety Equipment such as Breathing Apparatus, Safety Harness, Full Protection Suits, or Radiation Protection",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.2.e.1.e",
+      "Element Name": "Wear Specialized Protective or Safety Equipment such as Breathing Apparatus, Safety Harness, Full Protection Suits, or Radiation Protection",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.2.e.1.e",
+      "Element Name": "Wear Specialized Protective or Safety Equipment such as Breathing Apparatus, Safety Harness, Full Protection Suits, or Radiation Protection",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.2.e.1.e",
+      "Element Name": "Wear Specialized Protective or Safety Equipment such as Breathing Apparatus, Safety Harness, Full Protection Suits, or Radiation Protection",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.2.e.1.e",
+      "Element Name": "Wear Specialized Protective or Safety Equipment such as Breathing Apparatus, Safety Harness, Full Protection Suits, or Radiation Protection",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.3.a.1",
+      "Element Name": "Consequence of Error",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not serious at all"
+    },
+    {
+      "Element ID": "4.C.3.a.1",
+      "Element Name": "Consequence of Error",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Fairly serious"
+    },
+    {
+      "Element ID": "4.C.3.a.1",
+      "Element Name": "Consequence of Error",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Serious"
+    },
+    {
+      "Element ID": "4.C.3.a.1",
+      "Element Name": "Consequence of Error",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Very serious"
+    },
+    {
+      "Element ID": "4.C.3.a.1",
+      "Element Name": "Consequence of Error",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely serious"
+    },
+    {
+      "Element ID": "4.C.3.a.2.a",
+      "Element Name": "Impact of Decisions on Co-workers or Company Results",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "No results"
+    },
+    {
+      "Element ID": "4.C.3.a.2.a",
+      "Element Name": "Impact of Decisions on Co-workers or Company Results",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Minor results"
+    },
+    {
+      "Element ID": "4.C.3.a.2.a",
+      "Element Name": "Impact of Decisions on Co-workers or Company Results",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Moderate results"
+    },
+    {
+      "Element ID": "4.C.3.a.2.a",
+      "Element Name": "Impact of Decisions on Co-workers or Company Results",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Important results"
+    },
+    {
+      "Element ID": "4.C.3.a.2.a",
+      "Element Name": "Impact of Decisions on Co-workers or Company Results",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Very important results"
+    },
+    {
+      "Element ID": "4.C.3.a.2.b",
+      "Element Name": "Frequency of Decision Making",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.3.a.2.b",
+      "Element Name": "Frequency of Decision Making",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.3.a.2.b",
+      "Element Name": "Frequency of Decision Making",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.3.a.2.b",
+      "Element Name": "Frequency of Decision Making",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.3.a.2.b",
+      "Element Name": "Frequency of Decision Making",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.3.a.4",
+      "Element Name": "Freedom to Make Decisions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "No freedom"
+    },
+    {
+      "Element ID": "4.C.3.a.4",
+      "Element Name": "Freedom to Make Decisions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Very little freedom"
+    },
+    {
+      "Element ID": "4.C.3.a.4",
+      "Element Name": "Freedom to Make Decisions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Limited freedom"
+    },
+    {
+      "Element ID": "4.C.3.a.4",
+      "Element Name": "Freedom to Make Decisions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Some freedom"
+    },
+    {
+      "Element ID": "4.C.3.a.4",
+      "Element Name": "Freedom to Make Decisions",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "A lot of freedom"
+    },
+    {
+      "Element ID": "4.C.3.b.2",
+      "Element Name": "Degree of Automation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not at all automated"
+    },
+    {
+      "Element ID": "4.C.3.b.2",
+      "Element Name": "Degree of Automation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Slightly automated"
+    },
+    {
+      "Element ID": "4.C.3.b.2",
+      "Element Name": "Degree of Automation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Moderately automated"
+    },
+    {
+      "Element ID": "4.C.3.b.2",
+      "Element Name": "Degree of Automation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Highly automated"
+    },
+    {
+      "Element ID": "4.C.3.b.2",
+      "Element Name": "Degree of Automation",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Completely automated"
+    },
+    {
+      "Element ID": "4.C.3.b.4",
+      "Element Name": "Importance of Being Exact or Accurate",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not important at all"
+    },
+    {
+      "Element ID": "4.C.3.b.4",
+      "Element Name": "Importance of Being Exact or Accurate",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Fairly important"
+    },
+    {
+      "Element ID": "4.C.3.b.4",
+      "Element Name": "Importance of Being Exact or Accurate",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Important"
+    },
+    {
+      "Element ID": "4.C.3.b.4",
+      "Element Name": "Importance of Being Exact or Accurate",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Very important"
+    },
+    {
+      "Element ID": "4.C.3.b.4",
+      "Element Name": "Importance of Being Exact or Accurate",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely important"
+    },
+    {
+      "Element ID": "4.C.3.b.7",
+      "Element Name": "Importance of Repeating Same Tasks",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not important at all"
+    },
+    {
+      "Element ID": "4.C.3.b.7",
+      "Element Name": "Importance of Repeating Same Tasks",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Fairly important"
+    },
+    {
+      "Element ID": "4.C.3.b.7",
+      "Element Name": "Importance of Repeating Same Tasks",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Important"
+    },
+    {
+      "Element ID": "4.C.3.b.7",
+      "Element Name": "Importance of Repeating Same Tasks",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Very important"
+    },
+    {
+      "Element ID": "4.C.3.b.7",
+      "Element Name": "Importance of Repeating Same Tasks",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely important"
+    },
+    {
+      "Element ID": "4.C.3.b.8",
+      "Element Name": "Determine Tasks, Priorities and Goals",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "No freedom"
+    },
+    {
+      "Element ID": "4.C.3.b.8",
+      "Element Name": "Determine Tasks, Priorities and Goals",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Very little freedom"
+    },
+    {
+      "Element ID": "4.C.3.b.8",
+      "Element Name": "Determine Tasks, Priorities and Goals",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Limited freedom"
+    },
+    {
+      "Element ID": "4.C.3.b.8",
+      "Element Name": "Determine Tasks, Priorities and Goals",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Some freedom"
+    },
+    {
+      "Element ID": "4.C.3.b.8",
+      "Element Name": "Determine Tasks, Priorities and Goals",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "A lot of freedom"
+    },
+    {
+      "Element ID": "4.C.3.c.1",
+      "Element Name": "Level of Competition",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not at all competitive"
+    },
+    {
+      "Element ID": "4.C.3.c.1",
+      "Element Name": "Level of Competition",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Slightly competitive"
+    },
+    {
+      "Element ID": "4.C.3.c.1",
+      "Element Name": "Level of Competition",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Moderately competitive"
+    },
+    {
+      "Element ID": "4.C.3.c.1",
+      "Element Name": "Level of Competition",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Highly competitive"
+    },
+    {
+      "Element ID": "4.C.3.c.1",
+      "Element Name": "Level of Competition",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely competitive"
+    },
+    {
+      "Element ID": "4.C.3.d.1",
+      "Element Name": "Time Pressure",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Never"
+    },
+    {
+      "Element ID": "4.C.3.d.1",
+      "Element Name": "Time Pressure",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Once a year or more but not every month"
+    },
+    {
+      "Element ID": "4.C.3.d.1",
+      "Element Name": "Time Pressure",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Once a month or more but not every week"
+    },
+    {
+      "Element ID": "4.C.3.d.1",
+      "Element Name": "Time Pressure",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Once a week or more but not every day"
+    },
+    {
+      "Element ID": "4.C.3.d.1",
+      "Element Name": "Time Pressure",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Every day"
+    },
+    {
+      "Element ID": "4.C.3.d.3",
+      "Element Name": "Pace Determined by Speed of Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "1",
+      "Category Description": "Not important at all"
+    },
+    {
+      "Element ID": "4.C.3.d.3",
+      "Element Name": "Pace Determined by Speed of Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "2",
+      "Category Description": "Fairly important"
+    },
+    {
+      "Element ID": "4.C.3.d.3",
+      "Element Name": "Pace Determined by Speed of Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "3",
+      "Category Description": "Important"
+    },
+    {
+      "Element ID": "4.C.3.d.3",
+      "Element Name": "Pace Determined by Speed of Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "4",
+      "Category Description": "Very important"
+    },
+    {
+      "Element ID": "4.C.3.d.3",
+      "Element Name": "Pace Determined by Speed of Equipment",
+      "Scale ID": "CXP",
+      "Scale Name": "Context (Categories 1-5)",
+      "Category": "5",
+      "Category Description": "Extremely important"
+    },
+    {
+      "Element ID": "4.C.3.d.4",
+      "Element Name": "Work Schedules",
+      "Scale ID": "CTP",
+      "Scale Name": "Context (Categories 1-3)",
+      "Category": "1",
+      "Category Description": "Regular (established routine, set schedule)"
+    },
+    {
+      "Element ID": "4.C.3.d.4",
+      "Element Name": "Work Schedules",
+      "Scale ID": "CTP",
+      "Scale Name": "Context (Categories 1-3)",
+      "Category": "2",
+      "Category Description": "Irregular (changes with weather conditions, production demands, or contract duration)"
+    },
+    {
+      "Element ID": "4.C.3.d.4",
+      "Element Name": "Work Schedules",
+      "Scale ID": "CTP",
+      "Scale Name": "Context (Categories 1-3)",
+      "Category": "3",
+      "Category Description": "Seasonal (only during certain times of the year)"
+    },
+    {
+      "Element ID": "4.C.3.d.8",
+      "Element Name": "Duration of Typical Work Week",
+      "Scale ID": "CTP",
+      "Scale Name": "Context (Categories 1-3)",
+      "Category": "1",
+      "Category Description": "Less than 40 hours"
+    },
+    {
+      "Element ID": "4.C.3.d.8",
+      "Element Name": "Duration of Typical Work Week",
+      "Scale ID": "CTP",
+      "Scale Name": "Context (Categories 1-3)",
+      "Category": "2",
+      "Category Description": "40 hours"
+    },
+    {
+      "Element ID": "4.C.3.d.8",
+      "Element Name": "Duration of Typical Work Week",
+      "Scale ID": "CTP",
+      "Scale Name": "Context (Categories 1-3)",
+      "Category": "3",
+      "Category Description": "More than 40 hours"
+    }
+  ],
+  "specific_interest_areas_to_career_interest_types.csv": [
+    {
+      "Specific Interest Areas Element ID": "1.B.3.a",
+      "Specific Interest Areas Element Name": "Mechanics/Electronics",
+      "Career Interest Types Element ID": "1.B.1.a",
+      "Career Interest Types Element Name": "Realistic"
+    },
+    {
+      "Specific Interest Areas Element ID": "1.B.3.b",
+      "Specific Interest Areas Element Name": "Construction/Woodwork",
+      "Career Interest Types Element ID": "1.B.1.a",
+      "Career Interest Types Element Name": "Realistic"
+    }
+  ],
+  "survey_booklet_locations.csv": [
+    {
+      "Element ID": "2.C.1.a",
+      "Element Name": "Administration and Management",
+      "Survey Item Number": "KN01",
+      "Scale ID": "IM",
+      "Scale Name": "Importance"
+    },
+    {
+      "Element ID": "2.C.1.a",
+      "Element Name": "Administration and Management",
+      "Survey Item Number": "KN01b",
+      "Scale ID": "LV",
+      "Scale Name": "Level"
+    }
+  ],
+  "task_categories.csv": [
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "1",
+      "Category Description": "Yearly or less"
+    },
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "2",
+      "Category Description": "More than yearly"
+    },
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "3",
+      "Category Description": "More than monthly"
+    },
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "4",
+      "Category Description": "More than weekly"
+    },
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "5",
+      "Category Description": "Daily"
+    },
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "6",
+      "Category Description": "Several times daily"
+    },
+    {
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "7",
+      "Category Description": "Hourly or more"
+    }
+  ],
+  "task_ratings.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Task ID": "8823",
+      "Task": "Direct or coordinate an organization's financial or budget activities to fund operations, maximize investments, or increase efficiency.",
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "1",
+      "Data Value": "5.92",
+      "N": "76",
+      "Standard Error": "4.2651",
+      "Lower CI Bound": "1.3474",
+      "Upper CI Bound": "22.4442",
+      "Recommend Suppress": "N",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Task ID": "8823",
+      "Task": "Direct or coordinate an organization's financial or budget activities to fund operations, maximize investments, or increase efficiency.",
+      "Scale ID": "FT",
+      "Scale Name": "Frequency of Task (Categories 1-7)",
+      "Category": "2",
+      "Data Value": "15.98",
+      "N": "76",
+      "Standard Error": "5.6031",
+      "Lower CI Bound": "7.6477",
+      "Upper CI Bound": "30.3982",
+      "Recommend Suppress": "N",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    }
+  ],
+  "task_statements.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Task ID": "8823",
+      "Task": "Direct or coordinate an organization's financial or budget activities to fund operations, maximize investments, or increase efficiency.",
+      "Task Type": "Core",
+      "Incumbents Responding": "95",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Task ID": "8824",
+      "Task": "Confer with board members, organization officials, or staff members to discuss issues, coordinate activities, or resolve problems.",
+      "Task Type": "Core",
+      "Incumbents Responding": "95",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Task ID": "20461",
+      "Task": "Review and analyze legislation, laws, or public policy and recommend changes to promote or support interests of the general population or special groups.",
+      "Task Type": "Supplemental",
+      "Incumbents Responding": "94",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    }
+  ],
+  "tasks_to_dwas.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Task ID": "20461",
+      "Task": "Review and analyze legislation, laws, or public policy and recommend changes to promote or support interests of the general population or special groups.",
+      "DWA Element ID": "4.A.2.a.4.i.3",
+      "DWA Element Name": "Analyze impact of legal or regulatory changes.",
+      "Date": "07/2014",
+      "Domain Source": "Analyst"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Task ID": "20461",
+      "Task": "Review and analyze legislation, laws, or public policy and recommend changes to promote or support interests of the general population or special groups.",
+      "DWA Element ID": "4.A.4.b.6.h.4",
+      "DWA Element Name": "Advise others on legal or regulatory compliance matters.",
+      "Date": "07/2014",
+      "Domain Source": "Analyst"
+    }
+  ],
+  "training_and_experience.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "1",
+      "Data Value": "0.00",
+      "N": "28",
+      "Standard Error": "0.0000",
+      "Lower CI Bound": "",
+      "Upper CI Bound": "",
+      "Recommend Suppress": "N",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.03",
+      "Title": "Chief Sustainability Officers",
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "6",
+      "Data Value": "0.00",
+      "N": "27",
+      "Standard Error": "",
+      "Lower CI Bound": "",
+      "Upper CI Bound": "",
+      "Recommend Suppress": "",
+      "Date": "08/2021",
+      "Domain Source": "Occupational Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.03",
+      "Title": "Chief Sustainability Officers",
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "7",
+      "Data Value": "0.00",
+      "N": "27",
+      "Standard Error": "",
+      "Lower CI Bound": "",
+      "Upper CI Bound": "",
+      "Recommend Suppress": "",
+      "Date": "08/2021",
+      "Domain Source": "Occupational Expert"
+    },
+    {
+      "O*NET-SOC Code": "13-2031.00",
+      "Title": "Budget Analysts",
+      "Element ID": "3.A.4.a",
+      "Element Name": "Job-related Apprenticeship",
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Category": "",
+      "Data Value": "1.06",
+      "N": "17",
+      "Standard Error": "0.0386",
+      "Lower CI Bound": "1.0000",
+      "Upper CI Bound": "1.1383",
+      "Recommend Suppress": "N",
+      "Date": "08/2024",
+      "Domain Source": "Incumbent"
+    }
+  ],
+  "training_and_experience_categories.csv": [
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "1",
+      "Category Description": "None"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "2",
+      "Category Description": "Up to and including 1 month"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "3",
+      "Category Description": "Over 1 month, up to and including 3 months"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "4",
+      "Category Description": "Over 3 months, up to and including 6 months"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "5",
+      "Category Description": "Over 6 months, up to and including 1 year"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "6",
+      "Category Description": "Over 1 year, up to and including 2 years"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "7",
+      "Category Description": "Over 2 years, up to and including 4 years"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "8",
+      "Category Description": "Over 4 years, up to and including 6 years"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "9",
+      "Category Description": "Over 6 years, up to and including 8 years"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "10",
+      "Category Description": "Over 8 years, up to and including 10 years"
+    },
+    {
+      "Element ID": "3.A.1",
+      "Element Name": "Related Work Experience",
+      "Scale ID": "RW",
+      "Scale Name": "Related Work Experience (Categories 1-11)",
+      "Category": "11",
+      "Category Description": "Over 10 years"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "1",
+      "Category Description": "None"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "2",
+      "Category Description": "Up to and including 1 month"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "3",
+      "Category Description": "Over 1 month, up to and including 3 months"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "4",
+      "Category Description": "Over 3 months, up to and including 6 months"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "5",
+      "Category Description": "Over 6 months, up to and including 1 year"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "6",
+      "Category Description": "Over 1 year, up to and including 2 years"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "7",
+      "Category Description": "Over 2 years, up to and including 4 years"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "8",
+      "Category Description": "Over 4 years, up to and including 10 years"
+    },
+    {
+      "Element ID": "3.A.2",
+      "Element Name": "On-Site or In-Plant Training",
+      "Scale ID": "PT",
+      "Scale Name": "On-Site Or In-Plant Training (Categories 1-9)",
+      "Category": "9",
+      "Category Description": "Over 10 years"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "1",
+      "Category Description": "None or short demonstration"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "2",
+      "Category Description": "Anything beyond short demonstration, up to and including 1 month"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "3",
+      "Category Description": "Over 1 month, up to and including 3 months"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "4",
+      "Category Description": "Over 3 months, up to and including 6 months"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "5",
+      "Category Description": "Over 6 months, up to and including 1 year"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "6",
+      "Category Description": "Over 1 year, up to and including 2 years"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "7",
+      "Category Description": "Over 2 years, up to and including 4 years"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "8",
+      "Category Description": "Over 4 years, up to and including 10 years"
+    },
+    {
+      "Element ID": "3.A.3",
+      "Element Name": "On-the-Job Training",
+      "Scale ID": "OJ",
+      "Scale Name": "On-The-Job Training (Categories 1-9)",
+      "Category": "9",
+      "Category Description": "Over 10 years"
+    }
+  ],
+  "transferable_skills.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "2.B.1.a",
+      "Element Name": "Social Perceptiveness",
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Data Value": "4.12",
+      "N": "8",
+      "Standard Error": "0.1250",
+      "Lower CI Bound": "3.8800",
+      "Upper CI Bound": "4.3700",
+      "Recommend Suppress": "N",
+      "Not Relevant": "",
+      "Date": "08/2023",
+      "Domain Source": "Analyst"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "2.B.1.a",
+      "Element Name": "Social Perceptiveness",
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Data Value": "4.25",
+      "N": "8",
+      "Standard Error": "0.1637",
+      "Lower CI Bound": "3.9292",
+      "Upper CI Bound": "4.5708",
+      "Recommend Suppress": "N",
+      "Not Relevant": "N",
+      "Date": "08/2023",
+      "Domain Source": "Analyst"
+    }
+  ],
+  "work_styles.csv": [
+    {
+      "O*NET-SOC Code": "27-2011.00",
+      "Title": "Actors",
+      "Element ID": "1.D.2.a",
+      "Element Name": "Humility",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-1.42",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "47-2082.00",
+      "Title": "Tapers",
+      "Element ID": "1.D.1.d",
+      "Element Name": "Tolerance for Ambiguity",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-1.29",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "39-3091.00",
+      "Title": "Amusement and Recreation Attendants",
+      "Element ID": "1.D.1.a",
+      "Element Name": "Innovation",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.95",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "41-9012.00",
+      "Title": "Models",
+      "Element ID": "1.D.1.i",
+      "Element Name": "Leadership Orientation",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.81",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "41-9041.00",
+      "Title": "Telemarketers",
+      "Element ID": "1.D.3.a",
+      "Element Name": "Cautiousness",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.79",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "45-4021.00",
+      "Title": "Fallers",
+      "Element ID": "1.D.2.f",
+      "Element Name": "Social Orientation",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.77",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "35-9021.00",
+      "Title": "Dishwashers",
+      "Element ID": "1.D.1.c",
+      "Element Name": "Intellectual Curiosity",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.50",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "45-3031.00",
+      "Title": "Fishing and Hunting Workers",
+      "Element ID": "1.D.2.c",
+      "Element Name": "Empathy",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.39",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "33-9031.00",
+      "Title": "Gambling Surveillance Officers and Gambling Investigators",
+      "Element ID": "1.D.2.e",
+      "Element Name": "Optimism",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.34",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "49-9045.00",
+      "Title": "Refractory Materials Repairers, Except Brickmasons",
+      "Element ID": "1.D.1.f",
+      "Element Name": "Adaptability",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.32",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "47-2021.00",
+      "Title": "Brickmasons and Blockmasons",
+      "Element ID": "1.D.1.e",
+      "Element Name": "Initiative",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.29",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "41-9041.00",
+      "Title": "Telemarketers",
+      "Element ID": "1.D.2.b",
+      "Element Name": "Sincerity",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.25",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "51-9192.00",
+      "Title": "Cleaning, Washing, and Metal Pickling Equipment Operators and Tenders",
+      "Element ID": "1.D.2.d",
+      "Element Name": "Cooperation",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.18",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "27-3043.05",
+      "Title": "Poets, Lyricists and Creative Writers",
+      "Element ID": "1.D.4.b",
+      "Element Name": "Self-Control",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.17",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "51-6011.00",
+      "Title": "Laundry and Dry-Cleaning Workers",
+      "Element ID": "1.D.1.g",
+      "Element Name": "Self-Confidence",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "-0.10",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.1.b",
+      "Element Name": "Achievement Orientation",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.1.c",
+      "Element Name": "Intellectual Curiosity",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.2.a",
+      "Element Name": "Humility",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.2.b",
+      "Element Name": "Sincerity",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.2.c",
+      "Element Name": "Empathy",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.2.d",
+      "Element Name": "Cooperation",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.2.e",
+      "Element Name": "Optimism",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.3.a",
+      "Element Name": "Cautiousness",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.3.b",
+      "Element Name": "Attention to Detail",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.3.c",
+      "Element Name": "Dependability",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "1.D.3.d",
+      "Element Name": "Integrity",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1021.00",
+      "Title": "General and Operations Managers",
+      "Element ID": "1.D.1.a",
+      "Element Name": "Innovation",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1021.00",
+      "Title": "General and Operations Managers",
+      "Element ID": "1.D.1.d",
+      "Element Name": "Tolerance for Ambiguity",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1021.00",
+      "Title": "General and Operations Managers",
+      "Element ID": "1.D.2.f",
+      "Element Name": "Social Orientation",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-1021.00",
+      "Title": "General and Operations Managers",
+      "Element ID": "1.D.4.a",
+      "Element Name": "Stress Tolerance",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-2011.00",
+      "Title": "Advertising and Promotions Managers",
+      "Element ID": "1.D.1.e",
+      "Element Name": "Initiative",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-2011.00",
+      "Title": "Advertising and Promotions Managers",
+      "Element ID": "1.D.1.h",
+      "Element Name": "Perseverance",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-2011.00",
+      "Title": "Advertising and Promotions Managers",
+      "Element ID": "1.D.4.b",
+      "Element Name": "Self-Control",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-2033.00",
+      "Title": "Fundraising Managers",
+      "Element ID": "1.D.1.f",
+      "Element Name": "Adaptability",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-2033.00",
+      "Title": "Fundraising Managers",
+      "Element ID": "1.D.1.g",
+      "Element Name": "Self-Confidence",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "11-3012.00",
+      "Title": "Administrative Services Managers",
+      "Element ID": "1.D.1.i",
+      "Element Name": "Leadership Orientation",
+      "Scale ID": "DR",
+      "Scale Name": "Distinctiveness Rank",
+      "Data Value": "0.00",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "27-2011.00",
+      "Title": "Actors",
+      "Element ID": "1.D.3.d",
+      "Element Name": "Integrity",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "0.08",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "27-1012.00",
+      "Title": "Craft Artists",
+      "Element ID": "1.D.4.a",
+      "Element Name": "Stress Tolerance",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "0.15",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "33-9091.00",
+      "Title": "Crossing Guards and Flaggers",
+      "Element ID": "1.D.1.b",
+      "Element Name": "Achievement Orientation",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "0.20",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "39-3093.00",
+      "Title": "Locker Room, Coatroom, and Dressing Room Attendants",
+      "Element ID": "1.D.1.h",
+      "Element Name": "Perseverance",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "0.20",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "41-9091.00",
+      "Title": "Door-to-Door Sales Workers, News and Street Vendors, and Related Workers",
+      "Element ID": "1.D.3.b",
+      "Element Name": "Attention to Detail",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "0.74",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    },
+    {
+      "O*NET-SOC Code": "27-1012.00",
+      "Title": "Craft Artists",
+      "Element ID": "1.D.3.c",
+      "Element Name": "Dependability",
+      "Scale ID": "WI",
+      "Scale Name": "Work Styles Impact",
+      "Data Value": "0.95",
+      "Date": "12/2025",
+      "Domain Source": "AI/Expert"
+    }
+  ],
+  "transferable_skills_to_work_activities.csv": [
+    {
+      "Transferable Skills Element ID": "2.B.1.a",
+      "Transferable Skills Element Name": "Social Perceptiveness",
+      "Work Activities Element ID": "4.A.4.a.1",
+      "Work Activities Element Name": "Interpreting the Meaning of Information for Others"
+    },
+    {
+      "Transferable Skills Element ID": "2.B.1.a",
+      "Transferable Skills Element Name": "Social Perceptiveness",
+      "Work Activities Element ID": "4.A.4.a.3",
+      "Work Activities Element Name": "Communicating with People Outside the Organization"
+    }
+  ],
+  "transferable_skills_to_work_context.csv": [
+    {
+      "Transferable Skills Element ID": "2.B.1.a",
+      "Transferable Skills Element Name": "Social Perceptiveness",
+      "Work Context Element ID": "4.C.1.a.2.c",
+      "Work Context Element Name": "Public Speaking"
+    },
+    {
+      "Transferable Skills Element ID": "2.B.1.a",
+      "Transferable Skills Element Name": "Social Perceptiveness",
+      "Work Context Element ID": "4.C.1.a.2.f",
+      "Work Context Element Name": "Telephone Conversations"
+    }
+  ],
+  "work_activities.csv": [
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "4.A.1.a.1",
+      "Element Name": "Getting Information",
+      "Scale ID": "IM",
+      "Scale Name": "Importance",
+      "Data Value": "4.56",
+      "N": "29",
+      "Standard Error": "0.1559",
+      "Lower CI Bound": "4.2369",
+      "Upper CI Bound": "4.8756",
+      "Recommend Suppress": "N",
+      "Not Relevant": "",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    },
+    {
+      "O*NET-SOC Code": "11-1011.00",
+      "Title": "Chief Executives",
+      "Element ID": "4.A.1.a.1",
+      "Element Name": "Getting Information",
+      "Scale ID": "LV",
+      "Scale Name": "Level",
+      "Data Value": "4.89",
+      "N": "30",
+      "Standard Error": "0.1727",
+      "Lower CI Bound": "4.5393",
+      "Upper CI Bound": "5.2458",
+      "Recommend Suppress": "N",
+      "Not Relevant": "N",
+      "Date": "08/2023",
+      "Domain Source": "Incumbent"
+    }
+  ]
+}

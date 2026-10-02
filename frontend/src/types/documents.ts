@@ -72,6 +72,14 @@ export type JobSkill = CandidateSkill & {
   requirement_type: string;
 };
 
+export type CandidateSkillGroup = {
+  key: string;
+  label: string;
+  taxonomy: { concept_id: string; release_id: string; external_id: string;
+    preferred_label: string; source: string; version: string } | null;
+  occurrences: CandidateSkill[];
+};
+
 export type CandidateJobMatch = {
   id: string;
   candidate_profile_id: string;

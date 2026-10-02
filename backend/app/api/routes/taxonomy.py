@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_roles
@@ -8,6 +8,10 @@ from app.core.config import settings
 from app.db.models import User
 from app.db.session import get_db
 from app.schemas.taxonomy import (
+    TaxonomyReviewEventRead,
+    TaxonomyReviewPage,
+    OnetDataRecordRead,
+    TaxonomyRelationshipRead,
     EscoOnetMappingRead,
     OccupationRead,
     TaxonomyConceptRead,
@@ -19,10 +23,54 @@ from app.schemas.taxonomy import (
     TaxonomyVersionRead,
 )
 from app.services.taxonomy_service import TaxonomyService
+from app.taxonomy.packages import LIMITS
 
 
 router = APIRouter()
 taxonomy_admin = require_roles(settings.ADMIN_ROLE, settings.RESEARCHER_ROLE)
+
+
+@router.get("/reviews", response_model=TaxonomyReviewPage)
+def review_groups(
+    state: str = Query("pending", pattern="^(pending|selected|all)$"),
+    q: str = Query("", max_length=200), limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0),
+    current_user: User = Depends(taxonomy_admin), db: Session = Depends(get_db),
+) -> TaxonomyReviewPage:
+    return TaxonomyService(db).review_groups(state, q, limit, offset)
+
+
+@router.get("/reviews/{term_source}/{term_id}/history", response_model=list[TaxonomyReviewEventRead])
+def review_history(
+    term_id: UUID, term_source: str,
+    limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0),
+    current_user: User = Depends(taxonomy_admin), db: Session = Depends(get_db),
+) -> list[TaxonomyReviewEventRead]:
+    if term_source not in {"candidate", "job"}:
+        raise HTTPException(status_code=422, detail="Invalid term source.")
+    return TaxonomyService(db).review_history(term_source, term_id, limit, offset)
+
+
+@router.get("/concepts/{concept_id}/relationships", response_model=list[TaxonomyRelationshipRead])
+def concept_relationships(
+    concept_id: UUID, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db),
+) -> list[TaxonomyRelationshipRead]:
+    return TaxonomyService(db).relationships(concept_id, limit, offset)
+
+
+@router.get("/occupations/{occupation_id}/data", response_model=list[OnetDataRecordRead])
+def occupation_data(
+    occupation_id: UUID, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db),
+) -> list[OnetDataRecordRead]:
+    return TaxonomyService(db).occupation_data(occupation_id, limit, offset)
+
+
+def bounded_upload(file: UploadFile) -> bytes:
+    content = file.file.read(LIMITS.upload + 1)
+    if len(content) > LIMITS.upload:
+        raise HTTPException(status_code=413, detail="Taxonomy upload exceeds 128 MiB limit.")
+    return content
 
 
 @router.get("/search", response_model=list[TaxonomyConceptRead])
@@ -83,7 +131,7 @@ def import_taxonomy_release(
         version=version,
         release_date=release_date,
         filename=file.filename or f"{source_code.lower()}-import.json",
-        content=file.file.read(),
+        content=bounded_upload(file),
     )
 
 
@@ -117,7 +165,7 @@ def import_mappings(
     db: Session = Depends(get_db),
 ) -> TaxonomyImportResult:
     return TaxonomyService(db).import_mappings(
-        version, file.filename or "esco-onet-mappings.json", file.file.read()
+        version, file.filename or "esco-onet-mappings.json", bounded_upload(file)
     )
 
 
@@ -146,5 +194,6 @@ def review_link(
     db: Session = Depends(get_db),
 ) -> TaxonomyLinkCandidateRead:
     return TaxonomyService(db).review_link(
-        candidate_id, payload.status, payload.concept_id, current_user
+        candidate_id, payload.status, payload.concept_id, current_user,
+        payload.replace_selection, payload.expected_selection_token,
     )

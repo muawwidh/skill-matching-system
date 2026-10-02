@@ -1,0 +1,3 @@
+O*NET-SOC Code	Element ID	Element Name	Scale ID	Data Value	N	Standard Error	Lower CI Bound	Upper CI Bound	Recommend Suppress	Not Relevant	Date	Domain Source
+11-1011.00	1.A.1.a.1	Oral Comprehension	IM	4.62	8	0.1830	4.2664	4.9836	N	n/a	08/2023	Analyst
+11-1011.00	1.A.1.a.1	Oral Comprehension	LV	4.88	8	0.1250	4.6300	5.1200	N	N	08/2023	Analyst

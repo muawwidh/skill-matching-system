@@ -1,0 +1,3 @@
+originalSkillUri,originalSkillType,relationType,relatedSkillType,relatedSkillUri
+http://data.europa.eu/esco/skill/00064735-8fad-454b-90c7-ed858cc993f2,skill/competence,optional,knowledge,http://data.europa.eu/esco/skill/d4a0744a-508b-4a5e-97a5-ad1fc7f55e6e
+http://data.europa.eu/esco/skill/06670261-ea6b-4b52-a915-c7d4ff837f74,skill/competence,essential,skill/competence,http://data.europa.eu/esco/skill/57231a22-4da7-49c8-97b8-75672feadf1e

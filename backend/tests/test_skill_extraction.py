@@ -99,6 +99,14 @@ def test_job_processing_extracts_requirement_skills(client: TestClient) -> None:
     assert by_name["python"] == "required"
     assert by_name["docker"] == "required"
     assert by_name["kubernetes"] == "preferred"
+    assert all("occurrences" not in skill and "taxonomy" not in skill for skill in skills)
+    target = skills[0]
+    target["review_status"] = "rejected"
+    updated = client.put(f"/jobs/{job_id}/extracted-skills/{target['id']}", headers=headers, json=target)
+    assert updated.status_code == 200
+    assert updated.json()["id"] == target["id"]
+    assert updated.json()["review_status"] == "rejected"
+    assert updated.json()["requirement_type"] == target["requirement_type"]
 
 
 def test_matching_recommends_jobs_with_skill_gaps(client: TestClient) -> None:

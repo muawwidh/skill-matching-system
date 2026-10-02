@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-09-30
+Last updated: 2026-10-02
 
 ## Repository
 
@@ -12,7 +12,7 @@ Last verified code checkpoint before agent-context documentation:
 
 `9c2340c Fix taxonomy sample data mount`
 
-Phase 4 implementation checkpoint:
+Earlier Phase 4 implementation checkpoint (not the final closure checkpoint):
 
 `24dd9a7 Complete phase 4 taxonomy integration`
 
@@ -26,18 +26,19 @@ Phase 4 — Taxonomy Integration
 
 Implementation status:
 
-CORE IMPLEMENTATION WORKING / COMPLETION PENDING
+COMPLETE
 
 Current status:
 
-FINAL IMPLEMENTATION AND MANUAL VERIFICATION
+PHASE 4 CLOSED ON 2026-10-02; FINAL GIT CHECKPOINT PENDING
 
 Next planned phase:
 
-Phase 5 — Dense Retrieval
+Phase 5 — Dense Retrieval (NOT STARTED)
 
-Do not begin Phase 5 until the remaining Phase 4 implementation and
-acceptance checks are resolved unless explicitly instructed.
+Phase 4 closure combines repository test/package evidence with user-reported
+deployed browser/runtime acceptance. Phase 5 requires a separate instruction;
+no embeddings, dense retrieval or scoring changes were introduced at closure.
 
 ## Important Development History
 
@@ -53,7 +54,7 @@ Therefore the repository currently contains:
 - completed Phase 1
 - completed Phase 2
 - completed Phase 3
-- implemented Phase 4 taxonomy integration
+- completed Phase 4 taxonomy integration
 - early/basic matching functionality conceptually belonging to Phase 6
 
 The existing matching prototype is NOT the final Phase 6 implementation.
@@ -144,7 +145,8 @@ Implemented:
 Repeated terms may exist in extracted_candidate_terms because each
 occurrence may preserve separate evidence.
 
-Candidate-facing normalized skills should ultimately be deduplicated.
+Candidate-facing CV skills now have a consolidated read view with expandable
+occurrences (see Phase 4 below); stored extraction occurrences remain separate.
 
 ## Early Matching Prototype
 
@@ -181,13 +183,17 @@ It currently lacks the complete planned:
 
 ## Phase 4 — Taxonomy Integration
 
-Migration:
+Migration status (three distinct states):
 
-`0005_taxonomy_integration`
+- Repository migration head: `0007_taxonomy_review_audit`.
+- Last successfully verified revision: `0007_taxonomy_review_audit`, isolated PostgreSQL 16,
+  including populated 0005 upgrade and preservation of existing reviews from 0006.
+- Developer local Compose database head: `0007_taxonomy_review_audit`, user-reported
+  deployed runtime evidence on 2026-10-02; not queried or changed by this documentation review.
 
 Status:
 
-CORE IMPLEMENTATION WORKING / COMPLETION PENDING
+COMPLETE (2026-10-02)
 
 Implemented in the current codebase:
 
@@ -218,37 +224,83 @@ Implemented in the current codebase:
 - taxonomy management frontend
 - role-management utility
 
-Schema exists but functionality is not yet complete for:
+Additional Phase 4 implementation:
 
-- taxonomy relationships
+- strict ESCO 1.2.1 English CSV ZIP, O*NET 29.0 TXT ZIP and O*NET 31.0 CSV ZIP contracts
+- ESCO relationships with original direction and essential/optional distinction
+- same-release relationship foreign keys
+- structured O*NET occupation data, ratings and reference records
+- bounded archive validation (uploaded/member/total bytes and member count)
+- atomic release replacement and explicit rollback after write failures
+- source-scoped PostgreSQL transaction advisory locks
+- persisted per-file import reports and hashes
+- paginated relationship and occupation-data lookup APIs
+- representative fixtures including optional O*NET files
+- PostgreSQL migration/replacement/rollback/review tests
+- full-package verification CLI and checked-in evidence reports
 
-The database model/migration includes relationship storage, but the current
-implementation does not yet provide complete relationship import, service,
-repository, API, sample-data, or test coverage.
+### Official taxonomy support boundaries
 
-### Official taxonomy import limitation
+The pinned contracts are ESCO 1.2.1 classification English CSV ZIP, O*NET 29.0
+native TXT ZIP and O*NET 31.0 CSV ZIP only. ESCO 1.2.0, O*NET 31.0 TXT and other
+O*NET versions are not supported claims.
+Exact required/optional files and columns are documented in taxonomy-integration.md
+and onet-31-contract.md with the checked-in 31.0 manifest.
+Unknown package files are reported as skipped; this is not ingestion of every
+dataset/domain that either publisher distributes. No embeddings or final scoring
+were added.
 
-The current importer accepts a project-defined flattened JSON/CSV/TSV/TXT
-format.
+Complete supplied ESCO 1.2.1 and downloaded O*NET 29.0 packages have passed import
+and persisted-count reconciliation in isolated PostgreSQL. Evidence is in
+docs/verification and docs/phase4-verification.md. ESCO was supplied as an extracted
+directory without an embedded version manifest; the original download ZIP checksum
+is unavailable. Its report records a reconstructed ZIP checksum plus all original
+member hashes, not a claimed original distribution ZIP checksum.
 
-It does NOT yet constitute complete native ingestion of official ESCO or
-O*NET release packages.
+ESCO timestamp-only duplicate rows are merged by URI while preserving all source
+rows: 21 duplicate skill rows and 4 duplicate occupation rows. Other conflicting
+duplicates fail. Input/inserted/merged counts are reported separately.
 
-The current implementation does not yet fully ingest all master-plan data
-such as:
+O*NET datasets include occupations, elements, scales, skills, knowledge, abilities,
+work activities, tasks/ratings/categories, tools/technology, education/experience
+and category definitions. Optional alternate titles and job zones/reference data
+are implemented and tested. Full source rows preserve interpretation metadata.
 
-- ESCO relationship datasets
-- O*NET tasks
-- O*NET knowledge
-- O*NET abilities
-- O*NET work activities
-- O*NET tools/technology
-- O*NET education/experience datasets
+The legacy flattened JSON/CSV/TSV/TXT adapter remains available for development
+and interchange. It is not general official-package compatibility.
 
-Only the bundled sample import path has been verified end-to-end.
+### O*NET 31.0 CSV implementation and verification (2026-10-02)
 
-Therefore official taxonomy ingestion remains an important Phase 4
-completion item.
+Separate ONET-31.0-csv dispatch retains the verified ONET-29.0-txt adapter unchanged.
+All 45 supplied CSV datasets and every source field are preserved, including separate
+Essential/Transferable Skills, education/training categories, directional relationships
+and intact multi-endpoint rows. Dataset-specific identity keys avoid the documented
+software-skill and binary-relationship collisions. Unknown members are explicitly
+reported; only Read Me.txt is skipped in this package after release validation.
+
+Full package SHA-256:
+`55033fc68b4c13ec23e7f74dc6378660f6e854e75d55d6e333ae0a761d3987cd`.
+Evidence: docs/verification/onet-31.0.json. Initial import and same-version replacement
+each reconciled all 1,120,006 source/database records, comparing every source field in
+fresh PostgreSQL sessions. Materialized 4,022 concepts (including 1,016 occupations)
+and 20,262 directed relationships; zero unresolved references. Initial verification
+74.576 seconds, replacement 101.420 seconds, total 176.141 seconds. The dedicated
+verification schema in phase4_verify was removed afterward.
+
+Final complete backend suite: **146 passed**, PostgreSQL checks enabled; no skipped
+checks in this run. Frontend production build and git diff --check passed. Coverage
+includes all manifest files/headers, UTF-8/BOM/quoting, malformed CSV, extra columns,
+archive safety, exact historical collision counts, references, negative scales,
+categories, directed links, and replacement/post-write rollback. Existing 29.0
+regressions remain intact.
+
+No new migration: repository and isolated verified head remain
+0007_taxonomy_review_audit. Developer DB revision was not rechecked or changed.
+No developer records were imported, and no local Docker deployment was performed.
+29.0 historical verification evidence is unchanged. Attribution and exact per-dataset
+counts are in onet-31-contract.md; representative fixtures are explicitly distinct
+from full-package evidence. Subsequent user-reported browser/runtime acceptance is
+recorded in the closure section below. No embedding/retrieval/scoring work was added.
 
 ### Phase 4 verification coverage
 
@@ -263,13 +315,95 @@ Verified by automated/end-to-end tests:
 - role protection
 - approval workflow
 
-Not yet verified with representative fixtures:
+Additional verification completed:
 
 - CSV taxonomy import
 - TSV taxonomy import
 - TXT taxonomy import
-- native official ESCO release format
-- native official O*NET release format
+- native ESCO 1.2.1 English package fixtures and full supplied dataset
+- native O*NET 29.0 TXT package fixtures and complete downloaded package
+- optional O*NET file ingestion and validation
+- PostgreSQL upgrade from populated 0005, downgrade preservation and re-upgrade
+- PostgreSQL FK/uniqueness, same-version replacement and post-write rollback
+- PostgreSQL persisted approval and rejection decisions
+- archive safety, permissions, intended authenticated read APIs
+
+The full backend suite and frontend production build have passed. PostgreSQL
+tests skip explicitly as UNVERIFIED when their isolated database URL is absent.
+The new backend image was built and its isolated API health endpoint passed.
+That image/health verification predates the review consistency fix below.
+Developer application containers/data were not upgraded or replaced by this fix.
+
+### Review consistency blocker (resolved at closure)
+
+Manual acceptance exposed two approved candidate statuses for one extracted term,
+although only the second candidate was selected by approved_taxonomy_links.
+Code inspection also found rejection could leave a selected link intact.
+
+Implemented fix:
+
+- approved_taxonomy_links is the authoritative selection for each source/term pair
+- replacing a selection marks the previous approval `superseded`, not rejected
+- rejecting the selected candidate removes its link; rejecting an alternative preserves it
+- PostgreSQL term-scoped locks serialize reviews and candidate replacement
+- explicit replacement confirmation and a selection token prevent silent/stale replacements
+- repeated identical actions are idempotent and do not manufacture audit events
+- audit events store actor, time and before/after snapshots in the same transaction
+- grouped Pending/Selected/All views expose alternatives, selection and review history
+- legacy inconsistent statuses are flagged on read, never automatically repaired
+- administrator/researcher-only review/history endpoints preserve candidate restrictions
+
+Verification: complete backend suite **71 passed** with isolated PostgreSQL enabled;
+frontend production build passed. Regression coverage includes fresh PostgreSQL
+sessions, concurrent approvals, replacement, both rejection paths, repetition,
+source/term isolation, audit-write rollback, API permissions and additive 0006-to-0007
+migration preserving existing inconsistent records. No developer records were changed.
+Subsequent user-reported deployed acceptance verified approval, rejection,
+replacement, superseded state, persistence after refresh and review history.
+
+### Candidate skill consolidation (2026-10-01)
+
+The CV page previously rendered every extracted skill row separately, without
+taxonomy identity in its response. A new ownership-checked
+`GET /cvs/{document_id}/skill-groups` read endpoint groups occurrences by approved
+concept UUID and release UUID, exposing preferred label, external ID, source and
+version. Equal labels in distinct concepts/releases stay separate. Unlinked skills
+group only by exact lowercase stored normalized_text plus skill_type, not fuzzy
+similarity or cross-taxonomy equivalence. Linked and unlinked groups stay separate.
+
+Each group retains every occurrence ID, evidence, confidence and extraction review
+status. The CV-only panel expands occurrences for individual edits/approval/rejection;
+mixed statuses and all-rejected groups remain visible. Only extraction-approved
+occurrences count as confirmed support in this view. Taxonomy approval is independent.
+This presentation count does not change the existing matching prototype or scores.
+
+The existing flat read and save response formats remain available. CV saves now
+validate occurrence IDs against that CV and return its skills, rather than all
+profile skills. Existing profile-level manual skills remain profile-scoped. Drafts
+and actions use occurrence IDs. Saved changes refetch groups; taxonomy review
+invalidates CV queries, and the CV view also refreshes on focus/every 30 seconds.
+Draft changes are preserved separately during background refreshes.
+
+Text/normalization/type corrections clear only that occurrence's taxonomy selection
+and suggestions, and update its extracted term for subsequent explicit relinking.
+Evidence and audit history remain stored. Status-only reviews leave taxonomy links
+unchanged. Reads treat legacy skill/term text mismatches as unlinked without repairs.
+No administrative review history is exposed through the candidate endpoint.
+Job review remains on its existing occurrence view and API.
+
+Verification: focused run **17 passed**, followed by expanded complete backend suite
+**85 passed** with isolated PostgreSQL enabled (including grouping/correction and
+fresh-session checks). Frontend production build and git diff --check passed.
+Coverage includes aliases, repeated evidence, separate concepts/releases, unlinked
+fallback, mixed/all-rejected statuses, correction save/reload, taxonomy replacement,
+ownership/CV scope and unchanged Job responses/review updates.
+
+No migration was added or applied for consolidation; repository and last isolated
+verified head remain 0007. Developer data/runtime were untouched by implementation
+tests. Subsequent user-reported deployed acceptance verified grouped occurrences,
+individual evidence/review controls and persistence of two approved occurrences
+alongside one pending occurrence. Existing full-package import evidence is reused:
+importer behavior was not changed by consolidation.
 
 ## Taxonomy Matching Behavior
 
@@ -320,10 +454,16 @@ replacement processing occurs.
 
 This prevents stale taxonomy links from surviving document reprocessing.
 
-## Manual Local Verification Snapshot
+## Historical Manual Local Verification Snapshot
 
-The following results were observed in the developer's current local
+The following results were observed earlier in the developer's local
 PostgreSQL volume.
+
+This snapshot predates the review consistency blocker above. The user subsequently
+approved both REST APIs alternatives; only rank 2 was selected. Those developer
+records were intentionally left untouched by implementation/tests for explicit UI
+correction. This historical snapshot is not a claim about their current state;
+subsequent user-reported workflow acceptance is recorded in the closure section.
 
 They are NOT guaranteed repository state.
 
@@ -427,42 +567,60 @@ The frontend Taxonomy administration page remains role-restricted.
 Future agents must distinguish taxonomy management permissions from
 authenticated read-only lookup permissions.
 
-## Remaining Phase 4 Work and Acceptance Checks
+## Phase 4 Closure Acceptance (2026-10-02)
 
-Before Phase 4 is marked fully COMPLETE:
+All required implementation and functional acceptance criteria are satisfied.
+Evidence sources are distinguished: automated/full-package results are recorded in
+the repository; deployed browser/runtime checks and fresh developer counts below
+were supplied by the user. This documentation-only review did not rerun those checks
+or inspect/change the developer database.
 
-### Implementation gaps
+| Acceptance area | Evidence and outcome |
+| --- | --- |
+| Pinned ESCO/O*NET imports, relationships and fixtures | Isolated full-package reports, regression tests and successful browser imports |
+| Transactional replacement, rollback, FK/uniqueness and upgrades | Isolated PostgreSQL verification; ESCO replacement evidence retained, O*NET 31.0 initial/replacement round trips passed |
+| Backend/frontend | Latest complete suite 146 passed, none skipped; production build passed; updated backend/frontend successfully deployed per user |
+| Administrator/researcher interface | Working in deployed browser per user |
+| Candidate restrictions and intended reads | Administrative page redirect, authenticated read-only APIs and intended 403 responses verified per user |
+| Taxonomy review consistency | Approval, rejection, replacement, superseded state, refresh persistence and history verified per user; selected/alternative rejection covered by regression tests |
+| Candidate consolidation | Grouping by taxonomy identity, separate evidence/review controls and two approved/one pending occurrences persisted per user; edge cases and corrections covered by regression tests |
+| Migration status | Repository, isolated verified and user-reported developer heads all 0007_taxonomy_review_audit |
 
-1. determine and implement the required native official ESCO import path
-2. determine and implement the required native official O*NET import path
-3. implement ESCO taxonomy relationship ingestion and corresponding
-   persistence/tests as required by the master plan
-4. add corresponding tests using representative official-format fixtures
+### Active developer releases
 
-### Manual workflow verification
+User-reported fresh database counts after deployed browser imports:
 
-5. verify researcher/admin approval of a pending taxonomy candidate
-6. verify researcher/admin rejection of an incorrect taxonomy candidate
-7. verify review decisions persist in PostgreSQL
-8. verify ordinary candidate cannot perform taxonomy management operations
-9. verify restricted management endpoints return 403 to candidates
-10. verify intended authenticated read-only taxonomy endpoints remain
-    accessible where designed
-11. verify candidate-facing normalized skills do not unnecessarily display
-    repeated extraction occurrences
+| Active release | Concepts | Occupation table rows | O*NET source records | Directed relationships |
+| --- | ---: | ---: | ---: | ---: |
+| O*NET 31.0 CSV | 4,022 | 1,016 | 1,120,006 | 20,262 |
+| ESCO 1.2.1 English CSV | 18,237 | 0 (expected) | Not applicable | 156,336 |
 
-After these are resolved:
+ESCO occupations are taxonomy concepts; the separate occupations table is
+O*NET-oriented. Sample releases remain stored but are not active official releases.
+O*NET 29.0 TXT remains supported with historical evidence; this does not assert
+it is imported or active in the developer database.
 
-- update this document
-- run the complete backend test suite
-- run the frontend production build
-- verify Docker
-- verify migration state
-- create a Phase 4 completion Git checkpoint/tag
+The ESCO browser import used a ZIP reconstructed from the unchanged supplied
+directory. The original distribution ZIP checksum remains unavailable. Per-member
+hashes and reconstructed-ZIP evidence do not authenticate the original distribution.
+No other release/format support is implied by Phase 4 completion.
+
+### Checkpoint hygiene
+
+Functional closure is complete; the final Git checkpoint has not been created.
+The working tree contains the accumulated Phase 4 implementation and documentation;
+nothing was staged at closure review. The supplied O*NET ZIP and older pre-upgrade
+dump are ignored. However, `esco-1.2.1-en.zip` and
+`phase4-before-onet31-runtime-20261002-082407.dump` are untracked and NOT ignored.
+Neither is staged or tracked. Exclude them from the checkpoint and add appropriate
+ignore rules in a separately authorized repository-hygiene change. Do not use
+`git add .` or `git add -A`. Exact checkpoint scope is in phase4-verification.md.
 
 ## Next Phase
 
 Phase 5 — Dense Retrieval
+
+Status: NOT STARTED. Await a separate explicit implementation request.
 
 Phase 5 should implement:
 

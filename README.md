@@ -21,9 +21,13 @@ The early matching baseline compares reviewed candidate and job skills, stores m
 shows required and preferred skill gaps. Taxonomy-aware, semantic, weighted matching remains part of
 the later taxonomy, dense retrieval, and matching phases.
 
-Phase 4 adds versioned local ESCO and O*NET storage, official CSV/JSON import endpoints, O*NET-SOC
+Phase 4 adds versioned local ESCO and O*NET storage, pinned native ZIP import endpoints, O*NET-SOC
 occupations, ESCO-O*NET mappings, taxonomy search, exact and fuzzy term linking, confidence-based
 automatic approval, and an administrator mapping-review interface.
+Native contracts are ESCO 1.2.1 English CSV, O*NET 29.0 TXT and O*NET 31.0 CSV packages.
+See docs/onet-31-contract.md for the exact 31.0 scope and verification procedure.
+Phase 4 is complete based on automated/package evidence and user-reported deployed
+workflow acceptance (2026-10-02); see `docs/PROJECT_STATE.md`. Phase 5 is not started.
 
 ## Architecture
 
@@ -109,10 +113,12 @@ Grant an existing account the researcher or administrator role:
 docker compose exec backend python -m app.utils.manage_role you@example.com researcher
 ```
 
-Sign in again after changing the role, then open `http://localhost:5173/taxonomy`. Import official
-ESCO and O*NET CSV, TSV, or JSON releases with their published version numbers. The bundled sample
-button is intended only for development and automated tests; official imported releases are the main
-taxonomy source used by the linker.
+Sign in again after changing the role, then open `http://localhost:5173/taxonomy`.
+Upload an ESCO 1.2.1 English CSV ZIP, O*NET 29.0 TXT ZIP or O*NET 31.0 CSV ZIP with the exact version
+value. Required files/headers, limits and replacement effects are documented in
+`docs/taxonomy-integration.md`; full-package evidence is in `docs/phase4-verification.md`.
+Flattened JSON/CSV/TSV/TXT files remain a separate development/interchange format,
+not general official-release support. Bundled samples are development/testing data.
 
 ## Environment Variables
 
