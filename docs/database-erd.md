@@ -12,9 +12,11 @@ erDiagram
   CV_DOCUMENTS ||--o{ CV_SECTIONS : contains
   CV_DOCUMENTS ||--o{ EXTRACTED_CANDIDATE_TERMS : produces
   CANDIDATE_PROFILES ||--o{ CANDIDATE_SKILLS : reviews
+  CANDIDATE_PROFILES ||--o{ CANDIDATE_PROFILE_EMBEDDINGS : indexes
   JOBS ||--o{ JOB_SECTIONS : contains
   JOBS ||--o{ EXTRACTED_JOB_TERMS : produces
   JOBS ||--o{ JOB_SKILLS : reviews
+  JOBS ||--o{ JOB_EMBEDDINGS : indexes
   TAXONOMY_SOURCES ||--o{ TAXONOMY_VERSIONS : publishes
   TAXONOMY_VERSIONS ||--o{ TAXONOMY_CONCEPTS : contains
   TAXONOMY_CONCEPTS ||--o{ TAXONOMY_LABELS : names
@@ -61,6 +63,26 @@ erDiagram
     boolean consent_to_process_cv
     string status
     string source
+  }
+
+  CANDIDATE_PROFILE_EMBEDDINGS {
+    uuid id PK
+    uuid candidate_profile_id FK
+    vector embedding
+    string model_revision
+    string template_version
+    string source_hash
+    string status
+  }
+
+  JOB_EMBEDDINGS {
+    uuid id PK
+    uuid job_id FK
+    vector embedding
+    string model_revision
+    string template_version
+    string source_hash
+    string status
   }
 
   CV_DOCUMENTS {
@@ -220,5 +242,6 @@ erDiagram
   }
 ```
 
-Dense retrieval, detailed score components, and evaluation tables are reserved for the later phases
-described in the source requirements.
+The two Phase 5 embedding tables store vector(384), model ID/revision, template
+version, full input hash, release fingerprint, state and timestamps. They do not
+store candidate-job match scores. Detailed scoring/evaluation tables remain later work.

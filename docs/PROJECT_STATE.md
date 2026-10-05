@@ -8,9 +8,9 @@ Main branch:
 
 `main`
 
-Last verified code checkpoint before agent-context documentation:
+Final Phase 4 checkpoint (committed and pushed):
 
-`9c2340c Fix taxonomy sample data mount`
+`1aba426 Complete verified Phase 4 taxonomy integration`
 
 Earlier Phase 4 implementation checkpoint (not the final closure checkpoint):
 
@@ -22,23 +22,24 @@ Initial Git baseline:
 
 ## Current Phase
 
-Phase 4 — Taxonomy Integration
+Phase 5 — Dense Retrieval
 
 Implementation status:
 
-COMPLETE
+IN PROGRESS; not complete
 
 Current status:
 
-PHASE 4 CLOSED ON 2026-10-02; FINAL GIT CHECKPOINT PENDING
+PHASE 4 CLOSED AND CHECKPOINT PUSHED; PHASE 5 IMPLEMENTATION UNDER VERIFICATION
 
 Next planned phase:
 
-Phase 5 — Dense Retrieval (NOT STARTED)
+Phase 5 — Dense Retrieval (ACTIVE)
 
 Phase 4 closure combines repository test/package evidence with user-reported
-deployed browser/runtime acceptance. Phase 5 requires a separate instruction;
-no embeddings, dense retrieval or scoring changes were introduced at closure.
+deployed browser/runtime acceptance. The Phase 5 work below is limited to
+candidate-profile to job retrieval; it changes neither the Phase 4 lexical
+linker/reviews nor the earlier rule-based matching scores.
 
 ## Important Development History
 
@@ -183,7 +184,7 @@ It currently lacks the complete planned:
 
 ## Phase 4 — Taxonomy Integration
 
-Migration status (three distinct states):
+Migration status at Phase 4 closure (historical snapshot, not current repository head):
 
 - Repository migration head: `0007_taxonomy_review_audit`.
 - Last successfully verified revision: `0007_taxonomy_review_audit`, isolated PostgreSQL 16,
@@ -620,9 +621,10 @@ ignore rules in a separately authorized repository-hygiene change. Do not use
 
 Phase 5 — Dense Retrieval
 
-Status: NOT STARTED. Await a separate explicit implementation request.
+Status: IN PROGRESS. Do not declare complete without a locally executed pinned
+model, PostgreSQL retrieval verification and human-labelled retrieval evaluation.
 
-Phase 5 should implement:
+Phase 5 implementation scope:
 
 - embedding abstraction
 - Sentence Transformer model
@@ -632,6 +634,50 @@ Phase 5 should implement:
 - pgvector/vector-store abstraction
 - top-N semantic job retrieval
 - semantic retrieval tests
+
+The current implementation adds migration `0008_dense_retrieval`, separate
+candidate/profile and job vectors, a resumable indexing CLI, and candidate-only
+`GET /retrieval/jobs`. Exact cosine retrieval remains separate from
+`/matches/recommendations`. There is no semantic taxonomy-linking change.
+The new representation and provisioning contract is in phase5-dense-retrieval.md.
+The developer database remains at user-reported `0007_taxonomy_review_audit`;
+do not apply `0008` there without a separate deployment instruction. The
+repository head is `0008_dense_retrieval`. Last successfully verified migration
+revision is `0008_dense_retrieval` in isolated PostgreSQL. A populated `0007`
+schema was upgraded, downgraded and re-upgraded there; extension, vector(384),
+foreign keys, uniqueness, cascade and fresh-session cosine ranking passed.
+The pinned `intfloat/multilingual-e5-small` revision
+`fd1525a9fd15316a2d503bf26ab031a61d056e98` was provisioned under the
+ignored local `models/` directory and executed offline, including a
+network-disabled container check. Real-model CLI indexing and exact pgvector
+retrieval passed in a disposable schema of the isolated `phase5_verify`
+PostgreSQL database. The populated `0007` fixture was upgraded to `0008`;
+the schema was removed afterward. The gated real-model test passed. The
+subsequent complete backend suite with isolated PostgreSQL and the offline
+model enabled: **157 passed, 0 failed, 0 skipped**. Artifact hashes, checks,
+fixture counts and measured timings are recorded in
+`docs/verification/phase5-real-model.json` and summarized in
+`docs/verification/phase5-real-model.md`. Earlier Docker image build and
+`git diff --check` passed; no frontend files changed, so no frontend build was
+needed for this verification. The developer database remains at the
+user-reported `0007_taxonomy_review_audit` (not queried or migrated in this
+step). No human-labelled relevance set has been supplied, so real
+Recall@K/MRR evaluation is **PENDING**. Phase 5 is not complete.
+
+The Phase 5 human-labelled benchmark pack is now implemented but not populated:
+candidate/job JSONL validation, complete judgment-matrix validation, a
+reproducible blind pair export, isolated-database ranking export, grade-2
+Recall@5/10/20 and MRR calculation, optional separate grade-1 exploration,
+and optional second-reviewer Cohen's kappa. See
+`docs/phase5-evaluation-protocol.md`. Synthetic tests prove tooling behavior,
+not retrieval quality. There are **0** eligible real candidate profiles,
+**0** eligible real jobs and **0** human judgments in the repository; the
+target still requires 8 profiles, 30 jobs and 240 judgments. No developer
+data was exported or judged. Focused benchmark tests: 7 passed. The complete
+backend suite after this tooling change, with isolated PostgreSQL enabled:
+**163 passed, 1 skipped** (the gated real-model test was not rerun in the host
+Python environment without Torch). The separate pinned real-model verification
+above remains valid. Do not declare Phase 5 complete.
 
 Do not implement the final Phase 6 weighted scoring model as part of Phase 5.
 

@@ -23,9 +23,11 @@ from app.db.models.taxonomy import (
     TaxonomySource,
     TaxonomyVersion,
 )
+from app.db.models.retrieval import CandidateProfileEmbedding, JobEmbedding
 
 __all__ = [
     "CandidateProfile",
+    "CandidateProfileEmbedding",
     "CandidateJobMatch",
     "CandidateSkill",
     "CvDocument",
@@ -33,6 +35,7 @@ __all__ = [
     "ExtractedCandidateTerm",
     "ExtractedJobTerm",
     "Job",
+    "JobEmbedding",
     "JobSection",
     "JobSkill",
     "ProcessingLog",

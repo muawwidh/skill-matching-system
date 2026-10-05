@@ -71,12 +71,12 @@ def seed_0005(connection):
 
 @pytest.fixture
 def pg_database(monkeypatch):
-    url_text = os.environ.get("PHASE4_TEST_DATABASE_URL")
+    url_text = os.environ.get("PHASE5_TEST_DATABASE_URL") or os.environ.get("PHASE4_TEST_DATABASE_URL")
     if not url_text:
-        pytest.skip("UNVERIFIED: PHASE4_TEST_DATABASE_URL is not set")
+        pytest.skip("UNVERIFIED: isolated PostgreSQL test URL is not set")
     url = make_url(url_text)
-    if url.database != "phase4_verify":
-        pytest.fail("PostgreSQL tests require an isolated database named phase4_verify")
+    if url.database not in {"phase4_verify", "phase5_verify"}:
+        pytest.fail("PostgreSQL tests require an isolated verification database")
     schema = "phase4_" + uuid4().hex
     admin = create_engine(url)
     with admin.begin() as connection:
@@ -102,7 +102,7 @@ def pg_database(monkeypatch):
 def test_upgrade_populated_0005_preserves_data(pg_database):
     engine, config, before = pg_database
     with engine.connect() as connection:
-        assert connection.scalar(text("select version_num from alembic_version")) == "0007_taxonomy_review_audit"
+        assert connection.scalar(text("select version_num from alembic_version")) == "0008_dense_retrieval"
         assert connection.scalar(text("select count(*) from esco_onet_mappings")) == 1
         assert connection.scalar(text("select count(*) from approved_taxonomy_links")) == 2
         assert connection.scalar(text("select count(*) from taxonomy_relationships where taxonomy_version_id is not null")) == 1

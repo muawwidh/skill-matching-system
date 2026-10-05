@@ -94,6 +94,8 @@ class DocumentRepository:
         )
 
     def delete_cv_document(self, document: CvDocument) -> None:
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_profile(document.candidate_profile_id)
         term_ids = list(
             self.db.scalars(
                 select(ExtractedCandidateTerm.id).where(
@@ -126,6 +128,8 @@ class DocumentRepository:
         document: CvDocument,
         terms: list[ExtractedTerm],
     ) -> None:
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_profile(document.candidate_profile_id)
         previous_term_ids = list(
             self.db.scalars(
                 select(ExtractedCandidateTerm.id).where(
@@ -254,6 +258,8 @@ class DocumentRepository:
         )
         self.db.add(skill)
         self.db.flush()
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_profile(candidate_profile_id)
         return skill
 
     def update_candidate_skill(
@@ -282,9 +288,13 @@ class DocumentRepository:
         skill.evidence_sentence = evidence_sentence
         skill.review_status = review_status
         self.db.flush()
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_profile(skill.candidate_profile_id)
         return skill
 
     def delete_candidate_skill(self, skill: CandidateSkill) -> None:
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_profile(skill.candidate_profile_id)
         self.db.delete(skill)
         self.db.flush()
 
@@ -340,6 +350,8 @@ class DocumentRepository:
         job.cleaned_description = cleaned_description
         job.status = status
         self.db.flush()
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_job(job.id)
         return job
 
     def delete_job(self, job: Job) -> None:
@@ -381,6 +393,8 @@ class DocumentRepository:
         self.db.flush()
 
     def replace_job_terms(self, job: Job, terms: list[ExtractedTerm]) -> None:
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_job(job.id)
         previous_term_ids = list(
             self.db.scalars(
                 select(ExtractedJobTerm.id).where(ExtractedJobTerm.job_id == job.id)
@@ -534,6 +548,8 @@ class DocumentRepository:
         skill.evidence_sentence = evidence_sentence
         skill.review_status = review_status
         self.db.flush()
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_job(skill.job_id)
         return skill
 
     def add_processing_log(

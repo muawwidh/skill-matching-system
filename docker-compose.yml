@@ -28,11 +28,13 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://localhost:8080"]}
+      DENSE_MODEL_PATH: /models/multilingual-e5-small-fd1525a
     ports:
       - "8000:8000"
 
     volumes:
       - ./data:/data
+      - ./models:/models:ro
     depends_on:
       db:
         condition: service_healthy

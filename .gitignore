@@ -33,3 +33,7 @@ db_31_0_csv.zip
 .vscode/
 
 /phase4-before-upgrade-*.dump
+
+# Locally provisioned Phase 5 model artifacts
+/models/
+/evaluation-private/

@@ -22,3 +22,10 @@ Taxonomy processing follows the same boundary: taxonomy routes call `TaxonomySer
 `TaxonomyRepository` for versioned local ESCO/O*NET storage. `TaxonomyFileParser` adapts official file
 formats into domain records, while `TaxonomyLinker` ranks concept candidates independently of HTTP and
 database concerns. See `docs/taxonomy-integration.md`.
+
+Phase 5 adds a separate candidate-profile to job retrieval branch:
+candidate skill/job review state -> deterministic representation -> local E5
+embedding -> release/model-scoped pgvector tables -> exact cosine top-N API.
+Indexing runs explicitly through a batch CLI, not inside taxonomy imports or API
+requests. `MatchingService` and `/matches/recommendations` remain independent.
+See `docs/phase5-dense-retrieval.md`.

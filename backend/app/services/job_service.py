@@ -72,6 +72,8 @@ class JobService:
     def archive_job(self, job_id: UUID) -> Job:
         job = self.get_job(job_id)
         job.status = "archived"
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_job(job.id)
         self.repository.add_processing_log("job", job.id, "archive", "success", "Job archived.")
         self.db.commit()
         self.db.refresh(job)

@@ -106,6 +106,8 @@ class TaxonomyService:
             self.repository.persist_package(taxonomy_version, package)
             package.report["duration_seconds"] = round(perf_counter() - started, 3)
             taxonomy_version.import_report = dict(package.report)
+            from app.repositories.retrieval_repository import RetrievalRepository
+            RetrievalRepository(self.db).invalidate_all()
             self.db.commit()
             return TaxonomyImportResult(
                 source_code=source_code, version=version.strip(),
@@ -151,6 +153,8 @@ class TaxonomyService:
                 job_zone=record.job_zone,
                 metadata_json=record.metadata,
             )
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_all()
         self.db.commit()
         return TaxonomyImportResult(
             source_code=source_code,
@@ -314,6 +318,8 @@ class TaxonomyService:
                 if should_auto_approve:
                     self.repository.approve_candidate(candidate, "automatic", None)
                     auto_approved += 1
+            from app.repositories.retrieval_repository import RetrievalRepository
+            RetrievalRepository(self.db).invalidate_term(term_source, term.id)
         self.db.commit()
         return TaxonomyLinkRunResult(
             terms_processed=len(terms),
@@ -380,6 +386,8 @@ class TaxonomyService:
             if before != after:
                 action = "replaced" if review_status == "approved" and replacing else review_status
                 self.repository.record_review(candidate, action, user.id, before, after)
+                from app.repositories.retrieval_repository import RetrievalRepository
+                RetrievalRepository(self.db).invalidate_term(candidate.term_source, candidate.extracted_term_id)
             self.db.commit()
             return self._candidate_read(self.repository.get_link_candidate(candidate.id))
         except Exception:

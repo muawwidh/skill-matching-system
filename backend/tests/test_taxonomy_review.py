@@ -223,4 +223,6 @@ def test_upgrade_0006_does_not_repair_existing_review_rows(pg_database):
     with engine.connect() as connection:
         after = snapshot(connection)
     assert after.pop("taxonomy_review_events") == []
+    assert after.pop("candidate_profile_embeddings") == []
+    assert after.pop("job_embeddings") == []
     assert before == after
