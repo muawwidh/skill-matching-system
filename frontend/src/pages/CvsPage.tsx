@@ -13,7 +13,8 @@ export function CvsPage() {
   const queryClient = useQueryClient();
   const [cvText, setCvText] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [consent, setConsent] = useState(true);
+  const [pasteConsent, setPasteConsent] = useState(false);
+  const [uploadConsent, setUploadConsent] = useState(false);
 
   const cvQuery = useQuery({
     queryKey: ["cvs"],
@@ -22,29 +23,31 @@ export function CvsPage() {
   });
 
   const pasteMutation = useMutation({
-    mutationFn: () => pasteCv(accessToken as string, cvText, consent),
+    mutationFn: () => pasteCv(accessToken as string, cvText, pasteConsent),
     onSuccess: () => {
       setCvText("");
+      setPasteConsent(false);
       queryClient.invalidateQueries({ queryKey: ["cvs"] });
     },
   });
 
   const uploadMutation = useMutation({
-    mutationFn: () => uploadCv(accessToken as string, file as File, consent),
+    mutationFn: () => uploadCv(accessToken as string, file as File, uploadConsent),
     onSuccess: () => {
       setFile(null);
+      setUploadConsent(false);
       queryClient.invalidateQueries({ queryKey: ["cvs"] });
     },
   });
 
   function submitPastedCv(event: FormEvent) {
     event.preventDefault();
-    pasteMutation.mutate();
+    if (pasteConsent && !pasteMutation.isPending) pasteMutation.mutate();
   }
 
   function submitUploadedCv(event: FormEvent) {
     event.preventDefault();
-    if (file) {
+    if (file && uploadConsent && !uploadMutation.isPending) {
       uploadMutation.mutate();
     }
   }
@@ -61,11 +64,11 @@ export function CvsPage() {
             value={cvText}
           />
           <label className="mt-4 flex items-center gap-2 text-sm text-slate-700">
-            <input checked={consent} onChange={(event) => setConsent(event.target.checked)} type="checkbox" />
+            <input checked={pasteConsent} onChange={(event) => setPasteConsent(event.target.checked)} type="checkbox" />
             I consent to CV processing for job matching research.
           </label>
           {pasteMutation.error ? <p className="mt-3 text-sm text-red-700">{pasteMutation.error.message}</p> : null}
-          <button className="mt-4 flex items-center gap-2 rounded-md bg-ocean px-4 py-2 font-medium text-white" type="submit">
+          <button className="mt-4 flex items-center gap-2 rounded-md bg-ocean px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50" disabled={!pasteConsent || pasteMutation.isPending} type="submit">
             <Send size={18} aria-hidden="true" />
             Process pasted CV
           </button>
@@ -79,8 +82,12 @@ export function CvsPage() {
             onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             type="file"
           />
+          <label className="mt-4 flex items-center gap-2 text-sm text-slate-700">
+            <input checked={uploadConsent} onChange={(event) => setUploadConsent(event.target.checked)} type="checkbox" />
+            I consent to CV processing for job matching research.
+          </label>
           {uploadMutation.error ? <p className="mt-3 text-sm text-red-700">{uploadMutation.error.message}</p> : null}
-          <button className="mt-4 flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 font-medium text-slate-700" type="submit">
+          <button className="mt-4 flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={!file || !uploadConsent || uploadMutation.isPending} type="submit">
             <FileUp size={18} aria-hidden="true" />
             Upload and process
           </button>

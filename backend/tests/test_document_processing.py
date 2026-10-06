@@ -1,5 +1,8 @@
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from app.db.models import Role, User
 from app.services.document_parser_service import DocumentParserService
 from app.services.pdf_text_normalization_service import PdfTextNormalizationService
 from app.services.section_detection_service import SectionDetectionService
@@ -117,11 +120,25 @@ def test_candidate_can_upload_txt_cv(client: TestClient) -> None:
     assert response.json()["content_type"] == "text/plain"
 
 
-def test_job_creation_processes_sections(client: TestClient) -> None:
-    headers = auth_headers(client)
+def test_job_creation_processes_sections(client: TestClient, db_session: Session) -> None:
+    candidate_headers = auth_headers(client)
+    registration = client.post(
+        "/auth/register",
+        json={
+            "email": "job-admin@example.com",
+            "full_name": "Synthetic Job Administrator",
+            "password": "correct-horse-password",
+        },
+    )
+    assert registration.status_code == 201
+    user = db_session.scalar(select(User).where(User.email == "job-admin@example.com"))
+    assert user is not None
+    user.roles.append(Role(name="admin", description="Job administration"))
+    db_session.commit()
+    admin_headers = {"Authorization": f"Bearer {registration.json()['access_token']}"}
     response = client.post(
         "/jobs",
-        headers=headers,
+        headers=admin_headers,
         json={
             "title": "Backend Engineer",
             "company": "Acme",
@@ -138,5 +155,6 @@ def test_job_creation_processes_sections(client: TestClient) -> None:
         "required_skills",
     }
 
-    logs_response = client.get("/admin/logs", headers=headers)
+    assert client.get("/jobs", headers=candidate_headers).status_code == 200
+    logs_response = client.get("/admin/logs", headers=candidate_headers)
     assert logs_response.status_code == 403

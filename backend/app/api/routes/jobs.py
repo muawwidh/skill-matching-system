@@ -3,22 +3,23 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.auth import get_current_user
-from app.db.models import User
+from app.api.dependencies.auth import get_current_user, require_roles
+from app.core.config import settings
 from app.db.session import get_db
 from app.schemas.documents import JobCreate, JobRead, JobSkillRead, JobSkillUpdate, JobUpdate, SectionRead
 from app.services.job_service import JobService
 from app.services.skill_service import SkillService
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
+job_manager = require_roles(settings.ADMIN_ROLE, settings.RESEARCHER_ROLE)
 
 
-@router.post("", response_model=JobRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=JobRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(job_manager)])
 def create_job(payload: JobCreate, db: Session = Depends(get_db)) -> JobRead:
     return JobService(db).create_job(payload)
 
 
-@router.post("/import", response_model=list[JobRead], status_code=status.HTTP_201_CREATED)
+@router.post("/import", response_model=list[JobRead], status_code=status.HTTP_201_CREATED, dependencies=[Depends(job_manager)])
 def import_jobs(payload: list[JobCreate], db: Session = Depends(get_db)) -> list[JobRead]:
     service = JobService(db)
     return [service.create_job(job) for job in payload]
@@ -37,22 +38,22 @@ def get_job(job_id: UUID, db: Session = Depends(get_db)) -> JobRead:
     return JobService(db).get_job(job_id)
 
 
-@router.put("/{job_id}", response_model=JobRead)
+@router.put("/{job_id}", response_model=JobRead, dependencies=[Depends(job_manager)])
 def update_job(job_id: UUID, payload: JobUpdate, db: Session = Depends(get_db)) -> JobRead:
     return JobService(db).update_job(job_id, payload)
 
 
-@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(job_manager)])
 def delete_job(job_id: UUID, db: Session = Depends(get_db)) -> None:
     JobService(db).delete_job(job_id)
 
 
-@router.post("/{job_id}/process", response_model=JobRead)
+@router.post("/{job_id}/process", response_model=JobRead, dependencies=[Depends(job_manager)])
 def process_job(job_id: UUID, db: Session = Depends(get_db)) -> JobRead:
     return JobService(db).process_job(job_id)
 
 
-@router.post("/{job_id}/archive", response_model=JobRead)
+@router.post("/{job_id}/archive", response_model=JobRead, dependencies=[Depends(job_manager)])
 def archive_job(job_id: UUID, db: Session = Depends(get_db)) -> JobRead:
     return JobService(db).archive_job(job_id)
 
@@ -67,7 +68,7 @@ def get_job_extracted_skills(job_id: UUID, db: Session = Depends(get_db)) -> lis
     return SkillService(db).list_job_skills(job_id)
 
 
-@router.put("/{job_id}/extracted-skills/{skill_id}", response_model=JobSkillRead)
+@router.put("/{job_id}/extracted-skills/{skill_id}", response_model=JobSkillRead, dependencies=[Depends(job_manager)])
 def update_job_extracted_skill(
     job_id: UUID,
     skill_id: UUID,

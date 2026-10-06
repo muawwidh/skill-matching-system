@@ -1,5 +1,8 @@
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from app.db.models import Role, User
 from app.nlp.skill_extractor import SkillExtractor
 from app.services.section_detection_service import SectionDetectionService
 
@@ -14,6 +17,23 @@ def auth_headers(client: TestClient) -> dict[str, str]:
         },
     )
     assert response.status_code == 201
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+
+
+def job_manager_headers(client: TestClient, db_session: Session) -> dict[str, str]:
+    response = client.post(
+        "/auth/register",
+        json={
+            "email": "job-manager@example.com",
+            "full_name": "Synthetic Job Manager",
+            "password": "correct-horse-password",
+        },
+    )
+    assert response.status_code == 201
+    user = db_session.scalar(select(User).where(User.email == "job-manager@example.com"))
+    assert user is not None
+    user.roles.append(Role(name="admin", description="Job management"))
+    db_session.commit()
     return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
@@ -76,8 +96,8 @@ def test_cv_processing_extracts_and_reviews_candidate_skills(client: TestClient)
     assert any(skill["normalized_text"] == "python 3" for skill in review_response.json())
 
 
-def test_job_processing_extracts_requirement_skills(client: TestClient) -> None:
-    headers = auth_headers(client)
+def test_job_processing_extracts_requirement_skills(client: TestClient, db_session: Session) -> None:
+    headers = job_manager_headers(client, db_session)
     job_response = client.post(
         "/jobs",
         headers=headers,
@@ -109,7 +129,7 @@ def test_job_processing_extracts_requirement_skills(client: TestClient) -> None:
     assert updated.json()["requirement_type"] == target["requirement_type"]
 
 
-def test_matching_recommends_jobs_with_skill_gaps(client: TestClient) -> None:
+def test_matching_recommends_jobs_with_skill_gaps(client: TestClient, db_session: Session) -> None:
     headers = auth_headers(client)
     cv_response = client.post(
         "/cvs/paste",
@@ -124,7 +144,7 @@ def test_matching_recommends_jobs_with_skill_gaps(client: TestClient) -> None:
 
     job_response = client.post(
         "/jobs",
-        headers=headers,
+        headers=job_manager_headers(client, db_session),
         json={
             "title": "API Engineer",
             "company": "Acme",

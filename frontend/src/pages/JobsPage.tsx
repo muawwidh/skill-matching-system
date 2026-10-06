@@ -18,7 +18,8 @@ const emptyJob: JobPayload = {
 };
 
 export function JobsPage() {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
+  const canManageJobs = user?.roles.some((role) => role.name === "admin" || role.name === "researcher") ?? false;
   const queryClient = useQueryClient();
   const [job, setJob] = useState<JobPayload>(emptyJob);
 
@@ -60,7 +61,7 @@ export function JobsPage() {
 
   function submitJob(event: FormEvent) {
     event.preventDefault();
-    createMutation.mutate();
+    if (canManageJobs) createMutation.mutate();
   }
 
   function updateJobField(field: keyof JobPayload, value: string) {
@@ -69,7 +70,7 @@ export function JobsPage() {
 
   return (
     <div className="space-y-6">
-      <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitJob}>
+      {canManageJobs ? <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitJob}>
         <div className="flex items-center gap-2">
           <BriefcaseBusiness size={22} className="text-ocean" aria-hidden="true" />
           <h1 className="text-xl font-semibold text-ink">Create Job Description</h1>
@@ -91,7 +92,7 @@ export function JobsPage() {
           <Plus size={18} aria-hidden="true" />
           Create and process
         </button>
-      </form>
+      </form> : null}
 
       <section className="space-y-4">
           {jobsQuery.data?.map((item) => (
@@ -101,14 +102,14 @@ export function JobsPage() {
                   <h2 className="text-lg font-semibold text-ink">{item.title}</h2>
                   <p className="text-sm text-slate-600">{item.company || "Unknown company"} · {item.status}</p>
                 </div>
-                <button
+                {canManageJobs ? <button
                   aria-label="Archive job"
                   className="grid h-10 w-10 place-items-center rounded-md border border-slate-300 text-slate-700"
                   onClick={() => archiveMutation.mutate(item.id)}
                   type="button"
                 >
                   <Archive size={18} aria-hidden="true" />
-                </button>
+                </button> : null}
               </div>
               <div className="mt-4">
                 <SectionList sections={item.sections} />
