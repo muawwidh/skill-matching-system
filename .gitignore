@@ -37,3 +37,4 @@ db_31_0_csv.zip
 # Locally provisioned Phase 5 model artifacts
 /models/
 /evaluation-private/
+/evaluation/local/
