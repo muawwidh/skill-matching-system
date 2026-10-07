@@ -449,11 +449,33 @@ silently.
 
 ## CV / Job Taxonomy-Link Lifecycle
 
-When a CV or job is reprocessed or deleted, old taxonomy-link candidates and
-approved links associated with superseded extracted terms are removed before
-replacement processing occurs.
+For CV processing, extraction skills and terms are scoped to that CV; other
+retained CVs and manual profile skills are not replaced. On reprocessing the
+same CV, an occurrence is retained only when its complete extracted fields
+(wording, type, section, evidence, method, confidence and offsets) match
+uniquely. Its extraction decision, taxonomy candidates, selected link and
+review history then remain intact. Changed or ambiguous duplicate occurrences
+use the existing replacement lifecycle; no broader repeated-evidence identity
+policy is implied. CV-scoped skill APIs also return profile-wide manual skills.
+Candidate-edited text/type cannot yet be identified reliably after reprocessing
+and may return to fresh extraction output; preserving corrections requires
+explicit persisted provenance, and existing corrections cannot be classified
+retroactively without guessing. Retained terms without suggestions may be
+linked when an active taxonomy becomes available. An unchanged term may retain
+a historical selection to an inactive release: retrieval ignores that canonical
+link, and reprocessing does not silently rewrite the selection. Generating
+replacement suggestions for inactive selections remains a separate decision.
 
-This prevents stale taxonomy links from surviving document reprocessing.
+Deleting a CV removes its extraction skills before its extracted terms are
+deleted, so the existing SET NULL foreign key cannot leave those skills as
+profile evidence. Cached prototype matches for that candidate are cleared so
+the next read recomputes from retained skills. Its terms, link candidates and
+approved links are removed; append-only taxonomy review events remain. Full
+privacy erasure of audit history and cleanup of older orphan skills remain
+separate decisions.
+
+Job reprocessing/deletion continues to remove links for superseded job terms.
+Phase 5 remains incomplete pending human-labelled retrieval evaluation.
 
 ## Historical Manual Local Verification Snapshot
 

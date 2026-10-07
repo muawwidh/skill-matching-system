@@ -1,3 +1,4 @@
+from collections import Counter, defaultdict
 from uuid import UUID
 
 from sqlalchemy import select
@@ -103,7 +104,11 @@ class DocumentRepository:
                 )
             )
         )
+        self._delete_extraction_skills(term_ids)
         self._delete_taxonomy_links("candidate", term_ids)
+        self.db.query(CandidateJobMatch).filter(
+            CandidateJobMatch.candidate_profile_id == document.candidate_profile_id
+        ).delete(synchronize_session=False)
         self.db.delete(document)
         self.db.flush()
 
@@ -127,35 +132,46 @@ class DocumentRepository:
         self,
         document: CvDocument,
         terms: list[ExtractedTerm],
-    ) -> None:
+    ) -> list[UUID]:
         from app.repositories.retrieval_repository import RetrievalRepository
         RetrievalRepository(self.db).invalidate_profile(document.candidate_profile_id)
-        previous_term_ids = list(
+        previous_terms = list(
             self.db.scalars(
-                select(ExtractedCandidateTerm.id).where(
+                select(ExtractedCandidateTerm).where(
                     ExtractedCandidateTerm.cv_document_id == document.id
                 )
             )
         )
-        if previous_term_ids:
-            self.db.query(ApprovedTaxonomyLink).filter(
-                ApprovedTaxonomyLink.term_source == "candidate",
-                ApprovedTaxonomyLink.extracted_term_id.in_(previous_term_ids),
-            ).delete(synchronize_session=False)
-            self.db.query(TaxonomyLinkCandidate).filter(
-                TaxonomyLinkCandidate.term_source == "candidate",
-                TaxonomyLinkCandidate.extracted_term_id.in_(previous_term_ids),
-            ).delete(synchronize_session=False)
-        self.db.query(CandidateSkill).filter(
-            CandidateSkill.candidate_profile_id == document.candidate_profile_id,
+        previous_ids = [term.id for term in previous_terms]
+        skills = list(self.db.scalars(select(CandidateSkill).where(
+            CandidateSkill.extracted_term_id.in_(previous_ids),
             CandidateSkill.source == "extraction",
-        ).delete(synchronize_session=False)
-        self.db.query(ExtractedCandidateTerm).filter(
-            ExtractedCandidateTerm.cv_document_id == document.id
-        ).delete(synchronize_session=False)
-        self.db.flush()
+        ))) if previous_ids else []
+        skills_by_term = {skill.extracted_term_id: skill for skill in skills}
+        previous_by_key: dict[tuple, list[ExtractedCandidateTerm]] = defaultdict(list)
+        for previous in previous_terms:
+            if previous.id in skills_by_term:
+                previous_by_key[self._occurrence_key(previous)].append(previous)
+        incoming_counts = Counter(self._occurrence_key(term) for term in terms)
+        retained_ids = {
+            previous_by_key[key][0].id
+            for key, count in incoming_counts.items()
+            if count == 1 and len(previous_by_key[key]) == 1
+        }
+        removed_ids = [term_id for term_id in previous_ids if term_id not in retained_ids]
+        self._delete_extraction_skills(removed_ids)
+        self._delete_taxonomy_links("candidate", removed_ids)
+        if removed_ids:
+            self.db.query(ExtractedCandidateTerm).filter(
+                ExtractedCandidateTerm.id.in_(removed_ids)
+            ).delete(synchronize_session=False)
+            self.db.flush()
 
+        created_ids: list[UUID] = []
         for term in terms:
+            key = self._occurrence_key(term)
+            if incoming_counts[key] == 1 and len(previous_by_key[key]) == 1:
+                continue
             extracted_term = ExtractedCandidateTerm(
                 cv_document_id=document.id,
                 raw_text=term.raw_text,
@@ -170,6 +186,7 @@ class DocumentRepository:
             )
             self.db.add(extracted_term)
             self.db.flush()
+            created_ids.append(extracted_term.id)
             self.db.add(
                 CandidateSkill(
                     candidate_profile_id=document.candidate_profile_id,
@@ -183,6 +200,30 @@ class DocumentRepository:
                 )
             )
         self.db.flush()
+        linked_ids = set(self.db.scalars(select(TaxonomyLinkCandidate.extracted_term_id).where(
+            TaxonomyLinkCandidate.term_source == "candidate",
+            TaxonomyLinkCandidate.extracted_term_id.in_(retained_ids),
+        ))) if retained_ids else set()
+        linked_ids.update(self.db.scalars(select(ApprovedTaxonomyLink.extracted_term_id).where(
+            ApprovedTaxonomyLink.term_source == "candidate",
+            ApprovedTaxonomyLink.extracted_term_id.in_(retained_ids),
+        )))
+        return created_ids + sorted(retained_ids - linked_ids)
+
+    @staticmethod
+    def _occurrence_key(term: ExtractedCandidateTerm | ExtractedTerm) -> tuple:
+        return (
+            term.raw_text, term.normalized_text, term.term_type, term.source_section,
+            term.evidence_sentence, term.extraction_method, term.confidence_score,
+            term.start_char, term.end_char,
+        )
+
+    def _delete_extraction_skills(self, term_ids: list[UUID]) -> None:
+        if term_ids:
+            self.db.query(CandidateSkill).filter(
+                CandidateSkill.extracted_term_id.in_(term_ids),
+                CandidateSkill.source == "extraction",
+            ).delete(synchronize_session=False)
 
     def list_candidate_skills(self, candidate_profile_id: UUID) -> list[CandidateSkill]:
         return list(

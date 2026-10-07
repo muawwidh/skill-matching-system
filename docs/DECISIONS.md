@@ -236,3 +236,17 @@ for minimum acceptance, with the subjectivity limitation documented; a second
 reviewer and unweighted three-grade Cohen's kappa are optional. Only records
 with appropriate consent, de-identification and redistribution status may be
 committed; otherwise the real corpus stays in an ignored local directory.
+
+## D024 - Retained CVs Contribute To One Candidate Profile
+
+A candidate profile accumulates eligible evidence from all retained CVs, while
+extraction review and taxonomy selection remain occurrence- and CV-scoped.
+Processing or deleting one CV must not change another CV's skills or reviews.
+Manual profile skills are independent of CV deletion.
+
+Same-CV reprocessing preserves a uniquely identical extracted occurrence and
+its review identity. If complete occurrence fields change or duplicate keys
+are ambiguous, only that CV's superseded derived rows are replaced. This is
+not a general repeated-evidence matching policy. CV deletion removes derived
+skills before their SET NULL term FK can orphan them; append-only taxonomy
+review events are retained pending a separate privacy-retention decision.

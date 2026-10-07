@@ -287,7 +287,9 @@ class TaxonomyService:
             for item in self.repository.list_mappings()
         ]
 
-    def link_document(self, term_source: str, document_id: UUID) -> TaxonomyLinkRunResult:
+    def link_document(
+        self, term_source: str, document_id: UUID, term_ids: set[UUID] | None = None
+    ) -> TaxonomyLinkRunResult:
         concepts = self.repository.active_concepts()
         if not concepts:
             raise HTTPException(status_code=409, detail="Import an ESCO or O*NET taxonomy release before linking terms.")
@@ -296,6 +298,8 @@ class TaxonomyService:
             if term_source == "candidate"
             else self.repository.job_terms_for_document(document_id)
         )
+        if term_ids is not None:
+            terms = [term for term in terms if term.id in term_ids]
         candidates_created = 0
         auto_approved = 0
         for term in terms:
@@ -328,11 +332,11 @@ class TaxonomyService:
         )
 
     def link_document_if_taxonomy_available(
-        self, term_source: str, document_id: UUID
+        self, term_source: str, document_id: UUID, term_ids: set[UUID] | None = None
     ) -> TaxonomyLinkRunResult | None:
         if not self.repository.active_concepts():
             return None
-        return self.link_document(term_source, document_id)
+        return self.link_document(term_source, document_id, term_ids=term_ids)
 
     def pending_links(self) -> list[TaxonomyLinkCandidateRead]:
         return [self._candidate_read(item) for item in self.repository.pending_link_candidates()]

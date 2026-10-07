@@ -123,8 +123,11 @@ class CvService:
             full_text=document.cleaned_text,
             document_kind="candidate",
         )
-        self.repository.replace_candidate_terms(document, terms)
-        TaxonomyService(self.db).link_document_if_taxonomy_available("candidate", document.id)
+        created_term_ids = self.repository.replace_candidate_terms(document, terms)
+        if created_term_ids:
+            TaxonomyService(self.db).link_document_if_taxonomy_available(
+                "candidate", document.id, term_ids=set(created_term_ids)
+            )
         document.status = "processed"
         document.error_message = ""
         document.processed_at = datetime.now(timezone.utc)
