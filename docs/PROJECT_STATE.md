@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-10-02
+Last updated: 2026-10-08
 
 ## Repository
 
@@ -189,8 +189,9 @@ Migration status at Phase 4 closure (historical snapshot, not current repository
 - Repository migration head: `0007_taxonomy_review_audit`.
 - Last successfully verified revision: `0007_taxonomy_review_audit`, isolated PostgreSQL 16,
   including populated 0005 upgrade and preservation of existing reviews from 0006.
-- Developer local Compose database head: `0007_taxonomy_review_audit`, user-reported
-  deployed runtime evidence on 2026-10-02; not queried or changed by this documentation review.
+- Developer local Compose database head: `0007_taxonomy_review_audit`, reported
+  from deployed runtime on 2026-10-02 and last independently observed through a
+  read-only query on 2026-10-06; not queried or changed during Stability Batch 3.
 
 Status:
 
@@ -607,7 +608,7 @@ or inspect/change the developer database.
 | Candidate restrictions and intended reads | Administrative page redirect, authenticated read-only APIs and intended 403 responses verified per user |
 | Taxonomy review consistency | Approval, rejection, replacement, superseded state, refresh persistence and history verified per user; selected/alternative rejection covered by regression tests |
 | Candidate consolidation | Grouping by taxonomy identity, separate evidence/review controls and two approved/one pending occurrences persisted per user; edge cases and corrections covered by regression tests |
-| Migration status | Repository, isolated verified and user-reported developer heads all 0007_taxonomy_review_audit |
+| Migration status | At Phase 4 closure, repository and isolated verified heads were 0007_taxonomy_review_audit; the developer head was last independently observed at 0007_taxonomy_review_audit through a read-only query on 2026-10-06 |
 
 ### Active developer releases
 
@@ -662,12 +663,36 @@ candidate/profile and job vectors, a resumable indexing CLI, and candidate-only
 `GET /retrieval/jobs`. Exact cosine retrieval remains separate from
 `/matches/recommendations`. There is no semantic taxonomy-linking change.
 The new representation and provisioning contract is in phase5-dense-retrieval.md.
-The developer database remains at user-reported `0007_taxonomy_review_audit`;
-do not apply `0008` there without a separate deployment instruction. The
-repository head is `0008_dense_retrieval`. Last successfully verified migration
-revision is `0008_dense_retrieval` in isolated PostgreSQL. A populated `0007`
-schema was upgraded, downgraded and re-upgraded there; extension, vector(384),
+The developer database was last independently observed through a read-only query
+at `0007_taxonomy_review_audit` on 2026-10-06; do not apply `0008` there without
+a separate deployment instruction. The repository head is `0008_dense_retrieval`.
+Last successfully verified migration revision is `0008_dense_retrieval` in
+isolated PostgreSQL. A populated `0007` schema was upgraded, downgraded and
+re-upgraded there; extension, vector(384),
 foreign keys, uniqueness, cascade and fresh-session cosine ranking passed.
+Backend container startup now performs a read-only exact Alembic head-set check
+before Uvicorn. It refuses mismatched or unreachable databases; it does not
+apply migrations. The opt-in Compose `migrate` service runs `alembic upgrade head`
+only when deliberately invoked with the `maintenance` profile. Ordinary Compose
+startup does not run or depend on it. The developer database was not queried or
+modified during Stability Batch 3; the updated backend will refuse to start
+against its last observed `0007` revision until an explicit, backed-up migration
+is authorized. Phase 5 remains incomplete.
+
+Batch 3 verification after the static startup guard: focused migration-check
+tests **12 passed** against isolated PostgreSQL; complete default backend suite
+**178 passed, 33 skipped**; complete isolated PostgreSQL-enabled suite
+**210 passed, 1 skipped**. Compose
+configuration excluded `migrate` by default and included it with the maintenance
+profile. Backend image build and disposable Docker checks passed: fresh and
+behind/unknown revisions refused before serving, at-head health succeeded,
+explicit migration and repeat migration succeeded, and failed startup left
+the isolated revision/schema/sentinel unchanged. These prior disposable-runtime
+results remain applicable because startup behavior was unchanged by the follow-up.
+No normal Compose stack or
+developer database was accessed or changed. A connection timeout remains a possible
+future operational hardening measure; it was not implemented in Batch 3.
+
 The pinned `intfloat/multilingual-e5-small` revision
 `fd1525a9fd15316a2d503bf26ab031a61d056e98` was provisioned under the
 ignored local `models/` directory and executed offline, including a
@@ -682,8 +707,8 @@ fixture counts and measured timings are recorded in
 `docs/verification/phase5-real-model.md`. Earlier Docker image build and
 `git diff --check` passed; no frontend files changed, so no frontend build was
 needed for this verification. The developer database remains at the
-user-reported `0007_taxonomy_review_audit` (not queried or migrated in this
-step). No human-labelled relevance set has been supplied, so real
+last independently observed `0007_taxonomy_review_audit` on 2026-10-06
+(not queried or migrated in this step). No human-labelled relevance set has been supplied, so real
 Recall@K/MRR evaluation is **PENDING**. Phase 5 is not complete.
 
 The Phase 5 human-labelled benchmark pack is now implemented but not populated:

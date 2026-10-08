@@ -1,3 +1,19 @@
+x-backend-environment: &backend-environment
+  PROJECT_NAME: ${PROJECT_NAME:-Skill Gap Job Matching System}
+  APP_VERSION: ${APP_VERSION:-0.1.0}
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  DEBUG: ${DEBUG:-true}
+  DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://skillgap:skillgap@db:5432/skillgap}
+  SECRET_KEY: ${SECRET_KEY:-replace-with-a-long-random-secret}
+  ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+  REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+  CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://localhost:8080"]}
+  DENSE_MODEL_PATH: /models/multilingual-e5-small-fd1525a
+
+x-backend-volumes: &backend-volumes
+  - ./data:/data
+  - ./models:/models:ro
+
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -16,25 +32,14 @@ services:
       retries: 5
 
   backend:
+    image: skillgap-backend:local
     build:
       context: ./backend
-    environment:
-      PROJECT_NAME: ${PROJECT_NAME:-Skill Gap Job Matching System}
-      APP_VERSION: ${APP_VERSION:-0.1.0}
-      ENVIRONMENT: ${ENVIRONMENT:-development}
-      DEBUG: ${DEBUG:-true}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://skillgap:skillgap@db:5432/skillgap}
-      SECRET_KEY: ${SECRET_KEY:-replace-with-a-long-random-secret}
-      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
-      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
-      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://localhost:8080"]}
-      DENSE_MODEL_PATH: /models/multilingual-e5-small-fd1525a
+    environment: *backend-environment
     ports:
       - "8000:8000"
 
-    volumes:
-      - ./data:/data
-      - ./models:/models:ro
+    volumes: *backend-volumes
     depends_on:
       db:
         condition: service_healthy
@@ -43,6 +48,17 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+
+  migrate:
+    image: skillgap-backend:local
+    profiles: ["maintenance"]
+    command: ["alembic", "upgrade", "head"]
+    environment: *backend-environment
+    volumes: *backend-volumes
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
   frontend:
     build:

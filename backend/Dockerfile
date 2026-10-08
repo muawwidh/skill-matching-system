@@ -13,4 +13,4 @@ COPY alembic.ini /app/alembic.ini
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "python -m app.utils.check_migrations && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]

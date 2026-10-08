@@ -250,3 +250,13 @@ are ambiguous, only that CV's superseded derived rows are replaced. This is
 not a general repeated-evidence matching policy. CV deletion removes derived
 skills before their SET NULL term FK can orphan them; append-only taxonomy
 review events are retained pending a separate privacy-retention decision.
+
+## D025 - Database Migrations Are Explicit Operator Actions
+
+Serving application traffic must not apply Alembic migrations. Backend container
+startup reads the repository and database revision head sets and starts only when
+they match exactly; an absent, divergent or unreachable database fails closed.
+The checker is read-only and reports no database credentials. The same backend
+image exposes an opt-in Compose maintenance service for explicit
+`alembic upgrade head`; ordinary Compose startup neither runs nor depends on it. Backups and
+upgrade timing remain operator responsibilities.

@@ -3,8 +3,8 @@
 A modular full-stack research application for explainable skill gap analysis and job recommendations.
 The system is designed for career guidance and decision support, not automated hiring decisions.
 
-This repository currently implements Phases 1 through 3 from the requirements, together with an
-early exact-skill matching baseline that will be expanded during Phase 6.
+This repository implements Phases 1 through 4 and an in-progress Phase 5 retrieval
+system, together with an early exact-skill matching baseline that will be expanded during Phase 6.
 
 Phase 1 includes foundation, Docker setup, PostgreSQL setup, backend app shell, frontend app shell,
 configuration management, authentication, role-based access, database connection, Alembic migration,
@@ -27,7 +27,7 @@ automatic approval, and an administrator mapping-review interface.
 Native contracts are ESCO 1.2.1 English CSV, O*NET 29.0 TXT and O*NET 31.0 CSV packages.
 See docs/onet-31-contract.md for the exact 31.0 scope and verification procedure.
 Phase 4 is complete based on automated/package evidence and user-reported deployed
-workflow acceptance (2026-10-02); see `docs/PROJECT_STATE.md`. Phase 5 is not started.
+workflow acceptance (2026-10-02); see `docs/PROJECT_STATE.md`. Phase 5 is in progress.
 
 ## Architecture
 
@@ -58,11 +58,19 @@ Create an environment file:
 cp .env.example .env
 ```
 
-Start the system:
+For a fresh installation, explicitly migrate before starting the application:
 
 ```bash
-docker compose up --build
+docker compose up -d db
+docker compose build backend
+docker compose --profile maintenance run --rm migrate
+docker compose up -d --build backend frontend nginx
 ```
+
+For an existing database, create and verify a backup before the explicit migration.
+Inspect the release notes and current revision first; do not run the upgrade against
+an existing database merely to start the backend. The `migrate` service is excluded
+from ordinary `docker compose up` and is never a backend dependency.
 
 Open:
 
@@ -72,12 +80,26 @@ Open:
 
 ## Database Migrations
 
-The backend container runs migrations at startup. To run them manually:
+The backend checks Alembic revision sets before Uvicorn starts. A database that is
+uninitialized, behind, ahead, divergent or unreachable prevents startup; the check
+does not change schema or data. To apply migrations deliberately with the same
+backend image and configuration:
 
 ```bash
-cd backend
-alembic upgrade head
+docker compose up -d db
+docker compose build backend
+docker compose --profile maintenance run --rm migrate
+docker compose up -d backend frontend nginx
+docker compose exec backend python -m app.utils.check_migrations
+curl http://localhost:8000/health
 ```
+
+The `migrate` service uses the backend image. Build it first so the explicit
+upgrade runs the migrations from the current repository, not an absent or older image.
+
+For backend development outside Compose, run `python -m app.utils.check_migrations`
+before Uvicorn. If an upgrade is intended, use `cd backend && alembic upgrade head`
+as a separate operator action after backing up existing data.
 
 ## Local Backend Development
 
@@ -86,6 +108,7 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements/dev.txt
+python -m app.utils.check_migrations
 uvicorn app.main:app --reload
 ```
 
