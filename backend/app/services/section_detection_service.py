@@ -31,6 +31,7 @@ class SectionDetectionService:
         ),
         "education": (
             "education",
+            "education and certifications",
             "academic background",
             "academic qualifications",
             "qualifications and education",
@@ -65,17 +66,30 @@ class SectionDetectionService:
             ]
 
         sections: list[DetectedSection] = []
+        if text[: headings[0][0]].strip():
+            sections.append(
+                DetectedSection(
+                    section_type="full_text",
+                    heading="Full text",
+                    content=text[: headings[0][0]],
+                    start_char=0,
+                    end_char=headings[0][0],
+                    confidence_score=0.6,
+                )
+            )
         for index, (start, end, section_type, heading) in enumerate(headings):
             next_start = headings[index + 1][0] if index + 1 < len(headings) else len(text)
-            content = text[end:next_start].strip()
+            span = text[end:next_start]
+            content = span.strip()
             if content:
+                content_start = end + len(span) - len(span.lstrip())
                 sections.append(
                     DetectedSection(
                         section_type=section_type,
                         heading=heading,
                         content=content,
-                        start_char=end,
-                        end_char=next_start,
+                        start_char=content_start,
+                        end_char=content_start + len(content),
                     )
                 )
         return sections or [

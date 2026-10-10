@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-10-08
+Last updated: 2026-10-09
 
 ## Repository
 
@@ -117,6 +117,14 @@ Implemented:
 
 Scanned PDF OCR is not currently part of the baseline.
 
+Stability Batch 4 updates PDF normalization at upload/parsing: only genuine
+line headings/delimiters and strongly structured flattened uppercase heading
+runs create sections. Pre-heading body text is retained as `full_text` with
+valid offsets. Existing uploaded PDFs keep their stored text on ordinary
+`process_cv`: reprocessing does not rerun parsing or repair legacy PDF
+normalization. Affected PDFs require a new upload for corrected stored text;
+the new CV lifecycle does not inherit prior reviews.
+
 ## Phase 3
 
 Status: COMPLETE
@@ -148,6 +156,24 @@ occurrence may preserve separate evidence.
 
 Candidate-facing CV skills now have a consolidated read view with expandable
 occurrences (see Phase 4 below); stored extraction occurrences remain separate.
+Newly persisted candidate/job extracted terms identify extractor contract `v2`
+in `extraction_method` (`dictionary@v2`, `regex@v2`, or optional
+`spacy_phrase_matcher@v2`). Dictionary boundaries now admit ordinary terminal
+punctuation while protecting technical-name continuations. Existing terms are
+not rewritten. Every extraction made before Stability Batch 4 has a legacy
+`extraction_method` value. Because that field is part of Batch 2's complete
+occurrence reconciliation key, reprocessing a pre-v2 CV replaces all its
+legacy extraction occurrences even when visible text and offsets are unchanged.
+Approved, rejected and pending extraction reviews reset to newly extracted
+`pending` skills. A previously rejected skill may temporarily enter the
+transitional prototype matcher, which includes pending but excludes rejected
+skills. Taxonomy candidates and selected links for replaced terms are removed;
+taxonomy review audit events remain append-only. The candidate embedding is
+marked stale by the existing invalidation lifecycle. All reprocessed pre-v2
+evidence must be reviewed and relinked again before indexing or evaluation.
+This contract boundary does not safely migrate reviews. There is no requirement
+to reprocess reviewed legacy CVs immediately: leave them untouched unless
+deliberately regenerating and re-reviewing their evidence.
 
 ## Early Matching Prototype
 

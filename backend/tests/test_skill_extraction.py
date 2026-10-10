@@ -1,9 +1,15 @@
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Role, User
-from app.nlp.skill_extractor import SkillExtractor
+from app.db.models import ExtractedCandidateTerm, ExtractedJobTerm, Role, User
+from app.nlp.skill_extractor import (
+    EXTRACTION_CONTRACT_VERSION,
+    SkillDictionary,
+    SkillDictionaryEntry,
+    SkillExtractor,
+)
 from app.services.section_detection_service import SectionDetectionService
 
 
@@ -62,6 +68,119 @@ def test_skill_extractor_trims_evidence_from_dense_skill_lists() -> None:
     assert by_name["fastapi"] == "FastAPI"
     assert by_name["git"] == "Git & GitHub"
     assert len(by_name["python"]) < 30
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Experience with SQL.", {"sql"}),
+        ("Used Docker, Git, and Python.", {"docker", "git", "python"}),
+        ("Skills include FastAPI; PostgreSQL: advanced.", {"fastapi", "postgresql"}),
+        ("Built systems with React!", {"react"}),
+        ("Worked with Java?", {"java"}),
+        ("Used PYTHON", {"python"}),
+        ("Used Python)", {"python"}),
+    ],
+)
+def test_dictionary_punctuation_and_case_preserve_offsets_and_evidence(text: str, expected: set[str]) -> None:
+    extractor = SkillExtractor()
+    extractor.spacy_nlp = None
+    extractor.spacy_matcher = None
+    terms = extractor.extract_from_sections(SectionDetectionService().detect(text), text, "candidate")
+    dictionary_terms = [term for term in terms if term.extraction_method.startswith("dictionary@")]
+    assert {term.normalized_text for term in dictionary_terms} == expected
+    for term in dictionary_terms:
+        assert text[term.start_char : term.end_char] == term.raw_text
+        assert term.raw_text.lower() in term.evidence_sentence.lower()
+        assert term.extraction_method == f"dictionary@{EXTRACTION_CONTRACT_VERSION}"
+
+
+def test_dictionary_boundaries_protect_technical_names_and_substrings() -> None:
+    dictionary = SkillDictionary(
+        [
+            SkillDictionaryEntry(label=name, term_type="skill", aliases=(name.lower(),))
+            for name in ("C++", "C#", ".NET", "Node.js", "Java", "TypeScript", "React")
+        ]
+    )
+    extractor = SkillExtractor(dictionary)
+    extractor.spacy_nlp = None
+    extractor.spacy_matcher = None
+    text = "C++ C# .NET Node.js Java TypeScript; reactive javascript typescriptish C++Plus Node.jsx"
+    terms = extractor.extract_from_sections(SectionDetectionService().detect(text), text, "candidate")
+    assert {term.normalized_text for term in terms} == {
+        "c++", "c#", ".net", "node.js", "java", "typescript"
+    }
+    assert all(text[term.start_char : term.end_char] == term.raw_text for term in terms)
+
+
+def test_dictionary_dotted_identifier_boundary_requires_complete_skill_token() -> None:
+    dictionary = SkillDictionary(
+        [
+            SkillDictionaryEntry(label="Python", term_type="skill", aliases=("python",)),
+            SkillDictionaryEntry(label="Node.js", term_type="tool", aliases=("node.js",)),
+        ]
+    )
+    extractor = SkillExtractor(dictionary)
+    extractor.spacy_nlp = None
+    extractor.spacy_matcher = None
+    text = "Python.org Python. Node.js Node.js.example"
+    terms = extractor.extract_from_sections(SectionDetectionService().detect(text), text, "candidate")
+    assert [(term.normalized_text, term.raw_text, term.start_char, term.end_char) for term in terms] == [
+        ("python", "Python", text.index("Python. "), text.index("Python. ") + len("Python")),
+        ("node.js", "Node.js", text.index("Node.js "), text.index("Node.js ") + len("Node.js")),
+    ]
+    assert all(term.extraction_method == "dictionary@v2" for term in terms)
+
+
+def test_optional_spacy_method_keeps_distinct_versioned_provenance() -> None:
+    class FakeSpan:
+        text = "Python"
+        start_char = 0
+        end_char = 6
+
+    class FakeDocument:
+        def __getitem__(self, item):
+            return FakeSpan()
+
+    class FakeNlp:
+        vocab = type("Vocab", (), {"strings": {1: "Python::skill"}})()
+
+        def __call__(self, text):
+            return FakeDocument()
+
+    extractor = SkillExtractor()
+    extractor.spacy_nlp = FakeNlp()
+    extractor.spacy_matcher = lambda document: [(1, 0, 1)]
+    terms = extractor.extract_from_sections(SectionDetectionService().detect("Python"), "Python", "candidate")
+    assert len(terms) == 1
+    assert terms[0].extraction_method == "spacy_phrase_matcher@v2"
+    assert (terms[0].raw_text, terms[0].start_char, terms[0].end_char) == ("Python", 0, 6)
+
+
+def test_versioned_extraction_methods_are_persisted_for_candidate_and_job(
+    client: TestClient, db_session: Session
+) -> None:
+    assert EXTRACTION_CONTRACT_VERSION == "v2"
+    headers = auth_headers(client)
+    cv = client.post(
+        "/cvs/paste",
+        headers=headers,
+        json={"text": "Skills: Python. 5 years experience", "original_filename": "version.txt", "consent_to_process": True},
+    )
+    assert cv.status_code == 201
+    job = client.post(
+        "/jobs",
+        headers=job_manager_headers(client, db_session),
+        json={
+            "title": "Engineer", "company": "Example", "location": "Remote",
+            "employment_type": "Full-time", "description": "Required skills: SQL. 3 years experience",
+        },
+    )
+    assert job.status_code == 201
+    candidate_methods = set(db_session.scalars(select(ExtractedCandidateTerm.extraction_method)))
+    job_methods = set(db_session.scalars(select(ExtractedJobTerm.extraction_method)))
+    assert {"dictionary@v2", "regex@v2"} <= candidate_methods
+    assert {"dictionary@v2", "regex@v2"} <= job_methods
 
 
 def test_cv_processing_extracts_and_reviews_candidate_skills(client: TestClient) -> None:

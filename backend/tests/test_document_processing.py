@@ -1,8 +1,10 @@
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Role, User
+from app.nlp.skill_extractor import SkillExtractor
 from app.services.document_parser_service import DocumentParserService
 from app.services.pdf_text_normalization_service import PdfTextNormalizationService
 from app.services.section_detection_service import SectionDetectionService
@@ -51,20 +53,128 @@ def test_section_detection_handles_pdf_style_heading_variants() -> None:
     ]
 
 
-def test_pdf_text_normalizer_splits_inline_cv_headings() -> None:
-    text = (
-        "Jane Doe Professional Summary Backend engineer "
-        "Work Experience Built APIs Education MSc Computer Science "
-        "Skills Python SQL"
-    )
-    normalized = PdfTextNormalizationService().normalize(text)
+@pytest.mark.parametrize(
+    ("source", "normalized_expected", "section_types", "expected_terms"),
+    [
+        (
+            "Developer with 5 years of experience in Python and SQL.",
+            "Developer with 5 years of experience in Python and SQL.",
+            ["full_text"], {"5 years of experience", "python", "sql"},
+        ),
+        (
+            "Jane Doe Professional Summary Backend developer…",
+            "Jane Doe Professional Summary Backend developer…",
+            ["full_text"], set(),
+        ),
+        (
+            "Professional Summary\nBackend developer with Python.",
+            "Professional Summary\nBackend developer with Python.",
+            ["summary"], {"python"},
+        ),
+        (
+            "Education and certifications\nMSc Computer Science",
+            "Education and certifications\nMSc Computer Science",
+            ["education"], {"msc"},
+        ),
+        ("Skills: Python, SQL", "Skills: Python, SQL", ["skills"], {"python", "sql"}),
+        (
+            "Intro\nWork Experience\nBuilt APIs with Python.",
+            "Intro\nWork Experience\nBuilt APIs with Python.",
+            ["full_text", "work_experience"], {"python"},
+        ),
+        (
+            "Led data projects; improved customer profile matching.",
+            "Led data projects; improved customer profile matching.",
+            ["full_text"], set(),
+        ),
+        ("Gained skills in Docker.", "Gained skills in Docker.", ["full_text"], {"docker"}),
+        (
+            "PROFILE Backend developer. EXPERIENCE 5 years experience with Python. SKILLS Docker, SQL.",
+            "PROFILE\nBackend developer.\nEXPERIENCE\n5 years experience with Python.\nSKILLS\nDocker, SQL.",
+            ["summary", "work_experience", "skills"],
+            {"5 years experience", "python", "docker", "sql"},
+        ),
+        (
+            "EXPERIENCE in Python and SKILLS acquired over time.",
+            "EXPERIENCE in Python and SKILLS acquired over time.",
+            ["full_text"], {"python"},
+        ),
+        (
+            "PROFILE Backend developer. SKILLS Python, SQL.",
+            "PROFILE\nBackend developer.\nSKILLS\nPython, SQL.",
+            ["summary", "skills"], {"python", "sql"},
+        ),
+    ],
+)
+def test_pdf_normalization_golden_sections_and_extraction(
+    source: str, normalized_expected: str, section_types: list[str], expected_terms: set[str]
+) -> None:
+    normalizer = PdfTextNormalizationService()
+    normalized = normalizer.normalize(source)
+    assert normalized == normalized_expected
+    assert normalizer.normalize(source) == normalized
     sections = SectionDetectionService().detect(normalized)
-    assert {section.section_type for section in sections} >= {
-        "summary",
-        "work_experience",
-        "education",
-        "skills",
-    }
+    assert [section.section_type for section in sections] == section_types
+    assert all(normalized[section.start_char : section.end_char] == section.content for section in sections)
+    if source.startswith("Intro\nWork Experience"):
+        assert sections[0].content == "Intro\n"
+        assert sections[1].heading == "Work Experience"
+    terms = SkillExtractor().extract_from_sections(sections, normalized, "candidate")
+    assert {term.normalized_text for term in terms} >= expected_terms
+    assert all(normalized[term.start_char : term.end_char] == term.raw_text for term in terms)
+
+
+def test_flattened_uppercase_multiword_headings_keep_complete_section_boundaries() -> None:
+    source = (
+        "WORK EXPERIENCE Built Python APIs. PROFESSIONAL SUMMARY Backend engineer. "
+        "TECHNICAL SKILLS Python, SQL."
+    )
+    expected = (
+        "WORK EXPERIENCE\nBuilt Python APIs.\nPROFESSIONAL SUMMARY\nBackend engineer.\n"
+        "TECHNICAL SKILLS\nPython, SQL."
+    )
+    normalizer = PdfTextNormalizationService()
+    normalized = normalizer.normalize(source)
+    assert normalized == expected
+    assert normalizer.normalize(source) == normalized
+    assert normalizer.normalize(normalized) == normalized
+
+    sections = SectionDetectionService().detect(normalized)
+    assert [(section.section_type, section.heading, section.content) for section in sections] == [
+        ("work_experience", "WORK EXPERIENCE", "Built Python APIs."),
+        ("summary", "PROFESSIONAL SUMMARY", "Backend engineer."),
+        ("skills", "TECHNICAL SKILLS", "Python, SQL."),
+    ]
+    assert all(normalized[section.start_char : section.end_char] == section.content for section in sections)
+    assert all(first.end_char <= second.start_char for first, second in zip(sections, sections[1:]))
+    assert all(word not in section.content for section in sections for word in ("WORK", "PROFESSIONAL", "TECHNICAL"))
+    terms = SkillExtractor().extract_from_sections(sections, normalized, "candidate")
+    assert {"python", "sql"} <= {term.normalized_text for term in terms}
+    assert all(normalized[term.start_char : term.end_char] == term.raw_text for term in terms)
+
+
+def test_section_detection_preserves_exact_preamble_and_nonoverlapping_offsets() -> None:
+    text = "5 years experience with Python.\nProfessional Summary\nBackend developer.\nSkills\nSQL"
+    sections = SectionDetectionService().detect(text)
+    assert [section.section_type for section in sections] == ["full_text", "summary", "skills"]
+    assert sections[0].content == text[: text.index("Professional Summary")]
+    assert (sections[0].start_char, sections[0].end_char) == (0, text.index("Professional Summary"))
+    assert all(text[section.start_char : section.end_char] == section.content for section in sections)
+    assert all(first.end_char <= second.start_char for first, second in zip(sections, sections[1:]))
+    without_headings = text
+    for start, end, _, _ in reversed(SectionDetectionService()._find_headings(text)):
+        without_headings = without_headings[:start] + " " + without_headings[end:]
+    assert without_headings.split() == " ".join(section.content for section in sections).split()
+    terms = SkillExtractor().extract_from_sections(sections, text, "candidate")
+    assert {term.normalized_text for term in terms} >= {"5 years experience", "python", "sql"}
+    assert {term.source_section for term in terms if term.normalized_text == "python"} == {"full_text"}
+
+
+def test_whitespace_only_preamble_does_not_create_a_section() -> None:
+    text = " \n\nSkills: Python"
+    sections = SectionDetectionService().detect(text)
+    assert [section.section_type for section in sections] == ["skills"]
+    assert text[sections[0].start_char : sections[0].end_char] == "Python"
 
 
 def test_txt_parser_validates_supported_content() -> None:

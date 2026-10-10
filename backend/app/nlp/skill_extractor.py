@@ -4,6 +4,9 @@ from pathlib import Path
 import re
 
 
+EXTRACTION_CONTRACT_VERSION = "v2"
+
+
 @dataclass(frozen=True)
 class SkillDictionaryEntry:
     label: str
@@ -38,7 +41,9 @@ class SkillDictionary:
                 SkillDictionaryEntry(
                     label=item["label"],
                     term_type=item.get("type", "skill"),
-                    aliases=tuple({item["label"].lower(), *item.get("aliases", [])}),
+                    aliases=tuple(
+                        sorted({item["label"].lower(), *item.get("aliases", [])}, key=lambda value: (value.casefold(), value))
+                    ),
                 )
                 for item in raw_entries
             ]
@@ -97,8 +102,11 @@ class SkillExtractor:
                 requirement_type,
             )
         for entry in self.dictionary.entries:
-            for alias in sorted(entry.aliases, key=len, reverse=True):
-                pattern = re.compile(rf"(?<![A-Za-z0-9+#.-]){re.escape(alias)}(?![A-Za-z0-9+#.-])", re.I)
+            for alias in sorted(entry.aliases, key=lambda value: (-len(value), value.casefold(), value)):
+                pattern = re.compile(
+                    rf"(?<![A-Za-z0-9+#.-]){re.escape(alias)}(?![A-Za-z0-9+#-]|\.(?=[A-Za-z0-9]))",
+                    re.I,
+                )
                 for match in pattern.finditer(text):
                     start = section_offset + match.start()
                     end = section_offset + match.end()
@@ -109,7 +117,7 @@ class SkillExtractor:
                             term_type=entry.term_type,
                             source_section=source_section,
                             evidence_sentence=self._evidence_sentence(text, match.start(), match.end()),
-                            extraction_method="dictionary",
+                            extraction_method=f"dictionary@{EXTRACTION_CONTRACT_VERSION}",
                             confidence_score=0.9,
                             start_char=start,
                             end_char=end,
@@ -137,7 +145,7 @@ class SkillExtractor:
                     term_type=term_type,
                     source_section=source_section,
                     evidence_sentence=self._evidence_sentence(text, span.start_char, span.end_char),
-                    extraction_method="spacy_phrase_matcher",
+                    extraction_method=f"spacy_phrase_matcher@{EXTRACTION_CONTRACT_VERSION}",
                     confidence_score=0.92,
                     start_char=section_offset + span.start_char,
                     end_char=section_offset + span.end_char,
@@ -168,7 +176,7 @@ class SkillExtractor:
                         term_type=term_type,
                         source_section=source_section,
                         evidence_sentence=self._evidence_sentence(text, match.start(), match.end()),
-                        extraction_method="regex",
+                        extraction_method=f"regex@{EXTRACTION_CONTRACT_VERSION}",
                         confidence_score=confidence,
                         start_char=section_offset + match.start(),
                         end_char=section_offset + match.end(),
@@ -179,6 +187,8 @@ class SkillExtractor:
 
     @staticmethod
     def _section_offset(full_text: str, section_content: str, fallback_start: int) -> int:
+        if full_text[fallback_start : fallback_start + len(section_content)] == section_content:
+            return fallback_start
         position = full_text.find(section_content)
         return position if position >= 0 else fallback_start
 

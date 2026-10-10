@@ -260,3 +260,19 @@ The checker is read-only and reports no database credentials. The same backend
 image exposes an opt-in Compose maintenance service for explicit
 `alembic upgrade head`; ordinary Compose startup neither runs nor depends on it. Backups and
 upgrade timing remain operator responsibilities.
+
+## D026 - Conservative PDF Headings And Versioned Extraction Provenance
+
+PDF normalization must not infer headings from ordinary inline prose. Section
+headings need line-boundary or explicit delimiter evidence; recovery from a
+flattened PDF line requires a known uppercase heading at its start and either
+two more uppercase headings or a second after sentence-ending punctuation.
+Longest-first non-overlapping recognition
+keeps multiword headings together. Uncertain text remains prose, and meaningful
+preamble text remains extractable as `full_text`.
+
+Extractor behavior is identified by a stable `v2` contract in the existing
+extracted-term `extraction_method` field. Dictionary-regex, regex-indicator and
+optional spaCy methods remain distinct; a later behavior change must bump the
+contract constant. This is provenance for newly persisted terms, not a
+retroactive classification of old terms or a correction-history mechanism.
