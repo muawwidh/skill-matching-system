@@ -304,9 +304,9 @@ class TaxonomyService:
         auto_approved = 0
         for term in terms:
             self.repository.replace_link_candidates(term_source, term.id)
-            ranked = self.linker.rank(term.normalized_text, concepts)
+            ranked, unique_top = self.linker.rank_with_top_uniqueness(term.normalized_text, concepts)
             for rank, result in enumerate(ranked, start=1):
-                should_auto_approve = rank == 1 and result.confidence >= 0.95
+                should_auto_approve = rank == 1 and unique_top and result.confidence >= 0.95
                 candidate = self.repository.add_link_candidate(
                     term_source=term_source,
                     extracted_term_id=term.id,

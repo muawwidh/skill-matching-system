@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-10-09
+Last updated: 2026-10-10
 
 ## Repository
 
@@ -246,7 +246,8 @@ Implemented in the current codebase:
 - RapidFuzz fuzzy matching
 - confidence scoring
 - ranked link candidates
-- automatic approval of strong deterministic matches
+- automatic approval of strong deterministic matches only when one concept has
+  the unique highest confidence above the existing threshold
 - administrator/researcher review workflow
 - automatic taxonomy linking during CV/job processing
 - taxonomy management frontend
@@ -447,6 +448,16 @@ Current deterministic match labels include:
 These exact methods operate on normalized values.
 
 Fuzzy matching is used when deterministic normalized label matching fails.
+
+Stability Batch 5 retains preferred 1.00, alternative 0.98, fuzzy confidence,
+the 0.95 auto-approval threshold and the top-five candidate limit. Multiple
+matching labels on one release-scoped concept collapse to its strongest match.
+Only a unique top-confidence concept may auto-approve; equal-confidence distinct
+concepts remain pending, including across releases. Stable label/release/UUID
+ordering determines display rank, not semantic superiority. The ambiguity check
+precedes the candidate limit. Existing selections, approvals and audit events
+were not rewritten; possible historical cleanup requires a separate authorized
+inventory. Phase 5 remains incomplete pending human-labelled retrieval evaluation.
 
 ## Taxonomy Release Lifecycle
 

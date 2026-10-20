@@ -9,10 +9,14 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models import ApprovedTaxonomyLink, Role, TaxonomyLinkCandidate, User
+from app.db.models import (
+    ApprovedTaxonomyLink, CandidateProfile, CvDocument, ExtractedCandidateTerm,
+    Role, TaxonomyLabel, TaxonomyLinkCandidate, User,
+)
 from app.db.models.taxonomy import TaxonomyReviewEvent
 from app.repositories.taxonomy_repository import TaxonomyRepository
 from app.services.taxonomy_service import TaxonomyService
+from app.taxonomy.normalization import normalize_taxonomy_text
 from test_taxonomy import register
 from test_taxonomy_postgres import pg_database, snapshot  # noqa: F401
 
@@ -226,3 +230,135 @@ def test_upgrade_0006_does_not_repair_existing_review_rows(pg_database):
     assert after.pop("candidate_profile_embeddings") == []
     assert after.pop("job_embeddings") == []
     assert before == after
+
+
+def seed_linkable_cv(db: Session, text: str) -> tuple[User, CvDocument, ExtractedCandidateTerm]:
+    actor = User(email=f"link-{uuid4()}@example.com", full_name="Link Reviewer", hashed_password="unused")
+    db.add(actor)
+    db.flush()
+    profile = CandidateProfile(user_id=actor.id, consent_to_process_cv=True)
+    db.add(profile)
+    db.flush()
+    document = CvDocument(
+        candidate_profile_id=profile.id, original_filename="synthetic.txt", content_type="text/plain",
+        source="paste", raw_text=text, cleaned_text=text,
+    )
+    db.add(document)
+    db.flush()
+    term = ExtractedCandidateTerm(
+        cv_document_id=document.id, raw_text=text, normalized_text=normalize_taxonomy_text(text),
+        term_type="skill", source_section="skills", evidence_sentence=text,
+        extraction_method="test", confidence_score=0.9, start_char=0, end_char=len(text),
+    )
+    db.add(term)
+    db.commit()
+    return actor, document, term
+
+
+def test_automatic_linking_requires_unique_top_concept_in_postgres(pg_database, monkeypatch):
+    engine, _, _ = pg_database
+    with Session(engine) as db:
+        repo = TaxonomyRepository(db)
+        source = repo.get_or_create_source("AMBIGUITY_TEST", "Ambiguity Test", "", "")
+        version = repo.replace_version(source, "1", "", "test", "", True)
+
+        def concept(preferred: str, *alternatives: str):
+            return repo.add_concept(
+                version.id, str(uuid4()), preferred, normalize_taxonomy_text(preferred), "", "skill", "en",
+                [(label, normalize_taxonomy_text(label)) for label in alternatives], {},
+            )
+
+        concept("BatchFiveUniquePreferred")
+        concept("Unrelated unique", "BatchFiveUniqueAlias")
+        for _ in range(2):
+            concept("BatchFiveTiedPreferred")
+        concept("Alternative one", "BatchFiveTiedAlias")
+        concept("Alternative two", "BatchFiveTiedAlias")
+        concept("BatchFivePriority")
+        concept("Priority alternative", "BatchFivePriority")
+        duplicated = concept("Duplicated label owner", "BatchFiveDuplicate")
+        duplicated.labels.append(TaxonomyLabel(
+            label="BatchFiveDuplicate", normalized_label=normalize_taxonomy_text("BatchFiveDuplicate"),
+            label_type="other", language="en",
+        ))
+        db.commit()
+
+        cases = [
+            ("BatchFiveUniquePreferred", True, "exact_preferred", 1.0),
+            ("BatchFiveUniqueAlias", True, "exact_alternative", 0.98),
+            ("BatchFiveTiedPreferred", False, "exact_preferred", 1.0),
+            ("BatchFiveTiedAlias", False, "exact_alternative", 0.98),
+            ("BatchFivePriority", True, "exact_preferred", 1.0),
+            ("Pythn", False, "fuzzy", None),
+            ("BatchFiveDuplicate", True, "exact_alternative", 0.98),
+            ("Python", False, "exact_preferred", 1.0),
+        ]
+        ids = {}
+        for text, should_approve, method, confidence in cases:
+            actor, document, term = seed_linkable_cv(db, text)
+            run = TaxonomyService(db).link_document("candidate", document.id)
+            ids[text] = (actor.id, term.id)
+            assert run.links_auto_approved == int(should_approve)
+            with Session(engine) as fresh:
+                candidates = TaxonomyRepository(fresh).term_candidates("candidate", term.id)
+                selected = TaxonomyRepository(fresh).selected_link("candidate", term.id)
+                assert candidates and candidates[0].match_method == method
+                assert (selected is not None) is should_approve
+                assert {item.review_status for item in candidates if item.confidence_score == candidates[0].confidence_score} == {
+                    "approved" if should_approve else "pending"
+                }
+                if confidence is not None:
+                    assert candidates[0].confidence_score == confidence
+                else:
+                    assert candidates[0].confidence_score < 0.95
+
+        _, reverse_document, reverse_term = seed_linkable_cv(db, "BatchFiveTiedPreferred")
+        original = TaxonomyRepository.active_concepts
+        monkeypatch.setattr(TaxonomyRepository, "active_concepts", lambda self: list(reversed(original(self))))
+        reverse_run = TaxonomyService(db).link_document("candidate", reverse_document.id)
+        assert reverse_run.links_auto_approved == 0
+        with Session(engine) as fresh:
+            candidates = TaxonomyRepository(fresh).term_candidates("candidate", reverse_term.id)
+            assert {item.review_status for item in candidates if item.confidence_score == 1.0} == {"pending"}
+            assert TaxonomyRepository(fresh).selected_link("candidate", reverse_term.id) is None
+
+        actor_id, tied_term_id = ids["Python"]
+        pending = repo.term_candidates("candidate", tied_term_id)
+        TaxonomyService(db).review_link(pending[0].id, "approved", None, db.get(User, actor_id))
+        with Session(engine) as fresh:
+            selected = TaxonomyRepository(fresh).selected_link("candidate", tied_term_id)
+            assert selected and selected.link_candidate_id == pending[0].id
+            assert selected.approval_source == "human_review"
+            assert fresh.scalar(select(func.count()).select_from(TaxonomyReviewEvent).where(
+                TaxonomyReviewEvent.extracted_term_id == tied_term_id
+            )) == 1
+
+
+def test_new_ambiguity_rule_does_not_rewrite_other_selection_or_audit(pg_database):
+    engine, _, _ = pg_database
+    with Session(engine) as db:
+        actor, document, term = seed_linkable_cv(db, "Python")
+        concept = TaxonomyRepository(db).active_concepts()[0]
+        prior_term = uuid4()
+        prior_candidate = TaxonomyRepository(db).add_link_candidate(
+            "candidate", prior_term, "Python", "python", concept.id,
+            "exact_preferred", 1.0, 1, "pending",
+        )
+        db.commit()
+        TaxonomyService(db).review_link(prior_candidate.id, "approved", None, actor)
+        with Session(engine) as fresh:
+            before_link = TaxonomyRepository(fresh).selected_link("candidate", prior_term)
+            before = (before_link.id, before_link.link_candidate_id, before_link.concept_id,
+                      before_link.approval_source, before_link.approved_at)
+            events_before = [(item.id, item.action, item.before_state, item.after_state) for item in fresh.scalars(
+                select(TaxonomyReviewEvent).where(TaxonomyReviewEvent.extracted_term_id == prior_term)
+            )]
+        assert TaxonomyService(db).link_document("candidate", document.id).links_auto_approved == 0
+        with Session(engine) as fresh:
+            after_link = TaxonomyRepository(fresh).selected_link("candidate", prior_term)
+            assert (after_link.id, after_link.link_candidate_id, after_link.concept_id,
+                    after_link.approval_source, after_link.approved_at) == before
+            assert [(item.id, item.action, item.before_state, item.after_state) for item in fresh.scalars(
+                select(TaxonomyReviewEvent).where(TaxonomyReviewEvent.extracted_term_id == prior_term)
+            )] == events_before
+            assert TaxonomyRepository(fresh).selected_link("candidate", term.id) is None

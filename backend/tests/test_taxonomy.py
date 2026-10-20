@@ -1,11 +1,78 @@
 from fastapi.testclient import TestClient
+import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from uuid import UUID, uuid4
 
-from app.db.models import ApprovedTaxonomyLink, Role, User
+from app.db.models import ApprovedTaxonomyLink, Role, TaxonomyConcept, TaxonomyLabel, User
 from app.repositories.taxonomy_repository import TaxonomyRepository
 from app.taxonomy.linker import TaxonomyLinker
+from app.taxonomy.normalization import normalize_taxonomy_text
+
+
+def concept_for_ranking(preferred: str, alternatives: tuple[str, ...] = (), version_id: UUID | None = None) -> TaxonomyConcept:
+    concept = TaxonomyConcept(
+        id=uuid4(), taxonomy_version_id=version_id or uuid4(), external_id=str(uuid4()),
+        preferred_label=preferred, normalized_label=normalize_taxonomy_text(preferred),
+        concept_type="skill", language="en",
+    )
+    concept.labels = [TaxonomyLabel(label=label, normalized_label=normalize_taxonomy_text(label),
+                                    label_type="alternative", language="en") for label in alternatives]
+    return concept
+
+
+@pytest.mark.parametrize(
+    ("preferred", "alternatives", "query", "method", "confidence"),
+    [
+        ("Unique preferred", (), "Unique preferred", "exact_preferred", 1.0),
+        ("Different preferred", ("Unique alternative",), "Unique alternative", "exact_alternative", 0.98),
+    ],
+)
+def test_unique_top_concept_preserves_exact_match_precedence(preferred, alternatives, query, method, confidence):
+    ranked, unique = TaxonomyLinker().rank_with_top_uniqueness(query, [concept_for_ranking(preferred, alternatives)])
+    assert unique is True
+    assert [(item.method, item.confidence) for item in ranked] == [(method, confidence)]
+
+
+@pytest.mark.parametrize("match_kind", ["preferred", "alternative"])
+def test_distinct_equal_confidence_concepts_remain_ambiguous_after_limit_and_reversal(match_kind):
+    releases = (uuid4(), uuid4())
+    if match_kind == "preferred":
+        concepts = [concept_for_ranking("Shared term", version_id=version) for version in releases]
+        expected = 1.0
+    else:
+        concepts = [concept_for_ranking(f"Different {index}", ("Shared term",), version) for index, version in enumerate(releases)]
+        expected = 0.98
+    linker = TaxonomyLinker(max_candidates=1)
+    first, first_unique = linker.rank_with_top_uniqueness("Shared term", concepts)
+    reversed_rank, reversed_unique = linker.rank_with_top_uniqueness("Shared term", list(reversed(concepts)))
+    assert len(first) == len(reversed_rank) == 1
+    assert first_unique is reversed_unique is False
+    assert first[0].concept.id == reversed_rank[0].concept.id
+    assert first[0].confidence == expected
+
+
+def test_preferred_match_beats_alternative_and_duplicate_labels_do_not_create_ambiguity():
+    preferred = concept_for_ranking("Shared term")
+    alternative = concept_for_ranking("Different term", ("Shared term", "Shared term"))
+    ranked, unique = TaxonomyLinker().rank_with_top_uniqueness("Shared term", [alternative, preferred])
+    assert unique is True
+    assert [(item.concept.id, item.method, item.confidence) for item in ranked] == [
+        (preferred.id, "exact_preferred", 1.0), (alternative.id, "exact_alternative", 0.98)
+    ]
+    duplicated, same_concept_unique = TaxonomyLinker().rank_with_top_uniqueness(
+        "Shared term", [alternative, alternative]
+    )
+    assert same_concept_unique is True
+    assert [(item.concept.id, item.method, item.confidence) for item in duplicated] == [
+        (alternative.id, "exact_alternative", 0.98)
+    ]
+
+
+def test_below_auto_approval_threshold_still_ranks_for_review():
+    ranked, unique = TaxonomyLinker().rank_with_top_uniqueness("Pythn", [concept_for_ranking("Python")])
+    assert unique is True
+    assert ranked and ranked[0].method == "fuzzy" and ranked[0].confidence < 0.95
 
 
 def register(client: TestClient, email: str = "researcher@example.com") -> str:

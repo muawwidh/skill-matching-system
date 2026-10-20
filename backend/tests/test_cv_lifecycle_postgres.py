@@ -93,6 +93,16 @@ def review_alternative(db: Session, user: User, skill: CandidateSkill, *, approv
     return alternative.id
 
 
+def select_ambiguous_python_for_lifecycle_test(db: Session, user: User, skill: CandidateSkill) -> None:
+    repo = TaxonomyRepository(db)
+    candidates = repo.term_candidates("candidate", skill.extracted_term_id)
+    preferred = [item for item in candidates if item.match_method == "exact_preferred" and item.confidence_score == 1.0]
+    assert len(preferred) >= 2
+    assert repo.selected_link("candidate", skill.extracted_term_id) is None
+    TaxonomyService(db).review_link(preferred[0].id, "approved", None, user)
+    assert repo.selected_link("candidate", skill.extracted_term_id).link_candidate_id == preferred[0].id
+
+
 def test_cv_skill_apis_keep_extraction_scoped_and_manual_profile_wide(pg_database):
     engine, _, _ = pg_database
     with Session(engine) as db:
@@ -142,6 +152,8 @@ def test_overlapping_cv_deletion_preserves_other_term_and_taxonomy_rows(pg_datab
         old_python.review_status = "rejected"
         kept_python.review_status = "approved"
         db.commit()
+        select_ambiguous_python_for_lifecycle_test(db, user, old_python)
+        select_ambiguous_python_for_lifecycle_test(db, user, kept_python)
         review_alternative(db, user, kept_python)
         assert TaxonomyRepository(db).selected_link("candidate", old_python.extracted_term_id)
         assert TaxonomyRepository(db).selected_link("candidate", kept_python.extracted_term_id)
@@ -209,6 +221,7 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         python.review_status, sql.review_status = "approved", "rejected"
         assert fastapi.review_status == "pending"
         db.commit()
+        select_ambiguous_python_for_lifecycle_test(db, user, python)
         assert TaxonomyRepository(db).selected_link("candidate", python.extracted_term_id)
         concept = db.scalar(select(TaxonomyConcept).where(TaxonomyConcept.preferred_label == "Programming"))
         assert concept is not None
@@ -378,6 +391,7 @@ def test_cv_deletion_rolls_back_all_derived_rows(pg_database, monkeypatch):
         python = next(item for item in skills if item.normalized_text == "python")
         python.review_status = "approved"
         db.commit()
+        select_ambiguous_python_for_lifecycle_test(db, user, python)
         review_alternative(db, user, python)
         job = Job(title="Synthetic Python role", description="Python", cleaned_description="Python", status="processed")
         db.add(job)

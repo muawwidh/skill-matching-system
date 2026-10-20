@@ -1,9 +1,11 @@
 # Taxonomy integration
 
 Phase 4 is COMPLETE (2026-10-02). Automated/full-package evidence plus user-reported
-deployed browser/runtime acceptance is recorded in phase4-verification.md. Repository,
-isolated PostgreSQL verified and user-reported developer migration heads are all
-`0007_taxonomy_review_audit`. Phase 5 Dense Retrieval is next, not started.
+deployed browser/runtime acceptance is recorded in phase4-verification.md. The
+repository and isolated PostgreSQL verified heads are `0008_dense_retrieval`;
+the developer database was last independently observed at
+`0007_taxonomy_review_audit` on 2026-10-06 and was not accessed for Batch 5.
+Phase 5 Dense Retrieval is in progress, not complete.
 
 Active developer releases after browser imports (user-reported fresh counts):
 O*NET 31.0 CSV has 4,022 concepts, 1,016 occupations, 1,120,006 source records and
@@ -147,9 +149,17 @@ skipped files, missing optional files, unresolved references and relationship
 resolution count. The full-package verifier separately checks actual database
 counts in a fresh session. Fixtures alone do not establish official package support.
 
-Linking is unchanged: normalized preferred (1.0), alternative (0.98), then
-RapidFuzz (threshold 0.70, scaled by 0.94), top five candidates. Only the top
-candidate >= 0.95 auto-approves. No embeddings or final scoring changes.
+Linking retains normalized preferred (1.0), alternative (0.98), then RapidFuzz
+(threshold 0.70, scaled by 0.94), top five candidates. Matching labels for one
+release-scoped concept are deduplicated at its best confidence and method. A
+candidate auto-approves only if its concept alone has the highest confidence
+and it meets the existing 0.95 threshold. Distinct concepts tied at the top
+remain pending, even when one sorts first for display or a candidate limit hides
+another tied result. Display order is not semantic evidence. Human review can
+select an alternative through the existing review API. Batch 5 does not rewrite
+historical approvals, selections or append-only audit events; any cleanup of
+older ambiguous selections needs a separate authorized inventory. No embeddings
+or final scoring changes were made here.
 
 ## Required headers
 

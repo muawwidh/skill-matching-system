@@ -276,3 +276,14 @@ extracted-term `extraction_method` field. Dictionary-regex, regex-indicator and
 optional spaCy methods remain distinct; a later behavior change must bump the
 contract constant. This is provenance for newly persisted terms, not a
 retroactive classification of old terms or a correction-history mechanism.
+
+## D027 - Equal-Confidence Distinct Taxonomy Concepts Need Human Review
+
+Automatic taxonomy approval requires a unique highest-confidence concept above
+the existing 0.95 threshold. Matching labels on the same release-scoped concept
+are deduplicated before this decision, keeping its strongest match method and
+confidence. Distinct concepts tied at the top remain pending even if a stable
+label/release/UUID sort gives one of them rank 1 for display. That ordering is
+not evidence that one concept is semantically superior. Existing selected links
+and append-only review events are not rewritten by this rule; any historical
+cleanup requires a separate authorized inventory and decision.
