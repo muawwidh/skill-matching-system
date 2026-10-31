@@ -117,10 +117,16 @@ class SkillService:
         skill = self.repository.get_job_skill(skill_id, job_id)
         if not skill:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job skill not found.")
+        requested = (payload.raw_text, payload.normalized_text.lower(), payload.skill_type,
+                     payload.requirement_type, payload.evidence_sentence, payload.review_status)
+        current = (skill.raw_text, skill.normalized_text, skill.skill_type,
+                   skill.requirement_type, skill.evidence_sentence, skill.review_status)
+        if current == requested:
+            return skill
         updated = self.repository.update_job_skill(
             skill=skill,
             raw_text=payload.raw_text,
-            normalized_text=payload.normalized_text.lower(),
+            normalized_text=requested[1],
             skill_type=payload.skill_type,
             requirement_type=payload.requirement_type,
             evidence_sentence=payload.evidence_sentence,

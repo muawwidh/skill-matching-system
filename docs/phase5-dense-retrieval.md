@@ -90,6 +90,12 @@ stored but stale/unavailable. Job, job-skill, CV, candidate-skill and taxonomy
 selection changes mark affected rows stale in their existing database
 transaction. Taxonomy import/replacement marks all rows stale in the import
 transaction but never runs inference there. Reindex after those changes.
+Semantic job-skill corrections clear that term's active taxonomy identity and
+suggestions, so an old canonical label cannot enter the next representation.
+Non-semantic edits retain the selection. Every effective job-skill edit stales
+the embedding; relinking/review and reindexing are explicit. Historical taxonomy
+review events remain append-only, and this does not repair existing developer
+records.
 
 `GET /retrieval/jobs?limit=20` is candidate-authenticated, maximum 100. It
 returns only current processed jobs, ordered by cosine distance then job UUID.

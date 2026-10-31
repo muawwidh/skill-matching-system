@@ -42,7 +42,7 @@ def request_for(operation: str, job_id: str, skill_id: str) -> tuple[str, str, d
     if operation == "edit_skill":
         return "put", f"/jobs/{job_id}/extracted-skills/{skill_id}", {
             "json": {
-                "raw_text": "Python", "normalized_text": "python", "skill_type": "skill",
+                "raw_text": "Java", "normalized_text": "java", "skill_type": "skill",
                 "requirement_type": "required", "evidence_sentence": "Python", "review_status": "approved",
             },
         }
@@ -71,6 +71,10 @@ def test_job_mutation_permission_matrix(
     response = getattr(client, method)(path, headers=headers, **kwargs)
     expected = 401 if role is None else 403 if role == "candidate" else 204 if operation == "delete" else 201 if operation in {"create", "import"} else 200
     assert response.status_code == expected, response.text
+    if operation == "edit_skill" and role in {"admin", "researcher"}:
+        assert response.json()["raw_text"] == "Java"
+    if operation == "edit_skill" and role == "candidate":
+        assert client.get(f"/jobs/{job_id}/extracted-skills", headers=headers).json()[0]["raw_text"] != "Java"
 
     if role == "candidate":
         for read_path in ("/jobs", f"/jobs/{job_id}", f"/jobs/{job_id}/sections", f"/jobs/{job_id}/extracted-skills"):

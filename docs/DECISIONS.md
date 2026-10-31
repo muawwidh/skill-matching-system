@@ -287,3 +287,14 @@ label/release/UUID sort gives one of them rank 1 for display. That ordering is
 not evidence that one concept is semantically superior. Existing selected links
 and append-only review events are not rewritten by this rule; any historical
 cleanup requires a separate authorized inventory and decision.
+
+## D028 - Semantic Job-Skill Corrections Invalidate Taxonomy Selection
+
+Changing a job skill's raw text, normalized text or skill type changes its
+taxonomy identity. The associated extracted term is updated and its active
+selection and suggestions are removed in the same transaction. This is
+invalidation, not a human rejection or a replacement approval; append-only
+review events remain historical. Evidence, requirement and extraction-review
+edits preserve the taxonomy selection. Any effective job-skill edit stales
+the job embedding transactionally; reindexing and any relinking/review are
+explicit. Existing developer records are not retroactively repaired.

@@ -582,6 +582,22 @@ class DocumentRepository:
         evidence_sentence: str,
         review_status: str,
     ) -> JobSkill:
+        current = (skill.raw_text, skill.normalized_text, skill.skill_type,
+                   skill.requirement_type, skill.evidence_sentence, skill.review_status)
+        requested = (raw_text, normalized_text, skill_type, requirement_type,
+                     evidence_sentence, review_status)
+        if current == requested:
+            return skill
+        if current[:3] != requested[:3] and skill.extracted_term_id:
+            from app.repositories.taxonomy_repository import TaxonomyRepository
+
+            term = self.db.get(ExtractedJobTerm, skill.extracted_term_id)
+            if term is None or term.job_id != skill.job_id:
+                raise ValueError("Job skill extraction term is missing or belongs to another job.")
+            TaxonomyRepository(self.db).replace_link_candidates("job", term.id)
+            term.raw_text = raw_text
+            term.normalized_text = normalized_text
+            term.term_type = skill_type
         skill.raw_text = raw_text
         skill.normalized_text = normalized_text
         skill.skill_type = skill_type

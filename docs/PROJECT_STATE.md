@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-10-10
+Last updated: 2026-10-31
 
 ## Repository
 
@@ -513,6 +513,29 @@ privacy erasure of audit history and cleanup of older orphan skills remain
 separate decisions.
 
 Job reprocessing/deletion continues to remove links for superseded job terms.
+Phase 5 remains incomplete pending human-labelled retrieval evaluation.
+
+Stability Batch 6 changes future extracted job-skill edits only: semantic
+raw/normalized text or type corrections synchronize the extracted term and
+remove that term's obsolete active taxonomy selection and suggestions.
+Invalidation is removal, not a fabricated rejection or superseded human
+choice; append-only review events remain. Evidence, requirement and review
+status edits preserve a valid taxonomy selection, while every effective edit
+stales current job embeddings transactionally. Relinking/review and reindexing
+remain explicit. Historical developer records were not repaired. Phase 5
+remains incomplete pending human-labelled retrieval evaluation.
+Batch 6 verification used a disposable tmpfs PostgreSQL/pgvector container:
+10 Batch 6 regressions passed; 81 affected job-skill, taxonomy, retrieval,
+extraction and permission tests passed; and the complete PostgreSQL-enabled
+backend suite passed 252 tests with 1 skip. The skipped gated real-model test
+was not run because its model path was not configured for this run. An in-memory
+stale-link mutation was caught by the new fresh-session regression, and
+`git diff --check` passed. The disposable container was removed; all eight
+pre-existing containers remained stopped. The developer database and normal
+Compose project were not accessed, and no runtime deployment occurred.
+Repository and isolated verified Alembic heads remain `0008_dense_retrieval`;
+the developer database remains at its last independently observed
+`0007_taxonomy_review_audit` state. Batch 6 is verified but uncommitted;
 Phase 5 remains incomplete pending human-labelled retrieval evaluation.
 
 ## Historical Manual Local Verification Snapshot
