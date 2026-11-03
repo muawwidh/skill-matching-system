@@ -1,9 +1,11 @@
 # Phase 5 human-labelled retrieval evaluation pack
 
-**Status: infrastructure only. No real corpus, judgments, Recall@K or MRR yet.**
+**Status: corpus preparation/review; human judgments and retrieval-quality metrics pending.**
 Templates in `evaluation/templates/` are deliberately incomplete and fail
 validation. Keep actual records under ignored `evaluation-private/` unless all
-content is demonstrably de-identified, paraphrased and redistributable.
+content is demonstrably permission-cleared for publication. The private
+`evaluation/local/` directory is also ignored. Source PDFs and restricted
+normalized descriptions must not be committed or redistributed.
 
 ## Target and schemas
 
@@ -36,12 +38,31 @@ Job JSONL (`jobs.jsonl`), one object per line:
 | `language` | Must be `en` for this initial benchmark |
 | `title`, `employer_label`, `region_country`, `employment_type` | Nonempty display fields; employer label must not identify a private person |
 | `required_skills`, `preferred_skills` | Arrays of skills; at least one nonempty overall |
-| `description_paraphrase` | Original, concise paraphrase; no copied job description |
+| `description_text`, `content_mode` | Canonical text and explicit `paraphrased` or `verbatim_restricted` mode |
+| `description_paraphrase` | Legacy paraphrased text only; when used alone, mode defaults to `paraphrased`. Never use it for verbatim text. Conflicting dual descriptions fail. |
 | `source_category` | E.g. `public_posting`, `consented_job`, `author_constructed` |
 | `source_url` | Optional HTTP(S) URL; required for `public_posting` if legally appropriate |
 | `access_date` | ISO `YYYY-MM-DD` date |
-| `redistribution_status` | `redistributable`, `author_paraphrase`, or `consented` |
-| `deidentification_notes` | Paraphrasing/generalization record |
+| `redistribution_status` | Paraphrased: `redistributable`, `author_paraphrase`, or `consented`. Restricted verbatim: only `restricted_internal_use`. |
+| `redistribution_allowed` | Must be literal JSON `false` for restricted verbatim records; no inferred redistribution permission |
+| `deidentification_notes` | Paraphrasing/generalization or contact-redaction record |
+
+`verbatim_restricted` is job-only. It requires source category `public_posting`
+or `consented_job`, an HTTP(S) `source_url`, non-placeholder `source_id`,
+UTC `accessed_at` agreeing with `access_date`, a basename-only `pdf_filename`,
+64-character lowercase hexadecimal `pdf_sha256` and `normalized_text_sha256`.
+The normalized-text checksum must match the exact UTF-8 `description_text`,
+including its terminal newline. Source PDF hashes establish provenance, not
+copyright permission; the validator does not open PDFs or verify licensing.
+Other metadata, such as uppercase display IDs, source family and classification,
+may accompany records but cannot establish candidate-job relevance.
+
+Candidate consent, de-identification and PII validation are unchanged; candidates
+cannot use `restricted_internal_use`. Job text/skills still reject contact data,
+including explicit recruiter-name labels. A narrowly labelled, valid
+`Updated DD.MM.YYYY` job date is not a telephone number; unlabelled/invalid
+dates and phone/email text still pass through the original guard. Provenance
+URLs are metadata, not description text, and are permitted there.
 
 Judgment CSV (`judgments.csv`) requires columns `candidate_id`, `job_id`,
 `relevance_grade`, `reviewer_id`, `judgment_date`, `rationale`, and
@@ -61,14 +82,24 @@ grade-2 job before metrics can run.
 2. Remove names, contact information, exact addresses, photographs, unique
    employer/team identifiers and irrelevant protected/personal attributes.
    Automated email/phone screening is only a guardrail; perform manual review.
-3. Keep job text in your own words. Record the original source category, URL
-   where appropriate, access date, and what was paraphrased. Do not scrape
-   restricted sites or copy copyrighted descriptions verbatim.
+3. Choose the content mode honestly. Paraphrased records use independently
+   written text. Locally supplied source PDFs and their faithful normalized
+   text may instead be retained as `verbatim_restricted` for internal
+   bachelor-project evaluation, with redistribution prohibited. Do not claim
+   employer consent or a paraphrase merely because the owner supplied a PDF.
+   Remove irrelevant public recruiter names, emails, telephone numbers and
+   application-contact lines; retain duties, qualification distinctions,
+   location and substantive employer/equal-opportunity statements. Log
+   redaction categories and source page/line locations without contact values.
+   Retain source URLs and original PDF hashes in provenance. Do not scrape
+   restricted sites.
 4. Do not export developer CV/job records. Obtain explicit consent before using
    any real person's experience, even in a de-identified paraphrase. Keep
    identity-to-evaluation mapping outside the repository.
 5. Commit only content whose provenance and redistribution rights are clear;
-   otherwise retain it in `evaluation-private/`, already Git-ignored.
+   otherwise retain it in an ignored private directory. Publishing evaluation
+   IDs, hashes, aggregate metrics and methodology does not authorize publishing
+   the restricted descriptions, source PDFs or private candidate evidence.
 
 ## Labelling protocol and reviewer instructions
 
@@ -92,6 +123,11 @@ grade-2 job before metrics can run.
    is insufficient. For grade 1, explain plausible transfer and what is
    missing. For grade 2, cite concrete approved skills/evidence. Record
    uncertainty honestly and resolve ambiguous cases before finalization.
+   Blind exports and their metadata are private mode-0600 files, explicitly
+   marked `redistribution_allowed=false`; per-job content mode and source-use
+   status accompany the text. They are not publication exports, even when a
+   source is paraphrased. Restricted records are revalidated before export.
+
 3. Validate the completed matrix. The tool rejects missing/duplicate pairs,
    unknown IDs, invalid grades/dates and candidates without grade-2 jobs:
 
@@ -136,7 +172,7 @@ then. A second reviewer is not mandatory for minimum Phase 5 acceptance.
 ## Completion checklist
 
 - [ ] 8 permission-cleared, de-identified English candidate profiles.
-- [ ] 30 permission-cleared, paraphrased English jobs with multiple families
+- [ ] 30 provenance-complete English jobs in an explicit content mode with multiple families
       and hard negatives.
 - [ ] Provenance and redistribution status manually checked for every record.
 - [ ] All 240 pairs labelled blindly; each candidate has grade-2 jobs.
@@ -149,5 +185,8 @@ then. A second reviewer is not mandatory for minimum Phase 5 acceptance.
 Existing safe reuse: the repository's taxonomy samples and synthetic test
 fixtures are software tests, not candidate/job relevance data. They cannot
 count toward this benchmark. Developer CV/job records require consent and
-de-identification and were not inspected or exported. Current real corpus
-shortfall: **8 candidates, 30 jobs and 240 judgments**.
+de-identification; this corpus-validation update did not access the application
+database or export its records. The private local corpus now validates as
+**8 candidates and 30 jobs**; **240 human judgments remain pending**. These
+private records are not part of the committed templates, and corpus validation
+is not a retrieval-quality result or final human approval of the job texts.

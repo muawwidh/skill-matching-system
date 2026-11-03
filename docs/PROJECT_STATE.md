@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-10-31
+Last updated: 2026-11-03
 
 ## Repository
 
@@ -771,7 +771,7 @@ last independently observed `0007_taxonomy_review_audit` on 2026-10-06
 (not queried or migrated in this step). No human-labelled relevance set has been supplied, so real
 Recall@K/MRR evaluation is **PENDING**. Phase 5 is not complete.
 
-The Phase 5 human-labelled benchmark pack is now implemented but not populated:
+The Phase 5 human-labelled benchmark pack is implemented:
 candidate/job JSONL validation, complete judgment-matrix validation, a
 reproducible blind pair export, isolated-database ranking export, grade-2
 Recall@5/10/20 and MRR calculation, optional separate grade-1 exploration,
@@ -785,6 +785,24 @@ backend suite after this tooling change, with isolated PostgreSQL enabled:
 **163 passed, 1 skipped** (the gated real-model test was not rerun in the host
 Python environment without Torch). The separate pinned real-model verification
 above remains valid. Do not declare Phase 5 complete.
+
+The job-corpus contract now distinguishes `paraphrased` from
+`verbatim_restricted` using `description_text`/`content_mode`. Legacy genuine
+`description_paraphrase` records remain supported. Private verbatim job records
+require complete PDF/source/hash provenance, `restricted_internal_use` and
+literal `redistribution_allowed=false`; candidate consent/PII checks are
+unchanged. Public recruiter/contact details are removed from local normalized
+job text, with contact-free source-location audit records. Blind exports remain
+private and carry explicit use restrictions (D029). Verification on 2026-11-03:
+focused evaluation tests **40 passed**, including the private local corpus;
+complete default backend suite **241 passed, 45 skipped** (44 PostgreSQL-gated
+checks, including the real-model check, and the separately gated private-corpus
+check, which passed in the focused run). `validate-benchmark` accepts
+**8 candidates / 30 jobs / 240 expected pairs**, without judgments or metrics.
+Six normalized job texts were contact-redacted; all 40 source PDF hashes and
+frozen candidate files remain unchanged. No application/database access,
+source-PDF edits, embeddings, rankings or judgments are involved.
+Human-labelled evaluation remains pending and Phase 5 remains incomplete.
 
 Do not implement the final Phase 6 weighted scoring model as part of Phase 5.
 

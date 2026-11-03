@@ -3,10 +3,12 @@
 import csv
 import hashlib
 import json
+import os
 import random
 import re
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from app.retrieval.evaluation import retrieval_metrics
 from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATE_VERSION
@@ -16,7 +18,7 @@ GRADE = {"0", "1", "2"}
 CANDIDATE_FIELDS = ("id", "language", "profile_summary", "approved_skills", "source_category",
                     "consent_or_redistribution_status", "deidentification_notes")
 JOB_FIELDS = ("id", "language", "title", "employer_label", "region_country", "employment_type",
-              "required_skills", "preferred_skills", "description_paraphrase",
+              "required_skills", "preferred_skills",
               "source_category", "access_date", "redistribution_status",
               "deidentification_notes")
 JUDGMENT_FIELDS = ("candidate_id", "job_id", "relevance_grade", "reviewer_id",
@@ -62,6 +64,70 @@ def _date(value: str, label: str) -> None:
         raise ValueError(f"{label}: invalid ISO date") from exc
 
 
+def _job_content(row: dict, label: str) -> tuple[str, str]:
+    mode = row.get("content_mode", "paraphrased")
+    if mode not in {"paraphrased", "verbatim_restricted"}:
+        raise ValueError(f"{label}: invalid content_mode")
+    if "description_text" in row:
+        _text(row, "content_mode", label)
+        _text(row, "description_text", label)
+        # Validate without trimming: file hashes cover the exact serialized text.
+        description = row["description_text"]
+        if "description_paraphrase" in row and row["description_paraphrase"] != description:
+            raise ValueError(f"{label}: conflicting description fields")
+    elif mode == "paraphrased":
+        _text(row, "description_paraphrase", label)
+        description = row["description_paraphrase"]
+    else:
+        raise ValueError(f"{label}: verbatim_restricted requires description_text")
+    status = _text(row, "redistribution_status", label)
+    if mode == "verbatim_restricted":
+        if "description_paraphrase" in row:
+            raise ValueError(f"{label}: verbatim text must not be labelled description_paraphrase")
+        if status != "restricted_internal_use" or row.get("redistribution_allowed") is not False:
+            raise ValueError(f"{label}: verbatim_restricted requires restricted_internal_use and redistribution_allowed=false")
+        if "redistribution" in row and row["redistribution"] is not False:
+            raise ValueError(f"{label}: conflicting redistribution flag")
+        if row.get("source_category") not in {"public_posting", "consented_job"}:
+            raise ValueError(f"{label}: restricted text requires job-source provenance")
+        for field in ("source_id", "source_url", "accessed_at", "pdf_filename", "pdf_sha256", "normalized_text_sha256"):
+            _text(row, field, label)
+        url = urlsplit(row["source_url"])
+        if url.scheme not in {"https", "http"} or not url.netloc:
+            raise ValueError(f"{label}: invalid provenance source URL")
+        filename = row["pdf_filename"]
+        if Path(filename).name != filename or "\\" in filename or not filename.lower().endswith(".pdf"):
+            raise ValueError(f"{label}: pdf_filename must be a PDF basename")
+        for field in ("pdf_sha256", "normalized_text_sha256"):
+            if not re.fullmatch(r"[0-9a-f]{64}", row[field]):
+                raise ValueError(f"{label}: invalid {field}")
+        if hashlib.sha256(description.encode("utf-8")).hexdigest() != row["normalized_text_sha256"]:
+            raise ValueError(f"{label}: normalized text checksum mismatch")
+        try:
+            accessed = datetime.fromisoformat(row["accessed_at"])
+            if accessed.utcoffset() != timedelta(0) or accessed.date().isoformat() != row["access_date"]:
+                raise ValueError
+        except ValueError as exc:
+            raise ValueError(f"{label}: accessed_at must be UTC and match access_date") from exc
+    elif status not in {"redistributable", "author_paraphrase", "consented"}:
+        raise ValueError(f"{label}: unacceptable redistribution status for paraphrased content")
+    return description, mode
+
+
+def _job_has_pii(value: str) -> bool:
+    for line in value.splitlines():
+        updated = re.fullmatch(r"Updated (\d{2}\.\d{2}\.\d{4})", line.strip(), re.I)
+        if updated:
+            try:
+                datetime.strptime(updated[1], "%d.%m.%Y")
+                continue
+            except ValueError:
+                pass
+        if PII.search(line) or re.match(r"\s*(?:name|recruiter|contact name)\s*:\s*\S", line, re.I):
+            return True
+    return False
+
+
 def load_corpus(candidates_path: Path, jobs_path: Path) -> tuple[dict[str, dict], dict[str, dict]]:
     candidates, jobs = {}, {}
     for row in _jsonl(candidates_path):
@@ -105,16 +171,15 @@ def load_corpus(candidates_path: Path, jobs_path: Path) -> tuple[dict[str, dict]
         if not required and not preferred:
             raise ValueError(f"{label}: no skill content")
         _date(row["access_date"], label)
-        if row["redistribution_status"] not in {"redistributable", "author_paraphrase", "consented"}:
-            raise ValueError(f"{label}: unacceptable redistribution status")
+        description, mode = _job_content(row, label)
         url = row.get("source_url")
         if url is not None and (not isinstance(url, str) or not url.startswith(("https://", "http://"))):
             raise ValueError(f"{label}: invalid source URL")
         if row["source_category"] == "public_posting" and not url:
             raise ValueError(f"{label}: public posting requires source URL")
-        if any(PII.search(x) for x in [row["title"], row["employer_label"], row["description_paraphrase"], *required, *preferred]):
+        if any(_job_has_pii(x) for x in [row["title"], row["employer_label"], description, *required, *preferred]):
             raise ValueError(f"{label}: possible personal identifier")
-        jobs[identifier] = row
+        jobs[identifier] = {**row, "description_text": description, "content_mode": mode}
     if not candidates or not jobs:
         raise ValueError("Nonempty valid candidate and job corpora are required")
     return candidates, jobs
@@ -132,11 +197,14 @@ def write_blind_export(candidates: dict, jobs: dict, destination: Path, seed: in
     metadata_path = destination.with_name(destination.name + ".metadata.json")
     if metadata_path.exists():
         raise FileExistsError(f"Refusing to overwrite {metadata_path}")
-    with destination.open("w", encoding="utf-8", newline="") as handle:
+    contents = {key: _job_content(job, f"job {key}") for key, job in jobs.items()}
+    fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=(*JUDGMENT_FIELDS, "candidate_summary",
                                                    "candidate_skills", "job_title", "job_region",
                                                    "job_required_skills", "job_preferred_skills",
-                                                   "job_description"))
+                                                   "job_description", "job_content_mode",
+                                                   "job_redistribution_status", "job_redistribution_allowed"))
         writer.writeheader()
         for candidate_id, job_id in pair_order(candidates, jobs, seed):
             candidate, job = candidates[candidate_id], jobs[job_id]
@@ -146,11 +214,18 @@ def write_blind_export(candidates: dict, jobs: dict, destination: Path, seed: in
                              "job_title": job["title"], "job_region": job["region_country"],
                              "job_required_skills": "; ".join(job["required_skills"]),
                              "job_preferred_skills": "; ".join(job["preferred_skills"]),
-                             "job_description": job["description_paraphrase"]})
+                             "job_description": contents[job_id][0],
+                             "job_content_mode": contents[job_id][1],
+                             "job_redistribution_status": job["redistribution_status"],
+                             "job_redistribution_allowed": False})
     metadata = {"seed": seed, "pair_count": len(candidates) * len(jobs),
                 "ordering": "sorted IDs, Python random.Random(seed).shuffle",
-                "rank_or_score_visible": False, "blind_csv_sha256": _sha256(destination)}
-    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                "rank_or_score_visible": False, "blind_csv_sha256": _sha256(destination),
+                "contains_restricted_verbatim": any(mode == "verbatim_restricted" for _, mode in contents.values()),
+                "redistribution_allowed": False, "usage": "private human labelling only; not a publication export"}
+    fd = os.open(metadata_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        handle.write(json.dumps(metadata, indent=2, sort_keys=True) + "\n")
     return metadata
 
 

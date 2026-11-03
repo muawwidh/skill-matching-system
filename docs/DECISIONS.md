@@ -298,3 +298,17 @@ review events remain historical. Evidence, requirement and extraction-review
 edits preserve the taxonomy selection. Any effective job-skill edit stales
 the job embedding transactionally; reindexing and any relinking/review are
 explicit. Existing developer records are not retroactively repaired.
+
+## D029 - Private Verbatim Evaluation Sources Are Not Paraphrases
+
+Locally supplied original job PDFs and contact-redacted normalized text may be
+private bachelor-project evaluation material, explicitly `verbatim_restricted`
+with `restricted_internal_use`, complete source/hash provenance and
+`redistribution_allowed=false`. They must never be labelled as paraphrased or
+redistributable. Recruiter names and application contact details are not
+matching evidence. Candidate privacy and consent rules remain independent.
+Legacy legitimate paraphrased job records remain supported. Blind labelling
+exports are private and retain content-mode/use restrictions; publication may
+include evaluation IDs, hashes, metrics and methodology, not restricted
+descriptions, source PDFs or private candidate evidence. Source hashes and an
+owner-supplied PDF do not assert employer consent or a redistribution licence.

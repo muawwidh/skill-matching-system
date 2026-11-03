@@ -1,8 +1,11 @@
-"""Synthetic data only: validates evaluation tooling, not retrieval quality."""
+"""Synthetic tooling fixtures and a gated read-only private-corpus check; no quality claims."""
 
 import csv
+import hashlib
 import json
+import os
 from pathlib import Path
+import stat
 
 import pytest
 
@@ -197,3 +200,188 @@ def test_export_rankings_rejects_nonisolated_database_before_connecting(tmp_path
     with pytest.raises(ValueError, match="isolated phase5_verify"):
         export_rankings(candidates, jobs, tmp_path / "absent.json", "postgresql://localhost/developer",
                         tmp_path / "rankings.jsonl")
+
+
+def _restricted_job(row):
+    row.pop("description_paraphrase")
+    row.update(description_text="Synthetic source duties and qualifications.", content_mode="verbatim_restricted",
+               redistribution_status="restricted_internal_use", redistribution_allowed=False,
+               source_category="public_posting", source_id="S01", pdf_filename="S01.pdf",
+               source_url="https://careers.example.org/jobs/12345678901?source=public",
+               accessed_at="2026-11-03T12:00:00+00:00", access_date="2026-11-03", pdf_sha256="a" * 64)
+    row["normalized_text_sha256"] = hashlib.sha256(row["description_text"].encode()).hexdigest()
+    return row
+
+
+def _write_rows(path, rows):
+    path.write_text("".join(json.dumps(row) + "\n" for row in rows))
+
+
+def test_restricted_verbatim_source_and_private_blind_export(tmp_path):
+    cp, jp, _, rows = _files(tmp_path, 1)
+    _restricted_job(rows[0])
+    _write_rows(jp, rows)
+    candidates, jobs = load_corpus(cp, jp)
+    assert jobs["job_00"]["description_text"] == rows[0]["description_text"]
+    assert "description_paraphrase" not in jobs["job_00"]
+    output = tmp_path / "blind.csv"
+    metadata = write_blind_export(candidates, jobs, output)
+    exported = list(csv.DictReader(output.open()))
+    assert {r["job_content_mode"] for r in exported} == {"verbatim_restricted"}
+    assert {r["job_redistribution_status"] for r in exported} == {"restricted_internal_use"}
+    assert {r["job_redistribution_allowed"] for r in exported} == {"False"}
+    assert metadata["contains_restricted_verbatim"] and metadata["redistribution_allowed"] is False
+    assert stat.S_IMODE(output.stat().st_mode) == 0o600
+    assert stat.S_IMODE((tmp_path / "blind.csv.metadata.json").stat().st_mode) == 0o600
+    jobs["job_00"]["redistribution_allowed"] = True
+    with pytest.raises(ValueError, match="redistribution_allowed=false"):
+        write_blind_export(candidates, jobs, tmp_path / "bad.csv")
+    assert not (tmp_path / "bad.csv").exists()
+
+
+@pytest.mark.parametrize("flag", [True, None, "false", 0])
+def test_restricted_verbatim_requires_explicit_false_flag(tmp_path, flag):
+    cp, jp, _, rows = _files(tmp_path, 1)
+    _restricted_job(rows[0])["redistribution_allowed"] = flag
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="redistribution_allowed=false"):
+        load_corpus(cp, jp)
+
+
+@pytest.mark.parametrize("field", ["source_id", "source_url", "accessed_at", "pdf_filename", "pdf_sha256", "normalized_text_sha256"])
+def test_restricted_verbatim_requires_complete_provenance(tmp_path, field):
+    cp, jp, _, rows = _files(tmp_path, 1)
+    _restricted_job(rows[0]).pop(field)
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match=field):
+        load_corpus(cp, jp)
+
+
+@pytest.mark.parametrize("field,value,error", [
+    ("normalized_text_sha256", "b" * 64, "checksum mismatch"),
+    ("pdf_sha256", "TBD", "placeholder"),
+    ("pdf_filename", "../S01.pdf", "basename"),
+    ("accessed_at", "2026-11-03T12:00:00", "UTC"),
+    ("accessed_at", "2026-11-02T12:00:00Z", "access_date"),
+    ("source_category", "author_constructed", "job-source provenance"),
+    ("source_url", "https://", "source URL"),
+    ("redistribution_status", "redistributable", "restricted_internal_use"),
+    ("content_mode", "paraphrased", "redistribution status"),
+    ("content_mode", "TBD", "content_mode"),
+])
+def test_restricted_verbatim_rejects_invalid_contract(tmp_path, field, value, error):
+    cp, jp, _, rows = _files(tmp_path, 1)
+    _restricted_job(rows[0])[field] = value
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match=error):
+        load_corpus(cp, jp)
+
+
+def test_restricted_job_rule_does_not_extend_candidate_consent(tmp_path):
+    cp, jp, candidates, _ = _files(tmp_path)
+    candidates[0].update(consent_or_redistribution_status="restricted_internal_use",
+                         redistribution_allowed=False, content_mode="verbatim_restricted")
+    _write_rows(cp, candidates)
+    with pytest.raises(ValueError, match="candidate .*consent/redistribution"):
+        load_corpus(cp, jp)
+
+
+def test_paraphrased_legacy_and_modern_records_are_compatible(tmp_path):
+    cp, jp, _, rows = _files(tmp_path, 2)
+    rows[1]["description_text"] = rows[1].pop("description_paraphrase")
+    rows[1]["content_mode"] = "paraphrased"
+    _write_rows(jp, rows)
+    _, jobs = load_corpus(cp, jp)
+    assert all(job["content_mode"] == "paraphrased" for job in jobs.values())
+    assert jobs["job_00"]["description_text"] == rows[0]["description_paraphrase"]
+    rows[1]["description_paraphrase"] = "Conflicting text"
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="conflicting description"):
+        load_corpus(cp, jp)
+
+
+def test_job_template_stays_deliberately_incomplete_and_can_be_filled(tmp_path):
+    cp, jp, _, _ = _files(tmp_path, 1)
+    repository = Path(__file__).resolve().parents[2]
+    template = json.loads((repository / "evaluation/templates/jobs.template.jsonl").read_text())
+    _write_rows(jp, [template])
+    with pytest.raises(ValueError, match="placeholder"):
+        load_corpus(cp, jp)
+    template.update(id="template_job", language="en", title="Synthetic role", employer_label="Synthetic employer",
+                    region_country="Test region", employment_type="full-time", required_skills=["Python"],
+                    description_text="Synthetic author-written paraphrase", source_category="author_constructed",
+                    access_date="2026-11-03", redistribution_status="author_paraphrase",
+                    deidentification_notes="Synthetic fixture only")
+    _write_rows(jp, [template])
+    assert load_corpus(cp, jp)[1]["template_job"]["content_mode"] == "paraphrased"
+
+
+@pytest.mark.parametrize("field", ["required_skills", "preferred_skills"])
+def test_job_skill_contact_guard_is_unchanged(tmp_path, field):
+    cp, jp, _, rows = _files(tmp_path, 1)
+    rows[0][field] = ["Email test@example.org"]
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="personal identifier"):
+        load_corpus(cp, jp)
+
+
+@pytest.mark.parametrize("content", ["Email test@example.org", "Call +45 12345678", "Recruiter: Test contact", "Updated 31.02.2026"])
+def test_job_contact_guard_remains_active(tmp_path, content):
+    cp, jp, _, rows = _files(tmp_path, 1)
+    _restricted_job(rows[0])["description_text"] += "\n" + content
+    rows[0]["normalized_text_sha256"] = hashlib.sha256(rows[0]["description_text"].encode()).hexdigest()
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="personal identifier"):
+        load_corpus(cp, jp)
+
+
+def test_labelled_job_update_date_is_not_a_phone_and_candidates_are_unchanged(tmp_path):
+    cp, jp, candidates, rows = _files(tmp_path, 1)
+    rows[0]["description_paraphrase"] += "\nUpdated 22.10.2026"
+    _write_rows(jp, rows)
+    load_corpus(cp, jp)
+    rows[0]["description_paraphrase"] += "\nCall +45 12345678"
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="personal identifier"):
+        load_corpus(cp, jp)
+    candidates[0]["profile_summary"] += "\nUpdated 22.10.2026"
+    _write_rows(cp, candidates)
+    with pytest.raises(ValueError, match="candidate .*personal identifier"):
+        load_corpus(cp, jp)
+
+
+def test_modern_job_placeholders_duplicates_and_mislabelled_verbatim_rejected(tmp_path):
+    cp, jp, _, rows = _files(tmp_path, 2)
+    for row in rows:
+        _restricted_job(row)
+    rows[0]["description_text"] = "TBD"
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="placeholder description_text"):
+        load_corpus(cp, jp)
+    rows[0]["description_text"] = rows[1]["description_text"]
+    rows[0]["id"] = rows[1]["id"]
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="duplicate ID"):
+        load_corpus(cp, jp)
+    rows[0]["id"] = "job_00"
+    rows[0]["description_paraphrase"] = rows[0]["description_text"]
+    _write_rows(jp, rows)
+    with pytest.raises(ValueError, match="must not be labelled"):
+        load_corpus(cp, jp)
+
+
+def test_private_local_job_corpus_and_frozen_candidates_read_only():
+    location = os.environ.get("PHASE5_LOCAL_CORPUS_DIR")
+    if not location:
+        pytest.skip("Private local evaluation corpus not configured")
+    directory = Path(location)
+    candidate_path, job_path = directory / "candidates.jsonl", directory / "jobs.jsonl"
+    before = candidate_path.read_bytes()
+    candidates, jobs = load_corpus(candidate_path, job_path)
+    assert len(candidates) == 8 and len(jobs) == 30
+    assert all(j["content_mode"] == "verbatim_restricted" and j["redistribution_allowed"] is False for j in jobs.values())
+    for job in jobs.values():
+        text_path = directory / "source-jobs-normalized" / f"{job['job_id']}.txt"
+        assert text_path.read_text() == job["description_text"]
+        assert hashlib.sha256((directory / "source-jobs" / job["pdf_filename"]).read_bytes()).hexdigest() == job["pdf_sha256"]
+    assert candidate_path.read_bytes() == before
