@@ -152,3 +152,55 @@ def test_fresh_session_cosine_tie_filters_uniqueness_cascade_and_retry(pg_retrie
         fresh.commit()
     with Session(engine) as fresh:
         assert fresh.scalar(select(JobEmbedding).where(JobEmbedding.job_id == job_id)) is None
+
+
+def test_v1_v2_persist_separately_and_query_rejects_template_mismatch(pg_retrieval):
+    from app.retrieval.representation import TEMPLATE_V1, TEMPLATE_V2
+    engine, _, profile_id, job_id, user_id = pg_retrieval
+    fake = FakeEmbedder()
+    with Session(engine) as db:
+        for template in (TEMPLATE_V1, TEMPLATE_V2):
+            service = RetrievalService(db, template)
+            assert service.index_profile(profile_id, fake).outcome == "indexed"
+            assert service.index_job(job_id, fake).outcome == "indexed"
+        db.commit()
+    with Session(engine) as fresh:
+        profiles = list(fresh.scalars(select(CandidateProfileEmbedding)))
+        jobs = list(fresh.scalars(select(JobEmbedding)))
+        assert len(profiles) == len(jobs) == 2
+        assert {r.template_version for r in jobs} == {TEMPLATE_V1, TEMPLATE_V2}
+        assert len({r.source_hash for r in profiles}) == 2
+        user = fresh.get(User, user_id)
+        for template in (TEMPLATE_V1, TEMPLATE_V2):
+            service = RetrievalService(fresh, template)
+            results = service.jobs_for_user(user, 20)
+            assert len(results) == 1 and results[0]["template_version"] == template
+        v1_query = next(p for p in profiles if p.template_version == TEMPLATE_V1)
+        with pytest.raises(ValueError, match="template"):
+            RetrievalService(fresh, TEMPLATE_V2).repository.exact_jobs(v1_query, 20)
+        assert fresh.scalar(select(CandidateJobMatch.score)) == 77
+
+
+def test_invalidation_stales_all_coexisting_template_versions(pg_retrieval):
+    from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATE_V1, TEMPLATE_V2
+    from app.repositories.retrieval_repository import RetrievalRepository
+    engine, _, profile_id, job_id, _ = pg_retrieval
+    with Session(engine) as db:
+        for template in (TEMPLATE_V1, TEMPLATE_V2):
+            common = dict(embedding=[1.0] + [0.0] * 383, model_id=MODEL_ID, model_revision=MODEL_REVISION,
+                          template_version=template, source_hash="a" * 64, taxonomy_fingerprint="b" * 64, status="ready")
+            db.add(JobEmbedding(job_id=job_id, **common))
+            db.add(CandidateProfileEmbedding(candidate_profile_id=profile_id, **common))
+        db.commit()
+    with Session(engine) as fresh:
+        repository = RetrievalRepository(fresh, TEMPLATE_V2)
+        repository.invalidate_job(job_id)
+        repository.invalidate_profile(profile_id)
+        fresh.commit()
+    with Session(engine) as fresh:
+        for cls in (JobEmbedding, CandidateProfileEmbedding):
+            rows = list(fresh.scalars(select(cls)))
+            assert len(rows) == 2 and {r.template_version for r in rows} == {TEMPLATE_V1, TEMPLATE_V2}
+            assert all(r.status == "stale" for r in rows)
+            assert all(r.source_hash == "a" * 64 and r.taxonomy_fingerprint == "b" * 64 for r in rows)
+            assert all(list(r.embedding) == [1.0] + [0.0] * 383 for r in rows)

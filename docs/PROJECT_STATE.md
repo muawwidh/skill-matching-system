@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-03
+Last updated: 2026-11-04
 
 ## Repository
 
@@ -723,9 +723,9 @@ candidate/profile and job vectors, a resumable indexing CLI, and candidate-only
 `GET /retrieval/jobs`. Exact cosine retrieval remains separate from
 `/matches/recommendations`. There is no semantic taxonomy-linking change.
 The new representation and provisioning contract is in phase5-dense-retrieval.md.
-The developer database was last independently observed through a read-only query
-at `0007_taxonomy_review_audit` on 2026-10-06; do not apply `0008` there without
-a separate deployment instruction. The repository head is `0008_dense_retrieval`.
+The developer database is now independently observed through authorized
+read-only corpus queries at `0008_dense_retrieval`; no migration was run during
+the template-v2 work. The repository head is `0008_dense_retrieval`.
 Last successfully verified migration revision is `0008_dense_retrieval` in
 isolated PostgreSQL. A populated `0007` schema was upgraded, downgraded and
 re-upgraded there; extension, vector(384),
@@ -734,10 +734,10 @@ Backend container startup now performs a read-only exact Alembic head-set check
 before Uvicorn. It refuses mismatched or unreachable databases; it does not
 apply migrations. The opt-in Compose `migrate` service runs `alembic upgrade head`
 only when deliberately invoked with the `maintenance` profile. Ordinary Compose
-startup does not run or depend on it. The developer database was not queried or
-modified during Stability Batch 3; the updated backend will refuse to start
-against its last observed `0007` revision until an explicit, backed-up migration
-is authorized. Phase 5 remains incomplete.
+startup does not run or depend on it. Historically the developer database was
+not queried or modified during Stability Batch 3, and at that point its last
+observed revision was `0007`; startup correctly refused that mismatch. Later
+authorized deployment/corpus checks observed `0008`. Phase 5 remains incomplete.
 
 Batch 3 verification after the static startup guard: focused migration-check
 tests **12 passed** against isolated PostgreSQL; complete default backend suite
@@ -803,6 +803,63 @@ Six normalized job texts were contact-redacted; all 40 source PDF hashes and
 frozen candidate files remain unchanged. No application/database access,
 source-PDF edits, embeddings, rankings or judgments are involved.
 Human-labelled evaluation remains pending and Phase 5 remains incomplete.
+
+### Representation Template V2 (Uncommitted Review)
+
+`e5-job-profile-v1` remains explicitly callable/selectable with unchanged text
+and hashes. `e5-job-profile-v2` is the default main-evaluation contract, fixed
+before relevance judgments/rankings (D030). Candidate text is unchanged; its
+source hash identifies the selected contract. Job v2 uses stored sections,
+generic heading/condition/action cues and deterministic token reservations;
+the pinned local tokenizer enforces 512 tokens including special tokens. It
+does not alter source text, extraction, skills, reviews or taxonomy selections.
+Full inputs and selected text are hashed. CLI/API/evaluation select the same
+version; PostgreSQL uniqueness/query filters isolate both versions. No migration
+is added, and existing v1 rows are not overwritten. Switching templates requires
+explicit indexing of both sides, not merely changing the API parameter.
+
+Repository and isolated verified migration heads remain `0008_dense_retrieval`.
+The developer database was independently read at `0008_dense_retrieval` for the
+authorized corpus checks; it was not migrated or modified during this work.
+Earlier `0007` statements above describe historical observations, not this
+current read-only observation. Production embedding tables remain empty.
+Read-only corpus verification and test evidence are recorded in
+`docs/verification/phase5-template-v2.json`; historical v1 real-model evidence
+remains separate. No evaluation vectors, retrieval rankings or judgments have
+been generated. Phase 5 remains incomplete.
+
+Initial V2 verification: focused representation/retrieval/benchmark **63 passed, 1
+skipped** (private corpus enabled); complete default backend **256 passed, 47
+skipped**; isolated PostgreSQL host **300 passed, 3 skipped**; complete isolated
+PostgreSQL with the offline pinned real model **302 passed, 1 skipped**. The
+remaining private-corpus gate passed in the focused host run. Real-model
+inference/retrieval used synthetic disposable records only. All 30 dry-run v2
+texts are deterministic, at most 512 tokens (observed 506-508), with requirement
+and duty source content retained. The initial J12 short preferred overlap was
+subsequently identified as a classification defect, not token-budget truncation.
+All 30 v1 hashes, candidate frozen text, developer rows and local
+source files remain unchanged; production embeddings remain empty. Disposable
+test resources were removed. No frontend change/build or migration was needed.
+
+Accepted unreleased-v2 follow-up: desired-section aliases are preferred; only
+clear whole-line optional wording may override an explicit heading. Mixed or
+parenthetical/subordinate preferences retain the explicit section class and
+source wording. J12 retains ten preferred units: seven complete units and three budget-clipped verbatim prefixes.
+Its required-experience line remains required and complete at 75/75 characters.
+The three prefixes contain only verbatim source text: expected token-budget
+behavior, not invented or paraphrased text. No stored classifications/reviews
+were changed. All selected units were checked against their source wording.
+The 30 outputs remain deterministic and within 512 tokens; all v1 hashes and
+frozen candidate inputs are unchanged. Regression coverage includes coexisting
+template invalidation, oversize shrinking, exact-512 preservation and HEAD v1
+goldens. All five requested in-memory mutations were caught without source edits.
+Follow-up verification: focused/private corpus **77 passed, 3 skipped**; complete
+default backend **270 passed, 51 skipped**; isolated PostgreSQL **315 passed, 6
+skipped**; pinned offline tokenizer/model-load-only and persistence gates **36
+passed, 0 skipped**. The existing real-vector gate was not rerun under this
+turn's no-encode/no-index boundary; historical real-model evidence remains valid.
+No deployment, normal-stack rebuild, developer-data mutation or migration was
+performed. Phase 5 remains incomplete pending human-labelled evaluation.
 
 Do not implement the final Phase 6 weighted scoring model as part of Phase 5.
 

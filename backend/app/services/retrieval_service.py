@@ -17,9 +17,9 @@ class IndexResult:
 
 
 class RetrievalService:
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session, template_version: str | None = None, tokenizer=None) -> None:
         self.db = db
-        self.repository = RetrievalRepository(db)
+        self.repository = RetrievalRepository(db, template_version, tokenizer)
 
     def index_profile(self, profile_id: UUID, embedder: Embedder) -> IndexResult:
         profile = self.db.get(CandidateProfile, profile_id)
@@ -51,14 +51,13 @@ class RetrievalService:
         self.repository.upsert(job_id, "job", value, vector)
         return IndexResult("indexed", value.source_hash)
 
-    @staticmethod
-    def _job_embedding_query(job_id):
+    def _job_embedding_query(self, job_id):
         from sqlalchemy import select
         from app.db.models import JobEmbedding
-        from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATE_VERSION
+        from app.retrieval.representation import MODEL_ID, MODEL_REVISION
         return select(JobEmbedding).where(JobEmbedding.job_id == job_id,
             JobEmbedding.model_id == MODEL_ID, JobEmbedding.model_revision == MODEL_REVISION,
-            JobEmbedding.template_version == TEMPLATE_VERSION)
+            JobEmbedding.template_version == self.repository.template_version)
 
     @staticmethod
     def _validate(vector: list[float]) -> None:
@@ -69,7 +68,7 @@ class RetrievalService:
     def jobs_for_user(self, user: User, limit: int) -> list[dict]:
         from sqlalchemy import select
         from app.db.models import CandidateProfile
-        from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATE_VERSION
+        from app.retrieval.representation import MODEL_ID, MODEL_REVISION
 
         profile = self.db.scalar(select(CandidateProfile).where(CandidateProfile.user_id == user.id))
         if not profile or profile.status != "active" or not profile.consent_to_process_cv:
@@ -93,7 +92,7 @@ class RetrievalService:
                 results.append({"rank": len(results) + 1, "job_id": job.id, "title": job.title,
                     "company": job.company, "location": job.location, "employment_type": job.employment_type,
                     "retrieval_similarity": 1.0 - float(distance), "model_id": MODEL_ID,
-                    "model_revision": MODEL_REVISION, "template_version": TEMPLATE_VERSION,
+                    "model_revision": MODEL_REVISION, "template_version": self.repository.template_version,
                     "candidate_input_hash": query.source_hash, "job_input_hash": indexed.source_hash,
                     "candidate_indexed_at": query.indexed_at, "job_indexed_at": indexed.indexed_at})
                 if len(results) == limit:

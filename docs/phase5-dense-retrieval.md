@@ -33,6 +33,9 @@ model caches, private CVs, evaluation labels or embedding dumps.
 
 ## Exact representation contract (`e5-job-profile-v1`)
 
+This is the preserved baseline, not the default for new indexing. Select it
+explicitly with `--template e5-job-profile-v1` or the retrieval API query parameter.
+
 All field values collapse runs of whitespace to one space. Repeated textual
 values are deduplicated, then sorted case-insensitively with case-sensitive
 tie-breaking. Source records are sorted by UUID before SHA-256 hashing as
@@ -63,6 +66,112 @@ tokens including the two special tokens, retain the first 510 content tokens
 in priority order and decode them without cleanup. This means long free text
 may be truncated after the job title and structured skill fields. A new
 representation or truncation rule requires a new template version and reindex.
+
+## Section-aware contract (`e5-job-profile-v2`, default)
+
+`DENSE_TEMPLATE_VERSION` selects the default (v2 unless explicitly configured).
+CLI `index`, `export-rankings` and `evaluate` accept `--template` for either
+contract. `GET /retrieval/jobs?template_version=e5-job-profile-v1` selects the
+baseline; omitting the parameter uses the configured default. Unsupported
+versions fail. Both profile and job embeddings must have the same exact
+model/revision/template identity. Existing v1 rows are neither rewritten nor
+compared to v2 queries. No schema change is required.
+
+Compatibility functions `candidate_representation`/`job_representation` remain
+v1 builders, also explicitly named with `_v1`. Version-aware callers use
+`build_candidate_representation`/`build_job_representation`; `_v2` functions are
+explicitly callable as well. Do not infer the active version from the old names.
+
+Candidate v2 uses exactly the v1 semantic fields, ordering and text. Only its
+source-hash envelope changes to identify v2. Frozen candidate data is not edited.
+Both sides need explicit indexing under a selected template, even if candidate
+text did not change. Historical real-model evidence remains evidence for v1,
+not an automatic verification of v2.
+
+V2 uses the pinned local fast tokenizer without model inference during text
+construction. The artifact must declare the pinned immutable revision and have
+two special tokens. Local-files-only loading never downloads at startup or in
+API requests. Query-time source verification can load the tokenizer, not model
+weights. A missing local artifact fails clearly. Tests inject a deterministic
+tokenizer; separately gated tests use the actual pinned tokenizer/model.
+
+The exact packing policy (D030), independent of candidate/job identity:
+
+1. Metadata: `passage: Job title:`, `Employment:`, `Location:` in that order.
+   Values use prefix caps of 60/12/12 content tokens; total metadata cap 104.
+   Oversized values are clipped at word boundaries where possible, without
+   invented ellipses. Full original values remain in the source hash.
+2. Structured skills: required/preferred/unknown order, cap 96 including labels
+   and framing. Nonempty groups share 90 tokens with weights 3:2:1. Values are
+   sorted deterministically and case-insensitive duplicates collapse. Rejected
+   occurrences are excluded; pending occurrences still contribute. Only
+   consistent selected identities from active releases supply canonical labels.
+3. Source: stored sections in source-offset order, with stable identity tie
+   breaking. Generic whole-line/delimited headings, longest alias first, refine
+   boundaries; generic qualification/action cues can refine broad sections.
+   Preferred sections retain preference semantics. Existing extraction, section
+   rows and dictionaries are never changed. See `job_budget.py` for the exact
+   fixed heading grammar/cue expressions.
+   Recognized headings supply the default class. `Desired Skills` and `Desired
+   Qualifications` are preferred aliases with the same case/colon/question-mark
+   handling as existing aliases. Preference overrides are evaluated on the
+   whole original source line before sentence/window selection. Parenthetical
+   and bracketed cues are ignored for this decision. Mandatory wording,
+   multiple sentences or subordinate preference clauses do not override an
+   explicit section class. Clear leading preferred markers or whole-line
+   preferred predicates can override it; a bare preferred ending alone is
+   treated as ambiguous and cannot override an explicit heading. No mixed sentence is rewritten into
+   invented requirement fragments; ordinary source-unit selection remains
+   verbatim. In an unrecognized context, existing generic fallback cues remain.
+4. Source classes: requirements/qualifications/skills; preferences;
+   responsibilities/duties/experience; summary; context. Available description
+   capacity initially uses weights 4:2:4:1:1. Both requirements and duties thus
+   receive reserved capacity when recognized. Classes retain source order;
+   repeated lines are removed within a class. Standalone structured values
+   already represented are not repeated unnecessarily.
+5. Units split at source line/sentence boundaries, with a maximum of 64 original
+   whitespace-delimited words per unit, so even a single unheaded long line has
+   a stratified fallback. Cues apply per unit, not across unrelated sentences;
+   explicitly preferred conditions remain preferences. Each class first
+   reserves beginning/middle/end unit prefixes, then fills its
+   unused quota in source order and expands clipped anchors. Unspent capacity
+   is refunded across unfinished classes with the same weights, for at most
+   class-count-plus-one passes. Original wording is retained; selected units
+   appear in original order. No generated summaries or requirements are added.
+6. Missing/unrecognized headings: use generic line cues, then stratified
+   full-text/context fallback; never silently drop the description because no
+   terms or named sections exist. Context cannot consume capacity reserved for
+   recognized requirements and duties. Recognition is heuristic, not proof that
+   every source qualification was classified correctly.
+7. All labels/separators and both special tokens count. Final text is measured
+   with production tokenization and must be at most 512 tokens. Framing reserves
+   and prefix clipping can leave some space unused. No prefix-only final
+   truncation is used to discard later reserved classes. Unicode remains valid.
+   Diagnostics include the first draft's token count and shrink-pass count.
+   Pinned-tokenizer regressions deliberately overallocate a first draft to
+   exercise shrink handling and preserve an exactly-512-token draft unchanged.
+
+J12's earlier short preferred overlap was caused by classification (missing
+desired-section aliases and an overly broad preferred cue), not token-budget
+truncation. The follow-up reports show desired-section retention after this
+generic correction. Stored job terms, requirement classifications and reviews
+are not changed. Unreleased v2 retains its identifier because it has not been
+committed, indexed or used for relevance labels.
+
+V2 hashes the complete job, every skill including excluded review states, full
+stored section provenance, final selected text, template, model ID and revision.
+Changes outside selected snippets still change the source hash. Diagnostics
+report allocations, fallback, selected source locations and lost recognized
+classes; these are coverage evidence, not relevance labels. A future change to
+this policy requires a new template version. It was fixed before judgments or
+rankings; future v1/v2 Recall@K/MRR comparisons are separate configurations.
+
+Example explicit commands (operator actions, not performed on developer data):
+
+```sh
+.venv/bin/python -m app.retrieval.cli index profiles --template e5-job-profile-v2
+.venv/bin/python -m app.retrieval.cli index jobs --template e5-job-profile-v2
+```
 
 ## Persistence and lifecycle
 

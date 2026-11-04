@@ -11,7 +11,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from app.retrieval.evaluation import retrieval_metrics
-from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATE_VERSION
+from app.retrieval.representation import MODEL_ID, MODEL_REVISION, resolve_template
 
 SEED = 20261002
 GRADE = {"0", "1", "2"}
@@ -271,7 +271,8 @@ def _sha256(path: Path) -> str:
 
 def evaluate_pack(candidates_path: Path, jobs_path: Path, judgments_path: Path,
                   rankings_path: Path, grade_one: bool = False,
-                  allow_synthetic: bool = False) -> dict:
+                  allow_synthetic: bool = False, template_version: str | None = None) -> dict:
+    template_version = resolve_template(template_version)
     candidates, jobs = load_corpus(candidates_path, jobs_path)
     judgments = load_judgments(judgments_path, candidates, jobs)
     if not allow_synthetic and (len(candidates), len(jobs), len(judgments)) != (8, 30, 240):
@@ -281,7 +282,7 @@ def evaluate_pack(candidates_path: Path, jobs_path: Path, judgments_path: Path,
         candidate_id = row.get("candidate_id")
         if candidate_id not in candidates or candidate_id in ranked:
             raise ValueError("Ranking has unknown or duplicate candidate ID")
-        if (row.get("model_id"), row.get("model_revision"), row.get("template_version")) != (MODEL_ID, MODEL_REVISION, TEMPLATE_VERSION):
+        if (row.get("model_id"), row.get("model_revision"), row.get("template_version")) != (MODEL_ID, MODEL_REVISION, template_version):
             raise ValueError("Ranking model/revision/template provenance mismatch")
         if row.get("corpus_sha256") != {"candidates": _sha256(candidates_path), "jobs": _sha256(jobs_path)}:
             raise ValueError("Ranking corpus checksum mismatch")
@@ -304,7 +305,7 @@ def evaluate_pack(candidates_path: Path, jobs_path: Path, judgments_path: Path,
                          "grade_1_partial": sum(row["relevance_grade"] == "1" for row in judgments.values())},
               "relevance_rule": "grade 2 only", "per_candidate": per_candidate,
               "macro_average": macro,
-              "model": {"id": MODEL_ID, "revision": MODEL_REVISION, "template_version": TEMPLATE_VERSION},
+              "model": {"id": MODEL_ID, "revision": MODEL_REVISION, "template_version": template_version},
               "data_sha256": {name: _sha256(path) for name, path in
                               (("candidates", candidates_path), ("jobs", jobs_path),
                                ("judgments", judgments_path), ("rankings", rankings_path))}}
@@ -321,7 +322,7 @@ def evaluate_pack(candidates_path: Path, jobs_path: Path, judgments_path: Path,
 
 
 def export_rankings(candidates_path: Path, jobs_path: Path, mapping_path: Path,
-                    database_url: str, destination: Path) -> dict:
+                    database_url: str, destination: Path, template_version: str | None = None) -> dict:
     """Read actual retrieval results from an isolated database only."""
     from uuid import UUID
 
@@ -331,6 +332,7 @@ def export_rankings(candidates_path: Path, jobs_path: Path, mapping_path: Path,
 
     from app.db.models import User
     from app.services.retrieval_service import RetrievalService
+    template_version = resolve_template(template_version)
 
     if make_url(database_url).database != "phase5_verify":
         raise ValueError("Ranking export requires isolated phase5_verify database")
@@ -350,7 +352,7 @@ def export_rankings(candidates_path: Path, jobs_path: Path, mapping_path: Path,
     rows = []
     try:
         with Session(engine) as db:
-            service = RetrievalService(db)
+            service = RetrievalService(db, template_version)
             for candidate_id in sorted(candidates):
                 user = db.get(User, candidate_uuids[candidate_id])
                 if user is None:
@@ -363,7 +365,7 @@ def export_rankings(candidates_path: Path, jobs_path: Path, mapping_path: Path,
                     raise ValueError(f"Retrieval did not return every benchmark job for {candidate_id}; index first")
                 rows.append({"candidate_id": candidate_id, "retrieved_job_ids": ids,
                              "model_id": MODEL_ID, "model_revision": MODEL_REVISION,
-                             "template_version": TEMPLATE_VERSION, "corpus_sha256": hashes})
+                             "template_version": template_version, "corpus_sha256": hashes})
     finally:
         engine.dispose()
     destination.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")

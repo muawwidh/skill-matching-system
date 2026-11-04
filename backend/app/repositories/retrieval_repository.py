@@ -6,12 +6,16 @@ from sqlalchemy.orm import Session
 
 from app.db.models import (ApprovedTaxonomyLink, CandidateProfileEmbedding, CandidateSkill,
                            ExtractedCandidateTerm, ExtractedJobTerm, Job, JobEmbedding, JobSkill)
-from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATE_VERSION, candidate_representation, job_representation
+from app.retrieval.representation import (MODEL_ID, MODEL_REVISION, TEMPLATE_V1, resolve_template,
+    build_candidate_representation, build_job_representation)
+from app.retrieval.embedder import load_local_tokenizer
 
 
 class RetrievalRepository:
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session, template_version: str | None = None, tokenizer=None) -> None:
         self.db = db
+        self.template_version = resolve_template(template_version)
+        self.tokenizer = tokenizer
 
     def _canonicals(self, term_source: str, term_ids: list[UUID]) -> dict[UUID, tuple[str, str]]:
         if not term_ids:
@@ -43,7 +47,7 @@ class RetrievalRepository:
                          "type": skill.skill_type, "status": skill.review_status,
                          "evidence": skill.evidence_sentence, "canonical": canonical,
                          "release": release, "term_id": str(skill.extracted_term_id or "")})
-        return candidate_representation(rows)
+        return build_candidate_representation(rows, self.template_version)
 
     def job_input(self, job: Job):
         skills = list(self.db.scalars(select(JobSkill).where(JobSkill.job_id == job.id)))
@@ -64,7 +68,15 @@ class RetrievalRepository:
                   "location": job.location, "company": job.company,
                   "description": job.cleaned_description,
                   "status": job.status}
-        return job_representation(source, rows)
+        if self.template_version == TEMPLATE_V1:
+            return build_job_representation(source, rows, [], self.template_version)
+        sections = [{"id": str(s.id), "section_type": s.section_type, "heading": s.heading,
+                     "content": s.content, "start_char": s.start_char, "end_char": s.end_char,
+                     "confidence_score": s.confidence_score, "extraction_method": s.extraction_method}
+                    for s in job.sections]
+        if self.tokenizer is None:
+            self.tokenizer = load_local_tokenizer()
+        return build_job_representation(source, rows, sections, self.template_version, self.tokenizer)
 
     def invalidate_profile(self, profile_id: UUID) -> None:
         self.db.execute(update(CandidateProfileEmbedding).where(
@@ -94,17 +106,17 @@ class RetrievalRepository:
         key = "candidate_profile_id" if owner_kind == "profile" else "job_id"
         self.db.execute(update(cls).where(getattr(cls, key) == owner_id,
             cls.model_id == MODEL_ID, cls.model_revision == MODEL_REVISION,
-            cls.template_version == TEMPLATE_VERSION, cls.status == "stale").values(status="failed"))
+            cls.template_version == self.template_version, cls.status == "stale").values(status="failed"))
 
     def upsert(self, owner_id: UUID, owner_kind: str, value, embedding: list[float]) -> None:
         cls = CandidateProfileEmbedding if owner_kind == "profile" else JobEmbedding
         key = "candidate_profile_id" if owner_kind == "profile" else "job_id"
         row = self.db.scalar(select(cls).where(getattr(cls, key) == owner_id,
                 cls.model_id == MODEL_ID, cls.model_revision == MODEL_REVISION,
-                cls.template_version == TEMPLATE_VERSION).with_for_update())
+                cls.template_version == self.template_version).with_for_update())
         if row is None:
             row = cls(**{key: owner_id}, model_id=MODEL_ID, model_revision=MODEL_REVISION,
-                      template_version=TEMPLATE_VERSION)
+                      template_version=self.template_version)
             self.db.add(row)
         row.embedding = embedding
         row.source_hash = value.source_hash
@@ -118,14 +130,17 @@ class RetrievalRepository:
             CandidateProfileEmbedding.candidate_profile_id == profile_id,
             CandidateProfileEmbedding.model_id == MODEL_ID,
             CandidateProfileEmbedding.model_revision == MODEL_REVISION,
-            CandidateProfileEmbedding.template_version == TEMPLATE_VERSION))
+            CandidateProfileEmbedding.template_version == self.template_version))
 
     def exact_jobs(self, query, limit: int, offset: int = 0):
+        if (query.template_version, query.model_id, query.model_revision) != (
+                self.template_version, MODEL_ID, MODEL_REVISION):
+            raise ValueError("Query embedding model/template does not match retrieval configuration")
         distance = JobEmbedding.embedding.cosine_distance(query.embedding)
         return self.db.execute(select(JobEmbedding, Job, distance.label("distance"))
             .join(Job, Job.id == JobEmbedding.job_id)
             .where(JobEmbedding.status == "ready", JobEmbedding.model_id == MODEL_ID,
                    JobEmbedding.model_revision == MODEL_REVISION,
-                   JobEmbedding.template_version == TEMPLATE_VERSION,
+                   JobEmbedding.template_version == self.template_version,
                    Job.status == "processed")
             .order_by(distance, Job.id).offset(offset).limit(limit)).all()

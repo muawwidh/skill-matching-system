@@ -385,3 +385,21 @@ def test_private_local_job_corpus_and_frozen_candidates_read_only():
         assert text_path.read_text() == job["description_text"]
         assert hashlib.sha256((directory / "source-jobs" / job["pdf_filename"]).read_bytes()).hexdigest() == job["pdf_sha256"]
     assert candidate_path.read_bytes() == before
+
+
+def test_explicit_v1_evaluation_remains_separate_from_v2(tmp_path):
+    from app.retrieval.representation import TEMPLATE_V1, TEMPLATE_V2
+    cp, jp, candidates, jobs = _files(tmp_path)
+    judgments = tmp_path / "synthetic-judgments.csv"
+    _judgments(judgments, candidates, jobs)
+    rankings = tmp_path / "synthetic-rankings.jsonl"
+    hashes = {"candidates": hashlib.sha256(cp.read_bytes()).hexdigest(),
+              "jobs": hashlib.sha256(jp.read_bytes()).hexdigest()}
+    rows = [dict(candidate_id=c["id"], retrieved_job_ids=[j["id"] for j in jobs],
+                 model_id=MODEL_ID, model_revision=MODEL_REVISION, template_version=TEMPLATE_V1,
+                 corpus_sha256=hashes) for c in candidates]
+    _write_rows(rankings, rows)
+    result = evaluate_pack(cp, jp, judgments, rankings, allow_synthetic=True, template_version=TEMPLATE_V1)
+    assert result["model"]["template_version"] == TEMPLATE_V1
+    with pytest.raises(ValueError, match="provenance mismatch"):
+        evaluate_pack(cp, jp, judgments, rankings, allow_synthetic=True, template_version=TEMPLATE_V2)

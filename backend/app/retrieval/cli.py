@@ -11,7 +11,8 @@ from app.db.session import SessionLocal
 from app.retrieval.embedder import default_embedder
 from app.retrieval.benchmark import (cohens_kappa, evaluate_pack, export_rankings,
                                      load_corpus, load_judgments, write_blind_export)
-from app.retrieval.representation import MODEL_ID, MODEL_REVISION
+from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATES, resolve_template
+from app.services.retrieval_service import RetrievalService
 
 
 def provision(path: str) -> None:
@@ -27,7 +28,8 @@ def provision(path: str) -> None:
     print(json.dumps({"model": MODEL_ID, "revision": MODEL_REVISION, "path": str(location)}))
 
 
-def index(kind: str, limit: int, after: str | None) -> None:
+def index(kind: str, limit: int, after: str | None, template_version: str | None = None) -> None:
+    template_version = resolve_template(template_version)
     embedder = default_embedder()
     cls = Job if kind == "jobs" else CandidateProfile
     cursor = UUID(after) if after else None
@@ -43,7 +45,7 @@ def index(kind: str, limit: int, after: str | None) -> None:
     for item_id in ids:
         try:
             with SessionLocal() as db:
-                service = RetrievalService(db)
+                service = RetrievalService(db, template_version, embedder.tokenizer)
                 outcome = service.index_job(item_id, embedder) if kind == "jobs" else service.index_profile(item_id, embedder)
                 db.commit()
             counts[outcome.outcome] += 1
@@ -52,12 +54,12 @@ def index(kind: str, limit: int, after: str | None) -> None:
             failures.append(str(item_id))
             from app.repositories.retrieval_repository import RetrievalRepository
             with SessionLocal() as db:
-                RetrievalRepository(db).mark_failed(item_id, "job" if kind == "jobs" else "profile")
+                RetrievalRepository(db, template_version).mark_failed(item_id, "job" if kind == "jobs" else "profile")
                 db.commit()
             print(json.dumps({"id": str(item_id), "error": str(exc)}))
         if not failures:
             resume_after = item_id
-    print(json.dumps({"kind": kind, "processed": len(ids), "counts": counts,
+    print(json.dumps({"kind": kind, "template_version": template_version, "processed": len(ids), "counts": counts,
                       "next_after": str(resume_after) if resume_after else None,
                       "failed_ids": failures,
                       "duration_seconds": round(perf_counter() - started, 3)}))
@@ -72,6 +74,7 @@ def main() -> None:
     indexing.add_argument("kind", choices=("jobs", "profiles"))
     indexing.add_argument("--limit", type=int, default=100)
     indexing.add_argument("--after")
+    indexing.add_argument("--template", choices=TEMPLATES)
     blind = sub.add_parser("blind-export", help="Create randomized, score-free labelling CSV")
     blind.add_argument("candidates", type=Path)
     blind.add_argument("jobs", type=Path)
@@ -87,12 +90,14 @@ def main() -> None:
     rankings.add_argument("mapping", type=Path)
     rankings.add_argument("output", type=Path)
     rankings.add_argument("--database-url", required=True)
+    rankings.add_argument("--template", choices=TEMPLATES)
     evaluation = sub.add_parser("evaluate", help="Require complete, validated human judgments")
     evaluation.add_argument("candidates", type=Path)
     evaluation.add_argument("jobs", type=Path)
     evaluation.add_argument("judgments", type=Path)
     evaluation.add_argument("rankings", type=Path)
     evaluation.add_argument("--grade-one-exploratory", action="store_true")
+    evaluation.add_argument("--template", choices=TEMPLATES)
     kappa = sub.add_parser("kappa", help="Optional second-reviewer agreement")
     kappa.add_argument("candidates", type=Path)
     kappa.add_argument("jobs", type=Path)
@@ -105,10 +110,11 @@ def main() -> None:
     elif args.command == "index":
         if not 1 <= args.limit <= 1000:
             parser.error("--limit must be between 1 and 1000")
-        index(args.kind, args.limit, args.after)
+        index(args.kind, args.limit, args.after, args.template)
     elif args.command == "evaluate":
         print(json.dumps(evaluate_pack(args.candidates, args.jobs, args.judgments,
-                                       args.rankings, args.grade_one_exploratory), sort_keys=True))
+                                       args.rankings, args.grade_one_exploratory,
+                                       template_version=args.template), sort_keys=True))
     elif args.command == "blind-export":
         candidates, jobs = load_corpus(args.candidates, args.jobs)
         metadata = write_blind_export(candidates, jobs, args.output, args.seed)
@@ -121,7 +127,7 @@ def main() -> None:
         print(json.dumps(result, sort_keys=True))
     elif args.command == "export-rankings":
         print(json.dumps(export_rankings(args.candidates, args.jobs, args.mapping,
-                                         args.database_url, args.output), sort_keys=True))
+                                         args.database_url, args.output, template_version=args.template), sort_keys=True))
     elif args.command == "kappa":
         candidates, jobs = load_corpus(args.candidates, args.jobs)
         print(json.dumps(cohens_kappa(args.first, args.second, candidates, jobs), sort_keys=True))

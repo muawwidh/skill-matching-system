@@ -62,6 +62,18 @@ retrieval branch after review:
 2. Explicitly index both with the locally pinned E5 model
 3. Retrieve top-N active jobs by exact pgvector cosine distance
 
+Retrieval text now dispatches explicitly by template. V1 remains the unchanged
+baseline. V2 (default) preserves candidate text and budgets job metadata,
+structured skills and verbatim stored sections with reserved requirements and
+responsibilities capacity; generic heading/line cues and stratified context
+handle missing headings. This is an in-memory retrieval policy, not extraction
+or reprocessing: no source document, stored section, review or selection is
+rewritten. Both sides must be explicitly indexed under the same template;
+switching versions never compares v1 and v2 vectors. Source hashes include the
+v2 contract and complete inputs. See D030 and `phase5-dense-retrieval.md` for the
+fixed budget and the predeclared baseline/main-evaluation comparison. Phase 5
+remains incomplete pending human-labelled evaluation.
+
 Later phases add:
 
 1. Final weighted scoring

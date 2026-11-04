@@ -1,4 +1,5 @@
 from pathlib import Path
+from functools import lru_cache
 from typing import Protocol
 
 from app.retrieval.representation import DIMENSION, MODEL_ID, MODEL_REVISION, bounded_text
@@ -6,6 +7,21 @@ from app.retrieval.representation import DIMENSION, MODEL_ID, MODEL_REVISION, bo
 
 class Embedder(Protocol):
     def encode(self, text: str) -> list[float]: ...
+
+
+@lru_cache(maxsize=2)
+def load_local_tokenizer(path: str | None = None):
+    from os import environ
+    location = Path(path or environ.get("DENSE_MODEL_PATH", "../models/multilingual-e5-small-fd1525a"))
+    if not location.is_dir() or not (location / "revision.txt").exists():
+        raise RuntimeError("Pinned local tokenizer unavailable; explicitly provision the pinned model first")
+    if (location / "revision.txt").read_text().strip() != MODEL_REVISION:
+        raise RuntimeError("Local tokenizer does not declare the pinned revision")
+    from transformers import AutoTokenizer
+    tokenizer = AutoTokenizer.from_pretrained(str(location), local_files_only=True, trust_remote_code=False)
+    if not tokenizer.is_fast or tokenizer.num_special_tokens_to_add(pair=False) != 2:
+        raise RuntimeError("Unexpected pinned tokenizer contract")
+    return tokenizer
 
 
 class LocalE5Embedder:

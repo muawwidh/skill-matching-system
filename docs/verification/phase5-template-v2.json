@@ -1,0 +1,1704 @@
+{
+  "schema": "phase5-template-v2-followup-verification-v1",
+  "base_commit": "8607310aa12bec4e338f2d017bab48bec23c3426",
+  "before_tree_sha256": "7edbaedc9aecf138bb5a88e0d3a8f2b3345af86cc388d9eb0a1e61180f5ba820",
+  "before_artifact_sha256": {
+    "docs/verification/phase5-template-v2.json": "93535c49d2f5b7a4c60d8cdd8c356c782af7d49f5a67838285eddde1fbbd339b",
+    "docs/verification/phase5-template-v2.md": "c6ce9e6acb62444e83c7fd61dbe2acee30edbec945a7e6f3905d9a58df376e55"
+  },
+  "model": {
+    "id": "intfloat/multilingual-e5-small",
+    "revision": "fd1525a9fd15316a2d503bf26ab031a61d056e98",
+    "tokenizer_sha256": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39",
+    "offline": true,
+    "real_vector_encoding_this_followup": false
+  },
+  "migration": {
+    "repository_head": "0008_dense_retrieval",
+    "isolated_verified_head": "0008_dense_retrieval",
+    "developer_observed_head": "0008_dense_retrieval",
+    "migrations_added": false,
+    "developer_migrated": false
+  },
+  "policy": {
+    "template_version": "e5-job-profile-v2",
+    "uncommitted_unindexed_unlabelled": true,
+    "desired_preferred_aliases": [
+      "Desired Skills",
+      "Desired Qualifications"
+    ],
+    "metadata_cap": 104,
+    "structured_cap": 96,
+    "source_weights": {
+      "requirements": 4,
+      "preferences": 2,
+      "responsibilities": 4,
+      "summary": 1,
+      "context": 1
+    },
+    "max_source_unit_words": 64,
+    "max_tokens_including_specials": 512,
+    "classification_rule": "Recognized headings supply the default. Only a clear leading preferred marker or whole-line preferred predicate may override the explicit heading. Parenthetical/bracketed or subordinate preferences, mandatory/mixed wording and ambiguous bare preferred endings retain the explicit section class. No semantic fragments are invented.",
+    "whole_line_optional_forms": [
+      "leading preferred marker",
+      "whole-line preferred predicate"
+    ],
+    "source_unit_definition": "Selected fragments are exact prefixes of whitespace-normalized stored source units. Generated metadata/section labels are not source units.",
+    "optional_query_performance_change": false,
+    "template_version_constant_renamed": false,
+    "ambiguous_bare_preferred_endings_retain_heading": true
+  },
+  "checks": {
+    "v1_all_30_hashes_match_previous_audit": true,
+    "v2_deterministic": true,
+    "all_inputs_at_most_512_tokens": true,
+    "all_selected_source_units_verbatim": true,
+    "candidate_v2_text_matches_frozen_v1": true,
+    "developer_database_rows_unchanged": true,
+    "original_12_jobs_unchanged": true,
+    "local_corpus_files_unchanged": true,
+    "embedding_tables_empty": true,
+    "api_requests": 0,
+    "all_30_recorded_v1_hashes_unchanged": true,
+    "all_30_required_classes_retained": true,
+    "all_30_responsibility_classes_retained": true,
+    "all_selected_units_verbatim": true,
+    "production_jobs": 42,
+    "production_pending_evaluation_skills": 92,
+    "production_job_embeddings": 0,
+    "production_profile_embeddings": 0,
+    "frozen_candidate_inputs_unchanged": true,
+    "mapped_job_rows_and_skills_unchanged": true
+  },
+  "j12_correction": {
+    "cause": "Classification, not token-budget truncation: missing desired-section aliases and an overly broad preference override.",
+    "before_v2_sha256": "9b364b6c8074fba3bd1dac38ca45db13f26e94a14202fcb66db4cbea71ed76bf",
+    "after_v2_sha256": "ec6d18ac6a22e456f9a0442167a3683f3bcce1e9a008d10b580ad8762e2627c5",
+    "before_retained_source_units": {
+      "requirements": 15,
+      "preferences": 1,
+      "responsibilities": 16,
+      "context": 5
+    },
+    "after_retained_source_units": {
+      "requirements": 13,
+      "preferences": 10,
+      "responsibilities": 14,
+      "context": 5
+    },
+    "desired_skill_source_units_retained": true,
+    "recorded_preferred_block_overlap": {
+      "total": 1,
+      "representative_blocks": 1,
+      "longest_contiguous_word_runs": [
+        12
+      ]
+    },
+    "stored_job_skill_requirement_types_and_reviews_changed": false
+  },
+  "tests": {
+    "focused_private_corpus": {
+      "passed": 77,
+      "failed": 0,
+      "skipped": 3,
+      "skips": "Three pinned-tokenizer tests exercised separately"
+    },
+    "complete_default_backend": {
+      "passed": 270,
+      "failed": 0,
+      "skipped": 51
+    },
+    "complete_isolated_postgresql": {
+      "passed": 315,
+      "failed": 0,
+      "skipped": 6,
+      "skips": [
+        "Three pinned-tokenizer tests",
+        "Private-corpus gate (passed in focused run)",
+        "Model-load-only gate",
+        "Existing real-vector gate (not rerun under no-encode instruction)"
+      ]
+    },
+    "offline_tokenizer_model_load_and_postgresql_gates": {
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "real_model_loaded_without_encoding": true,
+      "real_model_encode_calls": 0,
+      "disposable_synthetic_data_only": true
+    },
+    "existing_real_vector_gate_this_turn": "NOT RUN: no-encode/no-index boundary; historical evidence unchanged",
+    "v1_head_golden_source": {
+      "commit": "8607310aa12bec4e338f2d017bab48bec23c3426",
+      "module_sha256": "90d083b46aea12014613a8350fe001e9f261104ee7713269f2d374f812e8b3d3"
+    },
+    "mutation_checks": {
+      "all_caught": true,
+      "source_files_unchanged": true,
+      "mutations": [
+        {
+          "mutation": "single_template_invalidation",
+          "test": "tests/test_retrieval_postgres.py::test_invalidation_stales_all_coexisting_template_versions",
+          "caught": true,
+          "exit_code": 1,
+          "output_sha256": "2c2537208f95a21e7a9504f168105ccff9f851e10b59ba3367c3b4ded1f2c374",
+          "summary": "1 failed, 2 warnings in 0.33s"
+        },
+        {
+          "mutation": "disabled_oversize_shrink",
+          "test": "tests/test_representation_v2.py::test_pinned_tokenizer_oversized_first_draft_is_shrunk",
+          "caught": true,
+          "exit_code": 1,
+          "output_sha256": "487e1f1bdd002e345dd236c98ed9931e4ae8df0f76802d5d7674824e67ad2cc3",
+          "summary": "1 failed, 2 warnings in 2.38s"
+        },
+        {
+          "mutation": "unnecessary_exact_limit_shrink",
+          "test": "tests/test_representation_v2.py::test_pinned_tokenizer_exactly_512_first_draft_is_not_shortened",
+          "caught": true,
+          "exit_code": 1,
+          "output_sha256": "2a0fff2cd61f325fec1c557ee6a221046d93c561ff90d02cbc55bd569b844268",
+          "summary": "1 failed, 2 warnings in 2.13s"
+        },
+        {
+          "mutation": "subordinate_preference_override",
+          "test": "tests/test_representation_v2.py::test_parenthetical_or_subordinate_preference_keeps_required_line",
+          "caught": true,
+          "exit_code": 1,
+          "output_sha256": "f55c41bd086ee771c2e0274241fa52b5af7ff28d45deed5961fdc9188c427f5a",
+          "summary": "4 failed, 2 warnings in 0.06s"
+        },
+        {
+          "mutation": "missing_desired_aliases",
+          "test": "tests/test_representation_v2.py::test_desired_section_aliases_are_preferred",
+          "caught": true,
+          "exit_code": 1,
+          "output_sha256": "ba548da76784606efcfbf86623f5f84a28c484123b0872093ab681507af1db1e",
+          "summary": "6 failed, 2 warnings in 0.06s"
+        }
+      ]
+    },
+    "diff_check": "passed; tracked and untracked sources",
+    "frontend_build": "not needed; frontend unchanged"
+  },
+  "limitations": [
+    "Selection remains representative, not exhaustive preservation of every source condition.",
+    "Classification is a generic retrieval-time heuristic, not a human review or extraction correction.",
+    "Mechanical source-block overlap is diagnostic, not a retrieval-quality metric.",
+    "No real-corpus vectors, rankings, relevance judgments or final evaluation were created."
+  ],
+  "jobs": [
+    {
+      "job_id": "J01",
+      "v1_sha256": "9d0381381637314a6b767c1b786998307bf22da68e1589f5303612eb983ceff2",
+      "before_followup_v2_sha256": "5d88995be0a13fb1a0aa6109a04abcad77cd81fcd78f94136c318e310410808d",
+      "v2_sha256": "b0deb8cd9d869671a68d11893f4de6db6042565659ebff43b61134dc53917e4a",
+      "v2_source_hash": "372997f847fe3e0ce1051932ec2492b3ef22883e6dd40e21e70125bd7be777b8",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 484,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 16,
+        "preferences": 7,
+        "responsibilities": 8,
+        "summary": 6
+      },
+      "available_source_units": {
+        "requirements": 22,
+        "preferences": 31,
+        "responsibilities": 8,
+        "summary": 92,
+        "context": 0
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 5,
+          "representative_blocks": 4,
+          "longest_contiguous_word_runs": [
+            12,
+            12,
+            5,
+            8,
+            2
+          ]
+        },
+        "preferred_skills": {
+          "total": 5,
+          "representative_blocks": 2,
+          "longest_contiguous_word_runs": [
+            2,
+            12,
+            7,
+            2,
+            1
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 37,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 2
+      },
+      "selected_trace_sha256": "df86c07bfb9c30f238d7253b9aeb54aceb0a28aa626254080dc5e27f28a41e65"
+    },
+    {
+      "job_id": "J02",
+      "v1_sha256": "9eefafe906ea62b250b4ff04842c4fbff4e2333a14d3590cabdf36419148684f",
+      "before_followup_v2_sha256": "ace7e58dc79f147243d971ab2bfcde81ebef001a288547b3c2a6617ee95f2641",
+      "v2_sha256": "6754df3f22b4c73674c77d71592acaa3792b9dbe2807fc49580e835da66b059d",
+      "v2_source_hash": "94eabd2fd1f36443a35297a38b57f432349f1dd9e85f9357c7cb687517cf1041",
+      "v2_tokens": 503,
+      "initial_draft_tokens": 361,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 4,
+        "responsibilities": 22,
+        "context": 8
+      },
+      "available_source_units": {
+        "requirements": 4,
+        "preferences": 0,
+        "responsibilities": 39,
+        "summary": 0,
+        "context": 8
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 2,
+          "representative_blocks": 2,
+          "longest_contiguous_word_runs": [
+            12,
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 2,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            0,
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 34,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {},
+      "selected_trace_sha256": "5a0d0473157e13b7156712c06fc9d32805760da6a85392537d6ad75cdcc525d2"
+    },
+    {
+      "job_id": "J03",
+      "v1_sha256": "63fc9d5fde8d01fa9375581d8f8b38fac9bb2068ad2cb5dd3ba9f39b53e470f7",
+      "before_followup_v2_sha256": "a675362833a319fe2a67ace4f14e61a964c8e37d62562d8e737ee5f739b1f81a",
+      "v2_sha256": "a675362833a319fe2a67ace4f14e61a964c8e37d62562d8e737ee5f739b1f81a",
+      "v2_source_hash": "66212389ac6bd07c8d77fbb861cb764e4e0ad7d06f9ef775b360b74480a3c1b3",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 494,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 20,
+        "responsibilities": 16,
+        "context": 5
+      },
+      "available_source_units": {
+        "requirements": 49,
+        "preferences": 0,
+        "responsibilities": 18,
+        "summary": 0,
+        "context": 20
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 2,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12,
+            2
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 41,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 1
+      },
+      "selected_trace_sha256": "f59c2d9c7ffc4dba3242bbb15ba1f1afd2dffbc44e04e808becb7cfca0b60237"
+    },
+    {
+      "job_id": "J04",
+      "v1_sha256": "8040a763e2f1f6e3a6601a13a06cb037698c6f3530606ebecaf3fece42f57d13",
+      "before_followup_v2_sha256": "dcebc940bcbfa1f9fd1823f4318e6f6b5735114d67337bf5734abea63c61080a",
+      "v2_sha256": "dcebc940bcbfa1f9fd1823f4318e6f6b5735114d67337bf5734abea63c61080a",
+      "v2_source_hash": "a6dd82c93d673e6974ed1f29291a683a0bce3154a0dde784d51a76021df29a56",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 494,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 19,
+        "responsibilities": 12,
+        "context": 5
+      },
+      "available_source_units": {
+        "requirements": 39,
+        "preferences": 0,
+        "responsibilities": 29,
+        "summary": 0,
+        "context": 30
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 0,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": []
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 36,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {},
+      "selected_trace_sha256": "7e35b6bfe734c684572d7752d5fe94319d340dc362bd32a4dea4f6c6ad6bb1cd"
+    },
+    {
+      "job_id": "J05",
+      "v1_sha256": "0fd0e15858376c198f74162fd65300478830a4e00cbb71c9c62c3d4e617b3afd",
+      "before_followup_v2_sha256": "f04926c477f39c5139ba1f95220e0d23f7eb1383b7d158ad87c937253e3211bf",
+      "v2_sha256": "f04926c477f39c5139ba1f95220e0d23f7eb1383b7d158ad87c937253e3211bf",
+      "v2_source_hash": "5e0ca401b1adbcfd81f66682f6bf41d2c1a6bb8c4f79ccba48222b6a001fb72c",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 416,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 13,
+        "responsibilities": 13,
+        "context": 13
+      },
+      "available_source_units": {
+        "requirements": 13,
+        "preferences": 0,
+        "responsibilities": 13,
+        "summary": 0,
+        "context": 44
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 0,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": []
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 39,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {},
+      "selected_trace_sha256": "f28a3dfba4fdbcea167117ae71d911bf22de4fd3b517f5eb491b5b3350bdfe78"
+    },
+    {
+      "job_id": "J06",
+      "v1_sha256": "6b966811bc573911c2eb8ce923ed1c9d9f63864df61f264712f23a3b1897e352",
+      "before_followup_v2_sha256": "c9fbe8be355d032e8825419a875f3ad3d908c65b086448609eb543480606ed59",
+      "v2_sha256": "c9fbe8be355d032e8825419a875f3ad3d908c65b086448609eb543480606ed59",
+      "v2_source_hash": "c0f61d48633c79f3fd15bffc9abc82a429354916efe58f8333c7e7d3046fc0d5",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 175,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 4,
+        "preferences": 1,
+        "responsibilities": 2,
+        "context": 30
+      },
+      "available_source_units": {
+        "requirements": 4,
+        "preferences": 1,
+        "responsibilities": 2,
+        "summary": 0,
+        "context": 46
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 2,
+          "representative_blocks": 2,
+          "longest_contiguous_word_runs": [
+            12,
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 37,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "line-cues+stratified-context",
+      "structured_skill_counts": {},
+      "selected_trace_sha256": "fd3f207b75713c9cf688f104239c33115c583ab0237826e2af46e4245a3ef26f"
+    },
+    {
+      "job_id": "J07",
+      "v1_sha256": "f09c65d36947ce4c365a2f52759f5770642fe42761b601eb9b9b980cd52fe98e",
+      "before_followup_v2_sha256": "17abd1063f1a6de2f1ad5156510d1f1c15425221b7c83bc8c1a253b9a1736449",
+      "v2_sha256": "17abd1063f1a6de2f1ad5156510d1f1c15425221b7c83bc8c1a253b9a1736449",
+      "v2_source_hash": "e2a1fa76a9053d5a8166459c47f9d670f277ce42bb0377656e25ce1f00e35f4b",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 372,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 9,
+        "preferences": 4,
+        "responsibilities": 8,
+        "context": 14
+      },
+      "available_source_units": {
+        "requirements": 9,
+        "preferences": 4,
+        "responsibilities": 8,
+        "summary": 0,
+        "context": 30
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 35,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "required": 2,
+        "preferred": 1
+      },
+      "selected_trace_sha256": "649f93bcbe3a6477b64b8dfabf682f5b0dbd5ac21478667fc1a6280671fa874b"
+    },
+    {
+      "job_id": "J08",
+      "v1_sha256": "8561d7f3c207f05824d1a3fbf21d9d457d49f5e04ad9176846ba8b9adb707c68",
+      "before_followup_v2_sha256": "aa6a173ce70e6faf80c8d6817092a28ede84e477d8131a6d01cf9b2966a78302",
+      "v2_sha256": "aa6a173ce70e6faf80c8d6817092a28ede84e477d8131a6d01cf9b2966a78302",
+      "v2_source_hash": "ee0d87d1d4fda5ed1b1fd699bdbb5fefa6fc13f491dba97310f5e0e40118c076",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 490,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 11,
+        "preferences": 8,
+        "responsibilities": 17,
+        "summary": 4,
+        "context": 7
+      },
+      "available_source_units": {
+        "requirements": 59,
+        "preferences": 19,
+        "responsibilities": 43,
+        "summary": 17,
+        "context": 65
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            5
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 47,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "required": 2,
+        "unknown": 2
+      },
+      "selected_trace_sha256": "01b28c1fcae83c1b05839d52c93d0064f8b40b4f3d9c22e5f374daa60abdc405"
+    },
+    {
+      "job_id": "J09",
+      "v1_sha256": "b58daacff2d9a5db92d0c7384ac395aabb79fc5abceef9a8e85a69bfa8d93cdb",
+      "before_followup_v2_sha256": "ff5bdd9ad7a416672a8661ba7e7a85c2ab52cd6a74ef76820656e6f379c8cdf6",
+      "v2_sha256": "ff5bdd9ad7a416672a8661ba7e7a85c2ab52cd6a74ef76820656e6f379c8cdf6",
+      "v2_source_hash": "1e631d043b0da67d13aa6015a9c2cfb3f8fc92f36b59dba7cae1e21d51b7545c",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 410,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 9,
+        "responsibilities": 21,
+        "context": 6
+      },
+      "available_source_units": {
+        "requirements": 9,
+        "preferences": 0,
+        "responsibilities": 41,
+        "summary": 0,
+        "context": 8
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 2,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12,
+            1
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            10
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 36,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 1
+      },
+      "selected_trace_sha256": "03a6fb0681af3dc6f9abf383e756ccdecb7f650325aa3769be58c6a3d65c53b2"
+    },
+    {
+      "job_id": "J10",
+      "v1_sha256": "a7487ca28cd87b280bf39232c211e9c95386930eea61f3741bc6ad97398c1e9f",
+      "before_followup_v2_sha256": "ef5d4be6c8cc02746af10600ebdbf1867e55bc482078125ffc78c9fda123d466",
+      "v2_sha256": "ef5d4be6c8cc02746af10600ebdbf1867e55bc482078125ffc78c9fda123d466",
+      "v2_source_hash": "1b731f33bafd616f4d2235b31a15b9b7eeedfe6a7fc93c64671755092bd008bd",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 202,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 6,
+        "responsibilities": 2,
+        "context": 31
+      },
+      "available_source_units": {
+        "requirements": 6,
+        "preferences": 0,
+        "responsibilities": 2,
+        "summary": 0,
+        "context": 52
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 0,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": []
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 39,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "line-cues+stratified-context",
+      "structured_skill_counts": {
+        "unknown": 2
+      },
+      "selected_trace_sha256": "4506e0a23c653df82a70403f709030d8fe1c00503d8dd5630a1a3eace48a9227"
+    },
+    {
+      "job_id": "J11",
+      "v1_sha256": "1087c1150edaf623086c0388ce8fb6e86229943d2b85d8c031245cada91b6911",
+      "before_followup_v2_sha256": "bbc0ebb73861b1190b2618c2a30b0259944ed8fa443c8e610ff1e5ea4d3ec32e",
+      "v2_sha256": "5cb6e093b2aa7a4bc2c66eb0c54a1d427f4a51d58f64e415c8f4c7a81b50b022",
+      "v2_source_hash": "8ae6f46c2b48963c393aded58b728d680514553ef1e857dde3b69647eba23d4e",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 492,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 17,
+        "responsibilities": 18,
+        "context": 5
+      },
+      "available_source_units": {
+        "requirements": 50,
+        "preferences": 0,
+        "responsibilities": 33,
+        "summary": 0,
+        "context": 5
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 3,
+          "representative_blocks": 2,
+          "longest_contiguous_word_runs": [
+            12,
+            12,
+            3
+          ]
+        },
+        "preferred_skills": {
+          "total": 2,
+          "representative_blocks": 2,
+          "longest_contiguous_word_runs": [
+            12,
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 40,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 13
+      },
+      "selected_trace_sha256": "4479b726d57746c3869d300a88582aec44aa8517211aac4146f368f5e7934815"
+    },
+    {
+      "job_id": "J12",
+      "v1_sha256": "d7b9987b41f3efb9cc244c93f0acae1702306c30d2a11d40717c509327bab2ae",
+      "before_followup_v2_sha256": "9b364b6c8074fba3bd1dac38ca45db13f26e94a14202fcb66db4cbea71ed76bf",
+      "v2_sha256": "ec6d18ac6a22e456f9a0442167a3683f3bcce1e9a008d10b580ad8762e2627c5",
+      "v2_source_hash": "616b18cd480b8421ba69929bb56d9f8720cd8df9222ffe4b7dfc3db4244ef2ca",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 492,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 13,
+        "preferences": 10,
+        "responsibilities": 14,
+        "context": 5
+      },
+      "available_source_units": {
+        "requirements": 18,
+        "preferences": 13,
+        "responsibilities": 34,
+        "summary": 0,
+        "context": 15
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 42,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "required": 1
+      },
+      "selected_trace_sha256": "e61ac00ddfa0058e2233c9d32ea6199fb204ee74dccd32d94ad4a7e6545241a2"
+    },
+    {
+      "job_id": "J13",
+      "v1_sha256": "82bb7a4fa58dd69e65a59a820d935a758d0a32dad51930c97afa1eef69df77a3",
+      "before_followup_v2_sha256": "3b06465bf766fae1acd40efe9847a692521a9076ee67ab256b234c6906685b53",
+      "v2_sha256": "3b06465bf766fae1acd40efe9847a692521a9076ee67ab256b234c6906685b53",
+      "v2_source_hash": "cd1af715293fa1bb79e2933d95fb779f03d8daa767f8c72dce6be1b7eb7717ed",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 438,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 23,
+        "responsibilities": 10,
+        "context": 8
+      },
+      "available_source_units": {
+        "requirements": 66,
+        "preferences": 0,
+        "responsibilities": 10,
+        "summary": 0,
+        "context": 28
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 41,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 2
+      },
+      "selected_trace_sha256": "e40d683a5d5320300c3ad514eeb282b9d46071cf58d36b72bf041c21b0028fb3"
+    },
+    {
+      "job_id": "J14",
+      "v1_sha256": "bed12a5b2e0575da877a2cc09cc6d3fafb7a1179cb63ea79be7827115c8d5e27",
+      "before_followup_v2_sha256": "a6de28f1d76d168841dbba036d551267e382f6280cd57c1bd42ffc21a0c9d79a",
+      "v2_sha256": "a6de28f1d76d168841dbba036d551267e382f6280cd57c1bd42ffc21a0c9d79a",
+      "v2_source_hash": "02758dfeb02aad7ec1ba4e4b032ffdc359794f4b8797929ea34f17896237766b",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 492,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 23,
+        "preferences": 11,
+        "responsibilities": 22,
+        "context": 9
+      },
+      "available_source_units": {
+        "requirements": 32,
+        "preferences": 11,
+        "responsibilities": 82,
+        "summary": 0,
+        "context": 133
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 65,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 3,
+        "preferred": 1
+      },
+      "selected_trace_sha256": "b35f06c610b9043722e53528f1d17c9c902a5121ab3037e7a7155802036b7c5f"
+    },
+    {
+      "job_id": "J15",
+      "v1_sha256": "a3ca5797741b863c1688f5459fb50cfc1d39212ac6cc7321306810fe4ec7e05f",
+      "before_followup_v2_sha256": "ab6ca429515ba2deebea42ca0201cabdc3b8360dcbee342a214211751cdb2444",
+      "v2_sha256": "ab6ca429515ba2deebea42ca0201cabdc3b8360dcbee342a214211751cdb2444",
+      "v2_source_hash": "73ef1819e966623026339c6511069dc9fa4fa21a7a3b4123cff18300f057352c",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 473,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 20,
+        "preferences": 13,
+        "responsibilities": 19,
+        "context": 3
+      },
+      "available_source_units": {
+        "requirements": 54,
+        "preferences": 26,
+        "responsibilities": 36,
+        "summary": 0,
+        "context": 3
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 2,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            6,
+            2
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 55,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "preferred": 1,
+        "required": 2
+      },
+      "selected_trace_sha256": "fa8e81d9ce652a33a01c3e1405915e7be0a01d350bfeac6a9ec891eff9c361d1"
+    },
+    {
+      "job_id": "J16",
+      "v1_sha256": "a3386aac24f2c6a2f0322f4425622872e57a2bdbda937431227560cec6f824be",
+      "before_followup_v2_sha256": "cc3b9295a1d6fc0353aba3615799fa06b1d5b255284cc17a8d5167c3045dc584",
+      "v2_sha256": "ce3988860c1626cb37a3fd75a6f1983fd718be34842011f32c024cdd4aaa0f3b",
+      "v2_source_hash": "b1f6c2c20adfd49b913e7e2bb2c060c835ec0ef35520bee93009e8e3e580e0b9",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 301,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 4,
+        "preferences": 1,
+        "responsibilities": 6,
+        "summary": 18,
+        "context": 3
+      },
+      "available_source_units": {
+        "requirements": 4,
+        "preferences": 1,
+        "responsibilities": 6,
+        "summary": 19,
+        "context": 3
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 3,
+          "representative_blocks": 3,
+          "longest_contiguous_word_runs": [
+            9,
+            12,
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 32,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 4
+      },
+      "selected_trace_sha256": "d4753a0faabeb888ae7df469aedd47ddb1dd7b4a5cbfc13f3e59eff49b3fc829"
+    },
+    {
+      "job_id": "J17",
+      "v1_sha256": "0d88cd4e281b4af0461c9124565e31aa02eb9b894987910183f273a9a3913b8e",
+      "before_followup_v2_sha256": "7e8c8329256503dd4f4ada429242b2dbe3e47ce1a72ed5e5bf1ab44ad8066da3",
+      "v2_sha256": "7e8c8329256503dd4f4ada429242b2dbe3e47ce1a72ed5e5bf1ab44ad8066da3",
+      "v2_source_hash": "7442e8760e912206bd87e6d8176323dd496cda1dbe6f773a6fffeeded97e8813",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 429,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 14,
+        "preferences": 1,
+        "responsibilities": 14,
+        "context": 5
+      },
+      "available_source_units": {
+        "requirements": 74,
+        "preferences": 1,
+        "responsibilities": 25,
+        "summary": 0,
+        "context": 15
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 3,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12,
+            2,
+            1
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 34,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 5
+      },
+      "selected_trace_sha256": "9ef407a8d10b7ff53d696c7b7234e7a1eae7ee6b812cc5c434aa46cf20ed46fe"
+    },
+    {
+      "job_id": "J18",
+      "v1_sha256": "727c98c9bd8290d51b6bfe24cb90bc49f2053dab1be0fc35bab495680262df61",
+      "before_followup_v2_sha256": "b94e95faf43ef658bc3b4afbc1a28c24dae4f5ec05e2175f604e969dd956addb",
+      "v2_sha256": "b94e95faf43ef658bc3b4afbc1a28c24dae4f5ec05e2175f604e969dd956addb",
+      "v2_source_hash": "71a84ca73cb84b7d86dd113ded683b01507001f9041ad95ad4a52cd2fc720f83",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 407,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 17,
+        "preferences": 1,
+        "responsibilities": 20,
+        "context": 4
+      },
+      "available_source_units": {
+        "requirements": 29,
+        "preferences": 1,
+        "responsibilities": 40,
+        "summary": 0,
+        "context": 4
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 0,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": []
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 42,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "required": 2
+      },
+      "selected_trace_sha256": "2fe8ed0be436b3d89355fb903544e57a76033bfeec5f25c550f2f58c024a0a22"
+    },
+    {
+      "job_id": "J19",
+      "v1_sha256": "0b52dd335d3ba7700b7d2f2833c68924be68395b28bfa0591f7f14913cb2a2b0",
+      "before_followup_v2_sha256": "c05aaf69aee1dc59ae3be852402e29667c75cca59ec3c00697212aa484f62b9d",
+      "v2_sha256": "c05aaf69aee1dc59ae3be852402e29667c75cca59ec3c00697212aa484f62b9d",
+      "v2_source_hash": "a5d217e0613aeb45ad57c99fa666138f507d1bf9b62c0a5c58b8e9d43bcf5612",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 494,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 18,
+        "responsibilities": 17,
+        "context": 6
+      },
+      "available_source_units": {
+        "requirements": 23,
+        "preferences": 0,
+        "responsibilities": 18,
+        "summary": 0,
+        "context": 41
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 0,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": []
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 41,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 1
+      },
+      "selected_trace_sha256": "96d7420c270d763aace5d3549054903725511fc740efb29367b020a574776c06"
+    },
+    {
+      "job_id": "J20",
+      "v1_sha256": "5080491e9f46451fa9153900a5d6360add3990e7ba0c4edcd15703f6bffa9849",
+      "before_followup_v2_sha256": "90303ad350d526f02ae42fbd169a7b378f2ac79e1a8c00f90dd60971624ef51d",
+      "v2_sha256": "b0294b829063e8ca98dfd19fad4665a2dbee0ab03d09bbe1e0fc74e989bbf863",
+      "v2_source_hash": "af11c16d906b81268db28e1c56710929420cb88c06c8868d5c6f27c70a4c490c",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 435,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 15,
+        "preferences": 2,
+        "responsibilities": 15,
+        "context": 2
+      },
+      "available_source_units": {
+        "requirements": 19,
+        "preferences": 2,
+        "responsibilities": 21,
+        "summary": 0,
+        "context": 2
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 3,
+          "representative_blocks": 3,
+          "longest_contiguous_word_runs": [
+            12,
+            12,
+            10
+          ]
+        },
+        "preferred_skills": {
+          "total": 3,
+          "representative_blocks": 3,
+          "longest_contiguous_word_runs": [
+            12,
+            8,
+            8
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 34,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 3
+      },
+      "selected_trace_sha256": "31483b83aa3d0808ee724dd397617cbaee20cb0c7cf5cc1b6828a400bc141593"
+    },
+    {
+      "job_id": "J21",
+      "v1_sha256": "ff8b0f8f87ed7b0aed5858519fda0abbb837a4c20368f39e231fa750a329043a",
+      "before_followup_v2_sha256": "d0b4026782d20541338d0af6d3a82b2a0b2bcb9575a812bde739eb7b7adf97f3",
+      "v2_sha256": "4c1ab3a9b8ab97e90abf789a145549f5759a140c5d3af84c3735b1945418dba7",
+      "v2_source_hash": "385ba60f3bca6bb1850af271d4c7ce728a73a2f0bedc748df5b9e1d915fba6e0",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 492,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 11,
+        "preferences": 6,
+        "responsibilities": 14,
+        "context": 7
+      },
+      "available_source_units": {
+        "requirements": 15,
+        "preferences": 32,
+        "responsibilities": 16,
+        "summary": 0,
+        "context": 30
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 2,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12,
+            2
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 38,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 1,
+        "preferred": 1
+      },
+      "selected_trace_sha256": "dae3b1d1655860322dbf342c2689b1abceafcdd07ee839e103591ceee7f29a42"
+    },
+    {
+      "job_id": "J22",
+      "v1_sha256": "21c6cc77c9249ab7c8d077b5de8420e2bfc321c2f21b52794080462d1bf2e1e5",
+      "before_followup_v2_sha256": "0c752b5ac7e57ef03285e8a8bc021a0f6015f407163f3991c3a5edd957fe544a",
+      "v2_sha256": "0c752b5ac7e57ef03285e8a8bc021a0f6015f407163f3991c3a5edd957fe544a",
+      "v2_source_hash": "9b68098e0073f99cee63601945ac96d653eb03f0fd61de97330c2c1840af6dab",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 355,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 7,
+        "preferences": 16,
+        "responsibilities": 1,
+        "context": 6
+      },
+      "available_source_units": {
+        "requirements": 7,
+        "preferences": 21,
+        "responsibilities": 1,
+        "summary": 0,
+        "context": 15
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 30,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "preferred": 1,
+        "unknown": 1
+      },
+      "selected_trace_sha256": "a43b9ca748b2e534420f7e00406808aa4be75f8e0cc60a3e50483d645f21095e"
+    },
+    {
+      "job_id": "J23",
+      "v1_sha256": "e3214530a7c89da1569304c993519add0f2904d269e090ac8a9ba340ea5471b4",
+      "before_followup_v2_sha256": "a91edc7324cc577e71932e498588ee17c0c0e492dd57064049a3defcaa9d37fd",
+      "v2_sha256": "a91edc7324cc577e71932e498588ee17c0c0e492dd57064049a3defcaa9d37fd",
+      "v2_source_hash": "01c2d8bc3cf849e0d8561b77ae7e14d4015101ab14f9e7084ccb282fdfe0c1bb",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 484,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 10,
+        "preferences": 8,
+        "responsibilities": 12,
+        "context": 6
+      },
+      "available_source_units": {
+        "requirements": 10,
+        "preferences": 50,
+        "responsibilities": 35,
+        "summary": 0,
+        "context": 34
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 36,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 6,
+        "preferred": 3
+      },
+      "selected_trace_sha256": "06a4acdaadb0a74f208bcafcf86b33a7d9102cf6f579d7dba520a79e2cb2281e"
+    },
+    {
+      "job_id": "J24",
+      "v1_sha256": "1481c7dc60e347080afd2c002f81a66e0f722538999a5d2936006d9a1fe1f57e",
+      "before_followup_v2_sha256": "215b58bc0a975a75d9c8a7c729637f33bdbdab0cbad84468850df3d2abd89994",
+      "v2_sha256": "215b58bc0a975a75d9c8a7c729637f33bdbdab0cbad84468850df3d2abd89994",
+      "v2_source_hash": "7601ff726ce515f3f80fbd359261f5c53fbdb7d28a61d8f69bd1d8d3949fc9e9",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 343,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 3,
+        "responsibilities": 24,
+        "context": 8
+      },
+      "available_source_units": {
+        "requirements": 3,
+        "preferences": 0,
+        "responsibilities": 61,
+        "summary": 0,
+        "context": 44
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 0,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": []
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 35,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 4
+      },
+      "selected_trace_sha256": "532b73c666b0046de4df7cd430e7d25ad24e299247d3dcc73a7267d329f42088"
+    },
+    {
+      "job_id": "J25",
+      "v1_sha256": "58d75ccc63470f88bf1fb5a6c1e374fbac916fe7e0b7178f6801de6c06c01d7a",
+      "before_followup_v2_sha256": "53abaea6aad2ef3cea46599f4237b07f7f60ee17b7d742ae020feaf49d5f2175",
+      "v2_sha256": "4d535b69bae8037ab71664a8f03fedd394791f8bfc4cf3fc0079ff7246fced62",
+      "v2_source_hash": "69c0a904fc6d6d0c943a4fe331906797740efb419fd0caaa87d6764b50ac70f9",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 494,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 17,
+        "responsibilities": 16,
+        "context": 5
+      },
+      "available_source_units": {
+        "requirements": 50,
+        "preferences": 0,
+        "responsibilities": 46,
+        "summary": 0,
+        "context": 29
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 38,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {},
+      "selected_trace_sha256": "182afe7298553438adf8dcf7a4c6f40627189198ceae209e14fb26f0a49607d3"
+    },
+    {
+      "job_id": "J26",
+      "v1_sha256": "d727e8cd910a373fd8d944712d1fe657823c5d1d98f068593eb3b8d10d349e50",
+      "before_followup_v2_sha256": "e652b196a306960b3db6d65db69f47f3cb7e70f31923c5d99bdfad8217ec05f8",
+      "v2_sha256": "e652b196a306960b3db6d65db69f47f3cb7e70f31923c5d99bdfad8217ec05f8",
+      "v2_source_hash": "a92693b221544a74d1b14c4a6b4788d4660331a89369d93fd4ea40b0a1da2329",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 494,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 17,
+        "responsibilities": 15,
+        "context": 5
+      },
+      "available_source_units": {
+        "requirements": 22,
+        "preferences": 0,
+        "responsibilities": 32,
+        "summary": 0,
+        "context": 47
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 0,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": []
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 37,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 7
+      },
+      "selected_trace_sha256": "71c6d1315dd899ec3b4bf8206187aaf57267c7918b752bbe585430c2f39d9738"
+    },
+    {
+      "job_id": "J27",
+      "v1_sha256": "202c82ff60c7abb66c36363b6cdff12c26a50b76c84c1dbeef0d87395e9cb1cf",
+      "before_followup_v2_sha256": "89f0ce275370060ed4672d3777a0bfcea56f11f1434d37d5b8e1ac3a6bff895f",
+      "v2_sha256": "3b0f20624fa60a48f0b541d887e37857e9177b48e66a277d6eeaed56a690ece8",
+      "v2_source_hash": "c0e4262db0723d41041ac89b08b54c54b840493177b72f17c1b0a9fa44924b44",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 494,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 15,
+        "responsibilities": 20,
+        "context": 9
+      },
+      "available_source_units": {
+        "requirements": 31,
+        "preferences": 0,
+        "responsibilities": 31,
+        "summary": 0,
+        "context": 57
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 44,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 7
+      },
+      "selected_trace_sha256": "2be360f1b81c3365ac693c22d274a61e69b79c3f112f06bc059875b0f560ddb7"
+    },
+    {
+      "job_id": "J28",
+      "v1_sha256": "2bcea59d8a3dfa4eee859a90fec2d511a60eecc4a4334c8aba43d04df7cb7c8f",
+      "before_followup_v2_sha256": "c4dfd3309f1ffe7e31c9163f2e031a9452f1b9a84cb28dce90ed37f076737145",
+      "v2_sha256": "c4dfd3309f1ffe7e31c9163f2e031a9452f1b9a84cb28dce90ed37f076737145",
+      "v2_source_hash": "81ae052da7b35aa4ff2649ee0c9e3de660afa582c4f32a61ec94551b31763cb9",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 477,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 15,
+        "responsibilities": 14,
+        "context": 8
+      },
+      "available_source_units": {
+        "requirements": 33,
+        "preferences": 0,
+        "responsibilities": 14,
+        "summary": 0,
+        "context": 18
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            8
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 37,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 2
+      },
+      "selected_trace_sha256": "2e6d77dff3bb69ab78006358caaccf461ada73b424ebdc8de2de669b27a63e0c"
+    },
+    {
+      "job_id": "J29",
+      "v1_sha256": "d3df5f7401460b610f85b02f9d7ca66ca65c2efdc0f4af8db18d183b3ead8669",
+      "before_followup_v2_sha256": "e0b1edfdab145a94d78ecc59c91a124307e2f35c9b35336b761527d5b9c8f88a",
+      "v2_sha256": "9a80135ab34232f828d9c38c5fa17413ac9ab205a2108c89c608ee7a1ed94b1a",
+      "v2_source_hash": "5204d430d5832b8c7cff90f6629089ad2faec8bb04f10ecfa98bb9e7ea885cf8",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 494,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 15,
+        "responsibilities": 13,
+        "context": 7
+      },
+      "available_source_units": {
+        "requirements": 59,
+        "preferences": 0,
+        "responsibilities": 14,
+        "summary": 0,
+        "context": 21
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 0,
+          "longest_contiguous_word_runs": [
+            1
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 35,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 3
+      },
+      "selected_trace_sha256": "396f744e290820f4b79ad9013f86f59c8bccfdc6f198e8b9ff5f169b785c5e59"
+    },
+    {
+      "job_id": "J30",
+      "v1_sha256": "179cb5858075581befbe94cd4fbe4d964017dc385c163ce9334e8677a5713b43",
+      "before_followup_v2_sha256": "8fa9f762d6bf4d6074b379fe774d193dd3c7ebafceec9a742d35eb4186bc7105",
+      "v2_sha256": "09b531d45ddcfecd89b7113d16cdcafe1d82831de7db65fa0bd32cc7373a0fed",
+      "v2_source_hash": "a0b514df81340777afcff6f6fec8616bfd8a9df9847c144223105a65db90147d",
+      "v2_tokens": 508,
+      "initial_draft_tokens": 425,
+      "shrink_passes": 0,
+      "retained_source_units": {
+        "requirements": 15,
+        "preferences": 1,
+        "responsibilities": 12,
+        "summary": 5,
+        "context": 6
+      },
+      "available_source_units": {
+        "requirements": 63,
+        "preferences": 1,
+        "responsibilities": 17,
+        "summary": 6,
+        "context": 34
+      },
+      "source_block_overlap": {
+        "required_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            12
+          ]
+        },
+        "preferred_skills": {
+          "total": 1,
+          "representative_blocks": 1,
+          "longest_contiguous_word_runs": [
+            8
+          ]
+        }
+      },
+      "all_selected_source_units_verbatim": true,
+      "verbatim_selected_unit_count": 39,
+      "recognized_substantive_classes_lost": [],
+      "fallback": "stored/headings",
+      "structured_skill_counts": {
+        "unknown": 5
+      },
+      "selected_trace_sha256": "830e403d9a0bbc371a9e31710d1a4926f5ad26d65eb167b2c983815855bdcfb9"
+    }
+  ],
+  "verification_date": "2026-11-04",
+  "changed_files": [
+    "backend/app/api/routes/retrieval.py",
+    "backend/app/core/config.py",
+    "backend/app/repositories/retrieval_repository.py",
+    "backend/app/retrieval/benchmark.py",
+    "backend/app/retrieval/cli.py",
+    "backend/app/retrieval/embedder.py",
+    "backend/app/retrieval/job_budget.py",
+    "backend/app/retrieval/representation.py",
+    "backend/app/services/retrieval_service.py",
+    "backend/tests/conftest.py",
+    "backend/tests/test_representation_v2.py",
+    "backend/tests/test_retrieval_benchmark.py",
+    "backend/tests/test_retrieval_postgres.py",
+    "backend/tests/test_retrieval_real_model.py",
+    "docs/DECISIONS.md",
+    "docs/PROJECT_STATE.md",
+    "docs/architecture.md",
+    "docs/phase5-dense-retrieval.md",
+    "docs/processing-flow.md",
+    "docs/verification/phase5-template-v2.json",
+    "docs/verification/phase5-template-v2.md"
+  ],
+  "followup_changed_files": [
+    "backend/app/retrieval/job_budget.py",
+    "backend/tests/test_representation_v2.py",
+    "backend/tests/test_retrieval_postgres.py",
+    "backend/tests/test_retrieval_real_model.py",
+    "docs/DECISIONS.md",
+    "docs/PROJECT_STATE.md",
+    "docs/phase5-dense-retrieval.md",
+    "docs/verification/phase5-template-v2.json",
+    "docs/verification/phase5-template-v2.md"
+  ],
+  "final_production_guard": {
+    "jobs": 42,
+    "pending_evaluation_job_skills": 92,
+    "embeddings": {
+      "job_embeddings": 0,
+      "candidate_profile_embeddings": 0
+    },
+    "all_job_rows_unchanged": true,
+    "frozen_candidate_inputs_unchanged": true,
+    "all_121_local_files_unchanged": true,
+    "developer_revision": "0008_dense_retrieval",
+    "api_write_requests": 0
+  },
+  "cleanup": {
+    "disposable_database_removed": true,
+    "temporary_network_removed": true,
+    "normal_container_ids_and_start_times_unchanged": true
+  },
+  "before_implementation_sha256": {
+    "backend/app/api/routes/retrieval.py": "6939521a01f2031eef4d4904fd593e0b69aad0b6dc198baefd5c7b804394da5e",
+    "backend/app/core/config.py": "f7da2b942651f06b58b385454a4087a57ac3ba99037c19700d66c043a78fb794",
+    "backend/app/repositories/retrieval_repository.py": "e4d3de2fd607b86adaf1a03ad1961167c940bbf037e78a80e1847f646a1a34aa",
+    "backend/app/retrieval/benchmark.py": "32b321d502f89c96226de4f44c0a9d42dc5cfaa70ca12c38870fba6eb614fe52",
+    "backend/app/retrieval/cli.py": "0127817ac873e3124cbfeab6db6ca706eaf9b48498b58f52b11f19874f8c6073",
+    "backend/app/retrieval/embedder.py": "4031ad6868de9f8ea3cd5921b3d0070826acdd040dcbab03bc06973b0c647f1a",
+    "backend/app/retrieval/job_budget.py": "45a9af1e403393bd1a7c5cc4e44d9579d9f5e66174313b9e7bc92f70090f8b68",
+    "backend/app/retrieval/representation.py": "279ef1662669b1970f44c22f35282b59c0a26906ad76ef95b71cd354476a2a8b",
+    "backend/app/services/retrieval_service.py": "5209889c3da7d9eaf296869101e8cf90489aa6b6f196d13b9b8b077f606c0d83"
+  },
+  "implementation_sha256": {
+    "backend/app/api/routes/retrieval.py": "6939521a01f2031eef4d4904fd593e0b69aad0b6dc198baefd5c7b804394da5e",
+    "backend/app/core/config.py": "f7da2b942651f06b58b385454a4087a57ac3ba99037c19700d66c043a78fb794",
+    "backend/app/repositories/retrieval_repository.py": "e4d3de2fd607b86adaf1a03ad1961167c940bbf037e78a80e1847f646a1a34aa",
+    "backend/app/retrieval/benchmark.py": "32b321d502f89c96226de4f44c0a9d42dc5cfaa70ca12c38870fba6eb614fe52",
+    "backend/app/retrieval/cli.py": "0127817ac873e3124cbfeab6db6ca706eaf9b48498b58f52b11f19874f8c6073",
+    "backend/app/retrieval/embedder.py": "4031ad6868de9f8ea3cd5921b3d0070826acdd040dcbab03bc06973b0c647f1a",
+    "backend/app/retrieval/job_budget.py": "c2da65513cd4cbfe9f1530a51d12d1e5bb712b937120bdf1e1d3d21de9e96a38",
+    "backend/app/retrieval/representation.py": "279ef1662669b1970f44c22f35282b59c0a26906ad76ef95b71cd354476a2a8b",
+    "backend/app/services/retrieval_service.py": "5209889c3da7d9eaf296869101e8cf90489aa6b6f196d13b9b8b077f606c0d83"
+  },
+  "policy_before_sha256": "45a9af1e403393bd1a7c5cc4e44d9579d9f5e66174313b9e7bc92f70090f8b68",
+  "policy_after_sha256": "c2da65513cd4cbfe9f1530a51d12d1e5bb712b937120bdf1e1d3d21de9e96a38",
+  "v2_hashes_changed_jobs": [
+    "J01",
+    "J02",
+    "J11",
+    "J12",
+    "J16",
+    "J20",
+    "J21",
+    "J25",
+    "J27",
+    "J29",
+    "J30"
+  ],
+  "status": "Follow-up verified; uncommitted; no indexing, real-model encoding, deployment or relevance evaluation",
+  "final_scoped_dry_run": {
+    "scope": "Mapped J01-J30 job rows only, with requested aggregate counts; no CV/candidate/audit-table queries.",
+    "checks": {
+      "v1_all_30_hashes_match_previous_audit": true,
+      "v2_deterministic": true,
+      "all_inputs_at_most_512_tokens": true,
+      "all_selected_source_units_verbatim": true,
+      "mapped_job_rows_and_skills_unchanged": true,
+      "local_corpus_files_unchanged": true,
+      "embedding_tables_empty": true,
+      "api_requests": 0
+    }
+  },
+  "frozen_candidate_verification_checkpoint": "Frozen candidate inputs were verified by the earlier successful read-only guard; the final rerun queried mapped job data and aggregates only. All 121 local input files remain unchanged and no writes occurred."
+}

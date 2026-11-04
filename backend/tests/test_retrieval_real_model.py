@@ -11,6 +11,15 @@ from app.services.retrieval_service import RetrievalService
 from test_retrieval_postgres import pg_retrieval  # noqa: F401
 
 
+def test_real_pinned_model_load_without_encoding():
+    path = os.environ.get("PHASE5_REAL_MODEL_PATH")
+    if not path:
+        pytest.skip("UNVERIFIED: PHASE5_REAL_MODEL_PATH is not set")
+    model = LocalE5Embedder(path)
+    assert model.model.get_sentence_embedding_dimension() == DIMENSION
+    assert model.tokenizer.num_special_tokens_to_add(pair=False) == 2
+
+
 def test_real_pinned_model_postgres_retrieval(pg_retrieval):
     path = os.environ.get("PHASE5_REAL_MODEL_PATH")
     if not path:
@@ -19,10 +28,10 @@ def test_real_pinned_model_postgres_retrieval(pg_retrieval):
     model = LocalE5Embedder(path)
     assert len(model.encode("query: Python engineer")) == DIMENSION
     with Session(engine) as db:
-        service = RetrievalService(db)
+        service = RetrievalService(db, tokenizer=model.tokenizer)
         assert service.index_profile(profile_id, model).outcome == "indexed"
         assert service.index_job(job_id, model).outcome == "indexed"
         db.commit()
     with Session(engine) as db:
-        rows = RetrievalService(db).jobs_for_user(db.get(User, user_id), 20)
+        rows = RetrievalService(db, tokenizer=model.tokenizer).jobs_for_user(db.get(User, user_id), 20)
         assert [row["job_id"] for row in rows] == [job_id]

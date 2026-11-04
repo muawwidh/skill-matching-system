@@ -312,3 +312,42 @@ exports are private and retain content-mode/use restrictions; publication may
 include evaluation IDs, hashes, metrics and methodology, not restricted
 descriptions, source PDFs or private candidate evidence. Source hashes and an
 owner-supplied PDF do not assert employer consent or a redistribution licence.
+
+## D030 - Predeclared Section-Aware Retrieval Template V2
+
+`e5-job-profile-v1` remains an explicitly selectable, unchanged baseline, with
+its historical verification evidence retained. `e5-job-profile-v2` is the default
+and main evaluation contract. This policy was defined before human relevance
+judgments or retrieval rankings were viewed; coverage debugging is not relevance
+evaluation. No job IDs, candidate families, occupational dictionaries or
+per-record exceptions select source text. Candidate v2 text is identical to v1;
+its source hash separately identifies the v2 contract.
+
+Recognized headings supply the source class by default. `Desired Skills` and
+`Desired Qualifications` are preferred headings. A preference cue overrides a
+heading only when the whole original line is clearly optional: a leading
+preferred marker or a whole-line preferred predicate, without mandatory or
+mixed-clause evidence. Parenthetical/bracketed or subordinate preferences do
+not make an otherwise required line optional. Mixed lines retain their explicit
+heading class and wording; no semantic fragments are invented. This correction
+remains within unreleased v2, which has not been committed, indexed or used for
+relevance labels. J12's former weak preferred coverage was a classification
+defect, not token-budget truncation.
+
+Job v2 prioritizes metadata, non-rejected structured skills/canonical labels,
+then verbatim source sections. Fixed metadata/structured caps are 104/96 tokens;
+remaining capacity is reserved across requirements, preferences,
+responsibilities, summary and context with weights 4:2:4:1:1. Empty classes
+redistribute capacity; unused quotas are refunded without sacrificing already
+reserved classes. Generic heading grammar and linguistic cues refine stored
+sections without modifying extraction. Source-order snippets are stratified
+before filling unused space. The exact pinned offline tokenizer, including
+special tokens, enforces the 512-token ceiling. Full source inputs, final text,
+template and model revision are hashed. This is selection, not paraphrasing,
+newly confirmed skills or complete preservation of every source condition.
+
+Both templates remain separate persistence/query identities. Switching requires
+explicit indexing of both profiles and jobs under the same template; it does
+not migrate reviews or overwrite baseline vectors. Recall@K/MRR may later
+compare v1 and v2 as separate predeclared configurations. No retrieval-quality
+claim follows from coverage or synthetic tests. Phase 5 remains incomplete.

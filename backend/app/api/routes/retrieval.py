@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+from typing import Literal
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import require_roles
@@ -13,6 +14,7 @@ router = APIRouter()
 
 @router.get("/jobs", response_model=list[RetrievedJob])
 def retrieve_jobs(limit: int = Query(20, ge=1, le=100),
+                  template_version: Literal["e5-job-profile-v1", "e5-job-profile-v2"] | None = None,
                   current_user: User = Depends(require_roles(settings.DEFAULT_CANDIDATE_ROLE)),
                   db: Session = Depends(get_db)) -> list[RetrievedJob]:
-    return RetrievalService(db).jobs_for_user(current_user, limit)
+    return RetrievalService(db, template_version).jobs_for_user(current_user, limit)

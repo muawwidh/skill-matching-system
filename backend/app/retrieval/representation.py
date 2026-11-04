@@ -1,11 +1,14 @@
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 MODEL_ID = "intfloat/multilingual-e5-small"
 MODEL_REVISION = "fd1525a9fd15316a2d503bf26ab031a61d056e98"
-TEMPLATE_VERSION = "e5-job-profile-v1"
+TEMPLATE_V1 = "e5-job-profile-v1"
+TEMPLATE_V2 = "e5-job-profile-v2"
+TEMPLATES = (TEMPLATE_V1, TEMPLATE_V2)
+TEMPLATE_VERSION = TEMPLATE_V2
 DIMENSION = 384
 MAX_TOKENS = 512
 
@@ -28,6 +31,7 @@ class Representation:
     text: str
     source_hash: str
     taxonomy_fingerprint: str
+    details: dict = field(default_factory=dict, compare=False)
 
 
 def candidate_representation(rows: list[dict]) -> Representation | None:
@@ -75,3 +79,52 @@ def bounded_text(text: str, tokenizer) -> str:
         content = content[:-1]
         bounded = tokenizer.decode(content, skip_special_tokens=True, clean_up_tokenization_spaces=False)
     return bounded
+
+
+# These aliases remain byte-for-byte baseline builders, including their hashes.
+candidate_representation_v1 = candidate_representation
+job_representation_v1 = job_representation
+
+
+def resolve_template(version: str | None = None) -> str:
+    if version is None:
+        from app.core.config import settings
+        version = settings.DENSE_TEMPLATE_VERSION
+    if version not in TEMPLATES:
+        raise ValueError("Unsupported retrieval template version")
+    return version
+
+
+def candidate_representation_v2(rows: list[dict]) -> Representation | None:
+    baseline = candidate_representation_v1(rows)
+    if baseline is None:
+        return None
+    return Representation(baseline.text, digest({"template": TEMPLATE_V2,
+        "complete_v1_source_hash": baseline.source_hash, "text": baseline.text}), baseline.taxonomy_fingerprint)
+
+
+def job_representation_v2(job: dict, rows: list[dict], sections: list[dict], tokenizer) -> Representation:
+    from app.retrieval.job_budget import budget_job
+    text, details = budget_job(job, rows, sections, tokenizer)
+    included = [r for r in rows if r["status"] != "rejected"]
+    release_hash = digest(unique_sorted([r.get("release", "") for r in included]))
+    source_hash = digest({"template": TEMPLATE_V2, "model": MODEL_ID, "revision": MODEL_REVISION,
+        "job": job, "skills": sorted(rows, key=lambda r: r["id"]),
+        "sections": sorted(sections, key=lambda s: (s.get("start_char", 0), s.get("end_char", 0),
+                                                    s.get("section_type", ""), s.get("content", ""), str(s.get("id", "")))),
+        "text": text})
+    return Representation(text, source_hash, release_hash, details)
+
+
+def build_candidate_representation(rows: list[dict], template_version: str) -> Representation | None:
+    version = resolve_template(template_version)
+    return candidate_representation_v1(rows) if version == TEMPLATE_V1 else candidate_representation_v2(rows)
+
+
+def build_job_representation(job: dict, rows: list[dict], sections: list[dict],
+                             template_version: str, tokenizer=None) -> Representation:
+    if resolve_template(template_version) == TEMPLATE_V1:
+        return job_representation_v1(job, rows)
+    if tokenizer is None:
+        raise RuntimeError("Template v2 requires the pinned local tokenizer")
+    return job_representation_v2(job, rows, sections, tokenizer)

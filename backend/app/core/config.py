@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     DEFAULT_CANDIDATE_ROLE: str = "candidate"
     ADMIN_ROLE: str = "admin"
     RESEARCHER_ROLE: str = "researcher"
+    DENSE_TEMPLATE_VERSION: Literal["e5-job-profile-v1", "e5-job-profile-v2"] = "e5-job-profile-v2"
 
     model_config = SettingsConfigDict(
         env_file=".env",

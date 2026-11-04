@@ -29,3 +29,10 @@ embedding -> release/model-scoped pgvector tables -> exact cosine top-N API.
 Indexing runs explicitly through a batch CLI, not inside taxonomy imports or API
 requests. `MatchingService` and `/matches/recommendations` remain independent.
 See `docs/phase5-dense-retrieval.md`.
+
+Representation dispatch is template-versioned: v1 is the unchanged baseline;
+v2 uses an offline pinned tokenizer and a deterministic section-aware job budget.
+The repository supplies stored sections and review-aware canonical labels to
+pure builders. Candidate semantic text is unchanged. Persistence, CLI, API and
+evaluation provenance select the same template explicitly; mismatched templates
+are isolated. No inference is performed while building text or checking hashes.
