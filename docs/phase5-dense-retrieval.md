@@ -1,4 +1,10 @@
-# Phase 5 dense job retrieval (implementation in progress)
+# Phase 5 Dense Job Retrieval
+
+Phase 5 is complete as a repository/methodology checkpoint. The frozen
+real-corpus evaluation and the run-specific scoped-isolation exception (D033)
+are accepted; see [the results report](verification/phase5-real-corpus-results.md).
+Deployment of the latest source to normal Compose is a separate operational
+checkpoint. Phase 6 has not started.
 
 This feature retrieves jobs for a candidate; it does not rank applicants,
 approve taxonomy links, or calculate final matching scores. Phase 4 lexical
@@ -155,8 +161,9 @@ J12's earlier short preferred overlap was caused by classification (missing
 desired-section aliases and an overly broad preferred cue), not token-budget
 truncation. The follow-up reports show desired-section retention after this
 generic correction. Stored job terms, requirement classifications and reviews
-are not changed. Unreleased v2 retains its identifier because it has not been
-committed, indexed or used for relevance labels.
+are not changed. These fixes were made while v2 was unreleased, before it was
+committed, indexed or used for relevance labels. The accepted frozen v2
+contract now remains unchanged; do not retune it using the observed results.
 
 V2 hashes the complete job, every skill including excluded review states, full
 stored section provenance, final selected text, template, model ID and revision.
@@ -231,6 +238,32 @@ incomplete rankings; grade-1 exploration is separate. See
 ranking export and the optional second-reviewer workflow. Synthetic fixtures
 validate only metric calculation, not relevance quality. The pinned model and
 real-model PostgreSQL retrieval have passed isolated verification; see
-`verification/phase5-real-model.json` for machine-readable evidence. No
-human-labelled set is available yet, so real retrieval quality remains
-**PENDING**. Phase 5 is not complete until human-labelled evaluation passes.
+`verification/phase5-real-model.json` for historical machine-readable evidence.
+The accepted frozen real-corpus run is documented in
+`verification/phase5-real-corpus-results.md`: 8 candidates, 30 jobs and 240
+human judgments; grade-2 coverage 7/8 and binary macro denominator 7.
+Recall@5/10/20 is 0.440476/0.630952/0.714286 and MRR 0.655065.
+`candidate_831967b28fd6` has no grade-2 job; its primary metrics are null, not
+zero. This coverage exception was adopted after the relevance judgments were
+collected. Single-rater subjectivity, no inter-rater reliability estimate,
+manual profile augmentation and the small restricted internal corpus limit
+the result. It is not end-to-end extraction quality or production hiring accuracy.
+
+The accepted developer corpus contains 8 current profile and 30 job vectors,
+all v2, with job inputs at 503-508 tokens. Only these frozen entities were
+indexed. Two independent full-ranking service runs were identical; all 29
+table fingerprints were unchanged, including 13 legacy prototype matches and
+zero evaluation matches. The one-off runners mounted current `d80e2c9` source;
+this does not claim a normal Compose image update or change the isolated-only
+guard on the generic `export-rankings` CLI. The owner explicitly accepted this
+run's scoped-isolation exception for closure (D033). The developer database was
+not physically isolated: only the frozen embeddings were in the ranking
+universe. Isolated PostgreSQL implementation verification passed separately.
+The substitution for the original physical-isolation criterion is recorded
+after evaluation; no results or parameters were changed by that acceptance.
+
+Useful candidate generation is not final matching. Approximately 28.6% of
+grade-2 relevance remains outside top 20 on the macro measure. Phase 6 must
+add explainable reviewed skills, required/preferred distinctions, skill gaps,
+qualifications and seniority without retroactively tuning or replacing this
+frozen Phase 5 baseline (D032).

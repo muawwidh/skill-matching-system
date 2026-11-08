@@ -1,7 +1,9 @@
 # Phase 5 human-labelled retrieval evaluation pack
 
-**Status: private primary judgments supplied; explicit coverage deviation recorded;
-retrieval-quality metrics pending. Phase 5 remains incomplete.**
+**Status: Phase 5 complete as a repository/methodology checkpoint. Frozen
+Template-v2 evaluation and interpretation are accepted, including the explicit
+run-specific scoped-isolation exception (D033). Latest-image deployment is
+separate; Phase 6 has not started.**
 Templates in `evaluation/templates/` are deliberately incomplete and fail
 validation. Keep actual records under ignored `evaluation-private/` unless all
 content is demonstrably permission-cleared for publication. The private
@@ -251,17 +253,56 @@ then. A second reviewer is not mandatory for minimum Phase 5 acceptance.
 
 ## Completion checklist
 
-- [ ] 8 permission-cleared, de-identified English candidate profiles.
-- [ ] 30 provenance-complete English jobs in an explicit content mode with multiple families
+- [x] 8 permission-cleared, de-identified English candidate profiles.
+- [x] 30 provenance-complete English jobs in an explicit content mode with multiple families
       and hard negatives.
-- [ ] Provenance and redistribution status manually checked for every record.
-- [ ] All 240 pairs labelled blindly; each candidate has grade-2 jobs or a valid
+- [x] Provenance and redistribution status manually checked for every record.
+- [x] All 240 pairs labelled blindly; each candidate has grade-2 jobs or a valid
       explicit coverage exception, reported with undefined metrics and denominator.
-- [ ] Completed matrix passes validation; uncertainty reviewed.
-- [ ] Isolated database contains only benchmark records for this run.
-- [ ] Actual pinned-model rankings exported with full job coverage.
-- [ ] Checksums and model provenance retained with resulting metrics.
-- [ ] Limitations, single-reviewer status and any adjudication documented.
+- [x] Completed matrix passes validation; uncertainty reviewed.
+- [x] Ranking universe isolated to the frozen corpus: original physical
+      benchmark-only criterion has an explicit approved run-specific
+      scoped-isolation exception (D033), not a claim of physical isolation.
+- [x] Actual pinned-model rankings exported with full job coverage.
+- [x] Checksums and model provenance retained with resulting metrics.
+- [x] Limitations, single-reviewer status and any adjudication documented.
+
+The owner explicitly accepted the scoped-isolation exception on 2026-11-08:
+the shared-developer-database run had exactly the frozen 8 profile and 30 job
+embeddings as its retrieval universe, no other entities indexed, and no
+prototype-score inputs. All 29 tables remained unchanged during ranking;
+13 existing legacy matches were preserved and evaluation matches remained zero.
+This is not a claim that the developer database contained only benchmark rows.
+Isolated PostgreSQL migration/service tests passed separately. Shared execution
+was authorized before indexing; the original physical-isolation checklist
+substitution is accepted explicitly at closure after evaluation. Record this
+operational deviation, separately from the post-judgment coverage exception.
+The general isolated workflow and CLI guard above remain unchanged for future
+runs; no frozen result or source artifact is altered by this closure decision.
+
+## Accepted Frozen Evaluation
+
+See [the concise result report](verification/phase5-real-corpus-results.md)
+for artifact hashes, exact fractions and acceptance evidence. The accepted
+8-by-30 corpus has 240 judgments (167 grade 0, 54 grade 1, 19 grade 2).
+Primary coverage is **7/8**, with **7** query-macro denominators and one
+undefined/excluded query, `candidate_831967b28fd6`, for which no grade-2 job
+was identified. Undefined is not zero. This coverage exception was adopted
+after the relevance judgments were collected. A single primary rater supplied
+the labels; no inter-rater reliability estimate exists.
+
+Primary Recall@5/10/20 is **37/84 = 0.440476**, **53/84 = 0.630952** and
+**5/7 = 0.714286**; MRR is **1261/1925 = 0.655065**. Optional grade-1-or-2
+results remain separate with denominator 8. Two committed-evaluator runs were
+byte-identical and an independent fraction implementation agreed within 1e-12.
+The long-form frozen export was only grouped into the evaluator's ordered-ID
+format; no retrieval, re-ranking, score change or tuning occurred in evaluation.
+
+The profiles were manually reviewed and augmented, so this does not evaluate
+end-to-end extraction. The small curated, restricted internal corpus and the
+post-judgment coverage exception limit generalization; these are not production
+hiring-accuracy estimates. Keep all restricted candidate/job text, private
+rationales and identifier mappings outside tracked documentation.
 
 Existing safe reuse: the repository's taxonomy samples and synthetic test
 fixtures are software tests, not candidate/job relevance data. They cannot
@@ -269,6 +310,7 @@ count toward this benchmark. Developer CV/job records require consent and
 de-identification; this corpus-validation update did not access the application
 database or export its records. The private local corpus contains
 **8 candidates and 30 jobs**; **240 primary judgments are supplied**, with the
-post-judgment 7/8 coverage limitation above. Retrieval-quality evaluation is pending. These
+post-judgment 7/8 coverage limitation above. The accepted frozen evaluation is
+reported above; completion status is explicitly distinguished from deployment. These
 private records are not part of the committed templates, and corpus validation
 is not a retrieval-quality result or final human approval of the job texts.

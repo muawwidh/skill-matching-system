@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-05
+Last updated: 2026-11-08
 
 ## Repository
 
@@ -26,15 +26,17 @@ Phase 5 — Dense Retrieval
 
 Implementation status:
 
-IN PROGRESS; not complete
+COMPLETE as a repository/methodology checkpoint, with the explicitly approved
+run-specific scoped-isolation exception (D033). Latest normal-stack deployment
+is a separate operational checkpoint, not implied by completion.
 
 Current status:
 
-PHASE 4 CLOSED AND CHECKPOINT PUSHED; PHASE 5 IMPLEMENTATION UNDER VERIFICATION
+PHASE 5 COMPLETE; DOCUMENTATION CHECKPOINT UNCOMMITTED FOR REVIEW
 
 Next planned phase:
 
-Phase 5 — Dense Retrieval (ACTIVE)
+Phase 6 — Matching and Skill-Gap Analysis (NOT STARTED)
 
 Phase 4 closure combines repository test/package evidence with user-reported
 deployed browser/runtime acceptance. The Phase 5 work below is limited to
@@ -56,6 +58,8 @@ Therefore the repository currently contains:
 - completed Phase 2
 - completed Phase 3
 - completed Phase 4 taxonomy integration
+- completed Phase 5 dense retrieval with accepted frozen evaluation and
+  explicitly documented corpus/coverage/isolation limitations
 - early/basic matching functionality conceptually belonging to Phase 6
 
 The existing matching prototype is NOT the final Phase 6 implementation.
@@ -700,12 +704,20 @@ Neither is staged or tracked. Exclude them from the checkpoint and add appropria
 ignore rules in a separately authorized repository-hygiene change. Do not use
 `git add .` or `git add -A`. Exact checkpoint scope is in phase4-verification.md.
 
-## Next Phase
+## Phase 5
 
 Phase 5 — Dense Retrieval
 
-Status: IN PROGRESS. Do not declare complete without a locally executed pinned
-model, PostgreSQL retrieval verification and human-labelled retrieval evaluation.
+Status: COMPLETE as a repository/methodology checkpoint. Implementation, pinned
+offline-model execution, PostgreSQL retrieval verification and human-labelled
+evaluation are accepted. The owner explicitly approved the run-specific
+scoped-isolation exception (D033). Do not treat normal Compose deployment as
+implied by this evidence. Phase 6 has not started.
+
+The checkpoint histories below retain their original test counts and status
+context. Empty embedding tables, pending judgments and incomplete status refer
+to those earlier steps, not the accepted corpus evaluation at the end of this
+section. That closure section is the current source of truth.
 
 Phase 5 implementation scope:
 
@@ -805,7 +817,7 @@ frozen candidate files remain unchanged. No application/database access,
 source-PDF edits, embeddings, rankings or judgments are involved.
 Human-labelled evaluation remains pending and Phase 5 remains incomplete.
 
-### Representation Template V2 (Uncommitted Review)
+### Representation Template V2 (Historical Pre-Commit Verification)
 
 `e5-job-profile-v1` remains explicitly callable/selectable with unchanged text
 and hashes. `e5-job-profile-v2` is the default main-evaluation contract, fixed
@@ -920,6 +932,90 @@ matrix validation still reports **8 total / 7 evaluable / 1 excluded, coverage
 All completed judgments and frozen corpus/historical records remain unchanged.
 No application database access or real metric/ranking execution occurred.
 `git diff --check` passed, including new untracked files. Work is uncommitted.
+
+### Accepted Frozen Evaluation and Closure Review
+
+Independent verdict: **ACCEPT - PHASE 5 EVALUATION RESULTS**.
+The benchmark's source commit is `d80e2c9`, contract `e5-job-profile-v2`,
+model `intfloat/multilingual-e5-small` at immutable revision
+`fd1525a9fd15316a2d503bf26ab031a61d056e98`.
+See [the concise verification/result report](verification/phase5-real-corpus-results.md)
+for exact hashes, fractions, method definitions and the requirements matrix.
+
+The frozen corpus is 8 candidates by 30 jobs, with all 240 human judgments:
+167 grade 0, 54 grade 1 and 19 grade 2. Primary grade-2 coverage is **7/8**:
+8 total, 7 evaluable, 1 excluded/undefined and binary macro denominator **7**.
+`candidate_831967b28fd6` has no clearly relevant job identified in the corpus;
+its primary metrics are **null/undefined, not zero**. No labels were changed.
+This coverage exception was adopted after the relevance judgments were collected.
+
+| Primary Metric | Exact Fraction | Macro Value |
+| --- | --- | ---: |
+| Recall@5 | 37/84 | 0.440476 |
+| Recall@10 | 53/84 | 0.630952 |
+| Recall@20 | 5/7 | 0.714286 |
+| MRR | 1261/1925 | 0.655065 |
+
+MRR indicates that a clearly relevant result often appears relatively early,
+but performance is uneven. Recall increases with K. About **28.6% remains
+outside top 20 on the macro measure**, not 28.6% of all positive pairs.
+Two of the 19 positive pairs lie outside 20, each the sole positive for a
+different query. Grade-1-or-2 exploration is separate, with denominator 8.
+
+The frozen indexing evidence records exactly 8 ready/current candidate and 30
+job vectors, explicit v2 and pinned artifacts, with 38 encode calls. Job inputs
+are 503-508 tokens. Two independent read-only service runs produced identical
+240-row rankings. All 29 database table fingerprints were unchanged during
+ranking; legacy matches remained 13/13 with identical fingerprint and evaluation
+matches 0/0. The offline committed evaluator ran twice with byte-identical
+normalized results; independent exact-fraction verification agreed within 1e-12.
+The accepted evaluation ID is `evaluation_v2_4ad60a9a219015141927c755`.
+Its labels, policy, ranking and metric files remain immutable. A new detailed
+interpretation is private mode-0600 material, not part of the metric manifest.
+
+All recorded implementation/model/PostgreSQL/human-evaluation gates have
+evidence. The owner explicitly accepted the authorized scoped-isolation
+exception for closure on 2026-11-08 (D033). The earlier protocol specified a
+physically isolated benchmark-only database; the actual corpus run used a
+shared developer database with only the frozen 8/30 entities embedded. Other
+profiles/jobs had no embeddings; all 13 legacy matches were excluded from
+ranking inputs and preserved. All 29 table fingerprints remained unchanged
+during ranking. This is verified retrieval-universe isolation, not physical
+database isolation. Isolated PostgreSQL implementation/migration verification
+remains separate. Shared execution was authorized before indexing; acceptance
+of the original checklist substitution is recorded at closure after evaluation.
+No results, labels or execution are retroactively changed or rerun. Phase 5 is
+complete with these methodological limitations; no required work remains for
+this repository/methodology checkpoint.
+
+Limitations: 8 candidates and 30 curated English jobs; only 7 evaluable binary
+queries; one candidate has no grade-2 job; post-judgment exclusion; a single
+primary rater and **no inter-rater reliability estimate**; manually reviewed
+and augmented candidate profiles; no end-to-end extraction-quality measurement;
+restricted internal employer material. Do not generalize these results as
+production hiring accuracy or confuse them with final Phase 6 scores.
+
+Repository migration head, isolated verified head and last observed developer
+head are all `0008_dense_retrieval`; the developer head was not queried in this
+documentation step. Current-source one-off runners do not establish deployment
+of the latest image to normal Compose. No runtime deployment was performed.
+
+Phase 6 has not started. Its recommendations are explainable reviewed-skill
+coverage, required/preferred distinctions, gaps, qualifications and seniority.
+It must not retroactively tune or replace the frozen Phase 5 baseline (D032).
+
+Documentation/interpretation verification on 2026-11-08: exact primary fractions,
+all 19 positive ranks and outside-top-K counts were checked against the frozen
+results. Corpus, label, ranking and evaluation manifests pass; all 56
+pre-existing frozen files remain unchanged. Tracked-document privacy scans
+found no restricted summaries/descriptions, private rationales or database
+identifiers. Focused benchmark/policy tests: **85 passed, 1 skipped** (private
+corpus gate unset; direct frozen-file checks passed separately).
+`git diff --check` passed, including the new verification report. No frontend
+build, migration, application database access or runtime operation was needed.
+The documentation changes remain uncommitted for review.
+The approved closure follow-up changes documentation only; frozen evidence
+remains unchanged. No latest-image deployment or Phase 6 work was performed.
 
 Do not implement the final Phase 6 weighted scoring model as part of Phase 5.
 

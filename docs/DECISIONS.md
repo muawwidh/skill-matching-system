@@ -330,7 +330,7 @@ preferred marker or a whole-line preferred predicate, without mandatory or
 mixed-clause evidence. Parenthetical/bracketed or subordinate preferences do
 not make an otherwise required line optional. Mixed lines retain their explicit
 heading class and wording; no semantic fragments are invented. This correction
-remains within unreleased v2, which has not been committed, indexed or used for
+was fixed while v2 was unreleased, before it was committed, indexed or used for
 relevance labels. J12's former weak preferred coverage was a classification
 defect, not token-budget truncation.
 
@@ -350,7 +350,8 @@ Both templates remain separate persistence/query identities. Switching requires
 explicit indexing of both profiles and jobs under the same template; it does
 not migrate reviews or overwrite baseline vectors. Recall@K/MRR may later
 compare v1 and v2 as separate predeclared configurations. No retrieval-quality
-claim follows from coverage or synthetic tests. Phase 5 remains incomplete.
+claim follows from coverage or synthetic tests alone; accepted real-corpus
+evidence is recorded separately in `verification/phase5-real-corpus-results.md`.
 
 ## D031 - Explicit Zero-Grade-2 Corpus-Coverage Exceptions
 
@@ -382,5 +383,59 @@ grade-2 coverage, one has none, and future binary aggregates have denominator
 7. The original failed validation and completed exports are retained. No
 judgment is promoted or re-reviewed to manufacture coverage. Report this
 limitation prominently, together with single-rater subjectivity and absence of
-an inter-rater reliability estimate. Phase 5 remains incomplete; this decision
-does not authorize indexing, rankings or metrics.
+an inter-rater reliability estimate. At this policy checkpoint Phase 5 remained
+incomplete; this decision alone did not authorize indexing, rankings or metrics.
+Later explicitly authorized execution is documented in the frozen result report.
+
+## D032 - Frozen Phase 5 Evidence Is Not Retuned By Phase 6
+
+The accepted Template-v2 real-corpus evaluation is an immutable candidate-
+generation baseline, not a final job-match score. Keep its model/revision,
+templates, labels, coverage policy and complete frozen ranking unchanged after
+interpretation. No observed success or failure retroactively authorizes a new
+embedding, label, threshold or representation under the same baseline identity.
+Later scoring/retrieval experiments require separate versions and disclosure
+of their evaluation-data use; they must not replace the historical baseline.
+
+Phase 6 may add the planned explainable reviewed-skill coverage,
+required/preferred distinctions, gaps, qualifications, experience and seniority.
+Those factors must derive from supported evidence, not similarity alone, and
+must not infer mastery, completed qualifications or independent practice from
+limited/reported/supervised evidence. Preserve missing versus unknown support.
+No Phase 6 implementation is introduced by this decision.
+
+## D033 - Run-Specific Scoped-Isolation Exception For Phase 5 Closure
+
+The owner explicitly accepted the authorized shared-database corpus run as a
+scoped-isolation exception for Phase 5 repository/methodology closure on
+2026-11-08. The original benchmark-only physical-database criterion is not
+silently described as satisfied: this run used the existing developer database.
+Only the frozen 8 profile and 30 job embeddings formed the retrieval universe;
+other profiles/jobs had no vectors. The 13 existing prototype matches were
+excluded from dense ranking and preserved, with zero evaluation matches.
+All 27 non-embedding tables remained unchanged during indexing, as demonstrated
+by the recorded before/after database-table fingerprints.
+Read-only ranking preserved all 29 table fingerprints, including all vectors.
+
+The scoped-isolation evidence comprised a pre-indexing PostgreSQL custom-format
+backup stored outside the repository and successfully checked with
+`pg_restore --list`; before/after database-table fingerprints; private alias
+mappings binding frozen aliases to the intended database entities; and SHA-256
+manifests for the corpus, indexing, ranking and evaluation artifacts.
+
+Shared execution was authorized before indexing. Its acceptance as a substitute
+for the earlier checklist criterion is explicit at closure, after evaluation,
+not a preregistered physical-isolation claim. This is an operational isolation
+deviation, separate from the post-judgment zero-grade-2 coverage deviation
+(D031); neither changes the labels, ranking, metric denominator or result.
+Independent isolated PostgreSQL migration/service/model verification remains
+separate evidence. The generic isolated-only ranking-export CLI guard and the
+default isolated verification workflow are unchanged. Future reproductions
+should preferably use a dedicated isolated benchmark database. This authorized
+exception is not precedent or general permission to use a shared developer
+database for future experiments.
+
+Phase 5 is complete as a repository/methodology checkpoint with the recorded
+limitations. Current-source one-off execution does not claim the latest normal
+Compose image is deployed. Phase 6 has not started, and must preserve the frozen
+Phase 5 baseline under D032.
