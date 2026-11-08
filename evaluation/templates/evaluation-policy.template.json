@@ -1,0 +1,26 @@
+{
+  "schema_version": "phase5-evaluation-policy-v1",
+  "methodology_version": "TBD",
+  "decision_date": "YYYY-MM-DD",
+  "corpus_freeze_id": "TBD",
+  "corpus_sha256": "REPLACE_WITH_FROZEN_CORPUS_SHA256",
+  "input_sha256": {
+    "candidates": "REPLACE_WITH_EXACT_CANDIDATES_JSONL_SHA256",
+    "jobs": "REPLACE_WITH_EXACT_JOBS_JSONL_SHA256",
+    "judgments": "REPLACE_WITH_EXACT_COMPLETED_JUDGMENT_CSV_SHA256"
+  },
+  "post_judgment_protocol_deviation": true,
+  "exceptions": [
+    {
+      "candidate_id": "replace_with_blinded_alias",
+      "reason": "TBD",
+      "grade2_coverage_status": "no_grade2_jobs",
+      "metric_treatment": {
+        "recall_at_k": "undefined",
+        "mrr": "undefined"
+      },
+      "exclude_from_aggregate_binary_query_denominator": true,
+      "retain_for_graded_descriptive_analyses": true
+    }
+  ]
+}

@@ -351,3 +351,36 @@ explicit indexing of both profiles and jobs under the same template; it does
 not migrate reviews or overwrite baseline vectors. Recall@K/MRR may later
 compare v1 and v2 as separate predeclared configurations. No retrieval-quality
 claim follows from coverage or synthetic tests. Phase 5 remains incomplete.
+
+## D031 - Explicit Zero-Grade-2 Corpus-Coverage Exceptions
+
+The default benchmark requirement remains at least one grade-2 job per
+candidate. An operator may supply a versioned, local evaluation policy to
+`validate-benchmark` and `evaluate` to declare a genuine uncovered query.
+It must identify the frozen corpus, exact candidate/job/judgment file hashes,
+candidate alias, reason, decision date and methodology version. Every bound
+record must carry the same freeze ID/hash. Unknown/duplicate aliases,
+positive-covered exclusions and undeclared uncovered queries are errors;
+exclusions are never inferred from labels or retrieval output.
+Policy v1 requires literal `post_judgment_protocol_deviation=true`; false,
+null, missing and non-boolean declarations fail. Validation and evaluation
+limitations state: "This coverage exception was adopted after the relevance judgments were collected."
+The policy file's own hash and existing corpus/export hashes establish the
+provenance binding; no separate source-decision hash is accepted or reported.
+
+An explicitly excluded query has undefined (`null`), not zero, binary Recall@K
+and MRR. Aggregate binary metrics use only positive-covered queries and must
+report total/evaluable/excluded counts, coverage, denominator and each excluded
+alias/reason. All judgments remain immutable, including grade 1; the query
+remains available for separately declared graded/descriptive analysis. Optional
+grade-1-or-2 analysis has its own explicitly reported denominator. Full-matrix
+and full-ranking coverage requirements still include excluded queries.
+
+The project owner's accepted private case is a **post-judgment corpus-coverage
+deviation**, not a preregistered policy or a retrieval result: 7/8 queries have
+grade-2 coverage, one has none, and future binary aggregates have denominator
+7. The original failed validation and completed exports are retained. No
+judgment is promoted or re-reviewed to manufacture coverage. Report this
+limitation prominently, together with single-rater subjectivity and absence of
+an inter-rater reliability estimate. Phase 5 remains incomplete; this decision
+does not authorize indexing, rankings or metrics.

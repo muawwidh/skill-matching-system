@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-04
+Last updated: 2026-11-05
 
 ## Repository
 
@@ -766,10 +766,11 @@ fixture counts and measured timings are recorded in
 `docs/verification/phase5-real-model.json` and summarized in
 `docs/verification/phase5-real-model.md`. Earlier Docker image build and
 `git diff --check` passed; no frontend files changed, so no frontend build was
-needed for this verification. The developer database remains at the
+needed for this historical verification. At that checkpoint the developer database remained at the
 last independently observed `0007_taxonomy_review_audit` on 2026-10-06
-(not queried or migrated in this step). No human-labelled relevance set has been supplied, so real
-Recall@K/MRR evaluation is **PENDING**. Phase 5 is not complete.
+(not queried or migrated in that step). No human-labelled relevance set had yet
+been supplied. Later primary judgments and the coverage exception are recorded
+below; real Recall@K/MRR evaluation is still **PENDING**. Phase 5 is not complete.
 
 The Phase 5 human-labelled benchmark pack is implemented:
 candidate/job JSONL validation, complete judgment-matrix validation, a
@@ -777,10 +778,10 @@ reproducible blind pair export, isolated-database ranking export, grade-2
 Recall@5/10/20 and MRR calculation, optional separate grade-1 exploration,
 and optional second-reviewer Cohen's kappa. See
 `docs/phase5-evaluation-protocol.md`. Synthetic tests prove tooling behavior,
-not retrieval quality. There are **0** eligible real candidate profiles,
-**0** eligible real jobs and **0** human judgments in the repository; the
-target still requires 8 profiles, 30 jobs and 240 judgments. No developer
-data was exported or judged. Focused benchmark tests: 7 passed. The complete
+not retrieval quality. At the original tooling checkpoint there were **0**
+eligible real candidate profiles, **0** eligible real jobs and **0** human
+judgments; the target was 8 profiles, 30 jobs and 240 judgments. No developer
+data was exported or judged in that tooling step. Focused benchmark tests: 7 passed. The complete
 backend suite after this tooling change, with isolated PostgreSQL enabled:
 **163 passed, 1 skipped** (the gated real-model test was not rerun in the host
 Python environment without Torch). The separate pinned real-model verification
@@ -860,6 +861,65 @@ passed, 0 skipped**. The existing real-vector gate was not rerun under this
 turn's no-encode/no-index boundary; historical real-model evidence remains valid.
 No deployment, normal-stack rebuild, developer-data mutation or migration was
 performed. Phase 5 remains incomplete pending human-labelled evaluation.
+
+### Explicit Grade-2 Coverage Policy
+
+The private frozen corpus now has 8 candidates, 30 jobs and 240 completed
+primary judgments. The project owner accepted one zero-grade-2 query as a
+**post-judgment corpus-coverage deviation**, not a retrieval result or a
+preregistered policy. Grade-2 query coverage is **7/8**: 8 total, 7 evaluable,
+1 excluded/undefined, with future aggregate binary Recall@K/MRR denominator
+**7**. Excluded aliases/reasons must accompany eventual results. No grade 1
+is promoted to grade 2; the candidate remains available for separate declared
+graded/descriptive analysis. Single-rater subjectivity remains a limitation;
+there is no inter-rater reliability estimate (D031).
+
+`validate-benchmark` and `evaluate` accept optional `--evaluation-policy PATH`.
+Without it, zero-grade-2 queries still fail. The strict versioned schema binds
+the exact candidate/job/judgment bytes and every record's freeze identity/hash,
+requires a reason/date/methodology and explicit undefined/exclusion/retention
+treatment, and rejects unknown, duplicate, positive-covered or undeclared
+exclusions. No alias is hard-coded. Excluded per-query binary metrics are
+`null`; aggregates omit them and report coverage/denominator prominently.
+Optional grade-1-or-2 exploration retains its separate denominator.
+The deliberately incomplete policy template and protocol document the input;
+a narrative decision is not silently treated as a valid machine policy.
+Policy v1 requires literal `post_judgment_protocol_deviation=true`; false,
+null, missing and non-boolean declarations fail. Validation and evaluation
+limitations state: "This coverage exception was adopted after the relevance judgments were collected."
+No separate source-decision hash is accepted or reported. The policy file's own
+SHA-256 and existing corpus/export hashes remain authoritative; older policies
+with the removed extra field must be regenerated.
+
+Read-only validation of the real completed matrix confirmed strict rejection
+without policy and acceptance of **240 pairs / 7/8 coverage** with a temporary
+policy explicitly derived from the preserved owner decision. The temporary
+policy was removed. CSV/JSONL exports, export-integrity record, original failed
+validation and historical decision retained their recorded SHA-256 hashes;
+both frozen corpus files were unchanged. This was validation only, not ranking
+or metric execution. Evaluator aggregation tests use injected synthetic results.
+No application/developer database access, indexing, vectors, real rankings,
+metrics, migrations, frontend changes or deployment occurred. Phase 5 remains
+incomplete pending retrieval-quality evaluation.
+
+Verification on 2026-11-04: focused policy/benchmark tests **75 passed,
+1 skipped** (private-corpus gate unset); complete default backend suite
+**306 passed, 51 skipped** (PostgreSQL, pinned tokenizer/real-model and private
+corpus environment gates unset). The separate read-only real-matrix check above
+passed. `git diff --check` passed, including the new untracked source/template
+files. No frontend build is necessary. Repository Alembic head remains
+`0008_dense_retrieval`; developer migration state was not queried in this work.
+
+Acceptance follow-up on 2026-11-05: focused policy/benchmark tests **85 passed,
+1 skipped**; complete default backend suite **316 passed, 51 skipped**, with
+the same environment gates unset. New regressions cover literal-true-only
+declaration, explicit post-judgment wording in validation/evaluation output,
+and rejection/non-reporting of the removed extra hash field. Read-only real
+matrix validation still reports **8 total / 7 evaluable / 1 excluded, coverage
+7/8, binary denominator 7**; strict validation without policy still fails.
+All completed judgments and frozen corpus/historical records remain unchanged.
+No application database access or real metric/ranking execution occurred.
+`git diff --check` passed, including new untracked files. Work is uncommitted.
 
 Do not implement the final Phase 6 weighted scoring model as part of Phase 5.
 

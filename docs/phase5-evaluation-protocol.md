@@ -1,6 +1,7 @@
 # Phase 5 human-labelled retrieval evaluation pack
 
-**Status: corpus preparation/review; human judgments and retrieval-quality metrics pending.**
+**Status: private primary judgments supplied; explicit coverage deviation recorded;
+retrieval-quality metrics pending. Phase 5 remains incomplete.**
 Templates in `evaluation/templates/` are deliberately incomplete and fail
 validation. Keep actual records under ignored `evaluation-private/` unless all
 content is demonstrably permission-cleared for publication. The private
@@ -71,8 +72,87 @@ remain. Dates are ISO. Reviewer IDs are pseudonyms. Grade **0** means not
 relevant, **1** partially relevant/plausible, **2** clearly relevant. Grade 2
 alone is relevant for Recall@5/10/20 and MRR; grade 1 is retained and can be
 reported in a separate exploratory grade-1-or-2 calculation. Missing judgments
-are never silently treated as grade 0. Every candidate must have at least one
-grade-2 job before metrics can run.
+are never silently treated as grade 0. By default every candidate must have at
+least one grade-2 job before metrics can run. The only exception is an explicit,
+validated local coverage policy as specified below; labels are never changed
+to meet the coverage requirement.
+
+## Explicit coverage policy (post-judgment deviation)
+
+`evaluation/templates/evaluation-policy.template.json` defines the versioned
+`phase5-evaluation-policy-v1` input. It is deliberately incomplete and invalid
+until populated from an authorized methodological decision; store the completed
+policy privately, not in Git. No candidate alias is hard-coded in the tooling.
+An existing narrative decision is historical evidence, not automatically a
+machine-valid policy. Supply the policy explicitly on **each** validation or
+evaluation invocation; it is never discovered or inferred silently.
+
+Required policy fields:
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | Exactly `phase5-evaluation-policy-v1` |
+| `methodology_version`, `decision_date` | Non-placeholder methodology identifier and ISO decision date |
+| `corpus_freeze_id`, `corpus_sha256` | Frozen corpus identity and lowercase hexadecimal SHA-256 |
+| `input_sha256` | Exact byte hashes of `candidates`, `jobs`, and the completed CSV `judgments` export |
+| `post_judgment_protocol_deviation` | Required literal boolean **true**; false, null, missing and non-boolean values fail |
+| `exceptions` | Nonempty array of the candidate declarations below |
+
+Each declaration requires `candidate_id` (blinded alias), substantive `reason`,
+`grade2_coverage_status: "no_grade2_jobs"`,
+`metric_treatment: {"recall_at_k": "undefined", "mrr": "undefined"}`,
+`exclude_from_aggregate_binary_query_denominator: true`, and
+`retain_for_graded_descriptive_analyses: true`. Flags are literal JSON booleans.
+Unknown fields, duplicate JSON keys and duplicate candidate exceptions fail.
+The policy file's own SHA-256 and the existing corpus/export hashes are the
+authoritative provenance. Older policies containing a removed extra hash field
+must be regenerated; no separate decision-file hash is accepted or reported.
+Every candidate/job JSONL row and judgment CSV row must contain matching
+`corpus_freeze_id` and `corpus_sha256`. The validator checks metadata consistency
+and exact file hashes; it does not authenticate a decision author or recompute
+the original application-data freeze payload from these files.
+
+The candidate must exist once and genuinely have zero grade-2 judgments.
+Excluding a positive-covered candidate, leaving another uncovered candidate
+undeclared, an incomplete/duplicate matrix, mismatched files/freeze metadata,
+or excluding every query fails. Candidate privacy, job-source restrictions and
+ordinary judgment validation are unchanged. Omitting the policy remains strict.
+
+Validation only (no vectors, rankings or metrics):
+
+```sh
+.venv/bin/python -m app.retrieval.cli validate-benchmark ../evaluation-private/candidates.jsonl ../evaluation-private/jobs.jsonl --judgments ../evaluation-private/judgments.csv --evaluation-policy ../evaluation-private/evaluation-policy.json
+```
+
+Later evaluation, **only when separately authorized**, accepts the same
+`--evaluation-policy PATH` on `evaluate`. It still requires complete rankings
+for all candidates and every job. The output's `query_coverage` prominently
+reports total queries, evaluable grade-2 queries, excluded/undefined queries,
+coverage fraction, binary aggregate denominator and excluded aliases/reasons.
+Excluded per-candidate Recall@5/10/20 and MRR are JSON `null`, not zero, and
+are omitted only from binary macro denominators. Policy and input hashes
+accompany results. Validation and evaluation coverage limitations explicitly
+state: "This coverage exception was adopted after the relevance judgments were collected."
+`reviewer_limitations` explicitly reports single-rater
+status and no inter-rater reliability estimate; reviewer IDs alone do not
+establish independent double labelling.
+
+The accepted private primary matrix has **8 total queries, 7 evaluable grade-2
+queries, 1 excluded/undefined query, coverage 7/8 and binary denominator 7**.
+Its excluded alias/reason must accompany any eventual result. This exception
+was accepted after judgments: it exposes limited corpus coverage, not retrieval
+performance, and is not a preregistered retrieval configuration. All 240 labels,
+including grade 1, the original failed validation and historical decision remain
+unchanged. There is no inter-rater reliability estimate for the single primary
+rater. No metrics have been produced by this support change.
+
+Keep uncovered candidates for separately declared graded/descriptive work.
+`--grade-one-exploratory` remains separate grade-1-or-2 binary exploration, not
+a graded metric or promotion of grade 1 to grade 2. It includes an excluded
+primary query when it has grade-1 evidence, reports its own denominator, and
+reports `null` for queries with neither grade 1 nor 2. Descriptive rows remain
+present regardless. The optional `kappa` command is unchanged and does not
+accept this policy; no reliability estimate is claimed here.
 
 ## Provenance and privacy checklist
 
@@ -175,7 +255,8 @@ then. A second reviewer is not mandatory for minimum Phase 5 acceptance.
 - [ ] 30 provenance-complete English jobs in an explicit content mode with multiple families
       and hard negatives.
 - [ ] Provenance and redistribution status manually checked for every record.
-- [ ] All 240 pairs labelled blindly; each candidate has grade-2 jobs.
+- [ ] All 240 pairs labelled blindly; each candidate has grade-2 jobs or a valid
+      explicit coverage exception, reported with undefined metrics and denominator.
 - [ ] Completed matrix passes validation; uncertainty reviewed.
 - [ ] Isolated database contains only benchmark records for this run.
 - [ ] Actual pinned-model rankings exported with full job coverage.
@@ -186,7 +267,8 @@ Existing safe reuse: the repository's taxonomy samples and synthetic test
 fixtures are software tests, not candidate/job relevance data. They cannot
 count toward this benchmark. Developer CV/job records require consent and
 de-identification; this corpus-validation update did not access the application
-database or export its records. The private local corpus now validates as
-**8 candidates and 30 jobs**; **240 human judgments remain pending**. These
+database or export its records. The private local corpus contains
+**8 candidates and 30 jobs**; **240 primary judgments are supplied**, with the
+post-judgment 7/8 coverage limitation above. Retrieval-quality evaluation is pending. These
 private records are not part of the committed templates, and corpus validation
 is not a retrieval-quality result or final human approval of the job texts.

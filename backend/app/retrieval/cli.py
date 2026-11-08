@@ -10,7 +10,7 @@ from app.db.models import CandidateProfile, Job
 from app.db.session import SessionLocal
 from app.retrieval.embedder import default_embedder
 from app.retrieval.benchmark import (cohens_kappa, evaluate_pack, export_rankings,
-                                     load_corpus, load_judgments, write_blind_export)
+                                     load_corpus, validate_benchmark, write_blind_export)
 from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATES, resolve_template
 from app.services.retrieval_service import RetrievalService
 
@@ -84,6 +84,7 @@ def main() -> None:
     validate.add_argument("candidates", type=Path)
     validate.add_argument("jobs", type=Path)
     validate.add_argument("--judgments", type=Path)
+    validate.add_argument("--evaluation-policy", type=Path, help="Explicit file-bound zero-grade-2 coverage policy")
     rankings = sub.add_parser("export-rankings", help="Only from isolated phase5_verify")
     rankings.add_argument("candidates", type=Path)
     rankings.add_argument("jobs", type=Path)
@@ -98,6 +99,7 @@ def main() -> None:
     evaluation.add_argument("rankings", type=Path)
     evaluation.add_argument("--grade-one-exploratory", action="store_true")
     evaluation.add_argument("--template", choices=TEMPLATES)
+    evaluation.add_argument("--evaluation-policy", type=Path, help="Explicit file-bound zero-grade-2 coverage policy")
     kappa = sub.add_parser("kappa", help="Optional second-reviewer agreement")
     kappa.add_argument("candidates", type=Path)
     kappa.add_argument("jobs", type=Path)
@@ -114,17 +116,13 @@ def main() -> None:
     elif args.command == "evaluate":
         print(json.dumps(evaluate_pack(args.candidates, args.jobs, args.judgments,
                                        args.rankings, args.grade_one_exploratory,
-                                       template_version=args.template), sort_keys=True))
+                                       template_version=args.template, policy_path=args.evaluation_policy), sort_keys=True))
     elif args.command == "blind-export":
         candidates, jobs = load_corpus(args.candidates, args.jobs)
         metadata = write_blind_export(candidates, jobs, args.output, args.seed)
         print(json.dumps(metadata, sort_keys=True))
     elif args.command == "validate-benchmark":
-        candidates, jobs = load_corpus(args.candidates, args.jobs)
-        result = {"candidates": len(candidates), "jobs": len(jobs), "expected_pairs": len(candidates) * len(jobs)}
-        if args.judgments:
-            result["judged_pairs"] = len(load_judgments(args.judgments, candidates, jobs))
-        print(json.dumps(result, sort_keys=True))
+        print(json.dumps(validate_benchmark(args.candidates, args.jobs, args.judgments, args.evaluation_policy), sort_keys=True))
     elif args.command == "export-rankings":
         print(json.dumps(export_rankings(args.candidates, args.jobs, args.mapping,
                                          args.database_url, args.output, template_version=args.template), sort_keys=True))

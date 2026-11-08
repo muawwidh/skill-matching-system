@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from app.retrieval.evaluation import retrieval_metrics
+from app.retrieval.evaluation_policy import load_policy, query_coverage, reviewer_limitations
 from app.retrieval.representation import MODEL_ID, MODEL_REVISION, resolve_template
 
 SEED = 20261002
@@ -229,7 +230,9 @@ def write_blind_export(candidates: dict, jobs: dict, destination: Path, seed: in
     return metadata
 
 
-def load_judgments(path: Path, candidates: dict, jobs: dict, require_complete: bool = True) -> dict[tuple[str, str], dict]:
+def load_judgments(path: Path, candidates: dict, jobs: dict, require_complete: bool = True, *,
+                   policy_path: Path | None = None, candidates_path: Path | None = None,
+                   jobs_path: Path | None = None) -> dict[tuple[str, str], dict]:
     result = {}
     with path.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
@@ -259,9 +262,10 @@ def load_judgments(path: Path, candidates: dict, jobs: dict, require_complete: b
         missing = expected - result.keys()
         if missing:
             raise ValueError(f"Missing {len(missing)} candidate-job judgments")
-        for candidate_id in candidates:
-            if not any(row["relevance_grade"] == "2" for (c, _), row in result.items() if c == candidate_id):
-                raise ValueError(f"Candidate {candidate_id} has no grade-2 relevant job")
+        policy = _bound_policy(policy_path, candidates_path, jobs_path, path, candidates, jobs, result)
+        query_coverage(candidates, result, policy)
+    elif policy_path is not None:
+        raise ValueError("Evaluation policy requires complete judgment validation")
     return result
 
 
@@ -269,12 +273,46 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _bound_policy(policy_path: Path | None, candidates_path: Path | None, jobs_path: Path | None,
+                  judgments_path: Path, candidates: dict, jobs: dict, judgments: dict):
+    if policy_path is None:
+        return None
+    if candidates_path is None or jobs_path is None:
+        raise ValueError("Evaluation policy requires candidate and job corpus paths for checksum binding")
+    if load_corpus(candidates_path, jobs_path) != (candidates, jobs):
+        raise ValueError("Evaluation policy corpus objects do not match the bound files")
+    return load_policy(policy_path, {"candidates": candidates_path, "jobs": jobs_path, "judgments": judgments_path},
+                       [*candidates.values(), *jobs.values(), *judgments.values()])
+
+
+def validate_benchmark(candidates_path: Path, jobs_path: Path, judgments_path: Path | None = None,
+                       policy_path: Path | None = None) -> dict:
+    candidates, jobs = load_corpus(candidates_path, jobs_path)
+    result = {"candidates": len(candidates), "jobs": len(jobs), "expected_pairs": len(candidates) * len(jobs)}
+    if judgments_path is None:
+        if policy_path is not None:
+            raise ValueError("Evaluation policy requires a judgment export")
+        return result
+    judgments = load_judgments(judgments_path, candidates, jobs, policy_path=policy_path,
+                               candidates_path=candidates_path, jobs_path=jobs_path)
+    policy = _bound_policy(policy_path, candidates_path, jobs_path, judgments_path, candidates, jobs, judgments)
+    result.update(judged_pairs=len(judgments), query_coverage=query_coverage(candidates, judgments, policy),
+                  reviewer_limitations=reviewer_limitations(judgments))
+    if policy_path is not None:
+        result["evaluation_policy_sha256"] = _sha256(policy_path)
+    return result
+
+
 def evaluate_pack(candidates_path: Path, jobs_path: Path, judgments_path: Path,
                   rankings_path: Path, grade_one: bool = False,
-                  allow_synthetic: bool = False, template_version: str | None = None) -> dict:
+                  allow_synthetic: bool = False, template_version: str | None = None,
+                  policy_path: Path | None = None) -> dict:
     template_version = resolve_template(template_version)
     candidates, jobs = load_corpus(candidates_path, jobs_path)
-    judgments = load_judgments(judgments_path, candidates, jobs)
+    judgments = load_judgments(judgments_path, candidates, jobs, policy_path=policy_path,
+                               candidates_path=candidates_path, jobs_path=jobs_path)
+    policy = _bound_policy(policy_path, candidates_path, jobs_path, judgments_path, candidates, jobs, judgments)
+    coverage = query_coverage(candidates, judgments, policy)
     if not allow_synthetic and (len(candidates), len(jobs), len(judgments)) != (8, 30, 240):
         raise ValueError("Phase 5 evaluation requires 8 candidates, 30 jobs and 240 judgments")
     ranked = {}
@@ -295,29 +333,46 @@ def evaluate_pack(candidates_path: Path, jobs_path: Path, judgments_path: Path,
     per_candidate = {}
     for candidate_id in sorted(candidates):
         relevant = {j for (c, j), row in judgments.items() if c == candidate_id and row["relevance_grade"] == "2"}
+        if not relevant:
+            exception = next(item for item in coverage["excluded_queries"] if item["candidate_id"] == candidate_id)
+            per_candidate[candidate_id] = {"relevant_count": 0, "queries": 0, "status": "undefined",
+                "reason": exception["reason"], **{key: None for key in ("recall_at_5", "recall_at_10", "recall_at_20", "mrr")}}
+            continue
         measured = retrieval_metrics([{"relevant_job_ids": sorted(relevant),
                                       "retrieved_job_ids": ranked[candidate_id]}])
         per_candidate[candidate_id] = {"relevant_count": len(relevant), **measured}
-    macro = {key: sum(row[key] for row in per_candidate.values()) / len(per_candidate)
+    macro = {key: sum(per_candidate[candidate][key] for candidate in coverage["eligible_candidate_ids"])
+             / coverage["aggregate_binary_query_denominator"]
              for key in ("recall_at_5", "recall_at_10", "recall_at_20", "mrr")}
     result = {"corpus": {"candidates": len(candidates), "jobs": len(jobs),
                          "judgments": len(judgments), "grade_2_relevant": sum(row["relevance_grade"] == "2" for row in judgments.values()),
                          "grade_1_partial": sum(row["relevance_grade"] == "1" for row in judgments.values())},
               "relevance_rule": "grade 2 only", "per_candidate": per_candidate,
+              "query_coverage": coverage, "reviewer_limitations": reviewer_limitations(judgments),
               "macro_average": macro,
               "model": {"id": MODEL_ID, "revision": MODEL_REVISION, "template_version": template_version},
               "data_sha256": {name: _sha256(path) for name, path in
                               (("candidates", candidates_path), ("jobs", jobs_path),
                                ("judgments", judgments_path), ("rankings", rankings_path))}}
+    if policy_path is not None:
+        result["data_sha256"]["evaluation_policy"] = _sha256(policy_path)
     if grade_one:
         exploratory = []
+        exploratory_per_candidate = {}
         for candidate_id in sorted(candidates):
             relevant = {j for (c, j), row in judgments.items() if c == candidate_id and row["relevance_grade"] in {"1", "2"}}
-            exploratory.append(retrieval_metrics([{"relevant_job_ids": sorted(relevant),
-                                                  "retrieved_job_ids": ranked[candidate_id]}]))
+            measured = (retrieval_metrics([{"relevant_job_ids": sorted(relevant),
+                                            "retrieved_job_ids": ranked[candidate_id]}]) if relevant else None)
+            exploratory_per_candidate[candidate_id] = {"relevant_count": len(relevant), "metrics": measured}
+            if measured is not None:
+                exploratory.append(measured)
         result["exploratory_grade_1_or_2"] = {
             key: sum(row[key] for row in exploratory) / len(exploratory)
             for key in ("recall_at_5", "recall_at_10", "recall_at_20", "mrr")}
+        result["exploratory_per_candidate"] = exploratory_per_candidate
+        result["exploratory_query_coverage"] = {"relevance_rule": "grade 1 or 2, separate from primary metrics",
+            "total_queries": len(candidates), "aggregate_query_denominator": len(exploratory),
+            "undefined_candidate_ids": [c for c, item in exploratory_per_candidate.items() if item["metrics"] is None]}
     return result
 
 
