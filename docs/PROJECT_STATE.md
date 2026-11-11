@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-08
+Last updated: 2026-11-11
 
 ## Repository
 
@@ -22,21 +22,44 @@ Initial Git baseline:
 
 ## Current Phase
 
-Phase 5 — Dense Retrieval
+Phase 6 — Matching and Skill-Gap Analysis
 
 Implementation status:
 
-COMPLETE as a repository/methodology checkpoint, with the explicitly approved
-run-specific scoped-isolation exception (D033). Latest normal-stack deployment
-is a separate operational checkpoint, not implied by completion.
+ACCEPTED METHODOLOGY/DESIGN CHECKPOINT ONLY. matching-policy-v1 and its
+evaluation protocol were accepted on 2026-11-10 following independent review
+and are frozen before implementation and Phase 6 rankings (D034). No Phase 6
+application implementation has begun. Phase 6 is not complete.
 
 Current status:
 
-PHASE 5 COMPLETE; DOCUMENTATION CHECKPOINT UNCOMMITTED FOR REVIEW
+PHASE 6 METHODOLOGY ACCEPTED; DOCUMENTATION PROMOTION UNCOMMITTED FOR INSPECTION
 
-Next planned phase:
+Phase 5 remains COMPLETE as a repository/methodology checkpoint, including
+the accepted D033 run-specific scoped-isolation exception. Its frozen
+artifacts, labels, rankings, metrics and results remain unchanged. Deployment
+is a separate operational checkpoint, not implied by methodology acceptance.
 
-Phase 6 — Matching and Skill-Gap Analysis (NOT STARTED)
+Repository head: `0008_dense_retrieval`.
+Isolated successfully verified head: `0008_dense_retrieval`.
+Developer database head: last independently observed `0008_dense_retrieval`;
+not queried or modified for this documentation promotion.
+`0009_explainable_matching` is proposed and does not exist yet.
+
+No Phase 6 reviewed facts, inventory sign-offs, scores, rankings or evaluations
+exist yet. The legacy matcher remains prototype behavior, not the final Phase 6
+engine; existing candidate_job_matches are not reinterpreted.
+
+Next authorized work is Phase 6 Checkpoint 1: policy engine, reviewed-fact and
+inventory contracts/APIs, and migration 0009, subject to its required distinct-
+value audit and safe handling plan. Implementation is not performed in this
+documentation task. Frozen-corpus fact entry remains a separate controlled
+data-preparation activity, not application implementation.
+
+Accepted references: docs/phase6-explainable-matching.md and
+docs/phase6-evaluation-protocol.md. The two later checkpoints before evaluation
+cover service/persistence/currentness and minimal forms/explanation UI; the
+fourth checkpoint covers separately controlled fact/policy freezes/evaluation.
 
 Phase 4 closure combines repository test/package evidence with user-reported
 deployed browser/runtime acceptance. The Phase 5 work below is limited to
@@ -712,12 +735,14 @@ Status: COMPLETE as a repository/methodology checkpoint. Implementation, pinned
 offline-model execution, PostgreSQL retrieval verification and human-labelled
 evaluation are accepted. The owner explicitly approved the run-specific
 scoped-isolation exception (D033). Do not treat normal Compose deployment as
-implied by this evidence. Phase 6 has not started.
+implied by this evidence. Phase 6 application implementation has not begun;
+its accepted methodology checkpoint is recorded in Current Phase above.
 
 The checkpoint histories below retain their original test counts and status
 context. Empty embedding tables, pending judgments and incomplete status refer
 to those earlier steps, not the accepted corpus evaluation at the end of this
-section. That closure section is the current source of truth.
+section. That closure section is the source of truth for Phase 5 completion;
+Current Phase above records the subsequent Phase 6 methodology checkpoint.
 
 Phase 5 implementation scope:
 
@@ -1000,7 +1025,8 @@ head are all `0008_dense_retrieval`; the developer head was not queried in this
 documentation step. Current-source one-off runners do not establish deployment
 of the latest image to normal Compose. No runtime deployment was performed.
 
-Phase 6 has not started. Its recommendations are explainable reviewed-skill
+At the Phase 5 closure checkpoint, Phase 6 had not started. Its planned
+recommendations were explainable reviewed-skill
 coverage, required/preferred distinctions, gaps, qualifications and seniority.
 It must not retroactively tune or replace the frozen Phase 5 baseline (D032).
 

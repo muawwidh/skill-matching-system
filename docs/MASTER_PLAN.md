@@ -130,6 +130,14 @@ Initial intended scoring configuration:
 
 Weights must remain configurable/versioned.
 
+Implementation-decision note: the historical formula above proposed a 35%
+semantic final-score component. D034 intentionally supersedes that proposal
+for matching-policy-v1: dense similarity is retrieval evidence only, with zero
+numeric final-score weight. The remaining planned proportions reduce to
+7:3:2:1 for required, preferred, occupation and qualification/experience
+components. See D034 in docs/DECISIONS.md and
+docs/phase6-explainable-matching.md. The original plan is retained as history.
+
 ## Phase 7 — Recommendation Experience
 
 - recommendation list

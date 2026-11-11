@@ -439,3 +439,45 @@ Phase 5 is complete as a repository/methodology checkpoint with the recorded
 limitations. Current-source one-off execution does not claim the latest normal
 Compose image is deployed. Phase 6 has not started, and must preserve the frozen
 Phase 5 baseline under D032.
+
+## D034 - Approved-Evidence Explainable Matching Policy v1
+
+Accepted on 2026-11-10 following independent document review. This freezes
+methodology before implementation and Phase 6 rankings; it does not claim an
+implemented engine, entered facts/inventories or migration 0009.
+
+Final alignment
+excludes numeric dense similarity, intentionally departing from the
+MASTER_PLAN draft's 35% semantic component. Similarity remains disclosed
+retrieval evidence and influences ties only through original retrieval order.
+Structured weights are 7:3:2:1 for required skills, preferred skills,
+occupation and qualification/experience. Explicit experience duration/scope
+belongs in Q; other seniority observations are caveats only. Only approved
+evidence contributes, described as candidate-confirmed rather than
+independently verified. Canonical classifications are required, preferred,
+non_requirement and unknown. Complete scoring requires resolved attributed
+applicability, explicit current reviewed inventory completeness, at least one
+approved required/preferred skill group and full applicable assessment.
+Pending bound rows or approved unknown classifications block sign-off;
+qualifications/experience require Q groups or explicit non_requirement review.
+Unavailable assessments produce provisional results, not invented zeros/full
+credit. Identity and conservative text-only rules cannot override conflicting
+concepts or bridge releases/systems. One-level groups use declared unknown
+propagation and deduplicated members. Relationship allowlist must equal [].
+Critical deduction uses maximum missing support among reviewed critical
+required groups, zero if none; unknown critical support prevents a complete
+score. Exact rational scores determine ordering. Separate relational runs
+preserve legacy matches; every read verifies fingerprints. The top-20 pool is
+declared by this policy, not the frozen Phase 5 pool. Primary evaluation
+requires the entire pool to be score-ready. Fact-entry protocol, reviewed
+facts and policy are frozen before rankings, with no post-ranking fact edits.
+Reused judgments are never tuning input or independent held-out validation.
+
+Decision clarifications: full identity support requires exact same-release
+concept identity or the declared conservative text-only rules. Exact-score
+ties use retrieval rank, then lowercase canonical job UUID. Explanations are
+advisory and evidence-bound. There is no eligibility or protected/personal-
+characteristic component or input. Policies and separate runs are immutable
+and versioned; substantive policy changes require a new immutable version.
+Legacy candidate_job_matches are preserved, not reinterpreted. The Phase 5
+retrieval baseline remains frozen under D032.
