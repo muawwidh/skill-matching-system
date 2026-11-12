@@ -24,6 +24,9 @@ from app.db.models.taxonomy import (
     TaxonomyVersion,
 )
 from app.db.models.retrieval import CandidateProfileEmbedding, JobEmbedding
+from app.db.models.explainable import (ScoringConfiguration, CandidateMatchingFact, JobMatchingFact,
+    JobRequirementGroup, JobRequirementGroupMember, JobInventoryReview, JobOccurrenceReview, MatchingRun,
+    JobMatchResult, MatchScoreComponent, SkillGapResult, SkillGapAtomicResult)
 
 __all__ = [
     "CandidateProfile",

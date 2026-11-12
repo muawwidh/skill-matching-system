@@ -4,10 +4,11 @@ Status: **ACCEPTED METHODOLOGY** on 2026-11-10 after independent review.
 
 Acceptance freezes `matching-policy-v1` methodology before implementation and
 before Phase 6 rankings. D034 records the accepted decision. This is a design
-checkpoint, not a completed Phase 6 implementation. No Phase 6 reviewed facts,
-inventory sign-offs, scores, rankings or evaluations have been created. Migration
-0009 remains proposed and does not exist. Fact entry and execution require
-separate authorization.
+checkpoint, not a completed Phase 6 implementation. Checkpoint 1 is implemented
+and uncommitted for independent review: pure rules, reviewed-input APIs/models
+and migration 0009. No real or frozen-corpus Phase 6 facts, inventory sign-offs,
+scores, rankings or evaluations have been created. Synthetic tests use isolated
+databases only. Fact entry and execution require separate authorization.
 
 ## Proposal Revision History
 
@@ -34,14 +35,26 @@ The accepted pre-promotion evaluation protocol SHA-256 was
 Promotion records acceptance on 2026-11-10 without changing the reviewed
 methodology or its implementation boundaries.
 
+Checkpoint 1 implementation additions (2026-11-11) introduced the pure engine,
+migration/table contracts and reviewed-input API documentation. The preceding
+accepted repository document SHA-256 was
+`f30b40dacb7579ef2fb97f44626bc4fe4196384b725e657944527e9be037d997`.
+The implementation document before this acceptance-correction pass had SHA-256
+`949a6b4502c17b1c25b7ac7000a806434cd6eef2581b412d8f4a880df51e876d`.
+The corrections repair implementation conformance and storage/lifecycle guards;
+they do not change matching-policy-v1 methodology, canonical configuration or
+weights. Detailed runtime/test evidence belongs in PROJECT_STATE.md.
+
 ## Baseline And Scope
 
 - Audit branch: `phase6-explainable-matching`.
 - Audit HEAD and frozen Phase 5 checkpoint:
   `349e668f670f71dadfa7d4680fdcb1ceef334321`.
 - Git was clean when the read-only policy audit was completed.
-- Repository migration head: `0008_dense_retrieval`. No database was accessed
-  to prepare or promote this document; a database revision is not newly verified here.
+- Original methodology baseline: `0008_dense_retrieval`. Checkpoint 1 repository
+  and isolated verified head: `0009_explainable_matching`. The developer database
+  remains 0008, observed during a read-only legacy-value audit; never migrated
+  by this checkpoint. See PROJECT_STATE.md for audit and test results.
 - Phase 5 is complete and frozen. Its model, Template-v2 representations,
   embeddings, rankings, judgments and results must not be retrospectively tuned.
 - The early `MatchingService` and `candidate_job_matches` implement a lexical
@@ -113,6 +126,8 @@ requirements and non-requirements never receive this penalty. Any critical
 group with unknown support makes the result provisional and prevents a
 complete score. A maximum, not a mean, ensures adding satisfied critical groups
 cannot reduce the penalty for an existing missing critical group.
+Critical inputs without an applicable, non-empty required-skill component R
+are invalid and rejected, not silently ignored.
 No requirement becomes critical from
 its taxonomy relation, occupation statistics, label or absence of evidence.
 
@@ -124,6 +139,12 @@ lowercase canonical job UUID string ascending. Display converts the exact
 fraction using Decimal `ROUND_HALF_UP` to two decimal places, without an
 intermediate rounded storage value. The result is an evidence-alignment index,
 not a suitability probability or prediction of hiring success.
+
+Exact strings use reduced signed-numerator/positive-denominator form, including
+`0/1` and `100/1`. Database checks reject malformed/noncanonical fractions,
+null/projection disagreement and disagreement with six-decimal rounding.
+Provisional is exactly equivalent to a null alignment value. Component/support
+values are null or in [0,1]; alignment is null or in [0,100].
 
 ## Evidence And Group Support
 
@@ -164,6 +185,11 @@ the candidate occurrence it concerns. It must never be explained as
 warning, not a block. For a requirement, support is the maximum over all
 approved candidate occurrences, each assessed independently under these rules.
 
+Pending/rejected links are not identity evidence and cannot block text-only
+fallback. Approved links outside selected comparable releases produce
+identity_incomparable rather than being erased by matching text; that warning
+does not block completeness.
+
 Identity reason codes are distinct:
 
 | Reason Code | Meaning |
@@ -203,6 +229,10 @@ Policy v1 supports one-level `SINGLE`, `OR` and `AND` groups over atomic members
 only; no nesting. Deduplicate members by evidence/concept identity before
 arithmetic, retaining all evidence references. Each job skill occurrence and
 each reviewed Q-fact can belong to at most one R, P or Q scoring group.
+Linked arithmetic members use the complete applicable approved concept-identity
+set. Unlinked text-only members use `(text, compatibility_family, normalized_text)`;
+distinct occurrence IDs do not create repeated credit. All occurrence references
+remain in explanations. Incompatible type families do not deduplicate together.
 
 - SINGLE: use the atomic member's support, including unknown.
 - OR: support is 1 if any member is 1; otherwise unknown if any member is
@@ -248,6 +278,12 @@ Qualification and experience occurrences must be represented in Q groups or
 explicitly reviewed as `non_requirement` before sign-off. Every bound approved
 scoring occurrence must be accounted for in its R/P/Q group or explicitly
 classified `non_requirement`; rejected occurrences remain retained but unscored.
+
+A group classification cannot silently override the referenced JobSkill legacy
+requirement_type. A differing classification needs an explicit approved
+occurrence review with reason, reviewer/time, immutable attribution snapshots
+and current source binding. Matching classifications need no override. Source
+changes make an earlier override stale until explicitly reviewed again.
 
 **Absence of pending extraction rows does not prove requirement-inventory
 completeness.** Extraction can miss requirements. Require an explicit reviewed
@@ -374,11 +410,12 @@ parameters and evidence. No LLM generates claims. Extraction confidence,
 taxonomy confidence and matching support are distinct, not calibrated
 probabilities.
 
-## Proposed Migration 0009
+## Migration 0009 (Checkpoint 1)
 
-Proposed migration: `0009_explainable_matching`, after `0008_dense_retrieval`.
+Implemented migration: `0009_explainable_matching`, after `0008_dense_retrieval`.
 Do not edit applied migrations or reinterpret legacy `candidate_job_matches`.
-The following is a proposed logical schema, not a created migration.
+The following logical schema is materialized in Checkpoint 1 and verified only
+in isolated PostgreSQL, not applied to the developer database.
 
 | Table | Purpose And Essential Constraints |
 | --- | --- |
@@ -388,10 +425,12 @@ The following is a proposed logical schema, not a created migration.
 | job_requirement_groups | Job FK; component R/P/Q; operator SINGLE/OR/AND; canonical classification; critical flag; reviewer FK SET NULL; immutable reviewer pseudonym/role snapshots; reviewed_at; source/inventory fingerprint. |
 | job_requirement_group_members | Group FK and exactly one job_skill or reviewed job Q-fact reference; unique group/member; separate global partial unique indexes on non-null job_skill_id and non-null job_matching_fact_id so neither occurrence nor Q-fact can enter multiple scoring groups. |
 | job_inventory_reviews | Job FK; canonical review status; explicit inventory_complete state; O and Q applicability/reason-code columns; reviewer FK SET NULL; immutable reviewer pseudonym/role snapshots; reviewed_at; bound job-source/inventory fingerprint. |
+| job_occurrence_reviews | Phase 6-only per-occurrence classification/review and current source fingerprint with immutable reviewer attribution. Explicit non_requirement decisions do not rewrite Phase 5 JobSkill fields or embeddings. |
 | matching_runs | Candidate/profile FK and policy FK; candidate, policy and universe/input fingerprints; relational status/current flag; pool limit, stale/missing eligible-job count and timestamps. |
 | job_match_results | Run/job references and job/input fingerprints; nullable alignment fraction and NUMERIC value; provisional flag; status; original retrieval rank and similarity. Unique job per run. |
 | match_score_components | Result FK; component/applicability/status; numerator, denominator, base/effective weight, value and contribution, including exact fractional forms; unique component per result. |
 | skill_gap_results | Result/group/member references; nullable atomic/group support and exact fractional forms; critical flag, classification and assessment status; unique assessment per result and group/member scope. |
+| skill_gap_atomic_results | Relational member/occurrence comparisons with nullable exact/numeric support and reason parameters, separate from the group support row. No production writer is exposed yet. |
 
 Use UUID keys, timestamps, relational status/applicability enums and FK
 constraints. Fields used in constraints or queries stay relational, including
@@ -421,13 +460,30 @@ by the audit methodology, not credentials, email addresses or full identity
 details. Reviewer deletion clears the FK, not the snapshots; attribution must
 not disappear or be rewritten to the reviewer's later role.
 
-Migration 0009 may add CHECK constraints to existing review/classification
-columns only after a read-only distinct-value audit and an explicit safe
-data-handling plan. Do not silently coerce existing values. The audit is a
-future authorized prerequisite, not performed by this documentation revision.
+The read-only legacy distinct-value/nullability audit found only canonical
+values. Checkpoint 1 leaves legacy review/classification columns, CHECKs and
+row values unchanged. A redundant unique `(id, job_id)` key on JobSkill supports
+composite ownership FKs without changing data. Strict checks are on new tables
+and input contracts. Any future CHECK addition
+to legacy columns still requires its own current audit and explicit safe plan.
+Never silently coerce existing values. New policy seed canonical JSON/hash is
+identical to the pure application constant and immutable in PostgreSQL.
 
-Use runs/results cascade deletion where appropriate for account/profile
-deletion. Job deletion/redaction must mark affected history unreplayable and
+The policy table blocks UPDATE, DELETE and TRUNCATE. Every INSERT checks SHA-256
+of exact canonical JSON UTF-8 bytes using PostgreSQL's built-in sha256; no new
+hashing extension is installed. V1 must match its fixed canonical bytes/hash,
+identity and empty allowlist. Future immutable versions can be inserted with
+their own valid identity/hash, not by mutating v1. Checkpoint 2's policy loader
+must still call `validate_configuration` after loading a row.
+
+Candidate-owned facts retain ownership cascades. Candidate profile deletion
+redacts sensitive snapshots and detaches retained runs using SET NULL,
+preserving non-sensitive arithmetic and policy provenance. Source CV or
+candidate-fact deletion conservatively redacts that candidate's result,
+component, gap and atomic snapshots and marks history unreplayable, including
+historical runs. Other candidates/jobs remain unchanged. This privacy erasure
+is distinct from ordinary staleness invalidation.
+Job deletion/redaction must mark affected history unreplayable and
 purge/redact restricted evidence; do not silently leave a replayable snapshot
 of deleted content. Preserve non-sensitive historical fingerprints where
 permitted, with a nullable job reference if history is retained. Preserve
@@ -459,6 +515,16 @@ model/revision/template/source/vector provenance. Embedding rows are upserted,
 so row IDs alone are insufficient. Record the retrieved universe and order;
 individual-result validity and shortlist validity are different concerns.
 Historical results remain explicitly historical, never silently current.
+Ordinary job invalidation stales only current runs and their results, leaving
+historical rows byte-identical. Policy activation must change current views,
+not historical results; Checkpoint 1 has no activation/orchestration API.
+
+When a JobSkill or Q-fact source is deleted, a source-aware database trigger
+removes its now-empty parent group and invalidates job inventory/current state.
+Surviving multi-member and unrelated groups remain. Direct final-member removal
+while its source exists still fails cardinality checks; empty group creation
+remains invalid. This covers existing term-replacement/cascade deletion paths
+without unconditional empty-group deletion.
 
 ## Retrieval-To-Reranking Flow And Permissions
 
@@ -530,6 +596,10 @@ demonstration data. An engine returning null for every pair fails acceptance.
 This methodology checkpoint creates no ranking, score or metric.
 
 ## Four Bounded Implementation Checkpoints
+
+Checkpoint 1 is implemented and verified as recorded in PROJECT_STATE.md;
+Checkpoints 2-4 remain pending. No production run-creation or scoring endpoint
+exists in Checkpoint 1.
 
 ### 1. Policy, Reviewed Facts And Schema
 
@@ -633,6 +703,36 @@ claim implementation of its requirements:
 Corpus-specific coverage counts and denominator policy are documented in the
 separate evaluation protocol, not embedded in this general matching decision.
 
+## Reviewed-Input API Surface (Checkpoint 1)
+
+All routes are under `/matching-inputs` and require authentication:
+
+- GET/POST `/candidates/{profile_id}/facts`; DELETE the owned fact by ID.
+  Candidate role and owner match are required; foreign profiles return 404.
+  No new administrator/researcher access to arbitrary candidate facts exists.
+- GET `/jobs/{job_id}/inventory` returns current inputs and their recomputed
+  fingerprint, plus whether an existing sign-off remains current.
+- POST/DELETE job facts and requirement groups; PUT occurrence classifications
+  and inventory sign-off. Job management requires admin or researcher, including
+  accounts also carrying candidate. Ordinary candidates receive 403.
+
+Every mutation requires `expected_fingerprint`. Writes lock the owning job or
+candidate profile, reject stale fingerprints, and commit reviewed-input and
+current-run invalidation together. GETs only read; no get-or-create behavior.
+Repeated unchanged classification/sign-off is a no-op. Reviewed facts/groups
+are created and explicitly deleted/recreated for corrections; no unrestricted
+update of immutable per-review attribution is offered. Schemas forbid extra
+fields, including protected-characteristic inputs. The APIs do not index,
+score, retrieve, change Phase 4 decisions or alter legacy matches/embeddings.
+
+Candidate fact creation/replacement requires an active owned profile. Missing
+profiles return 404; inactive/deleted retained profiles cannot create facts.
+Deletion remains available for privacy. Existing manual candidate-skill review
+has no profile-level CV-processing-consent prerequisite; the existing consent
+flag gates CV processing and dense retrieval/indexing. This checkpoint adds no
+new consent model for explicit candidate-confirmed manual facts and does not
+infer permission from unrelated fields. Referenced CV ownership is still checked.
+
 ## Remaining Prerequisites
 
 Independent review has accepted the methodology. Complete scores require
@@ -642,7 +742,8 @@ extraction cannot safely establish. Until those inputs exist, return transparent
 provisional assessments. Existing values must not be silently reclassified or
 historical developer data repaired as part of implementation.
 
-This is an accepted methodology/design checkpoint only. No Phase 6 application
-implementation has begun; migration 0009 and reviewed fact/inventory entry
-remain future work. Promotion changes documentation only, not code, data,
-runtime or the frozen Phase 5 baseline.
+Checkpoint 1 implements pure arithmetic/identity/group/readiness rules and the
+reviewed-input foundation only. Component assessments remain explicit inputs
+to the pure engine; retrieval-to-result adaptation and persisted production
+runs are Checkpoint 2. No facts have been entered for the frozen corpus and no
+real-data scores or evaluation have been produced. Phase 6 remains incomplete.

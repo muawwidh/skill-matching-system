@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-11
+Last updated: 2026-11-12
 
 ## Repository
 
@@ -26,40 +26,169 @@ Phase 6 — Matching and Skill-Gap Analysis
 
 Implementation status:
 
-ACCEPTED METHODOLOGY/DESIGN CHECKPOINT ONLY. matching-policy-v1 and its
-evaluation protocol were accepted on 2026-11-10 following independent review
-and are frozen before implementation and Phase 6 rankings (D034). No Phase 6
-application implementation has begun. Phase 6 is not complete.
+CHECKPOINT 1 IMPLEMENTED, UNCOMMITTED FOR INDEPENDENT REVIEW. matching-policy-v1
+and its evaluation protocol remain frozen under D034. The pure policy engine,
+reviewed-input contracts/APIs and migration 0009 are implemented and tested
+with synthetic data. Phase 6 is incomplete; retrieval-to-result orchestration,
+production matching runs, real scores, fact freeze and evaluation are not
+implemented or performed.
 
 Current status:
 
-PHASE 6 METHODOLOGY ACCEPTED; DOCUMENTATION PROMOTION UNCOMMITTED FOR INSPECTION
+PHASE 6 CHECKPOINT 1 IMPLEMENTED; UNCOMMITTED FOR INDEPENDENT REVIEW
 
 Phase 5 remains COMPLETE as a repository/methodology checkpoint, including
 the accepted D033 run-specific scoped-isolation exception. Its frozen
 artifacts, labels, rankings, metrics and results remain unchanged. Deployment
 is a separate operational checkpoint, not implied by methodology acceptance.
 
-Repository head: `0008_dense_retrieval`.
-Isolated successfully verified head: `0008_dense_retrieval`.
-Developer database head: last independently observed `0008_dense_retrieval`;
-not queried or modified for this documentation promotion.
-`0009_explainable_matching` is proposed and does not exist yet.
+Repository head: `0009_explainable_matching`.
+Isolated successfully verified head: `0009_explainable_matching`.
+Developer database head: `0008_dense_retrieval`, independently reverified on
+2026-11-12 through an explicitly authorized `BEGIN READ ONLY` / `ROLLBACK`
+transaction. All 12 migration-0009 tables were absent; no migration or data
+write was performed. The legacy-value audit below remains dated 2026-11-11.
+Migration 0009 exists in the repository and was applied only in disposable
+verification databases/schemas, never to the developer database. The controlled
+startup checker will refuse the updated backend against developer revision
+0008 until a separately authorized explicit migration is performed.
 
-No Phase 6 reviewed facts, inventory sign-offs, scores, rankings or evaluations
-exist yet. The legacy matcher remains prototype behavior, not the final Phase 6
-engine; existing candidate_job_matches are not reinterpreted.
+No real/frozen-corpus Phase 6 reviewed facts, inventory sign-offs, scores,
+rankings or evaluations have been created. Automated tests create synthetic
+input/result rows only in isolated databases. The legacy matcher remains
+prototype behavior; existing candidate_job_matches are not reinterpreted.
 
-Next authorized work is Phase 6 Checkpoint 1: policy engine, reviewed-fact and
-inventory contracts/APIs, and migration 0009, subject to its required distinct-
-value audit and safe handling plan. Implementation is not performed in this
-documentation task. Frozen-corpus fact entry remains a separate controlled
-data-preparation activity, not application implementation.
+Next checkpoint is Phase 6 Checkpoint 2: retrieval-to-result orchestration,
+persistence/currentness, ownership and concurrency. It is not implemented in
+Checkpoint 1. Frozen-corpus fact entry remains separately authorized controlled
+data preparation, not application implementation.
 
 Accepted references: docs/phase6-explainable-matching.md and
 docs/phase6-evaluation-protocol.md. The two later checkpoints before evaluation
 cover service/persistence/currentness and minimal forms/explanation UI; the
 fourth checkpoint covers separately controlled fact/policy freezes/evaluation.
+
+### Checkpoint 1 Verification (2026-11-11)
+
+The audit found all six legacy columns non-nullable VARCHARs with only the
+following distinct values. No legacy column, value or CHECK constraint was
+changed; new contracts reject noncanonical values and new tables enforce them.
+
+| Legacy Field | Values And Counts |
+| --- | --- |
+| candidate_skills.review_status | approved 146; pending 26; rejected 4 |
+| extracted_candidate_terms.review_status | pending 95 |
+| job_skills.review_status | approved 75; pending 26; rejected 17 |
+| extracted_job_terms.review_status | pending 118 |
+| job_skills.requirement_type | preferred 25; required 41; unknown 52 |
+| extracted_job_terms.requirement_type | preferred 13; required 16; unknown 89 |
+
+Focused policy/API suite: **56 passed**. Focused PostgreSQL suite: **11 passed**.
+Complete default backend: **372 passed, 62 skipped**. Complete isolated
+PostgreSQL-enabled backend: **428 passed, 6 skipped**. The remaining gates are
+pinned tokenizer (three parameterized cases), pinned real model (two) and
+private corpus (one); their paths were not configured for this checkpoint. The
+default run additionally skipped 56 PostgreSQL-dependent tests. No new model
+inference or real-corpus evaluation was needed or performed.
+
+PostgreSQL evidence covers fresh migration, populated-0008 upgrade/downgrade/
+re-upgrade, immutable policy seed, reviewer SET NULL/snapshot preservation,
+job-skill/Q-fact exclusivity, group/enum/reason constraints, profile locking,
+rollback and job-deletion history redaction. Successful input writes preserve
+all legacy/Phase 4/Phase 5 table snapshots, including ready synthetic vectors
+and prototype matches. Negative tests detect dilution of critical penalties,
+conflicting linked identities, unsupported text matches and incomplete sign-off.
+
+The new migration head is verified by Alembic and migration-check tests.
+Existing migration tests now expect 0009 where they test repository head;
+their historical data-preservation assertions remain. No frontend files
+changed, so no frontend build was required. No normal Compose service was
+rebuilt/restarted and no developer data or frozen artifacts were modified.
+The tmpfs PostgreSQL verification container was removed after verification.
+
+### Checkpoint 1 Acceptance Corrections (2026-11-12)
+
+Checkpoint 1 remains uncommitted for independent review; Phase 6 remains
+incomplete. No Checkpoint 2 orchestration, real facts, production matching
+runs, rankings, scores or evaluation was added. Migration 0009 was corrected
+while still uncommitted and unapplied to the developer database.
+
+Source-aware cascade cleanup now removes only groups emptied by deletion of
+their referenced JobSkill/Q-fact. Direct final-member removal and empty group
+creation still fail; replacement/reprocessing, surviving groups and rollback
+are covered. Inventory currentness is invalidated without fabricating a new
+human review. Composite ownership FKs reject cross-job occurrence/member
+references. Classification overrides require explicit approved source-bound
+reviews with reason, reviewer/time and immutable reviewer snapshots.
+
+Unlinked arithmetic deduplicates by compatibility family and normalized text,
+retaining every occurrence reference. Pending/rejected taxonomy links no longer
+block text fallback. Approved conflicting/incomparable identities still block
+text equivalence. Exact thirds, intermediate Fraction types, canonical reduced
+fraction strings and six-decimal projections are tested. Invalid critical
+inputs without non-empty applicable R are rejected by engine/schema contracts.
+
+Policy rows reject invalid INSERT/hash/configuration and UPDATE/DELETE/TRUNCATE.
+PostgreSQL built-in sha256 checks exact UTF-8 text; no hashing extension was
+added. Seed/configuration bytes remain identical to the application constant.
+Future immutable versions remain possible; the future Checkpoint 2 loader must
+still validate loaded configuration. Result constraints enforce provisional iff
+null score, value ranges, canonical fractions and NUMERIC agreement.
+
+Ordinary invalidation only stales current runs/results; historical rows remain
+byte-identical. Privacy erasure is an explicit exception: deleting a source CV,
+candidate fact or profile redacts candidate-linked sensitive snapshots and
+marks history unreplayable, leaving unrelated candidates/jobs unchanged.
+Profile deletion detaches retained arithmetic-only runs (SET NULL); policy and
+non-sensitive arithmetic provenance survive. No raw CV is stored in snapshots.
+Candidate fact creation requires an active owned profile. Existing manual-skill
+review does not impose CV-processing consent on manual facts; that flag still
+gates existing CV processing/retrieval, with no invented consent model.
+
+Independent runs: focused policy/API **82 passed**; focused PostgreSQL **75
+passed**; complete default **398 passed, 126 skipped**; complete isolated
+PostgreSQL **518 passed, 6 skipped**. Default gates include 120 PostgreSQL checks;
+the remaining six gates are three pinned-tokenizer cases, two real-model checks
+and one private-corpus check. These paths were not configured and remain
+UNVERIFIED for this correction pass, not counted as passed.
+
+All seven required mutations were killed in temporary source copies: mean
+critical penalty; duplicate unlinked credit; pending/rejected link blocking;
+float arithmetic; unconditional empty-group cleanup; invalid policy INSERT;
+historical-result invalidation. No workspace mutation was used. The populated
+0008 -> 0009 -> 0008 -> 0009 migration regression is independently rerun;
+legacy rows remain identical. No frontend files changed or build was needed.
+
+An initial fresh developer-state query was blocked by the approval gate and
+was not bypassed. Subsequent explicit authorization permitted a strictly
+read-only baseline check and a separate one-transaction attribution check,
+each ending with explicit ROLLBACK. Revision 0008 and absence of all 12 Phase 6
+tables were verified; embeddings remained 8 candidate / 30 job rows. Normal
+Compose container IDs/start times were unchanged around the baseline check.
+No verification API calls, authentication, writes, migrations or rebuilds/
+restarts occurred. Frozen Phase 5 files remained hash-identical; historical
+verification records were not rewritten. Disposable resources were removed.
+
+The live prototype-match count was 43, not the historical 13. The owner
+accepted this as an explained Jobs-page runtime change, not a Checkpoint 1
+effect. At 2026-11-12 11:03:23.994153 UTC (13:03:23.994153 Europe/Vilnius), the
+legacy recommendations GET inserted 30 rows for evaluation jobs J01-J30 and
+updated one pre-existing row for safe profile alias P02. P02 is a non-evaluation
+candidate/researcher profile, not one of the eight frozen evaluation candidates.
+The processing log records a successful 31-job refresh; backend access logs
+show GET /jobs and GET /matches/recommendations returning 200 at that time.
+The Jobs page automatically invokes the latter; its legacy cache-miss path
+persists refreshed prototype matches. No Phase 6 scoring was involved.
+
+All 43 rows are to be preserved: P02 has 42 and safe profile alias P01 has one.
+The original 13-row subset is present, but its aggregate fingerprint no longer
+matches the recorded baseline and must not be described as unchanged. The
+earlier frozen Phase 5 verification remains a historical statement about its
+own execution, not a claim about today's mutable runtime. No cleanup,
+recalculation, interface disabling or legacy redesign is authorized here.
+Checkpoint 1 is ready for final independent review; work remains uncommitted.
+Developer migration remains 0008: do not migrate, deploy or begin Checkpoint 2
+without separate authorization.
 
 Phase 4 closure combines repository test/package evidence with user-reported
 deployed browser/runtime acceptance. The Phase 5 work below is limited to

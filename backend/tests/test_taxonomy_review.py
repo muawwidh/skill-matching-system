@@ -229,7 +229,8 @@ def test_upgrade_0006_does_not_repair_existing_review_rows(pg_database):
     assert after.pop("taxonomy_review_events") == []
     assert after.pop("candidate_profile_embeddings") == []
     assert after.pop("job_embeddings") == []
-    assert before == after
+    # Newer heads may add tables/immutable policy seeds; every pre-existing row must remain identical.
+    assert before == {name: after[name] for name in before}
 
 
 def seed_linkable_cv(db: Session, text: str) -> tuple[User, CvDocument, ExtractedCandidateTerm]:

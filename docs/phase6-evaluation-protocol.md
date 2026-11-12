@@ -2,14 +2,17 @@
 
 Status: **ACCEPTED METHODOLOGY** on 2026-11-10 after independent review.
 
-This is a pre-implementation protocol for `matching-policy-v1`, accompanying
+This is the accepted evaluation protocol for `matching-policy-v1`, accompanying
 `phase6-explainable-matching.md`. It does not authorize data entry, ranking,
 metrics, database access or changes to frozen Phase 5 evidence. No Phase 6
 evaluation has been performed by writing this document.
 
 Acceptance freezes this protocol and `matching-policy-v1` methodology before
-implementation and before Phase 6 rankings. It does not claim implementation,
-reviewed fact/inventory entry or the existence of migration 0009.
+implementation and before Phase 6 rankings. Checkpoint 1 now implements the
+pure policy engine and reviewed-input APIs/models with migration 0009, verified
+in isolated PostgreSQL only. This does not create benchmark facts, a fact freeze,
+rankings, production scores or evaluation results. The developer database was
+not migrated; the next checkpoint is retrieval-to-result orchestration.
 
 ## Acceptance History
 
@@ -222,6 +225,8 @@ The four implementation checkpoints are defined in the accepted matching policy:
 policy/schema/review APIs; retrieval/persistence/currentness; minimal forms and
 explanation UI; then separately controlled fact/policy freezes and evaluation.
 This is an accepted methodology/design checkpoint under D034, not an
-implementation or completed Phase 6 evaluation. It changes no code, tests,
-database, runtime, judgments or frozen evidence. Migration 0009 and reviewed
-fact/inventory entry remain future work.
+completed Phase 6 evaluation. Checkpoint 1's application foundation does not
+authorize or perform benchmark fact entry, rankings or evaluation. Migration
+0009 exists but was not applied to the developer database. Reviewed corpus
+fact/inventory entry and all evaluation execution remain separately controlled
+future work; judgments and frozen evidence remain unchanged.
