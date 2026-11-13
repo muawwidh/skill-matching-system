@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Archive, BriefcaseBusiness, Plus } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { archiveJob, createJob, listJobs, listRecommendations, refreshRecommendations } from "../api/documents";
 import { JobMatchPanel } from "../components/JobMatchPanel";
@@ -20,6 +21,7 @@ const emptyJob: JobPayload = {
 export function JobsPage() {
   const { accessToken, user } = useAuth();
   const canManageJobs = user?.roles.some((role) => role.name === "admin" || role.name === "researcher") ?? false;
+  const isCandidate = user?.roles.some(role => role.name === "candidate") ?? false;
   const queryClient = useQueryClient();
   const [job, setJob] = useState<JobPayload>(emptyJob);
 
@@ -30,9 +32,10 @@ export function JobsPage() {
   });
 
   const recommendationsQuery = useQuery({
-    queryKey: ["recommendations"],
+    queryKey: ["recommendations", user?.id],
     queryFn: () => listRecommendations(accessToken as string),
-    enabled: Boolean(accessToken),
+    enabled: false,
+    retry: false,
   });
 
   const createMutation = useMutation({
@@ -54,8 +57,8 @@ export function JobsPage() {
 
   const refreshMatchesMutation = useMutation({
     mutationFn: () => refreshRecommendations(accessToken as string),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+    onSuccess: (matches) => {
+      queryClient.setQueryData(["recommendations", user?.id], matches);
     },
   });
 
@@ -70,6 +73,9 @@ export function JobsPage() {
 
   return (
     <div className="space-y-6">
+      <header><h1 className="text-xl font-semibold">Jobs and legacy prototype</h1><p>The lexical prototype is not Phase 6 alignment or a hiring probability. Its recommendations may refresh legacy cached matches.</p><Link className="underline" to="/matching">Phase 6 explainable matching</Link>{canManageJobs && <p><Link className="underline" to="/job-inventories">Review matching inventories</Link></p>}</header>
+      {isCandidate && <button type="button" disabled={recommendationsQuery.isFetching} className="rounded-md border border-slate-300 px-3 py-2" onClick={() => { void recommendationsQuery.refetch(); }}>Load legacy prototype recommendations (updates cache)</button>}
+      {recommendationsQuery.error && <p role="alert">{recommendationsQuery.error.message}</p>}
       {canManageJobs ? <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitJob}>
         <div className="flex items-center gap-2">
           <BriefcaseBusiness size={22} className="text-ocean" aria-hidden="true" />
@@ -114,11 +120,11 @@ export function JobsPage() {
               <div className="mt-4">
                 <SectionList sections={item.sections} />
               </div>
-              <JobMatchPanel
+              {isCandidate && recommendationsQuery.data ? <JobMatchPanel
                 isRefreshing={refreshMatchesMutation.isPending}
                 match={recommendationsQuery.data?.find((match) => match.job_id === item.id)}
                 onRefresh={() => refreshMatchesMutation.mutate()}
-              />
+              /> : null}
               {accessToken ? (
                 <SkillReviewPanel accessToken={accessToken} ownerId={item.id} ownerType="job" />
               ) : null}

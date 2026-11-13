@@ -38,7 +38,7 @@ export function JobMatchPanel({ match, isRefreshing, onRefresh }: JobMatchPanelP
             {score}%
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-ink">Candidate Match</h3>
+            <h3 className="text-sm font-semibold text-ink">Legacy prototype match</h3>
             <p className="text-xs text-slate-500">
               {match ? match.explanation : "Refresh after adding CV and job skills."}
             </p>

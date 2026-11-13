@@ -29,13 +29,16 @@ class DocumentRepository:
         self.db = db
 
     def get_or_create_candidate_profile(self, user_id: UUID) -> CandidateProfile:
-        profile = self.db.scalar(select(CandidateProfile).where(CandidateProfile.user_id == user_id))
+        profile = self.get_candidate_profile(user_id)
         if profile:
             return profile
         profile = CandidateProfile(user_id=user_id)
         self.db.add(profile)
         self.db.flush()
         return profile
+
+    def get_candidate_profile(self, user_id: UUID) -> CandidateProfile | None:
+        return self.db.scalar(select(CandidateProfile).where(CandidateProfile.user_id == user_id))
 
     def update_candidate_profile(
         self,

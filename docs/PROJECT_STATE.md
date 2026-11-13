@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-12
+Last updated: 2026-11-13
 
 ## Repository
 
@@ -26,50 +26,134 @@ Phase 6 — Matching and Skill-Gap Analysis
 
 Implementation status:
 
-CHECKPOINT 2 IMPLEMENTED, UNCOMMITTED FOR INDEPENDENT REVIEW. Checkpoint 1 is
-committed at 2c77df0. matching-policy-v1 and its evaluation protocol remain
-frozen under D034. Explicit owner-only retrieval-to-result orchestration now
-persists runs, exact components, gaps, atomic evidence and provenance using
-the unchanged Template-v2 top-20 retrieval path. Verification uses synthetic
-fixtures only. Phase 6 remains incomplete: no real/corpus facts, scores,
-rankings, fact freeze or evaluation have been produced.
+CHECKPOINT 3 PRESENTATION IMPLEMENTED, UNCOMMITTED FOR INDEPENDENT REVIEW.
+Checkpoint 1 is committed at 2c77df0; Checkpoint 2 at 982ae4c. The latter was
+the clean starting commit for this presentation work. matching-policy-v1 and
+its evaluation protocol remain frozen under D034. Owner-only explicit runs,
+components, gaps, evidence and readiness now have frontend presentation and
+minimal reviewed-input forms. Verification uses synthetic fixtures/mocked APIs
+only. Phase 6 remains incomplete: no real/corpus facts, scores, rankings, fact
+freeze or evaluation have been produced.
 
 Current status:
 
-PHASE 6 CHECKPOINT 2 IMPLEMENTED; UNCOMMITTED FOR INDEPENDENT REVIEW
+PHASE 6 CHECKPOINT 3 PRESENTATION IMPLEMENTED; INDEPENDENT REVIEW PENDING
 
 Phase 5 remains COMPLETE as a repository/methodology checkpoint, including
 the accepted D033 run-specific scoped-isolation exception. Its frozen
 artifacts, labels, rankings, metrics and results remain unchanged. Deployment
 is a separate operational checkpoint, not implied by methodology acceptance.
 
-Repository head: `0010_matching_input_integrity` (uncommitted).
+Repository migration head: `0010_matching_input_integrity` (committed).
 Isolated successfully verified head: `0010_matching_input_integrity`.
-Developer database head was last verified as `0009_explainable_matching`
-during the separately authorized migration/deployment verification. It was
-not queried or modified during Checkpoint 2. The migration-0008 observations
-below are historical, preceding that authorized migration. Migration 0009 is
-unchanged; new migration 0010 adds exact component-ratio constraints, bounded
-hash-only run provenance and transactional current-run invalidation guards.
-Only disposable databases receive 0010 in this checkpoint. A deployment of
-this source would require a separate backed-up explicit migration first;
-the controlled startup checker must not be bypassed.
+Developer database head was last verified as `0010_matching_input_integrity`
+during separately authorized migration/deployment verification before this
+turn. Checkpoint 3 does not query the database or authenticate against the
+running application. Earlier migration observations below are historical.
+No migration, policy, representation or frozen artifact is changed here.
+The normal Compose services are not rebuilt/restarted or deployed by this work.
 
 No real/frozen-corpus Phase 6 reviewed facts, inventory sign-offs, scores,
 rankings or evaluations have been created. Automated tests create synthetic
 input/result rows only in isolated databases. The legacy matcher remains
 prototype behavior; existing candidate_job_matches are not reinterpreted.
 
-Next checkpoint is Phase 6 Checkpoint 3: minimal reviewed-input forms and
-match-explanation UI. No frontend was changed in Checkpoint 2. Frozen-corpus
-fact entry remains separately authorized controlled data preparation, not
-application implementation. Checkpoint 4 fact/policy freezes and evaluation
+Next is independent acceptance of Checkpoint 3, then separately authorized
+Checkpoint 4 preparation. Frozen-corpus fact entry remains controlled data
+preparation, not application implementation. Fact/policy freezes and evaluation
 remain deferred; this work does not run matching against developer data.
 
 Accepted references: docs/phase6-explainable-matching.md and
-docs/phase6-evaluation-protocol.md. The remaining third checkpoint covers
-minimal forms/explanation UI; the fourth checkpoint covers separately
+docs/phase6-evaluation-protocol.md. The fourth checkpoint covers separately
 controlled fact/policy freezes/evaluation.
+
+### Checkpoint 3 Presentation (2026-11-13)
+
+- `/matching` reads only the owning candidate's current/latest run. An explicit
+  button is the sole run-creation action; replacements require confirmation.
+  Loads, navigation and reloads never POST a run or invoke legacy matching.
+  Mutations are not automatically retried. Empty/error/401/404/409 states are
+  visible, including missing/stale candidate-index errors.
+- Currentness, nullable/provisional scores, exact component fractions, base and
+  effective weights, assessment coverage, critical deduction, gaps, fixed reasons
+  and model/template provenance are presented separately from dense similarity
+  (numeric weight zero). Neither value is a hiring probability. Incomplete
+  pools are explicitly UI-only, not evaluated rankings. Missing/stale eligible
+  job counts and post-exclusion retrieval ranks remain visible.
+- Bounded evidence anchors resolve across the full run, including candidate
+  anchors in another result. Excerpts retain completion/duration/scope caveats,
+  source references and omission markers. Stale scores are not shown as current;
+  unreplayable/deleted evidence is suppressed. Failed ownership/resource reads
+  do not fall back to cached sensitive content. Private evidence remains subject
+  to authorized access/corpus restrictions; candidate-confirmed is not verified.
+- `/matching-facts` discovers only the authenticated user's profile and offers
+  candidate-confirmed fact creation and confirmed deletion. Candidate role and
+  ownership remain required. Inactive profiles cannot create facts; privacy
+  deletion remains available. `/job-inventories/:jobId` is manager-only, including
+  additive admin/researcher roles. It provides job facts, one-level R/P/Q groups,
+  explicit occurrence-classification review, applicability/fixed reasons and
+  inventory sign-off against current fingerprints. Pending, unknown and explicit
+  non_requirement remain distinct. No manual job-skill creation is introduced.
+- Fact/group corrections use the existing delete/create contract rather than
+  inventing an update API. Critical controls are R-only; members are approved
+  and ungrouped. Server-side readiness/ownership checks remain authoritative.
+  Conflict errors require reload; no blind replay or automatic reclassification.
+  A stale inventory is not pre-checked as a new completeness confirmation.
+- Legacy Jobs/prototype presentation is labelled separately. Its existing
+  write-on-GET recommendations now require an explicit load button; navigation
+  alone no longer refreshes that cache. Explicit legacy refresh still works.
+  Phase 6 pages never request `/matches/...`. Auth transitions clear query caches
+  and Phase 6 query keys include the user to prevent cross-account reuse.
+- One necessary backend correction: `GET /candidates/me` previously used
+  get-or-create and committed. The form's ownership lookup now reads only and
+  returns 404 when absent. Existing explicit profile-update/CV write workflows
+  still create profiles. Repository/service and authenticated-GET regressions
+  assert SELECT-only behavior, no COMMIT and no profile insertion. No scoring,
+  schema, migration, permission or policy change was needed.
+
+Verification:
+
+- Frontend component/API suite: 13 passed, 0 skipped (`npm test`). Uses existing
+  esbuild and Node's test runner; no new package dependency.
+- Mock-only Playwright suite: 19 passed, 0 skipped. Covers explicit single run
+  requests, navigation/reload without writes/legacy calls, empty/error states,
+  role boundaries, fact/group/classification/applicability requests, confirmed
+  deletion, fingerprint conflict without retry, redaction after reload and
+  native control labels/keyboard access. Synthetic desktop (1280) and mobile
+  (390) screenshots were inspected; no page overflow. Forms also pass mobile
+  label/overflow checks. This is targeted accessibility verification, not a full
+  assistive-technology audit. The external local browser toolchain is described
+  in `frontend/tests/README.md`; its test server is stopped after the suite.
+- Relevant backend regressions: 84 passed, 0 skipped (profile reads, auth,
+  matching inputs/runs/corrections and job permissions). Full default backend
+  suite: 499 passed, 186 environment-gated skips. PostgreSQL/real-model gates
+  were not rerun: this narrow SELECT-only correction adds no database constraint
+  or persistence rule; prior Checkpoint 2 isolated evidence remains historical.
+- Frontend production build and `git diff --check`, including untracked source,
+  pass. No developer database/API access, Docker commands, deployment, embeddings,
+  real runs, rankings, evaluation, frozen artifact edits or Phase 7 features.
+
+Outstanding acceptance: independent review and separately authorized manual
+acceptance with a non-null declared demonstration result, ownership/privacy and
+assistive-technology checks. Synthetic complete results do not replace that
+demonstration requirement. No corpus facts may be entered through these forms
+without the separate controlled preparation authorization. Phase 6 is incomplete.
+
+Checkpoint 3 merge-blocker corrections: shared API errors no longer append
+matching advice to unrelated 409s. The Phase 6 API adapter alone appends reload
+guidance with punctuation-aware separation. Registration, taxonomy review and
+dense-retrieval conflicts retain their original messages. Run creation now has
+a synchronous per-mounted-page in-flight guard, released in finally on either
+success or failure. This prevents overlapping activations in that page; it is
+not server idempotency or protection across tabs, remounts or reloads. A later
+deliberate run remains possible. Mock-browser regressions cover an empty-state
+double-click, a synchronous burst that bypasses disabled rendering, failure
+recovery and subsequent intentional creation. No automatic retry was added.
+Removing only the guard in a disposable copy makes the burst regression fail.
+Component/API tests, all mock-browser checks and production build were rerun;
+backend counts above are retained from the preceding implementation verification,
+not rerun for these frontend-only corrections. No scoring, orchestration,
+migration, policy, database, runtime or frozen-corpus change occurred.
 
 ### Checkpoint 2 Implementation (2026-11-12)
 

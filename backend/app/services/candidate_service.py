@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
 from app.db.models import CandidateProfile, User
 from app.repositories.document_repository import DocumentRepository
@@ -11,9 +12,9 @@ class CandidateService:
         self.repository = DocumentRepository(db)
 
     def get_my_profile(self, user: User) -> CandidateProfile:
-        profile = self.repository.get_or_create_candidate_profile(user.id)
-        self.db.commit()
-        self.db.refresh(profile)
+        profile = self.repository.get_candidate_profile(user.id)
+        if profile is None:
+            raise HTTPException(404, "Candidate profile not found")
         return profile
 
     def update_my_profile(self, user: User, payload: CandidateProfileUpdate) -> CandidateProfile:

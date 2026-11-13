@@ -10,9 +10,13 @@ import { LoginPage } from "./pages/LoginPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { TaxonomyPage } from "./pages/TaxonomyPage";
+import { MatchingPage } from "./pages/MatchingPage";
+import { MatchingFactsPage } from "./pages/MatchingFactsPage";
+import { JobInventoryPage } from "./pages/JobInventoryPage";
 
 function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, error, signOut } = useAuth();
+  if (isAuthenticated && error) return <main className="mx-auto max-w-2xl p-6"><p role="alert">Unable to load your session: {error.message}</p><button type="button" className="mt-4 rounded border border-slate-300 px-4 py-2" onClick={signOut}>Return to sign in</button></main>;
   return isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />;
 }
 
@@ -29,6 +33,10 @@ export function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/cvs" element={<CvsPage />} />
           <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/matching" element={<MatchingPage />} />
+          <Route path="/matching-facts" element={<MatchingFactsPage />} />
+          <Route path="/job-inventories" element={<JobInventoryPage />} />
+          <Route path="/job-inventories/:jobId" element={<JobInventoryPage />} />
           <Route path="/taxonomy" element={<TaxonomyPage />} />
         </Route>
       </Routes>
