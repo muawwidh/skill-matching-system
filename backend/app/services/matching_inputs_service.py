@@ -108,6 +108,9 @@ class MatchingInputsService:
 
     def create_group(self, user, job_id, payload):
         def action():
+            if payload.critical and (payload.component != "R" or payload.classification != "required"
+                                     or payload.review_status != "approved"):
+                raise HTTPException(422, "Only approved required-skill R groups can be critical")
             job = self.job(job_id, True)
             state = self.repo.job_state(job)
             self.check(payload.expected_fingerprint, state["fingerprint"])
@@ -227,6 +230,9 @@ class MatchingInputsService:
             if skill["skill_type"] in {"qualification", "experience"} and group["component"] != "Q":
                 raise HTTPException(409, "Qualification/experience must enter Q")
         for group in groups.values():
+            if group["critical"] and (group["component"] != "R" or group["classification"] != "required"
+                                      or group["review_status"] != "approved"):
+                raise HTTPException(409, "Critical group must be an approved required-skill R group")
             if group["review_status"] != "approved" or group["source_fingerprint"] != state["source_fingerprint"]:
                 raise HTTPException(409, "Unreviewed or stale group")
         if any(x["critical"] for x in groups.values()) and not any(x["component"] == "R" for x in groups.values()):

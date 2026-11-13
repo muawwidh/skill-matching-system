@@ -187,7 +187,10 @@ def test_component_weight_and_atomic_support_constraints(pg_database,target,exac
             row=MatchScoreComponent(result_id=result.id,component="R",status="assessed",applicability="applicable",
                 numerator=1,denominator=1,base_weight=7,effective_weight_fraction="1/1",effective_weight_value=1,
                 value_fraction="1/1",value=1,reason_code="test",reason_parameters={})
-            if target=="component": row.value_fraction=exact;row.value=value
+            if target=="component":
+                row.value_fraction=exact;row.value=value
+                row.numerator=int(exact.split('/')[0]) if exact else None
+                row.denominator=int(exact.split('/')[1]) if exact else None
             else: row.effective_weight_fraction=exact;row.effective_weight_value=value
         db.add(row)
         if valid: db.commit()

@@ -11,8 +11,13 @@ Acceptance freezes this protocol and `matching-policy-v1` methodology before
 implementation and before Phase 6 rankings. Checkpoint 1 now implements the
 pure policy engine and reviewed-input APIs/models with migration 0009, verified
 in isolated PostgreSQL only. This does not create benchmark facts, a fact freeze,
-rankings, production scores or evaluation results. The developer database was
-not migrated; the next checkpoint is retrieval-to-result orchestration.
+rankings, production scores or evaluation results. Checkpoint 2 now implements
+the owned explicit-run service, unchanged top-20 retrieval, persistence and
+readiness/currentness checks, verified only with synthetic isolated fixtures.
+New migration 0010 is not applied to the developer database by this work.
+The earlier separately authorized developer migration to 0009 is not benchmark
+fact entry or evaluation. Next is Checkpoint 3's minimal forms/explanation UI;
+this protocol and matching-policy-v1 remain unchanged.
 
 ## Acceptance History
 
@@ -227,6 +232,7 @@ explanation UI; then separately controlled fact/policy freezes and evaluation.
 This is an accepted methodology/design checkpoint under D034, not an
 completed Phase 6 evaluation. Checkpoint 1's application foundation does not
 authorize or perform benchmark fact entry, rankings or evaluation. Migration
-0009 exists but was not applied to the developer database. Reviewed corpus
+0009 exists and was applied in a separate authorized operational task; this
+checkpoint never accesses the developer database or applies new migration 0010. Reviewed corpus
 fact/inventory entry and all evaluation execution remain separately controlled
 future work; judgments and frozen evidence remain unchanged.

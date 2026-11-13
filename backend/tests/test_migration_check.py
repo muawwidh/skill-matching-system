@@ -74,7 +74,7 @@ def test_sqlite_revision_check_does_not_write_and_rejects_uninitialized_or_unkno
 
     with engine.begin() as connection:
         connection.execute(text("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)"))
-        connection.execute(text("INSERT INTO alembic_version (version_num) VALUES ('0009_explainable_matching')"))
+        connection.execute(text("INSERT INTO alembic_version (version_num) VALUES ('0010_matching_input_integrity')"))
     assert check_migrations(url)[0]
     with engine.begin() as connection:
         connection.execute(text("UPDATE alembic_version SET version_num = 'unknown_future_revision'"))
@@ -102,7 +102,7 @@ def test_postgres_at_head_and_behind_are_read_only(pg_database):
         before = connection.scalar(text("SELECT version_num FROM alembic_version"))
         count_before = connection.scalar(text("SELECT count(*) FROM users"))
     ok, message = check_migrations(url)
-    assert not ok and "0007_taxonomy_review_audit" in message and "0009_explainable_matching" in message
+    assert not ok and "0007_taxonomy_review_audit" in message and "0010_matching_input_integrity" in message
     with engine.connect() as connection:
         assert connection.scalar(text("SELECT version_num FROM alembic_version")) == before
         assert connection.scalar(text("SELECT count(*) FROM users")) == count_before
@@ -119,4 +119,4 @@ def test_postgres_fresh_database_requires_explicit_upgrade_and_retry_is_safe(pg_
     assert check_migrations(settings.DATABASE_URL)[0]
     command.upgrade(config, "head")
     with engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0009_explainable_matching"
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0010_matching_input_integrity"

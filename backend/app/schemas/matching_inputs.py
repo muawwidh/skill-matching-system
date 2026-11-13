@@ -62,8 +62,8 @@ class GroupInput(Input):
         ids = [(x.job_skill_id, x.job_matching_fact_id) for x in self.members]
         if len(set(ids)) != len(ids) or (self.operator == "SINGLE" and len(ids) != 1):
             raise ValueError("Distinct atomic members and valid SINGLE cardinality required")
-        if self.critical and (self.review_status != "approved" or self.classification != "required"):
-            raise ValueError("Only explicitly approved required groups can be critical")
+        if self.critical and (self.component != "R" or self.review_status != "approved" or self.classification != "required"):
+            raise ValueError("Only explicitly approved required-skill R groups can be critical")
         if ((self.component == "R" and self.classification != "required") or
             (self.component == "P" and self.classification != "preferred") or
             (self.component == "Q" and self.classification not in {"required", "preferred"})):

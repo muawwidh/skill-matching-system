@@ -4,9 +4,10 @@ Status: **ACCEPTED METHODOLOGY** on 2026-11-10 after independent review.
 
 Acceptance freezes `matching-policy-v1` methodology before implementation and
 before Phase 6 rankings. D034 records the accepted decision. This is a design
-checkpoint, not a completed Phase 6 implementation. Checkpoint 1 is implemented
-and uncommitted for independent review: pure rules, reviewed-input APIs/models
-and migration 0009. No real or frozen-corpus Phase 6 facts, inventory sign-offs,
+checkpoint, not a completed Phase 6 implementation. Checkpoint 1 is committed
+at 2c77df0. Checkpoint 2 implements retrieval-to-result orchestration and is
+uncommitted for independent review, with new migration 0010; applied migration
+0009 is not edited. No real or frozen-corpus Phase 6 facts, inventory sign-offs,
 scores, rankings or evaluations have been created. Synthetic tests use isolated
 databases only. Fact entry and execution require separate authorization.
 
@@ -45,6 +46,15 @@ The corrections repair implementation conformance and storage/lifecycle guards;
 they do not change matching-policy-v1 methodology, canonical configuration or
 weights. Detailed runtime/test evidence belongs in PROJECT_STATE.md.
 
+Checkpoint 2 implementation additions (2026-11-12) connect the accepted engine
+to owned explicit runs, exact persisted components/gaps and bound evidence,
+retrieval provenance, concurrency and read-only currentness checks. The preceding
+repository document SHA-256 was
+`2380f868eaedf63775d405ee100bb624726e6e6e62111f62256205fccfe18307`.
+Migration 0010 extends persistence/invalidation guarantees without editing 0009.
+No matching-policy-v1 configuration, weights or methodology changed. See
+PROJECT_STATE.md for tested/deferred functionality and verification results.
+
 ## Baseline And Scope
 
 - Audit branch: `phase6-explainable-matching`.
@@ -52,9 +62,10 @@ weights. Detailed runtime/test evidence belongs in PROJECT_STATE.md.
   `349e668f670f71dadfa7d4680fdcb1ceef334321`.
 - Git was clean when the read-only policy audit was completed.
 - Original methodology baseline: `0008_dense_retrieval`. Checkpoint 1 repository
-  and isolated verified head: `0009_explainable_matching`. The developer database
-  remains 0008, observed during a read-only legacy-value audit; never migrated
-  by this checkpoint. See PROJECT_STATE.md for audit and test results.
+  head: `0009_explainable_matching`. Checkpoint 2 repository head is
+  `0010_matching_input_integrity`. The developer database was separately migrated
+  to 0009 before Checkpoint 2; it is not accessed or migrated by this checkpoint.
+  See PROJECT_STATE.md for historical audits and current verification results.
 - Phase 5 is complete and frozen. Its model, Template-v2 representations,
   embeddings, rankings, judgments and results must not be retrospectively tuned.
 - The early `MatchingService` and `candidate_job_matches` implement a lexical
@@ -67,8 +78,8 @@ weights. Detailed runtime/test evidence belongs in PROJECT_STATE.md.
   collected, assessed or displayed by matching.
 
 The architecture remains routes -> services -> repositories -> domain/database
-components. Routes stay thin. This document specifies future behavior only;
-it changes no application, database, runtime or frozen artifact.
+components. Routes stay thin. The methodology sections specify the accepted
+contract; checkpoint sections distinguish implemented and deferred behavior.
 
 ## Plan Mapping And Intentional Departure
 
@@ -430,7 +441,7 @@ in isolated PostgreSQL, not applied to the developer database.
 | job_match_results | Run/job references and job/input fingerprints; nullable alignment fraction and NUMERIC value; provisional flag; status; original retrieval rank and similarity. Unique job per run. |
 | match_score_components | Result FK; component/applicability/status; numerator, denominator, base/effective weight, value and contribution, including exact fractional forms; unique component per result. |
 | skill_gap_results | Result/group/member references; nullable atomic/group support and exact fractional forms; critical flag, classification and assessment status; unique assessment per result and group/member scope. |
-| skill_gap_atomic_results | Relational member/occurrence comparisons with nullable exact/numeric support and reason parameters, separate from the group support row. No production writer is exposed yet. |
+| skill_gap_atomic_results | Relational member/occurrence comparisons with nullable exact/numeric support and reason parameters, separate from the group support row. Checkpoint 2 writes these only through explicit owned run creation. |
 
 Use UUID keys, timestamps, relational status/applicability enums and FK
 constraints. Fields used in constraints or queries stay relational, including
@@ -597,9 +608,10 @@ This methodology checkpoint creates no ranking, score or metric.
 
 ## Four Bounded Implementation Checkpoints
 
-Checkpoint 1 is implemented and verified as recorded in PROJECT_STATE.md;
-Checkpoints 2-4 remain pending. No production run-creation or scoring endpoint
-exists in Checkpoint 1.
+Checkpoints 1 and 2 are implemented as recorded in PROJECT_STATE.md;
+Checkpoint 2 is uncommitted for independent review. Checkpoints 3-4 remain
+pending. Run creation exists in Checkpoint 2, not the legacy matcher or the
+original Checkpoint 1 API surface.
 
 ### 1. Policy, Reviewed Facts And Schema
 
@@ -742,8 +754,32 @@ extraction cannot safely establish. Until those inputs exist, return transparent
 provisional assessments. Existing values must not be silently reclassified or
 historical developer data repaired as part of implementation.
 
-Checkpoint 1 implements pure arithmetic/identity/group/readiness rules and the
-reviewed-input foundation only. Component assessments remain explicit inputs
-to the pure engine; retrieval-to-result adaptation and persisted production
-runs are Checkpoint 2. No facts have been entered for the frozen corpus and no
-real-data scores or evaluation have been produced. Phase 6 remains incomplete.
+Checkpoint 2 adapts approved reviewed inputs to the unchanged pure engine and
+persists owned runs/components/gaps. POST `/matching-runs` is the only computation
+entry point, with no pool/model/policy overrides. GET by run ID and GET current
+only read and verify fingerprints; the latter can disclose the latest stale
+attempt without refreshing it. Missing/stale candidate indexes return 409.
+Unauthorized requests return 401/403; foreign-owned results return 404.
+
+Migration 0010 adds immutable-run provenance fields and component ratio checks.
+It also serializes source mutation/run creation through advisory lock 603402
+and the candidate row lock. Source writes invalidate only current runs/results
+in the same transaction; universe/taxonomy changes conservatively invalidate
+all current runs. Identical source updates do not stale history. Every read
+rebuilds input hashes (without retrieval or encoding vectors); flags are only a cache.
+Hash-only provenance is bounded to 256 KiB and contains selected-pool metadata
+plus the entire universe's fingerprint, not source documents. Sensitive evidence
+snapshots remain on results/components/gaps under the existing erasure triggers.
+
+Reviewer pseudonym handling requires no change: the internal random reviewer
+ID is hashed, not replaced with a personal name/email. Snapshots preserve the
+role at review time and survive reviewer FK deletion. Q phrase extraction alone
+cannot establish a qualification/experience assessment; structured reviewed
+facts are required. Unsupported equivalences or occupation incompatibility
+claims abstain as unknown, not invented zero support. Skill unknowns remain
+visible and unscored. Exact fractions, selected taxonomy provenance and all
+compared evidence references survive arithmetic deduplication.
+
+No facts have been entered for the frozen corpus and no real-data scores or
+evaluation have been produced. No frontend, fact freeze, deployment or model
+execution is included. Phase 6 remains incomplete.

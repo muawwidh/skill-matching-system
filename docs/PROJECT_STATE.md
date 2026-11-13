@@ -26,47 +26,189 @@ Phase 6 — Matching and Skill-Gap Analysis
 
 Implementation status:
 
-CHECKPOINT 1 IMPLEMENTED, UNCOMMITTED FOR INDEPENDENT REVIEW. matching-policy-v1
-and its evaluation protocol remain frozen under D034. The pure policy engine,
-reviewed-input contracts/APIs and migration 0009 are implemented and tested
-with synthetic data. Phase 6 is incomplete; retrieval-to-result orchestration,
-production matching runs, real scores, fact freeze and evaluation are not
-implemented or performed.
+CHECKPOINT 2 IMPLEMENTED, UNCOMMITTED FOR INDEPENDENT REVIEW. Checkpoint 1 is
+committed at 2c77df0. matching-policy-v1 and its evaluation protocol remain
+frozen under D034. Explicit owner-only retrieval-to-result orchestration now
+persists runs, exact components, gaps, atomic evidence and provenance using
+the unchanged Template-v2 top-20 retrieval path. Verification uses synthetic
+fixtures only. Phase 6 remains incomplete: no real/corpus facts, scores,
+rankings, fact freeze or evaluation have been produced.
 
 Current status:
 
-PHASE 6 CHECKPOINT 1 IMPLEMENTED; UNCOMMITTED FOR INDEPENDENT REVIEW
+PHASE 6 CHECKPOINT 2 IMPLEMENTED; UNCOMMITTED FOR INDEPENDENT REVIEW
 
 Phase 5 remains COMPLETE as a repository/methodology checkpoint, including
 the accepted D033 run-specific scoped-isolation exception. Its frozen
 artifacts, labels, rankings, metrics and results remain unchanged. Deployment
 is a separate operational checkpoint, not implied by methodology acceptance.
 
-Repository head: `0009_explainable_matching`.
-Isolated successfully verified head: `0009_explainable_matching`.
-Developer database head: `0008_dense_retrieval`, independently reverified on
-2026-11-12 through an explicitly authorized `BEGIN READ ONLY` / `ROLLBACK`
-transaction. All 12 migration-0009 tables were absent; no migration or data
-write was performed. The legacy-value audit below remains dated 2026-11-11.
-Migration 0009 exists in the repository and was applied only in disposable
-verification databases/schemas, never to the developer database. The controlled
-startup checker will refuse the updated backend against developer revision
-0008 until a separately authorized explicit migration is performed.
+Repository head: `0010_matching_input_integrity` (uncommitted).
+Isolated successfully verified head: `0010_matching_input_integrity`.
+Developer database head was last verified as `0009_explainable_matching`
+during the separately authorized migration/deployment verification. It was
+not queried or modified during Checkpoint 2. The migration-0008 observations
+below are historical, preceding that authorized migration. Migration 0009 is
+unchanged; new migration 0010 adds exact component-ratio constraints, bounded
+hash-only run provenance and transactional current-run invalidation guards.
+Only disposable databases receive 0010 in this checkpoint. A deployment of
+this source would require a separate backed-up explicit migration first;
+the controlled startup checker must not be bypassed.
 
 No real/frozen-corpus Phase 6 reviewed facts, inventory sign-offs, scores,
 rankings or evaluations have been created. Automated tests create synthetic
 input/result rows only in isolated databases. The legacy matcher remains
 prototype behavior; existing candidate_job_matches are not reinterpreted.
 
-Next checkpoint is Phase 6 Checkpoint 2: retrieval-to-result orchestration,
-persistence/currentness, ownership and concurrency. It is not implemented in
-Checkpoint 1. Frozen-corpus fact entry remains separately authorized controlled
-data preparation, not application implementation.
+Next checkpoint is Phase 6 Checkpoint 3: minimal reviewed-input forms and
+match-explanation UI. No frontend was changed in Checkpoint 2. Frozen-corpus
+fact entry remains separately authorized controlled data preparation, not
+application implementation. Checkpoint 4 fact/policy freezes and evaluation
+remain deferred; this work does not run matching against developer data.
 
 Accepted references: docs/phase6-explainable-matching.md and
-docs/phase6-evaluation-protocol.md. The two later checkpoints before evaluation
-cover service/persistence/currentness and minimal forms/explanation UI; the
-fourth checkpoint covers separately controlled fact/policy freezes/evaluation.
+docs/phase6-evaluation-protocol.md. The remaining third checkpoint covers
+minimal forms/explanation UI; the fourth checkpoint covers separately
+controlled fact/policy freezes/evaluation.
+
+### Checkpoint 2 Implementation (2026-11-12)
+
+POST `/matching-runs` with an empty strict body creates a new owned run.
+GET `/matching-runs/{run_id}` and `/matching-runs/current` verify currentness
+without retrieval, indexing or writes; current returns the latest attempt when
+invalidated, explicitly stale rather than silently creating another run.
+Candidate role plus ownership is required. Additional admin/researcher roles
+grant no access to other candidates; managers without candidate role receive
+403 and another candidate's run is hidden with 404.
+
+The loader calls validate_configuration on every load and checks canonical
+bytes/hash/engine identity. The writer acquires a PostgreSQL transaction-scoped
+input gate and candidate row lock, captures all eligible job input/index hashes,
+uses supported dense retrieval exactly once for the fixed top 20, rechecks
+inputs before commit and retires the previous current run atomically. No Phase 5
+indexer or prototype matcher is called. No-op source updates do not invalidate.
+Current-run invalidation covers reviewed inputs, sources, taxonomy and all
+embedding template versions; immutable historical results are not rewritten
+except the accepted source-erasure/redaction lifecycle. Retrieval-universe
+changes conservatively stale all current runs. The broad gate prioritizes
+correctness, not concurrent write throughput; conflicts roll back with 409.
+
+Run provenance binds policy/engine, full eligible-universe fingerprint, selected
+release fingerprints, ordered pool, source/model/template and full-vector hashes.
+Only the selected pool's index metadata is snapshotted; excluded jobs remain
+bound by the full-universe fingerprint and separate live/recorded missing/stale
+counts. Missing/stale candidate indexes fail readiness without fallback.
+Missing/stale jobs are counted separately and excluded by the unchanged
+retrieval service, whose returned ranks are post-exclusion. GET reports live
+coverage separately from recorded run coverage. Full-pool evaluation readiness
+requires twenty current non-provisional results, never a scored/provisional mix.
+
+Approved evidence only feeds deterministic assessments. Results retain exact
+fraction ordering, coverage, effective weights, missing/unassessed groups,
+occurrence-specific reasons and candidate-confirmed evidence references. Null
+scores stay null. O requires explicit reviewed same-release occupation identity;
+different concepts/titles alone remain unknown. Q compares explicit reviewed
+completion, exact field/scope/qualification identity or bounded duration, never
+degree hierarchy, implicit equivalence or summed overlapping periods. Q skill
+phrases without explicit structured facts remain provisional. Unresolved or
+stale inventory evidence remains visible, not silently promoted or scored zero.
+
+Reviewer pseudonyms were assessed: existing snapshots hash a random internal
+reviewer UUID (not a name/email) into a stable internal pseudonym with role at
+review time. No correction/backfill or new personal-identity field is needed;
+reviewer deletion still preserves the immutable minimum attribution. Constraint
+0010 checks component numerator/denominator against the exact fraction using
+integer cross-products, including null consistency and six-decimal projection.
+
+Synthetic tests cover a complete non-null persisted score, a complete twenty-job
+pool, deterministic reranking, provisional inputs, role/ownership/read-only GETs,
+fresh sessions, input changes, locks, atomic rollback and deletion redaction.
+No corpus facts, application requests, model encoding, rankings or evaluation
+were performed. The normal stack is neither rebuilt nor restarted. Deployment,
+demonstration data entry, UI, fact freeze and Phase 6 evaluation remain deferred.
+
+Initial Checkpoint 2 verification (before the review corrections below):
+focused policy/API/adapter suite **165 passed**;
+focused isolated PostgreSQL suite **125 passed**; complete default backend
+**481 passed, 176 skipped**; complete PostgreSQL-enabled backend **651 passed,
+6 skipped**. Default skips are 170 gated PostgreSQL tests plus the same six
+pinned-tokenizer/real-model/private-corpus gates. No real-model encoding or
+private-corpus execution was requested or performed. Existing Phase 4/5 and
+stability tests remain included. PostgreSQL fixtures verified populated
+0008 -> head -> 0008 -> head and populated 0009 -> 0010 -> 0009 -> 0010,
+constraint boundaries, current-only invalidation, no-op writes, locking,
+rollback, reviewer snapshot preservation and legacy-data preservation.
+
+A bounded implementation review found and fixed two adapter edge cases:
+explicit completed-experience constraints are never ignored; an approved mixed
+Q alternative retains OR(1, unknown)=1, whereas AND remains unknown. Two
+in-memory mutations were killed: ignoring experience completion caused seven
+regression failures; forcing a whole mixed Q group unknown caused two failures.
+No workspace source mutation was used. Policy configuration and the pure
+matching-policy-v1 engine are unchanged. Diff checks include untracked files.
+The disposable tmpfs PostgreSQL container is removed after verification; frozen
+Phase 5 file hashes and non-test container identities/start times are checked
+before/after. No frontend files changed, so no frontend build is needed.
+
+### Checkpoint 2 Review Corrections (2026-11-12)
+
+Critical flags are accepted only on approved required-skill R groups. Request
+validation returns 422 for critical Q input; group creation, inventory sign-off
+and the new CHECK in unapplied migration 0010 enforce the same boundary.
+Applied migration 0009 and the immutable policy/configuration are unchanged.
+An isolated populated-0009 regression proves that invalid existing critical Q
+data makes the 0010 upgrade fail without coercion, leaving revision/data intact.
+The ordinary populated upgrade/downgrade/re-upgrade regressions still pass.
+
+Expected per-job reviewed-input inconsistencies use a dedicated exception with
+a fixed reason code and source/group references. That job persists provisional
+with null alignment while other valid retrieved jobs still score. Unexpected
+ValueError/KeyError/programming failures are not converted into readiness or
+concurrency errors; the complete transaction rolls back and the error propagates.
+Actual serialization/deadlock/lock/current-run uniqueness conflicts return 409;
+storage constraint violations return 422 with a distinct persistence code, and
+an unsafe snapshot-size failure returns 413. No partial run is committed.
+
+Persistence uses `bounded-evidence-v1` without shortening scoring inputs.
+Source excerpts are retained in full when they fit; necessary clipping records
+exact original SHA-256, original/retained character counts and an explicit
+full-source reconstruction warning. IDs, source references, comparison identity
+hashes, exact arithmetic and every atomic decision are retained. One candidate
+evidence excerpt is anchored per run, not copied into every gap. Gap summaries
+show at most eight references with explicit omitted counts, full-sequence hashes
+and the relational lookup; the remaining references/decisions stay in atomic
+rows. Unknown occurrences and occupation assessments receive their own small
+diagnostic rows instead of overflowing job-level reason blobs. Existing 8 KiB
+reason and 16 KiB gap-evidence database bounds are not weakened.
+
+Tests verify a successful run with exactly 60 approved candidate skills and 20
+unresolved job occurrences, and a separate 60-by-21 case retaining all 1,260
+comparisons, only 60 candidate excerpts and the unchanged exact score 100/21.
+They also cover Unicode excerpts, no unnecessary clipping, critical-Q 422 and
+database/sign-off agreement, one inconsistent job alongside a scored job,
+near-tie exact-fraction/rank/UUID ordering without similarity, transactional
+approved-link invalidation/rollback, and candidate-vector-only drift with all
+metadata/source hashes and stale flags deliberately held unchanged. Fresh
+read-only GET checks detect that drift without updating the invalidation cache.
+The earlier evidence-privacy test now follows the source anchor and retains its
+original sentence, ownership and no-raw-CV assertions.
+
+Final correction verification: focused policy/API/adapter **179 passed**;
+focused isolated PostgreSQL **135 passed**; complete default **495 passed,
+186 skipped**; complete isolated PostgreSQL-enabled **675 passed, 6 skipped**.
+Default skips are 180 PostgreSQL gates plus three pinned-tokenizer cases, two
+real-model gates and one private-corpus gate; those six gates were not requested
+or configured. No real-data encoding, ranking or evaluation occurred.
+
+Remaining limitations: consumers must resolve evidence anchors across the
+complete run response; clipped prose requires retained source evidence for
+full-text reconstruction. If mandatory references cannot fit safely, the run
+fails explicitly rather than dropping them or changing a score. Frontend forms,
+demonstration/corpus fact entry, deployment and evaluation remain deferred.
+The developer database is not accessed, normal containers are not rebuilt or
+restarted, and frozen Phase 5 artifacts remain unchanged. Verification resources
+are disposable tmpfs PostgreSQL only and are removed after the final checks.
+Nothing is staged, committed or deployed by this correction pass.
 
 ### Checkpoint 1 Verification (2026-11-11)
 
@@ -108,7 +250,7 @@ The tmpfs PostgreSQL verification container was removed after verification.
 
 ### Checkpoint 1 Acceptance Corrections (2026-11-12)
 
-Checkpoint 1 remains uncommitted for independent review; Phase 6 remains
+At this historical correction checkpoint, Checkpoint 1 was uncommitted for independent review; Phase 6 remained
 incomplete. No Checkpoint 2 orchestration, real facts, production matching
 runs, rankings, scores or evaluation was added. Migration 0009 was corrected
 while still uncommitted and unapplied to the developer database.
@@ -186,9 +328,9 @@ matches the recorded baseline and must not be described as unchanged. The
 earlier frozen Phase 5 verification remains a historical statement about its
 own execution, not a claim about today's mutable runtime. No cleanup,
 recalculation, interface disabling or legacy redesign is authorized here.
-Checkpoint 1 is ready for final independent review; work remains uncommitted.
-Developer migration remains 0008: do not migrate, deploy or begin Checkpoint 2
-without separate authorization.
+At that checkpoint, Checkpoint 1 was ready for final independent review and
+work remained uncommitted. Developer migration was then 0008; migration,
+deployment and Checkpoint 2 each required separate subsequent authorization.
 
 Phase 4 closure combines repository test/package evidence with user-reported
 deployed browser/runtime acceptance. The Phase 5 work below is limited to

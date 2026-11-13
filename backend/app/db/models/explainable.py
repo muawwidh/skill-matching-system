@@ -79,6 +79,7 @@ class JobRequirementGroup(Reviewed, TimestampMixin, Base):
         enum_check("review_status", REVIEW), enum_check("component", ("R", "P", "Q")),
         enum_check("operator", ("SINGLE", "OR", "AND")), enum_check("classification", CLASSIFICATION),
         CheckConstraint("NOT critical OR (classification = 'required' AND review_status = 'approved')", name="ck_critical"),
+        CheckConstraint("NOT critical OR (component = 'R' AND classification = 'required' AND review_status = 'approved')", name="ck_critical_required_skill"),
         CheckConstraint("(component = 'R' AND classification = 'required') OR (component = 'P' AND classification = 'preferred') OR (component = 'Q' AND classification IN ('required','preferred'))", name="ck_component_classification"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -145,6 +146,7 @@ class MatchingRun(TimestampMixin, Base):
         Index("uq_current_matching_run", "candidate_profile_id", "policy_id", unique=True,
               postgresql_where=text("is_current = true"), sqlite_where=text("is_current = 1")),
         CheckConstraint("NOT is_current OR status = 'current'", name="ck_run_current"),
+        CheckConstraint("provenance_snapshot IS NULL OR length(CAST(provenance_snapshot AS TEXT)) <= 262144", name="ck_run_provenance_bound"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     candidate_profile_id: Mapped[UUID] = mapped_column(ForeignKey("candidate_profiles.id", ondelete="SET NULL"), nullable=True)
@@ -157,6 +159,14 @@ class MatchingRun(TimestampMixin, Base):
     is_current: Mapped[bool] = mapped_column(Boolean, nullable=False)
     pool_limit: Mapped[int] = mapped_column(Integer)
     stale_missing_job_count: Mapped[int] = mapped_column(Integer)
+    engine_version: Mapped[str] = mapped_column(String(80), nullable=True)
+    model_id: Mapped[str] = mapped_column(String(160), nullable=True)
+    model_revision: Mapped[str] = mapped_column(String(64), nullable=True)
+    template_version: Mapped[str] = mapped_column(String(40), nullable=True)
+    taxonomy_fingerprint: Mapped[str] = mapped_column(String(64), nullable=True)
+    retrieval_fingerprint: Mapped[str] = mapped_column(String(64), nullable=True)
+    # Hashes, identifiers and embedding metadata only; never candidate/source text.
+    provenance_snapshot: Mapped[dict] = mapped_column(JsonColumn, default=dict, nullable=True)
 
 
 class JobMatchResult(TimestampMixin, Base):
@@ -189,6 +199,8 @@ class MatchScoreComponent(Base):
     __table_args__ = (UniqueConstraint("result_id", "component", name="uq_result_component"),
                       CheckConstraint("status IN ('assessed','unassessed','not_applicable')", name="ck_component_status"),
                       CheckConstraint("denominator IS NULL OR denominator > 0", name="ck_component_denominator"),
+                      CheckConstraint("(numerator IS NULL) = (value_fraction IS NULL) AND (denominator IS NULL) = (value_fraction IS NULL) AND (value IS NULL) = (value_fraction IS NULL)", name="ck_component_ratio_null"),
+                      CheckConstraint("CASE WHEN value_fraction IS NULL THEN true ELSE numerator >= 0 AND denominator < 'Infinity'::numeric AND numerator <= denominator AND numerator * split_part(value_fraction, '/', 2)::numeric = denominator * split_part(value_fraction, '/', 1)::numeric END", name="ck_component_ratio_exact").ddl_if(dialect="postgresql"),
                       CheckConstraint("value IS NULL OR value BETWEEN 0 AND 1", name="ck_component_value"),
                       CheckConstraint("effective_weight_value IS NULL OR effective_weight_value BETWEEN 0 AND 1", name="ck_component_weight"),
                       CheckConstraint("phase6_fraction_valid(value_fraction, value)", name="ck_component_exact").ddl_if(dialect="postgresql"),

@@ -2,13 +2,23 @@
 from uuid import UUID
 from datetime import datetime, timezone
 
-from sqlalchemy import inspect, select, update
+from sqlalchemy import inspect, select, update, text
 from sqlalchemy.orm import Session
 
-from app.db.models import CandidateProfile, CandidateSkill, CvDocument, Job, JobSkill, ApprovedTaxonomyLink, TaxonomyConcept, TaxonomyVersion
+from app.db.models import (CandidateProfile, CandidateSkill, CvDocument, Job, JobSkill,
+    ApprovedTaxonomyLink, TaxonomyConcept, TaxonomyVersion, ExtractedCandidateTerm, ExtractedJobTerm)
 from app.db.models.explainable import (CandidateMatchingFact, JobMatchingFact, JobRequirementGroup,
     JobRequirementGroupMember, JobOccurrenceReview, JobInventoryReview, MatchingRun, JobMatchResult)
 from app.matching.policy import fingerprint
+
+
+INPUT_LOCK_KEY = 603402
+
+
+def lock_matching_inputs(db: Session) -> None:
+    """Shared with the PostgreSQL source-write guard; never used by GETs."""
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": INPUT_LOCK_KEY})
 
 
 def snapshot(row) -> dict:
@@ -23,10 +33,14 @@ class MatchingInputsRepository:
         self.db = db
 
     def profile(self, user_id: UUID, *, lock=False):
+        if lock:
+            lock_matching_inputs(self.db)
         query = select(CandidateProfile).where(CandidateProfile.user_id == user_id).execution_options(populate_existing=True)
         return self.db.scalar(query.with_for_update() if lock else query)
 
     def job(self, job_id: UUID, *, lock=False):
+        if lock:
+            lock_matching_inputs(self.db)
         query = select(Job).where(Job.id == job_id).execution_options(populate_existing=True)
         return self.db.scalar(query.with_for_update() if lock else query)
 
@@ -35,6 +49,9 @@ class MatchingInputsRepository:
         return list(self.db.scalars(query.order_by(model.id)))
 
     def taxonomy(self, skills, source, facts=()):
+        term_model = ExtractedCandidateTerm if source == "candidate" else ExtractedJobTerm
+        terms = list(self.db.scalars(select(term_model).where(term_model.id.in_(
+            [x.extracted_term_id for x in skills if x.extracted_term_id])).order_by(term_model.id)))
         links = list(self.db.scalars(select(ApprovedTaxonomyLink).where(
             ApprovedTaxonomyLink.term_source == source,
             ApprovedTaxonomyLink.extracted_term_id.in_([x.extracted_term_id for x in skills if x.extracted_term_id])
@@ -44,7 +61,7 @@ class MatchingInputsRepository:
         versions = list(self.db.scalars(select(TaxonomyVersion).where(
             TaxonomyVersion.id.in_([x.taxonomy_version_id for x in concepts])).order_by(TaxonomyVersion.id)))
         return {"links": [snapshot(x) for x in links], "concepts": [snapshot(x) for x in concepts],
-                "releases": [snapshot(x) for x in versions]}
+                "releases": [snapshot(x) for x in versions], "terms": [snapshot(x) for x in terms]}
 
     def candidate_state(self, profile):
         facts = self.rows(CandidateMatchingFact, candidate_profile_id=profile.id)
@@ -55,7 +72,7 @@ class MatchingInputsRepository:
                 "skills": [snapshot(x) for x in skills],
                 "sources": [{"id": x.id, "raw_hash": fingerprint(x.raw_text),
                              "cleaned_hash": fingerprint(x.cleaned_text)} for x in cvs]}
-        return {"fingerprint": fingerprint(data), "facts": [snapshot(x) for x in facts]}
+        return {"fingerprint": fingerprint(data), **data}
 
     def job_state(self, job):
         skills = self.rows(JobSkill, job_id=job.id)
@@ -74,11 +91,15 @@ class MatchingInputsRepository:
         current_hash = fingerprint(data)
         review = self.db.scalar(select(JobInventoryReview).where(JobInventoryReview.job_id == job.id))
         return {"fingerprint": current_hash, "source_fingerprint": source,
+                "taxonomy": self.taxonomy(skills, "job"),
                 "skills": [snapshot(x) for x in skills], **{k: v for k, v in data.items() if k != "source"},
                 "inventory": snapshot(review) if review else None,
                 "inventory_current": bool(review and review.inventory_complete and review.source_fingerprint == current_hash)}
 
     def invalidate_candidate(self, profile_id):
+        run_ids = list(self.db.scalars(select(MatchingRun.id).where(
+            MatchingRun.candidate_profile_id == profile_id, MatchingRun.is_current.is_(True))))
+        self.db.execute(update(JobMatchResult).where(JobMatchResult.run_id.in_(run_ids)).values(status="stale"))
         self.db.execute(update(MatchingRun).where(MatchingRun.candidate_profile_id == profile_id,
             MatchingRun.is_current.is_(True)).values(is_current=False, status="stale"))
 
