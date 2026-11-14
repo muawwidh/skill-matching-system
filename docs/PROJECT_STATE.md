@@ -102,6 +102,29 @@ This reference exposes no private path, credentials or source evidence.
 
 ### Checkpoint 4 Preparation And Feasibility Gate
 
+#### Accepted Manual-Capability Design (2026-11-14)
+
+The owner accepted the reviewed source-bound manual job-capability design under
+D035, documented in `docs/phase6-manual-job-capabilities.md`. This is design
+approval only: no extension code, migration 0011, API, deployment or corpus entry
+exists or is authorized by this acceptance. Repository migration head remains
+`0010_matching_input_integrity`; the developer database was not queried here.
+
+The design uses separate Phase 6 storage, unlinked human-approved R/P capabilities,
+exact stored-text anchors, inventory-only fingerprints and adapter-version
+currentness. Duplicate keys against extracted occurrences in all review states
+block entry/sign-off/completeness; unresolved requirements remain unrepresented
+in the private ledger. Grouped deletion is refused; ordinary deletion preserves
+history, while job deletion remains the erasure path. Scoring policy, frozen
+Phase 5 inputs and artifacts are unchanged. Frontend entry work is deferred.
+Source-bound human review/authorization and the existing entry protocol remain
+required. This removes no conditional/Q/O/threshold limitations and promises no
+evaluable top-20 pool. Any extension implementation must be separately authorized
+before migration, deployment or controlled corpus preparation.
+
+The preparation notes below describe the existing implementation and earlier
+feasibility sequence, not an implemented manual-capability extension.
+
 `docs/phase6-fact-entry-protocol.md` is the written execution-protocol draft for
 owner review, not an approved input freeze or permission to enter data. Searches
 found no prior standalone fact-entry protocol in tracked docs or the private

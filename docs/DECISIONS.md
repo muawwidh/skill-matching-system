@@ -481,3 +481,36 @@ characteristic component or input. Policies and separate runs are immutable
 and versioned; substantive policy changes require a new immutable version.
 Legacy candidate_job_matches are preserved, not reinterpreted. The Phase 5
 retrieval baseline remains frozen under D032.
+
+## D035 - Source-Bound Manual Phase 6 Job Capabilities
+
+Accepted by the owner on 2026-11-14. The accepted design is specified in
+[phase6-manual-job-capabilities.md](phase6-manual-job-capabilities.md).
+Store manual capabilities separately from extracted JobSkill/ExtractedJobTerm
+rows so Phase 5 retrieval inputs, representations and embeddings remain unchanged.
+Only authorized human-approved required/preferred capabilities may be entered,
+with exact stored cleaned-text spans/hash, expected inventory fingerprint,
+manual-transcription provenance and immutable actual reviewer attribution.
+Agents may draft source-bound proposals, not submit approvals or sign-offs.
+
+Manual rows remain unlinked and use existing identity/support functions unchanged,
+including identity-incomparable outcomes for approved out-of-scope links.
+Reject matching compatibility-family/normalized-text keys against extracted
+occurrences in every review state and against other manual rows. Recheck at
+sign-off and assessment; record blocked requirements as unrepresented in the
+private ledger, without overriding extraction decisions. Later conflicts make
+the affected job provisional, not a fabricated zero or a historical rewrite.
+
+Manual rows affect inventory fingerprints only, bind the cleaned-description
+hash and require explicit adapter-version currentness. Capability writes never
+update the jobs row. Deletion requires an expected fingerprint and refuses
+grouped rows; it invalidates current state but preserves historical snapshots.
+Job deletion remains the sensitive-data erasure path. Preserve origin-aware,
+bounded evidence and enforce relational ownership, group integrity, reviewer
+immutability and a downgrade that refuses unsupported populated state.
+
+This extends input storage/entry, not D034 scoring. Conditional/Q/O/threshold
+limitations and completeness gates remain; evaluable top-20 pools are not
+guaranteed. Frontend entry forms are deferred. Design approval is not
+implementation, migration, deployment or corpus-entry authorization. No such
+work is performed by this decision; frozen Phase 5 artifacts remain unchanged.
