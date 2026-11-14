@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-13
+Last updated: 2026-11-14
 
 ## Repository
 
@@ -26,18 +26,18 @@ Phase 6 — Matching and Skill-Gap Analysis
 
 Implementation status:
 
-CHECKPOINT 3 PRESENTATION IMPLEMENTED, UNCOMMITTED FOR INDEPENDENT REVIEW.
-Checkpoint 1 is committed at 2c77df0; Checkpoint 2 at 982ae4c. The latter was
-the clean starting commit for this presentation work. matching-policy-v1 and
-its evaluation protocol remain frozen under D034. Owner-only explicit runs,
-components, gaps, evidence and readiness now have frontend presentation and
-minimal reviewed-input forms. Verification uses synthetic fixtures/mocked APIs
-only. Phase 6 remains incomplete: no real/corpus facts, scores, rankings, fact
-freeze or evaluation have been produced.
+CHECKPOINTS 1-3 COMMITTED, CODE-REVIEWED AND DEPLOYED.
+Checkpoint 1 is committed at 2c77df0, Checkpoint 2 at 982ae4c and Checkpoint 3
+at cb0c8e7. Backend and frontend were deployed from cb0c8e7 in a separately
+authorized operational task. matching-policy-v1 and its accepted evaluation
+protocol remain frozen under D034. The owner has also inspected real ready
+and provisional synthetic results in a separate disposable environment using
+the actual frontend, APIs and pinned offline model. Phase 6 remains incomplete:
+no frozen-corpus Phase 6 facts, inventory freeze, rankings or evaluation exist.
 
 Current status:
 
-PHASE 6 CHECKPOINT 3 PRESENTATION IMPLEMENTED; INDEPENDENT REVIEW PENDING
+PHASE 6 CHECKPOINTS 1-3 DEPLOYED; CHECKPOINT 4 PREPARATION ONLY
 
 Phase 5 remains COMPLETE as a repository/methodology checkpoint, including
 the accepted D033 run-specific scoped-isolation exception. Its frozen
@@ -48,26 +48,139 @@ Repository migration head: `0010_matching_input_integrity` (committed).
 Isolated successfully verified head: `0010_matching_input_integrity`.
 Developer database head was last verified as `0010_matching_input_integrity`
 during separately authorized migration/deployment verification before this
-turn. Checkpoint 3 does not query the database or authenticate against the
-running application. Earlier migration observations below are historical.
-No migration, policy, representation or frozen artifact is changed here.
-The normal Compose services are not rebuilt/restarted or deployed by this work.
+turn. This documentation preparation does not query the database, authenticate,
+deploy or start services. Earlier migration/implementation observations below
+are historical; the dated status here supersedes them. No migration, policy,
+representation or frozen artifact is changed by this preparation.
 
-No real/frozen-corpus Phase 6 reviewed facts, inventory sign-offs, scores,
-rankings or evaluations have been created. Automated tests create synthetic
-input/result rows only in isolated databases. The legacy matcher remains
+No frozen-corpus Phase 6 reviewed facts, inventory sign-offs, scores,
+rankings or evaluations have been created. Automated tests and the separately
+authorized manual demonstration used synthetic isolated databases. The legacy matcher remains
 prototype behavior; existing candidate_job_matches are not reinterpreted.
 
-Next is independent acceptance of Checkpoint 3, then separately authorized
-Checkpoint 4 preparation. Frozen-corpus fact entry remains controlled data
-preparation, not application implementation. Fact/policy freezes and evaluation
-remain deferred; this work does not run matching against developer data.
+Next is review/approval of the written fact-entry protocol and a separately
+authorized source-only representability audit before any benchmark environment
+or fact entry. Frozen-corpus entry is controlled data preparation, not application
+implementation. Input/policy manifests, indexing, rankings and evaluation remain
+deferred; no such execution is authorized by this documentation task.
 
 Accepted references: docs/phase6-explainable-matching.md and
 docs/phase6-evaluation-protocol.md. The fourth checkpoint covers separately
 controlled fact/policy freezes/evaluation.
 
-### Checkpoint 3 Presentation (2026-11-13)
+### Deployment And Limited Manual Acceptance (2026-11-14)
+
+The private deployment record verifies backend/frontend source and served assets
+from cb0c8e7, health and migration agreement at 0010, expected OpenAPI routes and
+unauthenticated 401 responses. All 41 table fingerprints were unchanged, including
+the policy seed, 43 legacy prototype matches and 8/30 embeddings. Frozen-file
+hashes and non-target container identities were unchanged; nginx needed no reload.
+These are prior operational observations, not a fresh database check today.
+
+The owner manually inspected one ready result and one provisional result from a
+separate synthetic demonstration. The displayed 65/100 and gap states agreed
+with the supplied evidence: required coverage 1/2, preferred coverage 1, effective
+weights 7/10 and 3/10, O/Q explicitly not applicable, no critical deduction.
+The provisional result remained null. Actual pinned-model indexing/retrieval and
+the production APIs/frontend were used, not mocked results. This satisfies the
+declared non-null demonstration requirement; its two-job UI-only list is not a
+benchmark evaluation or a complete twenty-job pool.
+
+Explanation verbosity is usability feedback, not a scoring defect or authority
+to tune policy. Do not claim the owner tested input saving, stale transitions,
+permissions or duplicate submissions. Automated evidence for those behaviors is
+separate from this limited manual inspection. Manual ownership/privacy and
+accessibility/assistive-technology acceptance remain outstanding.
+
+After the owner finished, only the identified disposable demo's three containers,
+two networks, dedicated frontend image and temporary configuration were removed.
+The private mode-0600 acceptance record was preserved. Normal services, developer
+data and frozen artifacts were not accessed by that demo/cleanup activity.
+Verified acceptance-record SHA-256:
+`32c4651a58a97ff51a8c07e5a508cb241bb5fb705d1ad0b59e98b87599629ec8`.
+This reference exposes no private path, credentials or source evidence.
+
+### Checkpoint 4 Preparation And Feasibility Gate
+
+`docs/phase6-fact-entry-protocol.md` is the written execution-protocol draft for
+owner review, not an approved input freeze or permission to enter data. Searches
+found no prior standalone fact-entry protocol in tracked docs or the private
+local area; the accepted evaluation protocol specifies its required contents.
+
+The owner authored the 240 Phase 5 relevance judgments and saw aggregate Phase 5
+results. Disclose that prior exposure; the no-consultation barrier during entry
+is not a claim of historical blinding or independent held-out validation.
+
+Proposed corpus facts are researcher-transcribed from approved source evidence,
+not newly confirmed by the actual candidate/CV author. Current candidate-fact
+APIs remain candidate-owned: server reviewer/provenance fields follow the
+authenticated account (`candidate_confirmed`), not a distinct delegated human.
+The private ledger must separately identify the actual human operator/reviewer,
+their per-decision approval and the returned server attribution. Public methodology
+must disclose this limitation without publishing identities or account mappings.
+Credential possession is not permission to impersonate a candidate.
+
+Before execution, identify governing corpus terms and consent/permission evidence
+and require an explicit authorization record naming operator/reviewer, role,
+covered entities/account scope and permitted delegated actions. If absent or
+insufficient, stop; do not assume consent or bypass ownership. Agents may prepare
+source-bound drafts and schema-valid payload proposals within the information
+barrier, recording agent/tool origin separately from human review. Such drafts
+are not approvals. A named human must review each proposed decision against its
+source; a consolidated review packet is sufficient, not repetitive UI entry.
+Agents must not authenticate as candidate accounts or submit approved-status
+writes/sign-offs under this protocol. No delegated-entry endpoint is implied.
+
+Before creating a benchmark database, audit source evidence against the existing
+contracts without labels, rankings, per-query results or scoring. APIs can store
+source-bound occupation/qualification/experience facts, reviewed groups and
+inventory decisions, but do not guarantee arbitrary source expressibility:
+
+- No manual job-skill creation endpoint exists. Missing R/P capabilities cannot
+  be invented as Q/occupation facts or omitted while claiming completeness.
+  Do not edit/reprocess job text to manufacture missing skill rows or repurpose
+  unrelated extracted occurrences.
+- One-level groups cannot express nested alternatives, conditional degree/
+  experience routes or an O disjunction. Free-text storage does not make these
+  structures assessable. Preserve unsupported structure as a blocker/unknown.
+- A Q group containing only an extracted qualification/experience phrase remains
+  unknown (`explicit_q_fact_required`). Structured Q facts are required; genuine
+  duplicate projections need explicit review and source accounting, not silent
+  requirement deletion.
+- Q comparisons require compatible explicit fields/scope, qualification statement
+  identity/completion or explicit experience duration. O requires reviewed exact
+  selected-release concept identity. No equivalence, proficiency, duration,
+  completion or negative occupation compatibility may be invented to get a score.
+
+Therefore the current APIs support a conservative subset, not a proven complete
+encoding of all thirty source inventories. No corpus-level representability or
+evaluable-query count is claimed without the source-only audit. Unsupported
+requirements must prevent a false sign-off; unresolved assessments retain null
+scores and the accepted complete-pool exclusions. If meaningful execution needs
+a missing contract, stop for a separately scoped implementation decision before
+data entry; do not relax matching-policy-v1 or tune against judgments.
+
+Smallest remaining sequence: approve/freeze entry rules, governing terms and
+explicit operator/entity/action authorization; perform the source-only feasibility
+audit and separately attributed draft preparation; require named human review of
+every proposal, with a consolidated packet allowed; only if defensible, separately
+authorize isolated human-operated entry and complete source accounting; freeze reviewed inputs
+and policy with manifests; then separately authorize pinned indexing, top-20 runs
+and the accepted baseline-controlled evaluation. No new labels or weights.
+The protocol sets stop conditions for missing contracts or an unready corpus.
+Post-ranking input changes require a new experiment identity with the preceding
+freeze/results retained; they must not be folded into the same frozen experiment.
+
+### Historical Implementation Records (Superseded Status)
+
+The Checkpoint 1-3 entries below preserve implementation-time test and review
+history. Statements that work was uncommitted, review-pending, not deployed or
+awaiting a non-null demonstration are superseded by the dated current status
+above. They are not additional open review gates. Historical environment/test
+claims retain their original scope; no tests or operational checks were rerun
+for this documentation-only preparation.
+
+### Checkpoint 3 Presentation (Historical: 2026-11-13)
 
 - `/matching` reads only the owning candidate's current/latest run. An explicit
   button is the sole run-creation action; replacements require confirmation.
@@ -133,11 +246,13 @@ Verification:
   pass. No developer database/API access, Docker commands, deployment, embeddings,
   real runs, rankings, evaluation, frozen artifact edits or Phase 7 features.
 
-Outstanding acceptance: independent review and separately authorized manual
+Historical acceptance list (superseded by the 2026-11-14 status): independent review and separately authorized manual
 acceptance with a non-null declared demonstration result, ownership/privacy and
 assistive-technology checks. Synthetic complete results do not replace that
 demonstration requirement. No corpus facts may be entered through these forms
-without the separate controlled preparation authorization. Phase 6 is incomplete.
+without the separate controlled preparation authorization. The non-null demo and
+independent implementation review are now complete; ownership/privacy and manual
+accessibility checks remain unconfirmed. Phase 6 is incomplete.
 
 Checkpoint 3 merge-blocker corrections: shared API errors no longer append
 matching advice to unrelated 409s. The Phase 6 API adapter alone appends reload
