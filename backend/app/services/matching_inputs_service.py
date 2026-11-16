@@ -7,8 +7,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app.db.models import CandidateSkill, CvDocument, JobSkill, TaxonomyConcept
 from app.db.models.explainable import (CandidateMatchingFact, JobMatchingFact, JobRequirementGroup,
-    JobRequirementGroupMember, JobOccurrenceReview, JobInventoryReview)
-from app.matching.policy import CLASSIFICATIONS, REVIEWS, fingerprint
+    JobRequirementGroupMember, JobOccurrenceReview, JobInventoryReview, JobManualCapability)
+from app.matching.policy import CLASSIFICATIONS, REVIEWS, fingerprint, normalize, compatibility_family
+from app.matching.manual_capabilities import INPUT_ADAPTER_VERSION, manual_conflict
 from app.repositories.matching_inputs_repository import MatchingInputsRepository, snapshot
 
 
@@ -46,6 +47,49 @@ class MatchingInputsService:
 
     def read_job(self, job_id):
         return self.repo.job_state(self.job(job_id))
+
+    def create_capability(self, user, job_id, payload):
+        def action():
+            state = self.repo.job_state(self.job(job_id, True))
+            self.check(payload.expected_fingerprint, state["fingerprint"])
+            text = state["cleaned_description"]
+            if (payload.cleaned_description_sha256 != state["cleaned_description_sha256"]
+                    or payload.evidence_end > len(text)
+                    or text[payload.capability_start:payload.capability_end] != payload.raw_text
+                    or text[payload.evidence_start:payload.evidence_end] != payload.evidence_sentence):
+                raise HTTPException(409, "Cleaned source/hash/span mismatch; reload authoritative inventory")
+            normalized = normalize(payload.raw_text)
+            if not normalized or len(normalized) > 512:
+                raise HTTPException(422, "Normalized capability length must be 1-512 code points")
+            values = payload.model_dump(exclude={"expected_fingerprint", "review_status"})
+            values.update(id=uuid4(), job_id=job_id, normalized_text=normalized,
+                          compatibility_family=compatibility_family(payload.skill_type), provenance="manual_transcription")
+            item = JobManualCapability(**values, **self.review(user, "approved"))
+            proposed = {**state, "manual_capabilities": [*state["manual_capabilities"], snapshot(item)]}
+            if conflict := manual_conflict(proposed):
+                raise HTTPException(409, conflict + "; record requirement as unrepresented in the private ledger")
+            overlaps = any(payload.evidence_start < x["evidence_end"] and x["evidence_start"] < payload.evidence_end
+                           for x in state["manual_capabilities"])
+            self.db.add(item)
+            self.db.flush()
+            self.repo.invalidate_job(job_id)
+            return {**snapshot(item), "warnings": ["evidence_span_overlap"] if overlaps else []}
+        return self.mutate(action)
+
+    def delete_capability(self, user, job_id, capability_id, expected):
+        def action():
+            state = self.repo.job_state(self.job(job_id, True))
+            self.check(expected, state["fingerprint"])
+            item = self.db.get(JobManualCapability, capability_id)
+            if not item or item.job_id != job_id:
+                raise HTTPException(404, "Capability not found")
+            if self.db.scalar(select(JobRequirementGroupMember.id).where(
+                    JobRequirementGroupMember.manual_capability_id == capability_id)):
+                raise HTTPException(409, "Remove the referencing group before removing a capability")
+            self.db.delete(item)
+            self.repo.invalidate_job(job_id)
+            return {"deleted": str(capability_id)}
+        return self.mutate(action)
 
     def mutate(self, action):
         try:
@@ -115,21 +159,25 @@ class MatchingInputsService:
             state = self.repo.job_state(job)
             self.check(payload.expected_fingerprint, state["fingerprint"])
             for member in payload.members:
-                item = self.db.get(JobSkill if member.job_skill_id else JobMatchingFact,
-                                   member.job_skill_id or member.job_matching_fact_id)
+                model = JobManualCapability if member.manual_capability_id else JobSkill if member.job_skill_id else JobMatchingFact
+                item = self.db.get(model, member.manual_capability_id or member.job_skill_id or member.job_matching_fact_id)
                 if not item or item.job_id != job_id:
                     raise HTTPException(404, "Atomic group member not found")
                 if item.review_status != "approved":
                     raise HTTPException(409, "Group members must be approved")
-                kind = item.skill_type if member.job_skill_id else item.fact_type
+                kind = item.skill_type if member.job_skill_id or member.manual_capability_id else item.fact_type
+                if member.manual_capability_id and item.classification != payload.classification:
+                    raise HTTPException(422, "Manual member classification must match the group")
                 if payload.component == "Q":
                     if kind not in {"qualification", "experience"}:
                         raise HTTPException(422, "Q requires qualification/experience evidence")
                 elif kind not in {"skill", "tool", "domain_knowledge", "language"}:
                     raise HTTPException(422, "R/P requires compatible occupational capability evidence")
             item = JobRequirementGroup(id=uuid4(), job_id=job_id,
-                **payload.model_dump(exclude={"expected_fingerprint", "members", "review_status"}),
+                **payload.model_dump(exclude={"expected_fingerprint", "members", "review_status", "critical_rationale"}),
                 source_fingerprint=state["source_fingerprint"], **self.review(user, payload.review_status))
+            if payload.critical_rationale:
+                item.evidence_snapshot = {"critical_source_rationale": payload.critical_rationale}
             self.db.add(item)
             self.db.flush()
             self.db.add_all(JobRequirementGroupMember(id=uuid4(), job_id=job_id, group_id=item.id, **member.model_dump()) for member in payload.members)
@@ -184,12 +232,13 @@ class MatchingInputsService:
                 self.validate_inventory(state, payload)
             old = self.db.scalar(select(JobInventoryReview).where(JobInventoryReview.job_id == job_id))
             values = payload.model_dump(exclude={"expected_fingerprint"})
-            if old and old.source_fingerprint == state["fingerprint"] and all(getattr(old, k) == v for k, v in values.items()):
+            if old and old.input_adapter_version == INPUT_ADAPTER_VERSION and old.source_fingerprint == state["fingerprint"] and all(getattr(old, k) == v for k, v in values.items()):
                 return snapshot(old)
             if old:
                 self.db.delete(old)
                 self.db.flush()
             item = JobInventoryReview(id=uuid4(), job_id=job_id,
+                input_adapter_version=INPUT_ADAPTER_VERSION,
                 **{k: v for k, v in values.items() if k != "review_status"},
                 source_fingerprint=state["fingerprint"], **self.review(user, payload.review_status))
             self.db.add(item)
@@ -200,7 +249,16 @@ class MatchingInputsService:
 
     @staticmethod
     def validate_inventory(state, payload):
+        if conflict := manual_conflict(state):
+            raise HTTPException(409, conflict)
         groups = {str(x["id"]): x for x in state["groups"]}
+        for manual in state.get("manual_capabilities", []):
+            member = next((m for m in state["members"] if m.get("manual_capability_id") == manual["id"]), None)
+            group = groups.get(str(member["group_id"])) if member else None
+            if not group or group["component"] not in {"R", "P"} or group["classification"] != manual["classification"]:
+                raise HTTPException(409, "Manual capability missing consistent scoring group")
+            if group["critical"] and not group["evidence_snapshot"].get("critical_source_rationale"):
+                raise HTTPException(409, "Manual critical group requires source-bound rationale")
         skill_members = {str(x["job_skill_id"]): groups[str(x["group_id"])] for x in state["members"] if x["job_skill_id"]}
         fact_members = {str(x["job_matching_fact_id"]): groups[str(x["group_id"])] for x in state["members"] if x["job_matching_fact_id"]}
         reviews = {str(x["job_skill_id"]): x for x in state["occurrences"]}

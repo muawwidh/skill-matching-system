@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session
 from app.db.models import (CandidateProfile, CandidateSkill, CvDocument, Job, JobSkill,
     ApprovedTaxonomyLink, TaxonomyConcept, TaxonomyVersion, ExtractedCandidateTerm, ExtractedJobTerm)
 from app.db.models.explainable import (CandidateMatchingFact, JobMatchingFact, JobRequirementGroup,
-    JobRequirementGroupMember, JobOccurrenceReview, JobInventoryReview, MatchingRun, JobMatchResult)
+    JobRequirementGroupMember, JobOccurrenceReview, JobInventoryReview, MatchingRun, JobMatchResult, JobManualCapability)
 from app.matching.policy import fingerprint
+from app.matching.manual_capabilities import INPUT_ADAPTER_VERSION, cleaned_hash
 
 
 INPUT_LOCK_KEY = 603402
@@ -85,16 +86,22 @@ class MatchingInputsRepository:
         source = fingerprint({"job": snapshot(job), "skills": [snapshot(x) for x in skills],
                               "taxonomy": self.taxonomy(skills, "job")})
         data = {"source": source, "facts": [snapshot(x) for x in facts],
+                "manual_capabilities": [snapshot(x) for x in self.rows(JobManualCapability, job_id=job.id)],
+                "input_adapter_version": INPUT_ADAPTER_VERSION,
                 "groups": [snapshot(x) for x in groups], "members": [snapshot(x) for x in members],
                 "occurrences": [snapshot(x) for x in occurrences],
                 "fact_taxonomy": self.taxonomy([], "job", facts)}
         current_hash = fingerprint(data)
         review = self.db.scalar(select(JobInventoryReview).where(JobInventoryReview.job_id == job.id))
         return {"fingerprint": current_hash, "source_fingerprint": source,
+                "cleaned_description": job.cleaned_description or "",
+                "cleaned_description_sha256": cleaned_hash(job.cleaned_description or ""),
+                "coordinate_convention": "unicode_code_points_half_open",
                 "taxonomy": self.taxonomy(skills, "job"),
                 "skills": [snapshot(x) for x in skills], **{k: v for k, v in data.items() if k != "source"},
                 "inventory": snapshot(review) if review else None,
-                "inventory_current": bool(review and review.inventory_complete and review.source_fingerprint == current_hash)}
+                "inventory_current": bool(review and review.inventory_complete and review.source_fingerprint == current_hash
+                    and review.input_adapter_version == INPUT_ADAPTER_VERSION)}
 
     def invalidate_candidate(self, profile_id):
         run_ids = list(self.db.scalars(select(MatchingRun.id).where(

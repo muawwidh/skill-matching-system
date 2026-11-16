@@ -41,10 +41,11 @@ class MemberInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     job_skill_id: UUID | None = None
     job_matching_fact_id: UUID | None = None
+    manual_capability_id: UUID | None = None
 
     @model_validator(mode="after")
     def exclusive(self):
-        if (self.job_skill_id is None) == (self.job_matching_fact_id is None):
+        if sum(x is not None for x in (self.job_skill_id, self.job_matching_fact_id, self.manual_capability_id)) != 1:
             raise ValueError("Exactly one atomic source reference required")
         return self
 
@@ -56,18 +57,56 @@ class GroupInput(Input):
     critical: bool = Field(strict=True)
     review_status: Review
     members: list[MemberInput] = Field(min_length=1, max_length=100)
+    critical_rationale: str | None = Field(default=None, min_length=1, max_length=1000)
 
     @model_validator(mode="after")
     def consistent(self):
-        ids = [(x.job_skill_id, x.job_matching_fact_id) for x in self.members]
+        ids = [(x.job_skill_id, x.job_matching_fact_id, x.manual_capability_id) for x in self.members]
         if len(set(ids)) != len(ids) or (self.operator == "SINGLE" and len(ids) != 1):
             raise ValueError("Distinct atomic members and valid SINGLE cardinality required")
         if self.critical and (self.component != "R" or self.review_status != "approved" or self.classification != "required"):
             raise ValueError("Only explicitly approved required-skill R groups can be critical")
+        if self.critical and any(x.manual_capability_id for x in self.members) and not (self.critical_rationale or "").strip():
+            raise ValueError("Manual critical groups require a source-bound rationale")
         if ((self.component == "R" and self.classification != "required") or
             (self.component == "P" and self.classification != "preferred") or
             (self.component == "Q" and self.classification not in {"required", "preferred"})):
             raise ValueError("Component/classification mismatch")
+        return self
+
+
+class CapabilityInput(Input):
+    raw_text: str = Field(min_length=1, max_length=255)
+    skill_type: Literal["skill", "tool", "domain_knowledge", "language"]
+    classification: Literal["required", "preferred"]
+    review_status: Literal["approved"]
+    cleaned_description_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    capability_start: int = Field(ge=0, strict=True)
+    capability_end: int = Field(gt=0, strict=True)
+    evidence_start: int = Field(ge=0, strict=True)
+    evidence_end: int = Field(gt=0, strict=True)
+    evidence_sentence: str = Field(min_length=1, max_length=1000)
+    review_reason: str = Field(min_length=1, max_length=1000)
+    ledger_reference: str = Field(min_length=1, max_length=255)
+    local_source_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    local_line_start: int | None = Field(default=None, ge=1, strict=True)
+    local_line_end: int | None = Field(default=None, ge=1, strict=True)
+    local_start: int | None = Field(default=None, ge=0, strict=True)
+    local_end: int | None = Field(default=None, gt=0, strict=True)
+    no_local_file_anchor: bool = Field(strict=True)
+
+    @model_validator(mode="after")
+    def anchors(self):
+        if not (self.evidence_start <= self.capability_start < self.capability_end <= self.evidence_end):
+            raise ValueError("Contained half-open code-point spans required")
+        anchors = (self.local_source_sha256, self.local_line_start, self.local_line_end, self.local_start, self.local_end)
+        if self.no_local_file_anchor:
+            if any(x is not None for x in anchors):
+                raise ValueError("No-local-file declaration cannot contain a local anchor")
+        elif any(x is None for x in anchors) or self.local_line_end < self.local_line_start or self.local_end <= self.local_start:
+            raise ValueError("Complete ordered local anchor required")
+        if not self.review_reason.strip() or not self.ledger_reference.strip():
+            raise ValueError("Substantive review reason and ledger reference required")
         return self
 
 

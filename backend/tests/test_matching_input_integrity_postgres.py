@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 from alembic import command
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -146,15 +146,29 @@ def test_candidate_mutation_events_and_owner_reassignment(pg_database, event):
 
 def test_populated_0009_upgrade_preserves_history_and_nullable_provenance(pg_database):
     engine, config, _ = pg_database
+    command.downgrade(config, "0009_explainable_matching")
     with Session(engine) as db:
         _, profiles, job, _ = seed(db)
-        run, result = run_result(db, profiles[0], job)
-        db.add(MatchScoreComponent(result_id=result.id, component="R", applicability="applicable",
+        # Insert the actual 0009 table shape before upgrading. New adapter tags
+        # must not be removed from a later run merely to permit a downgrade.
+        from app.db.models.explainable import ScoringConfiguration
+        from app.matching.policy import POLICY_HASH
+        identity, result_id = uuid4(), uuid4()
+        db.execute(text("""INSERT INTO matching_runs
+            (id,candidate_profile_id,policy_id,candidate_fingerprint,policy_fingerprint,input_fingerprint,
+             universe_fingerprint,status,is_current,pool_limit,stale_missing_job_count)
+            VALUES (:id,:profile,:policy,:hash,:policyhash,:hash,:hash,'current',true,20,0)"""),
+            {"id":identity,"profile":profiles[0].id,"policy":db.scalar(select(ScoringConfiguration.id)),
+             "hash":"1"*64,"policyhash":POLICY_HASH})
+        db.execute(text("""INSERT INTO job_match_results
+            (id,run_id,job_id,job_fingerprint,input_fingerprint,alignment_fraction,alignment_value,
+             provisional,status,retrieval_rank,retrieval_similarity,reason_code,reason_parameters)
+            VALUES (:id,:run,:job,:hash,:hash,'100/1',100,false,'ready',1,.8,'synthetic','{}')"""),
+            {"id":result_id,"run":identity,"job":job.id,"hash":"1"*64})
+        db.add(MatchScoreComponent(result_id=result_id, component="R", applicability="applicable",
             status="assessed", numerator=2, denominator=6, value_fraction="1/3", value=Decimal(".333333"),
             base_weight=7, reason_code="synthetic", reason_parameters={}))
         db.commit()
-        identity = run.id
-    command.downgrade(config, "0009_explainable_matching")
     with engine.connect() as conn:
         before = conn.execute(text("SELECT * FROM matching_runs WHERE id=:id"), {"id": identity}).mappings().one()
     command.upgrade(config, "head")

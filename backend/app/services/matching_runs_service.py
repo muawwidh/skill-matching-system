@@ -13,6 +13,9 @@ from app.db.models import User, CandidateProfile
 from app.db.models.explainable import (MatchingRun, JobMatchResult, MatchScoreComponent,
     SkillGapResult, SkillGapAtomicResult)
 from app.matching.assessment import InputConsistencyError, assess_inputs
+from app.matching.manual_capabilities import INPUT_ADAPTER_VERSION
+from app.matching.public_evidence import (project, EVIDENCE, ATOMIC, GAP_EVIDENCE,
+    GAP_REASONS, COMPONENT_REASONS, RESULT_REASONS, PROVENANCE)
 from app.matching.policy import (POLICY_VERSION, POLICY_HASH, Component, assess, decimal_value,
     fingerprint, fraction_string, normalize)
 from app.repositories.matching_runs_repository import MatchingRunsRepository
@@ -111,6 +114,7 @@ class MatchingRunsService:
                 "full_universe_fingerprint": captured["universe_fingerprint"],
                 "retrieval_order": retrieval_input, "capture_fingerprint": captured["fingerprint"]})
             run = MatchingRun(id=run_id, candidate_profile_id=profile.id, policy_id=policy.id,
+                input_adapter_version=INPUT_ADAPTER_VERSION,
                 candidate_fingerprint=captured["candidate"]["fingerprint"], policy_fingerprint=POLICY_HASH,
                 input_fingerprint=fingerprint({"capture": captured["fingerprint"], "retrieval": retrieval_input}),
                 universe_fingerprint=captured["universe_fingerprint"], status="current", is_current=True,
@@ -237,7 +241,7 @@ class MatchingRunsService:
                 atomic_id = uuid4()
                 # Evidence prose is stored once, at a typed source anchor. All
                 # individual comparison decisions/IDs remain relational rows.
-                parameters = {k: v for k, v in atom.items() if k not in {
+                parameters = {k: v for k, v in project(atom, ATOMIC).items() if k not in {
                     "candidate_evidence_reference", "requirement_evidence_reference"}}
                 member = next((m for m in state["members"] if str(m["id"]) == atom.get("member_id")), {})
                 for side, source, is_fact, anchors, refs in (
@@ -247,9 +251,12 @@ class MatchingRunsService:
                     source_id = atom.get("candidate_id" if side == "candidate" else "requirement_id")
                     if source_id is None:
                         continue
-                    source_row = next((x for x in source["facts" if is_fact else "skills"] if str(x["id"]) == source_id),
+                    is_manual = side == "requirement" and (bool(member.get("manual_capability_id"))
+                        or atom.get("requirement_origin") == "phase6_manual_capability")
+                    source_row = next((x for x in source["manual_capabilities" if is_manual else "facts" if is_fact else "skills"] if str(x["id"]) == source_id),
                                       {"id": source_id, "source_record_missing": True})
-                    key = ("fact" if is_fact else "skill", source_id, fingerprint(source_row))
+                    origin = "phase6_manual_capability" if is_manual else "fact" if is_fact else "extracted_job_skill" if side == "requirement" else "skill"
+                    key = (origin, source_id, fingerprint(source_row))
                     anchor_id = anchors.setdefault(key, str(atomic_id))
                     reference = {"id": source_id, "source_kind": key[0], "anchor_atomic_id": anchor_id,
                                  "source_snapshot_sha256": key[2]}
@@ -262,7 +269,7 @@ class MatchingRunsService:
                 atoms.append(SkillGapAtomicResult(id=atomic_id, gap_id=gap.id,
                     member_id=UUID(atom["member_id"]) if atom.get("member_id") else None,
                     occurrence_fingerprint=fingerprint({"candidate": atom.get("candidate_id"),
-                        "requirement": atom["requirement_id"], "input": run.candidate_fingerprint}),
+                        "requirement": atom["requirement_id"], "origin": atom.get("requirement_origin"), "input": run.candidate_fingerprint}),
                     support_fraction=exact(value), support_value=numeric(value), reason_code=atom["reason_code"],
                     reason_parameters=bounded_snapshot(parameters, 8192, "atomic_reasons")))
             candidates, c_summary = reference_summary(list(candidate_refs.values()), "skill_gap_atomic_results")
@@ -285,8 +292,12 @@ class MatchingRunsService:
                 "statement", "completion", "duration_months", "field", "scope", "evidence_reference",
                 "evidence_sentence", "review_status", "cv_document_id", "taxonomy_concept_id", "taxonomy_release_id",
                 "source_fingerprint", "reviewer_pseudonym_snapshot", "reviewer_role_snapshot", "reviewed_at",
-                "source_record_missing", "candidate_profile_id", "job_id", "source", "confidence_score")
+                "source_record_missing", "candidate_profile_id", "job_id", "source", "confidence_score",
+                "provenance", "origin", "classification", "cleaned_description_sha256", "capability_start", "capability_end",
+                "evidence_start", "evidence_end")
         value = json_value({key: row[key] for key in keys if key in row})
+        if row.get("provenance") == "manual_transcription":
+            value["origin"] = "phase6_manual_capability"
         value["source_snapshot_sha256"] = fingerprint(row)
         value["comparison_fingerprints"] = {key: hashlib.sha256(normalize(row[key]).encode()).hexdigest()
             for key in ("normalized_text", "statement", "field", "scope") if key in row}
@@ -324,7 +335,7 @@ class MatchingRunsService:
                     "original_characters": len(row[key]), "retained_characters": 0}
                 value[key] = ""
         value["full_source_required_for_text_reconstruction"] = bool(value["text_omissions"])
-        return bounded_snapshot(value, 3200, "evidence_excerpt")
+        return bounded_snapshot(project(value, EVIDENCE), 3200, "evidence_excerpt")
 
     def current(self, user: User) -> dict:
         profile = self.profile(user)
@@ -346,6 +357,7 @@ class MatchingRunsService:
         if run.status != "unreplayable":
             captured = self.repo.capture(profile)
             current = bool(run.is_current and run.status == "current" and captured["candidate_ready"]
+                and run.input_adapter_version == INPUT_ADAPTER_VERSION
                 and captured["fingerprint"] == (run.provenance_snapshot or {}).get("capture_fingerprint")
                 and run.policy_fingerprint == POLICY_HASH and run.template_version == TEMPLATE_V2
                 and run.taxonomy_fingerprint == captured["taxonomy_fingerprint"]
@@ -354,6 +366,8 @@ class MatchingRunsService:
                 and run.retrieval_fingerprint == fingerprint((run.provenance_snapshot or {}).get("retrieval_order")))
         if not current:
             reasons.append("history_unreplayable" if run.status == "unreplayable" else "inputs_stale_or_historical")
+        if run.input_adapter_version != INPUT_ADAPTER_VERSION:
+            reasons.append("input_adapter_version_mismatch")
         results = [self.result_view(row, current, run.status == "unreplayable") for row in self.repo.results(run.id)]
         # Exact fractions determine order; a provisional row never receives an invented zero.
         results.sort(key=result_order_key)
@@ -366,10 +380,11 @@ class MatchingRunsService:
         if len(results) < 20:
             reasons.append("retrieval_pool_incomplete")
         return {"run_id": run.id, "policy_version": POLICY_VERSION, "policy_hash": run.policy_fingerprint,
+            "input_adapter_version": run.input_adapter_version,
             "engine_version": run.engine_version, "status": run.status if current or run.status in {"unreplayable", "historical"} else "stale",
             "current": current, "created_at": run.created_at, "input_fingerprint": run.input_fingerprint,
             "candidate_fingerprint": run.candidate_fingerprint, "taxonomy_fingerprint": run.taxonomy_fingerprint,
-            "retrieval_fingerprint": run.retrieval_fingerprint, "provenance": run.provenance_snapshot or {},
+            "retrieval_fingerprint": run.retrieval_fingerprint, "provenance": project(run.provenance_snapshot or {}, PROVENANCE),
             "retrieval": {"template_version": run.template_version, "model_id": run.model_id,
                 "model_revision": run.model_revision, "pool_limit": run.pool_limit,
                 "stale_missing_job_count": stale_missing_count,
@@ -397,23 +412,23 @@ class MatchingRunsService:
             "recorded_alignment_fraction": row.alignment_fraction,
             "original_retrieval_rank": row.retrieval_rank, "retrieval_similarity": str(row.retrieval_similarity),
             "input_fingerprint": row.input_fingerprint, "reason_code": row.reason_code,
-            "reason_parameters": {} if redacted else row.reason_parameters,
+            "reason_parameters": {} if redacted else project(row.reason_parameters, RESULT_REASONS),
             "components": [{"component": x.component, "status": x.status, "applicability": x.applicability,
                 "numerator": str(x.numerator) if x.numerator is not None else None,
                 "denominator": str(x.denominator) if x.denominator is not None else None,
                 "base_weight": x.base_weight, "effective_weight_fraction": x.effective_weight_fraction,
                 "effective_weight_value": str(x.effective_weight_value) if x.effective_weight_value is not None else None,
                 "value_fraction": x.value_fraction, "value": str(x.value) if x.value is not None else None,
-                "coverage_fraction": None if redacted else x.reason_parameters.get("coverage_fraction"),
-                "contribution_fraction": None if redacted else x.reason_parameters.get("contribution_fraction"),
-                "reason_code": x.reason_code, "reason_parameters": {} if redacted else x.reason_parameters} for x in components],
+                "coverage_fraction": None if redacted else project(x.reason_parameters, COMPONENT_REASONS).get("coverage_fraction"),
+                "contribution_fraction": None if redacted else project(x.reason_parameters, COMPONENT_REASONS).get("contribution_fraction"),
+                "reason_code": x.reason_code, "reason_parameters": {} if redacted else project(x.reason_parameters, COMPONENT_REASONS)} for x in components],
             "gaps": [{"group_id": x.group_id, "status": x.status, "critical": x.critical,
                 "support_fraction": x.support_fraction, "reason_code": x.reason_code,
-                "reason_parameters": {} if redacted else x.reason_parameters,
-                "evidence": {} if redacted else x.evidence_snapshot,
+                "reason_parameters": {} if redacted else project(x.reason_parameters, GAP_REASONS),
+                "evidence": {} if redacted else project(x.evidence_snapshot, GAP_EVIDENCE),
                 "atomic_assessments": [{"id": a.id, "member_id": a.member_id,
                     "support_fraction": a.support_fraction, "reason_code": a.reason_code,
-                    "reason_parameters": {} if redacted else a.reason_parameters}
+                    "reason_parameters": {} if redacted else project(a.reason_parameters, ATOMIC)}
                     for a in self.repo.atomic(x.id)]} for x in gaps]}
         for label, classification in (("missing_required", "required"), ("missing_preferred", "preferred")):
             view[label] = [x["group_id"] for x in view["gaps"] if x["status"] == "Missing"

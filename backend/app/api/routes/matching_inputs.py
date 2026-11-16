@@ -8,7 +8,7 @@ from app.api.dependencies.auth import require_roles
 from app.core.config import settings
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.matching_inputs import FactInput, GroupInput, InventoryInput, OccurrenceInput
+from app.schemas.matching_inputs import FactInput, GroupInput, InventoryInput, OccurrenceInput, CapabilityInput
 from app.services.matching_inputs_service import MatchingInputsService
 
 router = APIRouter()
@@ -47,6 +47,18 @@ def job_inventory(job_id: UUID, user: User = Depends(manager), db: Session = Dep
 @router.post("/jobs/{job_id}/facts", status_code=201)
 def add_job_fact(job_id: UUID, payload: FactInput, user: User = Depends(manager), db: Session = Depends(get_db)):
     return MatchingInputsService(db).create_fact(user, payload, job_id)
+
+
+@router.post("/jobs/{job_id}/capabilities", status_code=201)
+def add_capability(job_id: UUID, payload: CapabilityInput, user: User = Depends(manager), db: Session = Depends(get_db)):
+    return MatchingInputsService(db).create_capability(user, job_id, payload)
+
+
+@router.delete("/jobs/{job_id}/capabilities/{capability_id}")
+def remove_capability(job_id: UUID, capability_id: UUID,
+                      expected_fingerprint: str = Query(pattern=r"^[0-9a-f]{64}$"),
+                      user: User = Depends(manager), db: Session = Depends(get_db)):
+    return MatchingInputsService(db).delete_capability(user, job_id, capability_id, expected_fingerprint)
 
 
 @router.delete("/jobs/{job_id}/facts/{fact_id}")

@@ -10,6 +10,7 @@ from app.db.models import CandidateProfile, Job, JobEmbedding, TaxonomyVersion
 from app.db.models.explainable import (MatchingRun, JobMatchResult, ScoringConfiguration,
     MatchScoreComponent, SkillGapResult, SkillGapAtomicResult)
 from app.matching.policy import CANONICAL_CONFIGURATION, POLICY_VERSION, POLICY_HASH, fingerprint, validate_configuration
+from app.matching.manual_capabilities import INPUT_ADAPTER_VERSION
 from app.repositories.matching_inputs_repository import MatchingInputsRepository, snapshot, lock_matching_inputs
 from app.repositories.retrieval_repository import RetrievalRepository
 from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATE_V2
@@ -75,7 +76,7 @@ class MatchingRunsRepository:
         candidate_ready = bool(profile.status == "active" and profile.consent_to_process_cv
             and candidate_input and candidate_embedding and candidate_embedding.status == "ready"
             and candidate_embedding.source_hash == candidate_input.source_hash)
-        provenance = {"candidate_hash": candidate["fingerprint"],
+        provenance = {"input_adapter_version": INPUT_ADAPTER_VERSION, "candidate_hash": candidate["fingerprint"],
             "candidate_embedding": self.embedding_snapshot(candidate_embedding),
             "candidate_representation_source_hash": candidate_input.source_hash if candidate_input else None,
             "taxonomy_selection": [{"id": str(x.id), "fingerprint": fingerprint(snapshot(x))} for x in releases],

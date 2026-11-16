@@ -72,6 +72,45 @@ class JobMatchingFact(Fact, TimestampMixin, Base):
     job_id: Mapped[UUID] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"))
 
 
+class JobManualCapability(Reviewed, TimestampMixin, Base):
+    __tablename__ = "job_manual_capabilities"
+    __table_args__ = (
+        UniqueConstraint("id", "job_id", name="uq_manual_owner"),
+        UniqueConstraint("job_id", "compatibility_family", "normalized_text", name="uq_manual_key"),
+        CheckConstraint("review_status = 'approved' AND provenance = 'manual_transcription'", name="ck_manual_approved"),
+        CheckConstraint("classification IN ('required','preferred')", name="ck_manual_classification"),
+        CheckConstraint("(skill_type IN ('skill','tool') AND compatibility_family = 'technical_capability') OR (skill_type IN ('domain_knowledge','language') AND compatibility_family = skill_type)", name="ck_manual_family"),
+        CheckConstraint("0 <= evidence_start AND evidence_start <= capability_start AND capability_start < capability_end AND capability_end <= evidence_end", name="ck_manual_spans"),
+        CheckConstraint("length(raw_text) BETWEEN 1 AND 255 AND length(normalized_text) BETWEEN 1 AND 512 AND length(evidence_sentence) BETWEEN 1 AND 1000 AND length(review_reason) BETWEEN 1 AND 1000 AND length(ledger_reference) BETWEEN 1 AND 255", name="ck_manual_lengths"),
+        CheckConstraint("(local_source_sha256 IS NULL AND local_line_start IS NULL AND local_line_end IS NULL AND local_start IS NULL AND local_end IS NULL) OR (local_source_sha256 IS NOT NULL AND local_line_start IS NOT NULL AND local_line_end IS NOT NULL AND local_start IS NOT NULL AND local_end IS NOT NULL AND local_line_start >= 1 AND local_line_end >= local_line_start AND local_start >= 0 AND local_end > local_start)", name="ck_manual_local_anchor"),
+        CheckConstraint("cleaned_description_sha256 ~ '^[0-9a-f]{64}$' AND (local_source_sha256 IS NULL OR local_source_sha256 ~ '^[0-9a-f]{64}$')", name="ck_manual_hashes").ddl_if(dialect="postgresql"),
+        CheckConstraint("octet_length(evidence_snapshot::text) <= 8192", name="ck_manual_snapshot_bound").ddl_if(dialect="postgresql"),
+        CheckConstraint("no_local_file_anchor = (local_source_sha256 IS NULL)", name="ck_manual_no_local_file"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    job_id: Mapped[UUID] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), index=True)
+    raw_text: Mapped[str] = mapped_column(String(255))
+    normalized_text: Mapped[str] = mapped_column(String(512))
+    skill_type: Mapped[str] = mapped_column(String(30))
+    compatibility_family: Mapped[str] = mapped_column(String(30))
+    classification: Mapped[str] = mapped_column(String(30))
+    provenance: Mapped[str] = mapped_column(String(30))
+    cleaned_description_sha256: Mapped[str] = mapped_column(String(64))
+    capability_start: Mapped[int] = mapped_column(Integer)
+    capability_end: Mapped[int] = mapped_column(Integer)
+    evidence_start: Mapped[int] = mapped_column(Integer)
+    evidence_end: Mapped[int] = mapped_column(Integer)
+    evidence_sentence: Mapped[str] = mapped_column(String(1000))
+    review_reason: Mapped[str] = mapped_column(String(1000))
+    ledger_reference: Mapped[str] = mapped_column(String(255))
+    local_source_sha256: Mapped[str] = mapped_column(String(64), nullable=True)
+    local_line_start: Mapped[int] = mapped_column(Integer, nullable=True)
+    local_line_end: Mapped[int] = mapped_column(Integer, nullable=True)
+    local_start: Mapped[int] = mapped_column(Integer, nullable=True)
+    local_end: Mapped[int] = mapped_column(Integer, nullable=True)
+    no_local_file_anchor: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+
 class JobRequirementGroup(Reviewed, TimestampMixin, Base):
     __tablename__ = "job_requirement_groups"
     __table_args__ = (
@@ -97,7 +136,9 @@ class JobRequirementGroupMember(Base):
         ForeignKeyConstraint(["group_id", "job_id"], ["job_requirement_groups.id", "job_requirement_groups.job_id"], ondelete="CASCADE"),
         ForeignKeyConstraint(["job_skill_id", "job_id"], ["job_skills.id", "job_skills.job_id"], ondelete="CASCADE"),
         ForeignKeyConstraint(["job_matching_fact_id", "job_id"], ["job_matching_facts.id", "job_matching_facts.job_id"], ondelete="CASCADE"),
-        CheckConstraint("(job_skill_id IS NOT NULL AND job_matching_fact_id IS NULL) OR (job_skill_id IS NULL AND job_matching_fact_id IS NOT NULL)", name="ck_member_reference"),
+        ForeignKeyConstraint(["manual_capability_id", "job_id"], ["job_manual_capabilities.id", "job_manual_capabilities.job_id"], deferrable=True, initially="DEFERRED"),
+        CheckConstraint("CASE WHEN job_skill_id IS NULL THEN 0 ELSE 1 END + CASE WHEN job_matching_fact_id IS NULL THEN 0 ELSE 1 END + CASE WHEN manual_capability_id IS NULL THEN 0 ELSE 1 END = 1", name="ck_member_reference"),
+        Index("uq_group_manual", "manual_capability_id", unique=True, postgresql_where=text("manual_capability_id IS NOT NULL"), sqlite_where=text("manual_capability_id IS NOT NULL")),
         Index("uq_group_job_skill", "job_skill_id", unique=True, postgresql_where=text("job_skill_id IS NOT NULL"), sqlite_where=text("job_skill_id IS NOT NULL")),
         Index("uq_group_q_fact", "job_matching_fact_id", unique=True, postgresql_where=text("job_matching_fact_id IS NOT NULL"), sqlite_where=text("job_matching_fact_id IS NOT NULL")),
     )
@@ -106,6 +147,7 @@ class JobRequirementGroupMember(Base):
     group_id: Mapped[UUID] = mapped_column(ForeignKey("job_requirement_groups.id", ondelete="CASCADE"))
     job_skill_id: Mapped[UUID] = mapped_column(ForeignKey("job_skills.id", ondelete="CASCADE"), nullable=True)
     job_matching_fact_id: Mapped[UUID] = mapped_column(ForeignKey("job_matching_facts.id", ondelete="CASCADE"), nullable=True)
+    manual_capability_id: Mapped[UUID] = mapped_column(nullable=True)
 
 
 class JobInventoryReview(Reviewed, TimestampMixin, Base):
@@ -124,6 +166,7 @@ class JobInventoryReview(Reviewed, TimestampMixin, Base):
     q_applicability: Mapped[str] = mapped_column(String(20))
     q_reason: Mapped[str] = mapped_column(String(80), nullable=True)
     source_fingerprint: Mapped[str] = mapped_column(String(64))
+    input_adapter_version: Mapped[str] = mapped_column(String(80), nullable=True)
 
 
 class JobOccurrenceReview(Reviewed, TimestampMixin, Base):
@@ -160,6 +203,7 @@ class MatchingRun(TimestampMixin, Base):
     pool_limit: Mapped[int] = mapped_column(Integer)
     stale_missing_job_count: Mapped[int] = mapped_column(Integer)
     engine_version: Mapped[str] = mapped_column(String(80), nullable=True)
+    input_adapter_version: Mapped[str] = mapped_column(String(80), nullable=True)
     model_id: Mapped[str] = mapped_column(String(160), nullable=True)
     model_revision: Mapped[str] = mapped_column(String(64), nullable=True)
     template_version: Mapped[str] = mapped_column(String(40), nullable=True)

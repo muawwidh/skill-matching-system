@@ -23,7 +23,8 @@ from test_taxonomy_postgres import pg_database  # noqa: F401
 
 NEW_TABLES={"scoring_configurations","candidate_matching_facts","job_matching_facts","job_requirement_groups",
             "job_requirement_group_members","job_inventory_reviews","job_occurrence_reviews","matching_runs",
-            "job_match_results","match_score_components","skill_gap_results","skill_gap_atomic_results"}
+            "job_match_results","match_score_components","skill_gap_results","skill_gap_atomic_results",
+            "job_manual_capabilities"}
 
 
 def legacy_snapshot(engine):
@@ -104,6 +105,7 @@ def test_group_membership_global_exclusivity_and_cross_job_ownership(pg_database
 def run_result(db, profile, job):
     config=db.scalar(select(ScoringConfiguration))
     run=MatchingRun(candidate_profile_id=profile.id,policy_id=config.id,candidate_fingerprint="1"*64,
+        input_adapter_version="phase6-inputs-v2",
         policy_fingerprint=POLICY_HASH,input_fingerprint="2"*64,universe_fingerprint="3"*64,
         status="current",is_current=True,pool_limit=20,stale_missing_job_count=0)
     db.add(run);db.flush()

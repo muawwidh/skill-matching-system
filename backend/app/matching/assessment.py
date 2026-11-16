@@ -7,6 +7,7 @@ No prose parsing, credential hierarchy, period aggregation or equivalence is
 performed. Unsupported reviewed-fact comparisons abstain rather than score 0.
 """
 from fractions import Fraction
+from app.matching.manual_capabilities import manual_conflict, INPUT_ADAPTER_VERSION
 
 from app.matching.policy import (
     CLASSIFICATIONS, REVIEWS, Component, Link, Occurrence, Support, assess, fingerprint, group_support,
@@ -136,17 +137,23 @@ def assess_inputs(candidate_state: dict, job_state: dict, selected_releases: fro
         if not {"links", "concepts", "releases"} <= state["taxonomy"].keys():
             raise ValueError("Full taxonomy snapshot required")
     releases = frozenset(str(x) for x in selected_releases)
+    if conflict := manual_conflict(job_state):
+        raise InputConsistencyError(conflict, "Manual source or extracted/manual key conflict; inventory is incomplete")
     candidates = tuple(_occurrence(x, candidate_state["taxonomy"]) for x in _ordered(candidate_state["skills"])
                        if x["review_status"] == "approved" and
                        x["skill_type"] in {"skill", "tool", "domain_knowledge", "language"})
     facts = _ordered(candidate_state["facts"])
     skills = {_id(x["id"]): x for x in job_state["skills"]}
+    manuals = {_id(x["id"]): {**x, "requirement_type": x["classification"],
+                "origin": "phase6_manual_capability"} for x in job_state.get("manual_capabilities", [])}
     job_facts = {_id(x["id"]): x for x in job_state["facts"]}
     inventory = job_state.get("inventory") or {}
     current = bool(job_state.get("inventory_current") and inventory.get("source_fingerprint") == job_state.get("fingerprint"))
+    if "input_adapter_version" in job_state:
+        current = current and inventory.get("input_adapter_version") == INPUT_ADAPTER_VERSION
     complete = bool(current and inventory.get("review_status") == "approved" and inventory.get("inventory_complete"))
     groups, evidence, unknown_occurrences = [], [], []
-    used_skills, used_facts = set(), set()
+    used_skills, used_facts, used_manuals = set(), set(), set()
     source = job_state.get("source_fingerprint")
 
     def record(group, members, requirements, result):
@@ -164,6 +171,7 @@ def assess_inputs(candidate_state: dict, job_state: dict, selected_releases: fro
                                  "candidate_evidence_reference": candidate.get("evidence_reference"),
                                  "candidate_extracted_term_id": next((_id(x.get("extracted_term_id")) for x in candidate_state["skills"] if str(x["id"]) == support.occurrence_id), None),
                                  "requirement_extracted_term_id": _id(requirement.get("extracted_term_id")),
+                                 "requirement_origin": requirement.get("origin", "extracted_job_skill" if member.get("job_skill_id") else "job_matching_fact"),
                                  "requirement_evidence_reference": requirement.get("evidence_reference"),
                                  "explanation": FACT_EXPLANATION if group["component"] in {"O", "Q"} else
                                  "Unresolved inventory evidence cannot be assessed." if support.reason == "unresolved_inventory_occurrence" else support_explanation(support)})
@@ -187,19 +195,24 @@ def assess_inputs(candidate_state: dict, job_state: dict, selected_releases: fro
         requirements = []
         for member in members:
             skill_id, fact_id = _id(member.get("job_skill_id")), _id(member.get("job_matching_fact_id"))
-            if (skill_id is None) == (fact_id is None):
+            manual_id = _id(member.get("manual_capability_id"))
+            if sum(x is not None for x in (skill_id, fact_id, manual_id)) != 1:
                 raise InputConsistencyError("invalid_member_reference", "Exactly one member source required")
-            key = skill_id or fact_id
-            used = used_skills if skill_id else used_facts
+            key = skill_id or fact_id or manual_id
+            used = used_manuals if manual_id else used_skills if skill_id else used_facts
             if key in used:
                 raise InputConsistencyError("duplicate_group_membership", "Source belongs to more than one group")
             used.add(key)
-            row = (skills if skill_id else job_facts).get(key)
+            row = (manuals if manual_id else skills if skill_id else job_facts).get(key)
             if row is None:
                 row = {"id": key, "review_status": "pending", "fact_type": "unavailable", "skill_type": "unavailable"}
             if component == "Q" and row.get("fact_type", row.get("skill_type")) not in {"qualification", "experience", "unavailable"}:
                 raise InputConsistencyError("invalid_q_member", "Q requires qualification/experience evidence")
-            if component != "Q" and not skill_id:
+            if manual_id and (component == "Q" or row.get("classification") != group["classification"]):
+                raise InputConsistencyError("invalid_manual_group", "Manual capabilities require classification-consistent R/P groups")
+            if manual_id and group["critical"] and not group.get("evidence_snapshot", {}).get("critical_source_rationale"):
+                raise InputConsistencyError("critical_rationale_missing", "Manual critical groups require source-bound rationale")
+            if component != "Q" and not (skill_id or manual_id):
                 raise InputConsistencyError("invalid_capability_member", "R/P requires occupational skills")
             if component != "Q" and row["review_status"] == "approved" and row.get("skill_type") not in {
                     "skill", "tool", "domain_knowledge", "language"}:
@@ -233,6 +246,13 @@ def assess_inputs(candidate_state: dict, job_state: dict, selected_releases: fro
         else:
             result = occupational_group(group["operator"], tuple(_occurrence(x, job_state["taxonomy"]) for x in requirements), candidates, releases)
         record(group, members, requirements, result)
+
+    if set(manuals) != used_manuals:
+        complete = False
+        unknown_occurrences.extend({"component": None, "requirement_id": key, "candidate_id": None,
+            "requirement_origin": "phase6_manual_capability", "support": None,
+            "reason_code": "unresolved_inventory_occurrence", "classification": manuals[key]["classification"]}
+            for key in sorted(set(manuals) - used_manuals))
 
     for requirement in _ordered(job_state["facts"]):
         if requirement["review_status"] == "pending":

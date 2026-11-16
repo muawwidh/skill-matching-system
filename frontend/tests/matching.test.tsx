@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { run, fingerprint, fact } from "./fixtures.mjs";
 import type { MatchingRun } from "../src/types/matching";
-import { RunDetails, atomicIndex, resolveEvidence } from "../src/components/matching/RunDetails";
+import { RunDetails, EvidenceText, atomicIndex, resolveEvidence } from "../src/components/matching/RunDetails";
 import { FactForm } from "../src/components/matching/FactForm";
 import { ErrorNotice } from "../src/components/matching/Controls";
 import { candidateInputs, createRun, currentRun, inputWriter } from "../src/api/matching";
@@ -13,6 +13,32 @@ import { register } from "../src/api/auth";
 import { reviewTaxonomyLink } from "../src/api/taxonomy";
 
 const fixture = () => structuredClone(run) as MatchingRun;
+test("manual provenance and origin label transcription without extracted-term identity", () => {
+  for (const manual of [{ provenance: "manual_transcription" }, { origin: "phase6_manual_capability" }]) {
+    const html = renderToStaticMarkup(<EvidenceText candidate={false} value={{
+      id: "manual-synthetic", raw_text: "Git", review_status: "approved", skill_type: "tool",
+      extracted_term_id: "must-not-display-extracted-id", source: "Reviewed fact",
+      extraction_provenance: { extraction_method: "must-not-display-extractor" }, ...manual,
+    }} />);
+    assert.ok(html.includes("Manual source transcription"));
+    for (const forbidden of ["Reviewed fact", "Extracted term", "must-not-display-extracted-id", "must-not-display-extractor"]) {
+      assert.ok(!html.includes(forbidden), forbidden);
+    }
+  }
+});
+test("manual atomic origin survives shared evidence anchor resolution", () => {
+  const value = fixture();
+  const atom = value.results[0].gaps[0].atomic_assessments[0];
+  atom.reason_parameters.requirement_origin = "phase6_manual_capability";
+  atom.reason_parameters.requirement_evidence = { raw_text: "Git", extracted_term_id: "private-extractor-id" };
+  const reference = { ...atom, id: "manual-reference", reason_parameters: {
+    requirement_origin: "phase6_manual_capability", requirement_evidence_anchor_id: atom.id,
+  } };
+  const evidence = resolveEvidence(reference, "requirement", atomicIndex(value));
+  const html = renderToStaticMarkup(<EvidenceText candidate={false} value={evidence} />);
+  assert.ok(html.includes("Manual source transcription"));
+  assert.ok(!html.includes("private-extractor-id"));
+});
 test("complete and provisional results preserve null, reasons, weights and gaps", () => {
   const html = renderToStaticMarkup(<RunDetails run={fixture()} jobNames={new Map([["job-synthetic", "Synthetic role"]])} />);
   for (const text of ["76.92 / 100", "Unavailable", "Null is not zero", "UI-only ordering", "Required skills", "Qualification / experience", "Matched", "unassessed", "identity incomparable", "Candidate-confirmed evidence", "Bounded excerpt", "Numeric alignment weight: 0", "not hiring probabilities", "Missing/stale job embeddings now: 2"]) assert.ok(html.includes(text), text);

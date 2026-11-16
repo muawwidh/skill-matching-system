@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-14
+Last updated: 2026-11-16
 
 ## Repository
 
@@ -37,21 +37,24 @@ no frozen-corpus Phase 6 facts, inventory freeze, rankings or evaluation exist.
 
 Current status:
 
-PHASE 6 CHECKPOINTS 1-3 DEPLOYED; CHECKPOINT 4 PREPARATION ONLY
+PHASE 6 CHECKPOINTS 1-3 DEPLOYED; D035 EXTENSION IMPLEMENTED, NOT DEPLOYED;
+CHECKPOINT 4 EXECUTION DEFERRED
 
 Phase 5 remains COMPLETE as a repository/methodology checkpoint, including
 the accepted D033 run-specific scoped-isolation exception. Its frozen
 artifacts, labels, rankings, metrics and results remain unchanged. Deployment
 is a separate operational checkpoint, not implied by methodology acceptance.
 
-Repository migration head: `0010_matching_input_integrity` (committed).
-Isolated successfully verified head: `0010_matching_input_integrity`.
+Repository migration head: `0011_manual_job_capabilities` (uncommitted extension).
+Isolated migration verification covers 0010 -> 0011 -> 0010 -> 0011, populated
+legacy state, preserved old NULL adapter tags, and safe downgrade refusal when
+manual rows, new adapter tags alone or dependent history remain.
 Developer database head was last verified as `0010_matching_input_integrity`
 during separately authorized migration/deployment verification before this
-turn. This documentation preparation does not query the database, authenticate,
-deploy or start services. Earlier migration/implementation observations below
-are historical; the dated status here supersedes them. No migration, policy,
-representation or frozen artifact is changed by this preparation.
+turn. This extension implementation does not query that database, authenticate
+to the running app, deploy or restart normal services. Earlier observations below
+are historical; the dated status here supersedes them. Applied 0009/0010,
+matching-policy-v1 configuration and frozen Phase 5 artifacts remain unchanged.
 
 No frozen-corpus Phase 6 reviewed facts, inventory sign-offs, scores,
 rankings or evaluations have been created. Automated tests and the separately
@@ -102,13 +105,87 @@ This reference exposes no private path, credentials or source evidence.
 
 ### Checkpoint 4 Preparation And Feasibility Gate
 
+#### D035 Implementation (2026-11-14, Uncommitted)
+
+Acceptance corrections B1/B2 (2026-11-16, uncommitted): new candidate-facing
+evidence excerpts exclude ledger references, review reasons, all local anchors
+and the no-local-file declaration. Explicit server-side, nested field/shape
+allowlists project run provenance, result/component/gap reasons and evidence,
+including previously persisted snapshots. Critical-source rationales and other
+manager-only review metadata are excluded; permitted stored-source hashes/spans,
+source IDs, origin and reviewer provenance remain. Historical rows are not
+rewritten. Authorized manager inventory access retains the private fields.
+The frontend labels either manual-transcription provenance or manual origin
+"Manual source transcription", including shared evidence anchors; it does not
+label manual rows "Reviewed fact" or display extracted-term provenance/IDs.
+No scoring, policy, retrieval, applied migration or inventory-entry change is
+introduced by these corrections.
+
+Correction verification: focused backend/API tests 53 passed; relevant isolated
+PostgreSQL tests 36 passed, including candidate GETs from a fresh session,
+private-key/value marker checks across new/historical snapshots, manager access
+and unchanged stored history. Complete default backend suite: 519 passed,
+202 skipped. Frontend component/API tests: 15 passed; production build passed.
+Whitespace checks include new files. Tests use synthetic fixtures only; the
+disposable tmpfs PostgreSQL container was removed. No developer database access,
+running-app authentication, deployment, corpus entry or frozen-artifact change
+occurred. Independent focused re-review remains outstanding.
+
+The separately authorized extension is implemented for independent review, not
+deployed or entered into the corpus. Migration 0011 adds job_manual_capabilities,
+exclusive same-job manual group membership and immutable adapter-version tags
+without modifying applied migrations or legacy rows. Manual capabilities remain
+unlinked; existing pure identity/support functions and scoring configuration are
+unchanged. Manager inventory GET exposes authoritative cleaned text/hash and
+code-point coordinates; POST/DELETE capabilities require current fingerprints.
+Source slices, bounds, attribution, local/stored anchors and approved R/P-only
+contracts are validated. Human entry uses the authorized API; no frontend entry
+form or agent approval authority is introduced.
+
+Duplicate checks use compatibility_family(skill_type) and normalized matching
+keys against every extracted review state and manual rows, at creation, sign-off
+and assessment. Later conflicts/source mismatches make the affected job
+provisional. Critical manual R groups require a source-bound rationale. Uncertain
+proposals remain unentered ledger items and must prevent human completeness
+sign-off; the API cannot discover an external private ledger.
+
+Manual writes affect inventory fingerprints, never source_fingerprint, jobs rows,
+retrieval representations/hashes, embeddings or legacy matches. Version
+phase6-inputs-v2 is checked independently on reads. Earlier sign-offs/runs become
+non-current without backfill or historical rewriting. Grouped deletion is refused;
+ordinary deletion preserves origin-aware bounded historical snapshots. Full job
+deletion remains the sensitive-data erasure path. Safe downgrade refuses dependent
+state, including version tags alone, rather than silently deleting it.
+
+Synthetic service/API and disposable PostgreSQL tests cover source/Unicode,
+permissions, attribution, all-review-state duplicates/later conflicts, group
+constraints, rollback/concurrency, old-version currentness, historical identity
+preservation, job erasure and unchanged Phase 4/5/legacy tables and v1/v2 inputs.
+Final verification: focused policy/input/run suite 149 passed; focused PostgreSQL
+suite 76 passed; complete default backend suite 518 passed, 201 skipped; complete
+isolated PostgreSQL-enabled suite 713 passed, 6 skipped. The six opt-in skips are
+three pinned-tokenizer cases, two real-model cases and the private-corpus gate;
+the default suite additionally skips 195 isolated PostgreSQL cases. No model
+encoding or private-corpus evaluation was performed. Earlier overlapping test
+runs encountered the fixture's shared vector-extension teardown race; final
+focused/full PostgreSQL runs were sequential and passed without code changes
+to the fixture or applied migrations. Whitespace checks include all new files.
+Disposable tmpfs PostgreSQL resources were removed after verification.
+No developer database access, normal-stack changes, corpus fact entry, real
+indexing/ranking/evaluation or frozen-artifact changes occurred. Frontend files
+are unchanged, so no frontend build is needed. Conditional/Q/O/threshold
+limitations remain; this extension does not guarantee an evaluable top-20 pool.
+Independent implementation review, separately authorized migration/deployment,
+controlled human fact entry and Checkpoint 4 freezes/evaluation remain deferred.
+
 #### Accepted Manual-Capability Design (2026-11-14)
 
 The owner accepted the reviewed source-bound manual job-capability design under
-D035, documented in `docs/phase6-manual-job-capabilities.md`. This is design
-approval only: no extension code, migration 0011, API, deployment or corpus entry
-exists or is authorized by this acceptance. Repository migration head remains
-`0010_matching_input_integrity`; the developer database was not queried here.
+D035, documented in `docs/phase6-manual-job-capabilities.md`. At acceptance this
+was design approval only, with no extension code, migration or API. That
+implementation status is superseded by the separately authorized implementation
+above; design approval did not itself authorize implementation or execution.
+The developer database was not queried here.
 
 The design uses separate Phase 6 storage, unlinked human-approved R/P capabilities,
 exact stored-text anchors, inventory-only fingerprints and adapter-version

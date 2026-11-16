@@ -54,7 +54,10 @@ def test_upgrade_rejects_existing_critical_q_without_coercion(pg_database):
         group = JobRequirementGroup(id=uuid4(), job_id=job.id, component="Q", operator="SINGLE", classification="required",
             critical=True, source_fingerprint="0" * 64, **review)
         db.add(group); db.flush()
-        db.add(JobRequirementGroupMember(job_id=job.id, group_id=group.id, job_matching_fact_id=fact.id))
+        # Reflect the applied 0009 shape; the current ORM also includes 0011's
+        # manual reference, which must not be INSERTed before that column exists.
+        db.execute(text("INSERT INTO job_requirement_group_members (id,job_id,group_id,job_matching_fact_id) VALUES (:id,:job,:grp,:fact)"),
+            {"id":uuid4(), "job":job.id, "grp":group.id, "fact":fact.id})
         db.commit(); group_id = group.id
     with pytest.raises(IntegrityError, match="ck_critical_required_skill"):
         command.upgrade(config, "head")

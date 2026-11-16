@@ -39,6 +39,7 @@ export type Evidence = {
   fact_type?: string; review_status?: string; completion?: string; scope?: string;
   duration_months?: number | null; field?: string; source_record_missing?: boolean;
   extracted_term_id?: string; cv_document_id?: string; source?: string;
+  provenance?: string; origin?: string;
   taxonomy_links?: { concept_id: string; release_id: string; match_method?: string }[];
   text_omissions?: Record<string, unknown>; full_source_required_for_text_reconstruction?: boolean;
   extraction_provenance?: { source_section?: string; start_char?: number; end_char?: number; extraction_method?: string };
@@ -48,6 +49,7 @@ export type Atomic = {
   reason_parameters: {
     explanation?: string; candidate_evidence?: Evidence; requirement_evidence?: Evidence;
     candidate_evidence_anchor_id?: string; requirement_evidence_anchor_id?: string;
+    requirement_origin?: string;
   };
 };
 export type Gap = {

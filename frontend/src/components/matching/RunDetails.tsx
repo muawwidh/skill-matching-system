@@ -5,9 +5,10 @@ export function atomicIndex(run: MatchingRun) {
 }
 export function resolveEvidence(atom: Atomic, side: "candidate" | "requirement", index: Map<string, Atomic>): Evidence | undefined {
   const direct = atom.reason_parameters[`${side}_evidence`];
-  if (direct) return direct;
   const anchor = atom.reason_parameters[`${side}_evidence_anchor_id`];
-  return anchor ? index.get(anchor)?.reason_parameters[`${side}_evidence`] : undefined;
+  const value = direct || (anchor ? index.get(anchor)?.reason_parameters[`${side}_evidence`] : undefined);
+  return value && side === "requirement" && atom.reason_parameters.requirement_origin
+    ? { ...value, origin: atom.reason_parameters.requirement_origin } : value;
 }
 const names: Record<string, string> = { R: "Required skills", P: "Preferred skills", O: "Occupation", Q: "Qualification / experience" };
 export const readable = (value: string) => value.replace(/_/g, " ");
@@ -15,6 +16,7 @@ function Reasons({ items }: { items?: string[] }) {
   return items?.length ? <ul className="match-reasons">{items.map((x, i) => <li key={`${x}:${i}`}>{readable(x)} <code>{x}</code></li>)}</ul> : null;
 }
 export function EvidenceText({ value, candidate }: { value?: Evidence; candidate: boolean }) {
+  const manual = value?.provenance === "manual_transcription" || value?.origin === "phase6_manual_capability";
   return <div className="match-evidence"><h4>{candidate ? "Candidate-confirmed evidence" : "Reviewed job evidence"}</h4>
     {!value || value.source_record_missing ? <p>Evidence unavailable or redacted. Do not infer support.</p> : <>
       <p><strong>{value.raw_text || value.statement || value.normalized_text || "Referenced evidence"}</strong></p>
@@ -24,8 +26,8 @@ export function EvidenceText({ value, candidate }: { value?: Evidence; candidate
       {value.completion && <p>Qualification completion: {readable(value.completion)}</p>}
       {value.duration_months != null && <p>Duration: {value.duration_months} months</p>}
       {value.field && <p>Field: {value.field}</p>}{value.scope && <p>Scope: {value.scope}</p>}
-      {value.extraction_provenance && <p className="match-muted">{value.extraction_provenance.source_section || "Section unspecified"} · character offsets {value.extraction_provenance.start_char ?? "?"}–{value.extraction_provenance.end_char ?? "?"} · {value.extraction_provenance.extraction_method}</p>}
-      <details><summary>Evidence provenance</summary><dl className="match-provenance"><dt>Occurrence / fact</dt><dd>{value.id || "Unavailable"}</dd><dt>Extracted term</dt><dd>{value.extracted_term_id || "Not applicable"}</dd><dt>Source</dt><dd>{value.source || value.cv_document_id || "Reviewed fact"}</dd></dl>
+      {!manual && value.extraction_provenance && <p className="match-muted">{value.extraction_provenance.source_section || "Section unspecified"} · character offsets {value.extraction_provenance.start_char ?? "?"}–{value.extraction_provenance.end_char ?? "?"} · {value.extraction_provenance.extraction_method}</p>}
+      <details><summary>Evidence provenance</summary><dl className="match-provenance"><dt>Occurrence / fact</dt><dd>{value.id || "Unavailable"}</dd>{!manual && <><dt>Extracted term</dt><dd>{value.extracted_term_id || "Not applicable"}</dd></>}<dt>Source</dt><dd>{manual ? "Manual source transcription" : value.source || value.cv_document_id || "Reviewed fact"}</dd></dl>
         {value.taxonomy_links?.map(link => <p key={`${link.release_id}:${link.concept_id}`}>Reviewed concept {link.concept_id} · release {link.release_id} · {link.match_method}</p>)}
       </details>
       {(value.full_source_required_for_text_reconstruction || Object.keys(value.text_omissions || {}).length > 0) && <p className="match-warning">Bounded excerpt: content was omitted or clipped. Full source is needed for reconstruction.</p>}
