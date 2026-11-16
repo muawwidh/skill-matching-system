@@ -36,12 +36,17 @@ export function MatchingPage() {
   if (!user) return <Loading />;
   if (!allowed) return <p role="alert">Candidate role required. Matching runs are available only to the owning candidate.</p>;
   const empty = run.error instanceof ApiError && run.error.status === 404;
+  const reloadBusy = action.isPending || run.isFetching;
   return <div className="matching-page"><div className="match-summary"><div><h1>Explainable matching</h1><p>Phase 6 · matching-policy-v1</p></div><Link to="/matching-facts">Candidate-confirmed facts</Link></div>
     <p>Only approved evidence contributes. Pending and rejected evidence is not scored. Dense retrieval selects the pool; it contributes no numeric weight to final alignment.</p>
     <p className="match-muted">Private evidence: restricted candidate/job material must remain within its authorized environment. Candidate-confirmed claims are not independently verified.</p>
     <div className="match-actions">
       <button type="button" className="match-primary" disabled={action.isPending || run.isFetching} onClick={() => { void submitRun(); }}><Play size={16} aria-hidden="true" />{action.isPending ? "Creating run..." : "Create matching run"}</button>
-      <button type="button" disabled={action.isPending || run.isFetching} onClick={() => { void run.refetch(); action.reset(); }}><RotateCw size={16} aria-hidden="true" />Reload current state</button>
+      <button type="button" aria-disabled={reloadBusy} onClick={() => {
+        if (reloadBusy) return;
+        void run.refetch();
+        action.reset();
+      }}><RotateCw size={16} aria-hidden="true" />Reload current state</button>
     </div>
     <ErrorNotice error={action.error || (!empty ? run.error : null)} />
     {jobs.error && <p role="alert">Job names unavailable. Results retain their recorded evidence and currentness.</p>}

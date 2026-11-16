@@ -103,6 +103,18 @@ Verified acceptance-record SHA-256:
 `32c4651a58a97ff51a8c07e5a508cb241bb5fb705d1ad0b59e98b87599629ec8`.
 This reference exposes no private path, credentials or source evidence.
 
+### Matching Reload Focus (2026-11-16, Not Deployed)
+
+The matching screen keeps “Reload current state” focusable while its GET is
+pending and ignores activation while busy. Completion does not set focus:
+on success or failure, keyboard focus stays on the control unless the user
+moved it. Automated Chromium tests with synthetic responses verified both
+outcomes and no duplicate GET on repeated activation while busy. The facts
+and inventory screens retained focus on successful reload without changes.
+Component/API tests: 15 passed; mock browser tests: 24 passed; production
+build passed. This addresses A11Y-01 in source, not human or screen-reader
+acceptance.
+
 ### Checkpoint 4 Preparation And Feasibility Gate
 
 #### D035 Implementation (2026-11-14, Uncommitted)

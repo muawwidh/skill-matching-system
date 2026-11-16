@@ -31,7 +31,7 @@ input {
 .matching-page button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .5rem .75rem; border: 1px solid #a3b3ba; border-radius: 4px; background: white; }
 .matching-page button.match-primary { background: #16645e; color: white; border-color: #16645e; }
 .matching-page button.match-icon { width: 40px; height: 40px; padding: 0; flex-shrink: 0; align-self: flex-start; }
-.matching-page button:disabled { opacity: .55; cursor: not-allowed; }
+.matching-page button:disabled, .matching-page button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
 .matching-page a { color: #165d77; text-decoration: underline; }
 .matching-page :focus-visible { outline: 3px solid #a15319; outline-offset: 3px; }
 .matching-page summary { cursor: pointer; padding: .5rem 0; font-weight: 600; }

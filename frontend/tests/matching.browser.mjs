@@ -65,6 +65,56 @@ test("candidate navigation, reload and fact lookup never write or use legacy end
     assert.ok(f.calls.every(c => !c.path.startsWith("/matches")));
   } finally { await f.close(); }
 });
+for (const status of [200, 500]) {
+  for (const moveAway of [false, true]) {
+    test(`keyboard reload (${status}) preserves ${moveAway ? "the user's new focus" : "button focus"}`, async () => {
+      const f = await fixture();
+      let release;
+      const gate = new Promise(resolve => { release = resolve; });
+      try {
+        await navigate(f, "/matching");
+        await f.page.getByRole("heading", { name: "current run" }).waitFor();
+        let reloads = 0;
+        f.state.handler = async ({ path }) => {
+          if (path !== "/matching-runs/current") return;
+          reloads++;
+          await gate;
+          return { status, body: status === 200 ? run : { detail: "Synthetic reload failure" } };
+        };
+        const reload = f.page.getByRole("button", { name: "Reload current state" });
+        await reload.focus();
+        await f.page.keyboard.press("Enter");
+        await f.page.locator('button[aria-disabled="true"]').filter({ hasText: "Reload current state" }).waitFor();
+        assert.ok(await reload.evaluate(b => b === document.activeElement));
+        await f.page.keyboard.press("Space");
+        if (moveAway) await f.page.keyboard.press("Shift+Tab");
+        const expected = moveAway ? f.page.getByRole("link", { name: "Candidate-confirmed facts" }) : reload;
+        assert.ok(await expected.evaluate(el => el === document.activeElement));
+        release();
+        await f.page.locator('button[aria-disabled="false"]').filter({ hasText: "Reload current state" }).waitFor();
+        if (status === 500) await f.page.getByRole("alert").filter({ hasText: "Synthetic reload failure" }).waitFor();
+        assert.ok(await expected.evaluate(el => el === document.activeElement && el.matches(":focus-visible")));
+        assert.equal(reloads, 1);
+        assert.deepEqual(writes(f.calls), []);
+      } finally { release(); await f.close(); }
+    });
+  }
+}
+test("keyboard reload keeps focus on the facts and inventory controls", async () => {
+  for (const [path, endpoint] of [["/matching-facts", "/facts"], ["/job-inventories/job-synthetic", "/inventory"]]) {
+    const f = await fixture({ user: { ...user, roles: [{ name: "candidate" }, { name: "researcher" }] } });
+    try {
+      await navigate(f, path);
+      await f.page.getByRole("button", { name: "Add fact", exact: true }).waitFor();
+      const reload = f.page.getByRole("button", { name: "Reload current inputs" });
+      await reload.focus();
+      await Promise.all([f.page.waitForResponse(r => r.url().endsWith(endpoint)), f.page.keyboard.press("Enter")]);
+      await f.page.waitForLoadState("networkidle");
+      assert.ok(await reload.evaluate(el => el === document.activeElement && el.matches(":focus-visible")));
+      assert.deepEqual(writes(f.calls), []);
+    } finally { await f.close(); }
+  }
+});
 test("visiting Jobs does not invoke the legacy write-on-GET recommendations", async () => {
   const f = await fixture(); try {
     await navigate(f, "/jobs"); await f.page.getByText("No skills or indicators extracted yet.").waitFor();
