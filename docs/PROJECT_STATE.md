@@ -103,7 +103,7 @@ Verified acceptance-record SHA-256:
 `32c4651a58a97ff51a8c07e5a508cb241bb5fb705d1ad0b59e98b87599629ec8`.
 This reference exposes no private path, credentials or source evidence.
 
-### Matching Reload Focus (2026-11-16, Not Deployed)
+### Matching Reload Focus (2026-11-16, Deployed)
 
 The matching screen keeps “Reload current state” focusable while its GET is
 pending and ignores activation while busy. Completion does not set focus:
@@ -112,8 +112,13 @@ moved it. Automated Chromium tests with synthetic responses verified both
 outcomes and no duplicate GET on repeated activation while busy. The facts
 and inventory screens retained focus on successful reload without changes.
 Component/API tests: 15 passed; mock browser tests: 24 passed; production
-build passed. This addresses A11Y-01 in source, not human or screen-reader
-acceptance.
+build passed.
+
+On deployed commit `cd1ce1d`, the owner confirmed that “Reload current state”
+retained visible focus after keyboard activation and that Tab navigation
+continued normally. This manual check was limited to the successful reload;
+failure-path coverage was automated only. Screen-reader acceptance remains
+outstanding.
 
 ### Checkpoint 4 Preparation And Feasibility Gate
 
