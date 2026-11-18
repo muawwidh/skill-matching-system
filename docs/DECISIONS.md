@@ -791,3 +791,39 @@ vocabulary matching is revisited, degree and education lines must be handled
 first, for example by typing those matches as qualifications or skipping
 education sections. The same handling should then be checked on jobs.
 
+## D043 - Matching Variants Are Compared Offline Without Weights
+
+The ranking options are compared offline on the frozen Phase 5 benchmark. They
+are not tuned in the app. `python -m app.retrieval.cli compare-matching` is
+read-only:
+- it opens a read-only transaction and rejects any write statement;
+- it persists nothing in the database.
+
+It ranks the same 30 jobs for the same candidates with four variants:
+- **A:** retrieval only (cosine similarity);
+- **B:** skill coverage with name matching only;
+- **C:** skill coverage with taxonomy concept first, then name (the current
+  rule);
+- **D:** C with retrieval similarity as the tie-break (the current app).
+
+All four are scored against the same frozen judgments and evaluable queries,
+with the Phase 5 metrics plus nDCG@10 over grades 0/1/2. The rankings are
+written in the Phase 5 format, so variant A also serves as the input to the
+committed `evaluate` command.
+
+**No hand-picked weights.** Each variant is either a single score (A) or a
+lexicographic order of exact fractions and counts (B to D, D036/D040).
+There is no parameter to choose, so nothing can be fitted to these judgments.
+- A weighted blend, such as α·similarity + β·coverage, would need its weights
+  chosen. With seven evaluable queries, choosing them on this benchmark would
+  overfit it.
+- Choosing them without data would repeat the arbitrary 2:1 weights that D036
+  removed.
+
+Results (`docs/verification/matching-variant-comparison.md`) are
+descriptive only: no significance claims at n = 7. They also show that coverage
+ranking is decided by ties for half of the candidates, so changes to the
+coverage rule should not be judged on these numbers alone. Final Phase 6
+scoring must still be configurable and versioned. Any future weight must come
+from data other than this benchmark, or be declared before it is measured.
+

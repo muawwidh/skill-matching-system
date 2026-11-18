@@ -235,3 +235,44 @@ Private files are in
 
 Unlike the accepted run, this one did not use the blind two-pass container
 protocol or table fingerprints. It is a development measurement.
+
+## Final Labelled Run: After Job Extraction v3 + Complete Review (2026-11-18)
+
+This is the **final labelled measurement** of the current system state. Like the
+re-run above, it does not replace the accepted result.
+
+State:
+- every job skill on the 30 benchmark jobs is reviewed: 0 pending on active
+  jobs;
+- two manual-check type decisions were applied (D039 report);
+- the 9 changed job embeddings were reindexed with the same model and template;
+- the 8 candidate profile inputs are still byte-identical to the freeze.
+
+The rankings are variant A of `python -m app.retrieval.cli compare-matching`
+(source commit `150574e`; see `matching-variant-comparison.md`). The live
+database was read inside a read-only transaction. The committed
+`python -m app.retrieval.cli evaluate` scored them, with the frozen judgments
+and coverage policy (7/8, denominator 7). An independent runner, the one used
+for the re-run above, produced identical rankings.
+
+| Metric | Accepted (D033) | Re-run, 38 pending | **Final, complete review** |
+| --- | --- | --- | --- |
+| Recall@5 | 37/84 = 0.440476 | 37/84 = 0.440476 | **43/84 = 0.511905** |
+| Recall@10 | 53/84 = 0.630952 | 25/42 = 0.595238 | **25/42 = 0.595238** |
+| Recall@20 | 5/7 = 0.714286 | 6/7 = 0.857143 | **6/7 = 0.857143** |
+| MRR | 1261/1925 = 0.655065 | 4289/6916 = 0.620156 | **4289/6916 = 0.620156** |
+
+Exploratory (grade 1 or 2, denominator 8): Recall@5 0.401419, Recall@10
+0.715636, Recall@20 0.947527, MRR 0.916667. These are unchanged from the
+re-run.
+
+Finishing the review changed one thing: one query's Recall@5 went from 0.50 to
+0.67. With 7 queries, none of these differences supports a claim that job
+extraction v3 improves or harms retrieval. They are descriptive only.
+
+Private outputs are in
+`evaluation/local/phase5-final-and-matching-comparison-20261118/`:
+- `comparison/rankings-A.jsonl`, SHA-256
+  `5410babf3e44f893a9fb054b6b5d96644d877addf01c7ef8ee174a9740ac1842`;
+- `phase5-final-evaluation.json`, SHA-256
+  `3dfe8438c668c2169a2837a6fcd704f611983b711311a32a958860e9dfe91fa2`.

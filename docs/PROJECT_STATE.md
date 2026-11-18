@@ -233,6 +233,19 @@ The accepted Phase 5 result is unchanged; the second column measures a later
 state. Details and limitations are in
 `docs/verification/phase5-real-corpus-results.md`.
 
+After the complete review (0 pending job skills on active jobs), 9 changed job
+embeddings were reindexed. The **final labelled run** gives Recall@5 43/84 =
+0.511905, Recall@10 25/42 = 0.595238, Recall@20 6/7 = 0.857143 and MRR
+4289/6916 = 0.620156. Candidate inputs are still identical to the freeze.
+
+`python -m app.retrieval.cli compare-matching` (D043) compares four rankings on
+the same benchmark: retrieval only, coverage by name, coverage by concept then
+name, and the current app. Results are in
+`docs/verification/matching-variant-comparison.md`. Coverage-based rankings
+score far below retrieval there. For 4 of the 8 candidates no approved skill
+matches any benchmark job, so their coverage ranking is decided by ties. With
+n = 7 there are no significance claims.
+
 ## Early Matching Prototype
 
 Migration:
