@@ -7,6 +7,7 @@ import type {
   Job,
   JobPayload,
   JobSkill,
+  JobSkillUpdate,
   ProcessingLog,
 } from "../types/documents";
 
@@ -87,6 +88,15 @@ export function reviewCvSkills(accessToken: string, cvId: string, skills: Candid
 
 export function listJobSkills(accessToken: string, jobId: string) {
   return apiRequest<JobSkill[]>(`/jobs/${jobId}/extracted-skills`, { accessToken });
+}
+
+export function reviewJobSkill(accessToken: string, jobId: string, skillId: string, body: JobSkillUpdate) {
+  return apiRequest<JobSkill>(`/jobs/${encodeURIComponent(jobId)}/extracted-skills/${encodeURIComponent(skillId)}`, {
+    method: "PUT", accessToken, body: JSON.stringify({
+      raw_text: body.raw_text, normalized_text: body.normalized_text, skill_type: body.skill_type,
+      requirement_type: body.requirement_type, evidence_sentence: body.evidence_sentence, review_status: body.review_status,
+    }),
+  });
 }
 
 export function listRecommendations(accessToken: string) {

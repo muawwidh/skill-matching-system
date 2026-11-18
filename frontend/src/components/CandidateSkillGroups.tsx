@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Save, X } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { RotateCw } from "lucide-react";
+import { ReviewSummary } from "./matching/ReviewSummary";
 
 import { listCvSkillGroups, reviewCvSkills } from "../api/documents";
 import type { CandidateSkill } from "../types/documents";
@@ -9,40 +11,62 @@ export function CandidateSkillGroups({ accessToken, cvId }: { accessToken: strin
   const cache = useQueryClient();
   const [drafts, setDrafts] = useState<Record<string, Partial<CandidateSkill>>>({});
   const [saved, setSaved] = useState(false);
+  const baseline = useRef<string>();
+  const busy = useRef(false);
   const query = useQuery({
     queryKey: ["cv", cvId, "skills", "groups"],
     queryFn: () => listCvSkillGroups(accessToken, cvId),
-    refetchOnWindowFocus: "always",
-    refetchInterval: 30000,
+    retry: false, refetchOnWindowFocus: false, refetchOnReconnect: false,
   });
   const save = useMutation({
-    mutationFn: () => reviewCvSkills(accessToken, cvId,
-      (query.data ?? []).flatMap((group) => group.occurrences.map((item) => ({ ...item, ...drafts[item.id] })))),
+    retry: false,
+    mutationFn: async () => {
+      const fresh = await listCvSkillGroups(accessToken, cvId);
+      if (JSON.stringify(fresh) !== baseline.current) throw new Error("The saved collection changed. Reload and reconcile before saving; no PUT was sent.");
+      return reviewCvSkills(accessToken, cvId, fresh.flatMap(group => group.occurrences.map(item => ({ ...item, ...drafts[item.id] }))));
+    },
     onSuccess: async () => {
       setDrafts({});
+      baseline.current = undefined;
       setSaved(true);
       await cache.invalidateQueries({ queryKey: ["cv", cvId, "skills"] });
       await cache.invalidateQueries({ queryKey: ["taxonomy"] });
+      await cache.invalidateQueries({ queryKey: ["matching-run"] });
     },
   });
   function edit(id: string, patch: Partial<CandidateSkill>) {
+    baseline.current ??= JSON.stringify(query.data);
     setSaved(false);
     setDrafts((current) => ({ ...current, [id]: { ...current[id], ...patch } }));
   }
+  async function submit() {
+    if (busy.current || query.isFetching || query.error || save.error) return;
+    busy.current = true;
+    try { await save.mutateAsync(); } catch { /* Keep decisions for explicit reconciliation. */ }
+    finally { busy.current = false; }
+  }
+  async function reload() {
+    if (busy.current || query.isFetching) return;
+    if (Object.keys(drafts).length && !window.confirm("Discard unsaved skill decisions and reload the complete collection?")) return;
+    const result = await query.refetch();
+    if (!result.isError) { setDrafts({}); baseline.current = undefined; save.reset(); setSaved(false); }
+  }
   if (query.isLoading) return <p className="text-sm text-slate-500">Loading skills...</p>;
-  return <section className="mt-4 border-t border-slate-200 pt-4">
+  return <section className="matching-page mt-4 border-t border-slate-200 pt-4">
+    {query.data && !query.error && <ReviewSummary rows={query.data.flatMap(g => g.occurrences)} unlinked={query.data.filter(g => !g.taxonomy).reduce((n,g) => n + g.occurrences.length, 0)} />}
     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
       <h3 className="text-sm font-semibold">Skills and indicators</h3>
-      <button type="button" disabled={save.isPending || query.isFetching || !Object.keys(drafts).length}
-        onClick={() => save.mutate()} className="inline-flex items-center gap-2 rounded bg-ocean px-3 py-2 text-sm text-white disabled:opacity-50">
+      <button type="button" disabled={save.isPending || query.isFetching || Boolean(query.error || save.error) || !Object.keys(drafts).length}
+        onClick={() => { void submit(); }} className="inline-flex items-center gap-2 rounded bg-ocean px-3 py-2 text-sm text-white disabled:opacity-50">
         <Save size={16} />{save.isPending ? "Saving..." : "Save review"}
       </button>
+      <button type="button" aria-disabled={save.isPending || query.isFetching} onClick={() => { void reload(); }}><RotateCw size={16} aria-hidden="true" />Reload skills</button>
     </div>
     {query.error || save.error ? <p role="alert" className="text-sm text-red-700">{(query.error ?? save.error)?.message}</p> : null}
     {saved ? <p role="status" className="mb-2 text-sm text-ocean">Review saved.</p> : null}
     {Object.keys(drafts).length ? <p role="status" className="mb-2 text-sm text-amber-800">Unsaved review changes</p> : null}
     {!query.data?.length && !query.error ? <p className="text-sm text-slate-500">No skills or indicators extracted yet.</p> : null}
-    <div className="divide-y divide-slate-200">{query.data?.map((group) => {
+    <div className="divide-y divide-slate-200">{!query.error && query.data?.map((group) => {
       const occurrences = group.occurrences.map((item) => ({ ...item, ...drafts[item.id] }));
       const changedText = group.occurrences.some((item) => drafts[item.id]?.raw_text !== undefined && drafts[item.id].raw_text !== item.raw_text);
       const counts = occurrences.reduce<Record<string, number>>((result, item) => {

@@ -72,6 +72,9 @@ export type JobSkill = CandidateSkill & {
   requirement_type: string;
 };
 
+export type JobSkillUpdate = Pick<JobSkill, "raw_text" | "normalized_text" | "skill_type" |
+  "requirement_type" | "evidence_sentence" | "review_status">;
+
 export type CandidateSkillGroup = {
   key: string;
   label: string;
