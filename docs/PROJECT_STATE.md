@@ -194,6 +194,12 @@ Existing job terms are unchanged until re-extracted. Reprocessing a job through
 the API still replaces its terms; that path has not yet been changed to
 preserve reviews.
 
+Additive re-extraction of existing jobs (D039) is implemented as
+`python -m app.services.job_service reextract`. It is a dry-run by default and
+writes only with `--apply`. A dry-run on 2026-11-18 left the database
+unchanged. `--apply` has **not** been run: it awaits the pre-apply `pg_dump`
+snapshot and the Phase 5 metrics record.
+
 ## Early Matching Prototype
 
 Migration:

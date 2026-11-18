@@ -460,7 +460,11 @@ class DocumentRepository:
             synchronize_session=False
         )
         self.db.flush()
+        self.add_job_terms(job, terms)
 
+    def add_job_terms(self, job: Job, terms: list[ExtractedTerm]) -> list[UUID]:
+        """Insert extracted terms, each with a pending job skill; returns the new term IDs."""
+        term_ids: list[UUID] = []
         for term in terms:
             extracted_term = ExtractedJobTerm(
                 job_id=job.id,
@@ -477,6 +481,7 @@ class DocumentRepository:
             )
             self.db.add(extracted_term)
             self.db.flush()
+            term_ids.append(extracted_term.id)
             self.db.add(
                 JobSkill(
                     job_id=job.id,
@@ -491,6 +496,18 @@ class DocumentRepository:
                 )
             )
         self.db.flush()
+        return term_ids
+
+    def job_extraction_state(self, job_id: UUID) -> list[tuple[ExtractedJobTerm, JobSkill | None]]:
+        """Stored extracted terms of a job with their (extraction-sourced) job skill, if any."""
+        skills = {
+            skill.extracted_term_id: skill
+            for skill in self.db.scalars(select(JobSkill).where(JobSkill.job_id == job_id, JobSkill.extracted_term_id.is_not(None)))
+        }
+        terms = self.db.scalars(
+            select(ExtractedJobTerm).where(ExtractedJobTerm.job_id == job_id).order_by(ExtractedJobTerm.start_char)
+        )
+        return [(term, skills.get(term.id)) for term in terms]
 
     def list_job_skills(self, job_id: UUID) -> list[JobSkill]:
         return list(

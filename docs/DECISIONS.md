@@ -583,3 +583,36 @@ implemented v3 reproduces these counts:
 Vocabulary terms add review workload, so they enter as `pending` evidence like
 every extraction. Existing jobs are not re-extracted by this decision. Any
 re-extraction must preserve review decisions; see the follow-up entry.
+
+## D039 - Existing Jobs Are Re-extracted Additively
+
+Existing jobs are moved to a new extraction contract (D038) by additive
+reconciliation, never by the delete-and-recreate path used when a job is
+created or edited. Command: `python -m app.services.job_service reextract`.
+It is a read-only dry-run unless `--apply` is given. `--esco on|off` overrides
+the config switch.
+
+Stored and fresh occurrences match on (normalized text, term type, start,
+end) in the stored cleaned text:
+- **Matched occurrences are untouched:** review status, approved taxonomy
+  links and suggestions stay as they are. Only a still-`pending` skill takes a
+  changed requirement type. For an approved or rejected skill the difference
+  is reported and not applied, because the stored value is part of a reviewed
+  item.
+- **Reviewer-edited occurrences:** if a fresh term lands on the exact span of
+  a stored occurrence whose text or type was edited during review, the stored
+  occurrence is kept and the fresh term is not added. Otherwise re-extraction
+  would re-introduce the raw text a reviewer corrected; the 2026-11-18 dry-run
+  found 14 such cases.
+- **New occurrences** are inserted as `pending` job skills with their
+  versioned extraction method. Taxonomy linking runs for those term IDs only.
+- **Vanished occurrences** (no longer extracted) are kept and reported.
+
+Each applied job gets an `additive_reextraction` processing log with the
+counts. Its embedding is marked stale. `python -m app.retrieval.cli index
+jobs` then re-embeds only jobs whose input hash changed.
+
+The 30 Phase 5 evaluation jobs are included. Before `--apply`, a `pg_dump`
+snapshot (stored outside the repository) and the Phase 5 metrics it
+reproduces are recorded in this entry. Until then their stored extraction is
+unchanged.

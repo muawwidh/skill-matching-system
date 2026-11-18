@@ -609,3 +609,118 @@ def test_esco_vocabulary_config_switch_compares_old_and_new(client: TestClient, 
 def test_sample_esco_releases_are_never_used_as_vocabulary(db_session: Session) -> None:
     _seed_esco_release(db_session, is_sample=True)
     assert build_job_extractor(db_session, use_esco_vocabulary=True).esco_vocabulary is None
+
+
+# ---- Additive re-extraction (D039) ------------------------------------------------------------
+
+def _legacy_job(client: TestClient, db_session: Session, description: str):
+    """Create a job, then make its stored extraction look like contract v2."""
+    from app.db.models import Job
+    from app.services.section_detection_service import SectionDetectionService as V2Sections
+
+    headers = job_manager_headers(client, db_session)
+    response = client.post("/jobs", headers=headers, json={
+        "title": "Legacy", "company": "Example", "location": "Remote", "employment_type": "Full-time",
+        "description": description})
+    assert response.status_code == 201
+    job = db_session.get(Job, UUID(response.json()["id"]))
+    from dataclasses import replace
+
+    # v2 job extraction = v2 patterns and sections; requirement only from required/preferred skills headings.
+    v2_requirements = {"required_skills": "required", "preferred_skills": "preferred"}
+    v2_terms = [
+        replace(term, requirement_type=v2_requirements.get(term.source_section, "unknown"))
+        for term in SkillExtractor().extract_from_sections(
+            V2Sections().detect(job.cleaned_description), job.cleaned_description, "candidate")
+    ]
+    assert all(term.extraction_method.endswith("@v2") for term in v2_terms)
+    from app.repositories.document_repository import DocumentRepository
+    DocumentRepository(db_session).replace_job_terms(job, v2_terms)
+    db_session.commit()
+    return job, headers
+
+
+def test_additive_reextraction_keeps_reviews_and_adds_new_terms_as_pending(
+    client: TestClient, db_session: Session
+) -> None:
+    from app.db.models import ProcessingLog
+    from app.services.job_service import JobReextractionService
+
+    description = "Qualifications\nPython, Docker and Git\n3-5 years of relevant experience\nBenefits\nAWS credits"
+    job, _ = _legacy_job(client, db_session, description)
+    skills = {s.normalized_text: s for s in db_session.scalars(select(JobSkill).where(JobSkill.job_id == job.id))}
+    assert {"python", "docker", "git", "aws"} <= set(skills)
+    skills["python"].review_status = "approved"
+    skills["docker"].review_status = "rejected"
+    db_session.commit()
+    before = {s.id: (s.review_status, s.requirement_type) for s in skills.values()}
+
+    service = JobReextractionService(db_session, use_esco_vocabulary=False)
+    plan = service.plan(job)
+    assert [t.normalized_text for t in plan.new_terms] == ["3-5 years of relevant experience"]
+    assert [(s.normalized_text, new) for _, s, new in plan.pending_type_changes] == [("git", "required")]
+    assert sorted((s.normalized_text, new) for _, s, new in plan.reviewed_type_changes) == [
+        ("docker", "required"), ("python", "required")]
+    assert [term.normalized_text for term, _ in plan.vanished] == ["aws"]  # now under Benefits
+    db_session.rollback()  # planning writes nothing
+    assert {s.id: (s.review_status, s.requirement_type) for s in
+            db_session.scalars(select(JobSkill).where(JobSkill.job_id == job.id))} == before
+
+    service.apply(job, service.plan(job))
+    after = {s.normalized_text: s for s in db_session.scalars(select(JobSkill).where(JobSkill.job_id == job.id))}
+    assert (after["python"].review_status, after["python"].requirement_type) == ("approved", "unknown")
+    assert (after["docker"].review_status, after["docker"].requirement_type) == ("rejected", "unknown")
+    assert (after["git"].review_status, after["git"].requirement_type) == ("pending", "required")
+    assert after["aws"].id == skills["aws"].id  # vanished occurrence kept
+    new = after["3-5 years of relevant experience"]
+    assert (new.review_status, new.requirement_type, new.source) == ("pending", "required", "extraction")
+    assert db_session.scalar(select(ExtractedJobTerm.extraction_method).where(ExtractedJobTerm.id == new.extracted_term_id)) == "regex@v3"
+    log = db_session.scalar(select(ProcessingLog).where(ProcessingLog.stage == "additive_reextraction"))
+    assert log is not None and log.metadata_json["new_terms"] == 1
+
+    # Idempotent: a second run finds nothing new and changes nothing.
+    second = service.plan(job)
+    assert not second.changes_data and second.new_terms == []
+
+
+def test_additive_reextraction_links_only_new_terms(client: TestClient, db_session: Session, monkeypatch) -> None:
+    from app.services import job_service
+
+    job, _ = _legacy_job(client, db_session, "Requirements\nPython\n2-4 years of industry experience")
+    linked: list[set] = []
+    monkeypatch.setattr(job_service.TaxonomyService, "link_document_if_taxonomy_available",
+                        lambda self, source, document_id, term_ids=None: linked.append(term_ids))
+    service = job_service.JobReextractionService(db_session, use_esco_vocabulary=False)
+    new_ids = service.apply(job, service.plan(job))
+    assert len(new_ids) == 1 and linked == [set(new_ids)]
+
+
+def test_reextraction_cli_dry_run_writes_nothing(client: TestClient, db_session: Session, monkeypatch, capsys) -> None:
+    from app.services import job_service
+
+    job, _ = _legacy_job(client, db_session, "Requirements\nPython\n2-4 years of industry experience")
+    job_id = job.id
+    count = lambda: len(list(db_session.scalars(select(ExtractedJobTerm).where(ExtractedJobTerm.job_id == job_id))))
+    before = count()
+    monkeypatch.setattr("app.db.session.SessionLocal", lambda: db_session)
+    assert job_service.main(["reextract", "--esco", "off", "--job", str(job_id)]) == 0
+    output = capsys.readouterr().out
+    assert "DRY-RUN (no writes)" in output and "new   1" in output
+    assert count() == before
+
+
+def test_reextraction_does_not_re_add_text_a_reviewer_corrected(client: TestClient, db_session: Session) -> None:
+    from app.services.job_service import JobReextractionService
+
+    job, headers = _legacy_job(client, db_session, "Requirements\nNABCEP certification")
+    skill = db_session.scalar(select(JobSkill).where(JobSkill.job_id == job.id, JobSkill.normalized_text == "certification"))
+    payload = {"raw_text": "certification", "normalized_text": "nabcep certification", "skill_type": "certification",
+               "requirement_type": "required", "evidence_sentence": skill.evidence_sentence, "review_status": "approved"}
+    assert client.put(f"/jobs/{job.id}/extracted-skills/{skill.id}", headers=headers, json=payload).status_code == 200
+    db_session.expire_all()
+
+    plan = JobReextractionService(db_session, use_esco_vocabulary=False).plan(job)
+    assert plan.new_terms == [] and plan.vanished == []
+    [(stored_term, kept_skill, fresh)] = plan.reviewer_edited
+    assert (kept_skill.normalized_text, kept_skill.review_status, fresh.normalized_text) == (
+        "nabcep certification", "approved", "certification")
