@@ -594,11 +594,13 @@ the config switch.
 
 Stored and fresh occurrences match on (normalized text, term type, start,
 end) in the stored cleaned text:
-- **Matched occurrences are untouched:** review status, approved taxonomy
-  links and suggestions stay as they are. Only a still-`pending` skill takes a
-  changed requirement type. For an approved or rejected skill the difference
-  is reported and not applied, because the stored value is part of a reviewed
-  item.
+- **Matched occurrences keep their review:** review status, approved taxonomy
+  links and suggestions stay as they are. A still-`pending` skill takes a
+  changed requirement type. An approved skill takes it only from `unknown` to
+  `required` or `preferred`: v2 never assigned a type there, so this fills a
+  gap without overriding a reviewed value. Every other difference on an
+  approved or rejected skill is reported for manual checking and not applied,
+  e.g. preferred → required, required → unknown, or any rejected skill.
 - **Reviewer-edited occurrences:** if a fresh term lands on the exact span of
   a stored occurrence whose text or type was edited during review, the stored
   occurrence is kept and the fresh term is not added. Otherwise re-extraction
@@ -607,12 +609,57 @@ end) in the stored cleaned text:
 - **New occurrences** are inserted as `pending` job skills with their
   versioned extraction method. Taxonomy linking runs for those term IDs only.
 - **Vanished occurrences** (no longer extracted) are kept and reported.
+- **Job create/edit** uses the same reconciliation instead of delete and
+  recreate. In addition, an occurrence with the same text, type and evidence
+  sentence at a new span counts as moved: its review is kept and its offsets
+  are updated. Text removed by an edit leaves its occurrences in place,
+  reported as vanished.
 
 Each applied job gets an `additive_reextraction` processing log with the
 counts. Its embedding is marked stale. `python -m app.retrieval.cli index
 jobs` then re-embeds only jobs whose input hash changed.
 
-The 30 Phase 5 evaluation jobs are included. Before `--apply`, a `pg_dump`
-snapshot (stored outside the repository) and the Phase 5 metrics it
-reproduces are recorded in this entry. Until then their stored extraction is
-unchanged.
+The 30 Phase 5 evaluation jobs are included.
+
+**Pre-apply snapshot (2026-11-18):**
+- File: `skillgap-pre-job-reextraction-20261118T091512Z.dump`
+  (PostgreSQL custom format), in `skillgap-snapshots/` beside the repository,
+  not in Git.
+- SHA-256:
+  `141bcefaff08e2c6f82415a9c193228244cfdcb00f429d18c5d1a292ff12c94e`.
+- State at the snapshot:
+  - Alembic `0008_dense_retrieval`;
+  - 118 extracted job terms and job skills (75 approved, 26 pending,
+    17 rejected);
+  - 41 approved job taxonomy links;
+  - 30 ready job embeddings.
+- Restore with
+  `pg_restore --clean --if-exists -d skillgap <file>`.
+
+Phase 5 results are unaffected. The accepted evaluation
+`evaluation_v2_4ad60a9a219015141927c755` (source commit `d80e2c9`, template
+`e5-job-profile-v2`, model `intfloat/multilingual-e5-small@fd1525a9`, 8
+candidates × 30 jobs, 240 judgments) reported:
+
+| Metric | Fraction | Value |
+|---|---|---|
+| Recall@5 | 37/84 | 0.440476 |
+| Recall@10 | 53/84 | 0.630952 |
+| Recall@20 | 5/7 | 0.714286 |
+| MRR | 1261/1925 | 0.655065 |
+
+Its ranking and metric files are immutable. The database state it was
+produced from is preserved in the snapshot above. Re-running Phase 5 against
+the live database after this re-extraction, and after reindexing, measures a
+different system state.
+
+The dry-run outputs reviewed before applying are in
+`evaluation/local/job-reextraction-2026-11-18/` (git-ignored):
+- `dryrun-esco-on-summary.txt` and `dryrun-esco-on-verbose.txt`: before the
+  approved-unknown rule;
+- `dryrun-esco-off-summary.txt` and `dryrun-esco-off-verbose.txt`;
+- `dryrun-esco-on-verbose-final-rule.txt`: the plan that was applied.
+
+Final plan, ESCO on: 31 jobs, 271 new pending terms (249 from ESCO), 9
+approved unknown skills given a type, 19 reviewed differences reported only,
+14 reviewer-edited spans kept and 2 vanished occurrences kept.

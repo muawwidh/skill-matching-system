@@ -196,9 +196,26 @@ preserve reviews.
 
 Additive re-extraction of existing jobs (D039) is implemented as
 `python -m app.services.job_service reextract`. It is a dry-run by default and
-writes only with `--apply`. A dry-run on 2026-11-18 left the database
-unchanged. `--apply` has **not** been run: it awaits the pre-apply `pg_dump`
-snapshot and the Phase 5 metrics record.
+writes only with `--apply`. Job create/edit now uses the same reconciliation;
+the old delete-and-recreate `replace_job_terms` remains only as a test
+fixture helper.
+
+Applied 2026-11-18 to all 31 active jobs (ESCO on), after snapshot
+`skillgap-pre-job-reextraction-20261118T091512Z.dump`; see D039. Results:
+- 271 new pending job skills, 249 of them from ESCO;
+- 246 new terms received an automatically approved taxonomy link;
+- 9 approved `unknown` skills were given a requirement type;
+- 19 other reviewed differences are reported for manual checking only;
+- 14 reviewer-edited spans and 2 vanished occurrences were kept;
+- the 75 approved and 17 rejected job skills and the 41 existing approved
+  job links are unchanged;
+- a second run finds no changes.
+
+All 31 job embeddings are **stale** and were deliberately not reindexed:
+pending job skills are reviewed first. Until reindexing, the retrieval
+tie-break in skill coverage is unavailable for those jobs. Approved-only
+matching is unaffected until new skills are approved. Outputs are in
+`evaluation/local/job-reextraction-2026-11-18/`.
 
 ## Early Matching Prototype
 
@@ -291,9 +308,11 @@ Status: IMPLEMENTED 2026-11-18 (no migration)
 - The Dashboard shows a "System overview" section with "X of Y" tables, and
   no percentages, only to users with the admin role. The request is never
   made for other users.
-- No account in the local development database currently has the admin role.
-  The section is verified by API tests and a direct read-only service run
-  against that database, not yet in the browser.
+- One local development account was granted the admin role on 2026-11-18
+  with `python -m app.utils.manage_role <email> admin`. With that account,
+  `GET /admin/overview` returned 200, and researchers and candidates still got
+  403. Roles are granted with that command. There is no revoke command;
+  removing a role requires SQL.
 
 ## Phase 4 — Taxonomy Integration
 
