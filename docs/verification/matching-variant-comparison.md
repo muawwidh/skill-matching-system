@@ -51,7 +51,7 @@ private.
   No significance test was run, and at this sample size none would be
   meaningful. The differences describe this benchmark only.
 - **Coverage ranking is often decided by ties.** For 4 of the 8 candidates,
-  including Q2, Q5, Q6 and Q7, **no approved skill matches any of the 30
+  namely Q2, Q5, Q6 and Q7, **no approved skill matches any of the 30
   jobs**. B and C then order those candidates' jobs only by "has
   required/preferred skills" and the job UUID, which is effectively arbitrary.
   Q6's better Recall@10 under B and C comes from this ordering, not from

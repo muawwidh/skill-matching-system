@@ -266,8 +266,8 @@ Exploratory (grade 1 or 2, denominator 8): Recall@5 0.401419, Recall@10
 0.715636, Recall@20 0.947527, MRR 0.916667. These are unchanged from the
 re-run.
 
-Finishing the review changed one thing: one query's Recall@5 went from 0.50 to
-0.67. With 7 queries, none of these differences supports a claim that job
+Finishing the review changed only Recall@5: one query went from 0.50 to 0.67,
+another from 0.33 to 0.67. With 7 queries, none of these differences supports a claim that job
 extraction v3 improves or harms retrieval. They are descriptive only.
 
 Private outputs are in
