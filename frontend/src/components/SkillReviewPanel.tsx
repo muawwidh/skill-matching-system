@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronDown, ChevronRight, X } from "lucide-react";
 import { useState } from "react";
 
-import { listJobSkills } from "../api/documents";
+import { listJobSkills, reviewJobSkill } from "../api/documents";
 import type { JobSkill } from "../types/documents";
 import { CandidateSkillGroups, skillSourceLabel } from "./CandidateSkillGroups";
 
@@ -10,12 +10,14 @@ type SkillReviewPanelProps = {
   accessToken: string;
   ownerId: string;
   ownerType: "cv" | "job";
+  /** Job skills only: show per-occurrence approve/reject (admin and researcher). */
+  canReview?: boolean;
 };
 
-export function SkillReviewPanel({ accessToken, ownerId, ownerType }: SkillReviewPanelProps) {
+export function SkillReviewPanel({ accessToken, ownerId, ownerType, canReview = false }: SkillReviewPanelProps) {
   return ownerType === "cv"
     ? <CandidateSkillGroups key={ownerId} accessToken={accessToken} cvId={ownerId} />
-    : <JobSkillGroups accessToken={accessToken} jobId={ownerId} />;
+    : <JobSkillGroups accessToken={accessToken} jobId={ownerId} canReview={canReview} />;
 }
 
 const REQUIREMENT_STRENGTH: Record<string, number> = { required: 3, preferred: 2, unknown: 1 };
@@ -53,11 +55,20 @@ function reviewSummary(occurrences: JobSkill[]): string {
   return entries.length === 1 ? entries[0][0] : entries.map(([status, count]) => `${count} ${status}`).join(" · ");
 }
 
-function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: string }) {
+function JobSkillGroups({ accessToken, jobId, canReview }: { accessToken: string; jobId: string; canReview: boolean }) {
+  const queryClient = useQueryClient();
   const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});
   const skillQuery = useQuery({
     queryKey: ["job", jobId, "skills"],
     queryFn: () => listJobSkills(accessToken, jobId),
+  });
+  const review = useMutation({
+    mutationFn: ({ skill, status }: { skill: JobSkill; status: "approved" | "rejected" }) =>
+      reviewJobSkill(accessToken, jobId, skill, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job", jobId, "skills"] });
+      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+    },
   });
 
   if (skillQuery.isLoading) {
@@ -71,6 +82,7 @@ function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: st
   return (
     <div className="mt-4 rounded-md border border-slate-200 bg-white p-3">
       <h3 className="mb-3 text-sm font-semibold text-ink">Extracted Skills and Indicators</h3>
+      {review.error ? <p role="alert" className="mb-2 text-sm text-red-700">{review.error.message}</p> : null}
       <div className="space-y-2">
         {groups.map((group) => {
           const statuses = new Set(group.occurrences.map((item) => item.review_status));
@@ -91,7 +103,7 @@ function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: st
                   {statuses.size > 1 ? `Mixed: ${reviewSummary(group.occurrences)}` : reviewSummary(group.occurrences)}
                 </span>
               </div>
-              {withEvidence.length ? (
+              {withEvidence.length || canReview ? (
                 <div className="mt-2">
                   <button
                     className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600"
@@ -99,7 +111,7 @@ function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: st
                     type="button"
                   >
                     {expandedEvidence[group.key] ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
-                    Evidence
+                    {canReview ? "Evidence and review" : "Evidence"}
                   </button>
                   {expandedEvidence[group.key] ? (
                     <ul className="mt-2 space-y-2">
@@ -109,6 +121,36 @@ function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: st
                             {item.raw_text} · {item.requirement_type}{item.source_section ? ` · ${sectionLabel(item.source_section)}` : ""} · {skillSourceLabel(item.source)} · {item.review_status}
                           </p>
                           {item.evidence_sentence || "No evidence text"}
+                          {canReview ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                aria-label={`Approve job skill occurrence ${item.id}`}
+                                aria-pressed={item.review_status === "approved"}
+                                className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium ${
+                                  item.review_status === "approved" ? "border-ocean bg-ocean text-white" : "border-slate-300 text-ocean"
+                                }`}
+                                disabled={review.isPending || item.review_status === "approved"}
+                                onClick={() => review.mutate({ skill: item, status: "approved" })}
+                                type="button"
+                              >
+                                <Check size={14} aria-hidden="true" />
+                                Approve
+                              </button>
+                              <button
+                                aria-label={`Reject job skill occurrence ${item.id}`}
+                                aria-pressed={item.review_status === "rejected"}
+                                className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium ${
+                                  item.review_status === "rejected" ? "border-red-700 bg-red-700 text-white" : "border-slate-300 text-red-700"
+                                }`}
+                                disabled={review.isPending || item.review_status === "rejected"}
+                                onClick={() => review.mutate({ skill: item, status: "rejected" })}
+                                type="button"
+                              >
+                                <X size={14} aria-hidden="true" />
+                                Reject
+                              </button>
+                            </div>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

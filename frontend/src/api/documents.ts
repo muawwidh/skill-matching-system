@@ -104,3 +104,19 @@ export function refreshRecommendations(accessToken: string) {
 export function getSystemOverview(accessToken: string) {
   return apiRequest<SystemOverview>("/admin/overview", { accessToken });
 }
+
+// Per-occurrence job skill review (admin/researcher only; enforced by the API).
+export function reviewJobSkill(accessToken: string, jobId: string, skill: JobSkill, reviewStatus: "approved" | "rejected") {
+  return apiRequest<JobSkill>(`/jobs/${jobId}/extracted-skills/${skill.id}`, {
+    method: "PUT",
+    accessToken,
+    body: JSON.stringify({
+      raw_text: skill.raw_text,
+      normalized_text: skill.normalized_text,
+      skill_type: skill.skill_type,
+      requirement_type: skill.requirement_type,
+      evidence_sentence: skill.evidence_sentence,
+      review_status: reviewStatus,
+    }),
+  });
+}

@@ -129,7 +129,7 @@ export function JobsPage() {
                 rankTotal={coverageRank.size}
               />
               {accessToken ? (
-                <SkillReviewPanel accessToken={accessToken} ownerId={item.id} ownerType="job" />
+                <SkillReviewPanel accessToken={accessToken} canReview={canManageJobs} ownerId={item.id} ownerType="job" />
               ) : null}
             </article>
           ))}
