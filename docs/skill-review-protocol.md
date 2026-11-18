@@ -14,15 +14,18 @@ Extraction sets `requirement_type` from the section heading (D038):
 
 A reviewer may correct that type. When the sentence wording and the heading
 disagree, **the sentence wording beats the heading**:
-- A skill introduced as *familiarity with*, *exposure to*, *knowledge of … is
-  a plus*, *a plus*, *nice to have* or *desirable* is `preferred`, even under a
-  Requirements or Qualifications heading.
+- A skill introduced as *familiarity with*, *exposure to*, *… is a plus*,
+  *… is considered an advantage*, *… is an asset*, *nice to have* or
+  *desirable* is `preferred`, even under a Requirements or Qualifications
+  heading.
 - A skill stated as *must*, *required* or *essential* is `required`, even under
   a heading that gives `unknown`.
 
-Example (2026-11-18): "Familiarity with Python frameworks such as Django or
-FastAPI is a plus" sits under the J11 "Your Profile" heading. Extraction v3
-gives `required`; the reviewed value stays `preferred`.
+Example (2026-11-18): under the "Your Profile" heading of one job,
+"Familiarity with Python frameworks such as Django, Flask, or FastAPI is
+considered an advantage" and "Exposure to cloud technologies (Azure, AWS, GCP),
+Docker, or CI/CD tools is considered an advantage". Extraction v3 gives
+`required`; the reviewed value stays `preferred`.
 
 ## Status
 
