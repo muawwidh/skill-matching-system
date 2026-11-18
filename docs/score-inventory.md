@@ -1,0 +1,214 @@
+# Score and Constant Inventory
+
+Snapshot of the repository at commit `349e668` (branch `simple-matching`),
+compiled 2026-11-18 by reading the code. No code was changed to produce it.
+
+Scope: every numeric value that is shown to a user or persisted as a result,
+plus every threshold, weight, cut-off or budget that determines one of those
+values. Paths are relative to `backend/app/` unless stated otherwise.
+
+## Origin categories
+
+| Category | Meaning |
+|---|---|
+| **Data-derived** | Fitted, calibrated or measured from project data. |
+| **Source** | Taken from an external specification: the model card or architecture, a library's definition, or a standard formula from the literature. |
+| **Arbitrary** | Hand-chosen by the developer. "Documented" means the value and its intent are recorded in `docs/DECISIONS.md` or another doc. That record gives no empirical justification, so the value stays arbitrary. |
+
+**Main finding:** no constant in the scoring, extraction, linking or retrieval
+paths is data-derived. Every hand-set threshold and weight is arbitrary. Only
+the model-imposed limits and the standard metric formulas come from a source.
+The only data-derived numbers are evaluation **outputs** (section 6).
+
+---
+
+## 1. Legacy matcher (`/matches`, Phase 6 prototype)
+
+Shown to users in `JobsPage` → `frontend/src/components/JobMatchPanel.tsx`.
+Persisted in `candidate_job_matches`.
+
+| Value | Where computed | Exact formula | Constants | Origin |
+|---|---|---|---|---|
+| `score` (0–100, stored with 2 decimals) | `services/matching_service.py:66` `MatchingService._score_job` | `R = required ∪ unknown` and `P = preferred`, using the job's skill `normalized_text` sets. `C` is the candidate's set. `score = round(100 · (2·|R∩C| + 1·|P∩C|) / (2·|R| + 1·|P|), 2)`. The score is `0.0` when the denominator is 0. | `required_weight = 2` (l.76) | Arbitrary, undocumented |
+| | | | `preferred_weight = 1` | Arbitrary, undocumented |
+| | | | `unknown` requirement type counted as required (weight 2) | Arbitrary, undocumented |
+| | | | Multiplier `100`, rounding to `2` d.p. | Arbitrary (presentation) |
+| | | Skill eligibility: `skill_type ∈ {"skill","tool"}` (`_is_matchable_type`, l.123), with `review_status != "rejected"`. **Pending** skills count as matched. (`repositories/document_repository.py:500,512`) | Type set; rejected-only exclusion | Arbitrary, undocumented |
+| | | Equality is an exact string match on `normalized_text`. It uses no taxonomy links, embeddings or partial credit. | — | — |
+| Score displayed (`NN%`) | `frontend/src/components/JobMatchPanel.tsx:32` | `Math.round(score)`. Shows `0%` when no match row exists. | — | Arbitrary (presentation) |
+| `explanation` (text bucket chosen by score) | `services/matching_service.py:127` `_explanation` | First rule that applies: (1) no required skill matched and some missing → "Low match…"; (2) `score ≥ 80` → "Strong…"; (3) `score ≥ 50` → "Partial…"; (4) preferred missing and no required missing → "Required skills are mostly covered…"; (5) otherwise "Limited…". | `80` (l.135) | Arbitrary, undocumented |
+| | | | `50` (l.137) | Arbitrary, undocumented |
+| `candidate_skill_count` | `_score_job` | `|C|` | — | Count |
+| `job_skill_count` | `_score_job` | `|R ∪ P|` | — | Count |
+| Processing-log `score` | `match_my_job` | The same `score`, logged with `round()` in the message text. | — | — |
+
+Known inconsistencies:
+- Rule (4) can produce a message saying required skills are "mostly covered" when the score is below 50.
+- The "Strong match … required skill coverage" text is chosen on the combined score, not on required coverage alone.
+
+---
+
+## 2. Dense retrieval (`GET /retrieval/jobs`, Phase 5)
+
+Returned by the API but **not shown in any frontend page**. Ranking is not
+persisted. The embeddings are persisted in `job_embeddings` and
+`candidate_profile_embeddings`.
+
+| Value | Where computed | Exact formula | Constants | Origin |
+|---|---|---|---|---|
+| `retrieval_similarity` | `services/retrieval_service.py:94` `RetrievalService.jobs_for_user`. The distance comes from `repositories/retrieval_repository.py:139` `exact_jobs`. | `1.0 − cosine_distance(q, d)`, where pgvector computes `cosine_distance = 1 − (q·d)/(‖q‖‖d‖)`. Vectors are L2-normalised at encode time, so the result equals `q·d`. Search is an exact scan ordered by `(distance, job.id)`. | Cosine as the similarity measure | Source (E5 usage convention) |
+| `rank` | `jobs_for_user` | 1-based position after the exact sort. Jobs whose stored `source_hash` is stale are skipped. | — | — |
+| Query and passage embeddings | `retrieval/embedder.py:43` `LocalE5Embedder.encode` | `SentenceTransformer.encode(bounded_text, normalize_embeddings=True)`. Mean pooling is set by the model's `1_Pooling` config. | Model `intfloat/multilingual-e5-small` @ `fd1525a9…` | Source (pinned model) |
+| | | | `DIMENSION = 384` (`retrieval/representation.py:12`) | Source (model architecture) |
+| | | | `MAX_TOKENS = 512` (l.13), including 2 special tokens | Source (model max sequence length) |
+| | | | Prefixes `"query: "` / `"passage: "` (l.45, l.54) | Source (E5 model card) |
+| `limit` default / maximum | `api/routes/retrieval.py:16` | `Query(20, ge=1, le=100)` | 20, 1, 100 | Arbitrary |
+| Internal page size | `retrieval_service.py:85` | Fetches 100 rows per scan page | 100 | Arbitrary (performance only, does not affect results) |
+
+Observed similarities are tightly packed. For two real accounts on 2026-11-18,
+the top-5 values were 0.84–0.88. The values are not calibrated probabilities.
+Per AGENTS.md they must not be used as the final match score.
+
+### 2a. Job representation budget (template `e5-job-profile-v2`)
+
+These constants decide **what text is embedded**, so they shape every
+`retrieval_similarity`. The algorithm lives in `retrieval/job_budget.py`
+`budget_job` (l.241). It is recorded as predeclared in DECISIONS.md D030.
+
+| Constant | Location | Role | Origin |
+|---|---|---|---|
+| `METADATA_CAP = 104` tokens | l.7, `_metadata` | Hard cap for the title, employment and location block | Arbitrary, documented (D030) |
+| Per-field caps `60 / 12 / 12` (title/employment/location) | l.112 | Starting clip lengths. The largest cap is reduced by 1 until the block fits `METADATA_CAP`. | Arbitrary, undocumented |
+| `STRUCTURED_CAP = 96` tokens | l.8, `_structured` | Cap for the required, preferred and other skill lists | Arbitrary, documented (D030) |
+| `STRUCTURED_CAP − 6` | l.136 | Reserve for line separators | Arbitrary, undocumented |
+| Structured weights `required 3 : preferred 2 : unknown 1` | l.136 | Split of the structured cap | Arbitrary, undocumented |
+| `CLASS_WEIGHTS` `requirements 4, preferences 2, responsibilities 4, summary 1, context 1` | l.9 | Split of the remaining tokens across verbatim source classes | Arbitrary, documented (D030) |
+| `_allocate` | l.101 | `quota_k = ⌊total·w_k/Σw⌋`. Leftover units go +1 each to the first keys in insertion order. | Algorithm choice |
+| Safety margin `−12`, then `−2` for special tokens | l.249 | `budget = 512 − 2 − tokens(metadata+structured) − 12` | `2`: Source (tokenizer contract). `12`: Arbitrary |
+| `−3` per bucket label | l.213 | Reserve inside each class bucket | Arbitrary |
+| Refund: `spare = 512 − size − 4`, stop if `spare < 8` | l.272, l.275 | Spends unused tokens on unfinished classes | Arbitrary |
+| Shrink step `size − 512 + 2` | l.286 | Reduces the budget after an over-length render | Arbitrary |
+| Unit chunking `64` words | l.182 | Long sentences are split into 64-word units | Arbitrary |
+| Stratified anchors: first, middle (`(n−1)//2`), last unit | `_render_bucket` l.211 | Picks which snippets are kept first | Arbitrary |
+
+Template v1 (`job_representation`, `retrieval/representation.py`) has no budget
+constants. It truncates the full text at 512 tokens through `bounded_text`
+(l.69). The candidate text is the same in v1 and v2: approved skills,
+canonical labels and evidence. Only `review_status == "approved"` skills are
+included. Pending skills are excluded, unlike the legacy matcher.
+
+---
+
+## 3. Skill extraction confidence (Phase 3)
+
+Persisted on extracted terms, `candidate_skills` and `job_skills`. **Shown to
+users** as `Math.round(confidence_score*100)%` in
+`frontend/src/components/SkillReviewPanel.tsx:103` and
+`CandidateSkillGroups.tsx:69` ("extraction confidence").
+
+| Value | Where computed | Formula | Constant | Origin |
+|---|---|---|---|---|
+| Dictionary match (regex fallback) | `nlp/skill_extractor.py:121` | Fixed value | `0.90` | Arbitrary, undocumented |
+| spaCy PhraseMatcher dictionary match | l.149 | Fixed value | `0.92` | Arbitrary, undocumented |
+| Regex `experience_indicator` ("N years experience") | l.165 | Fixed value | `0.86` | Arbitrary, undocumented |
+| Regex `qualification` (bachelor/master/…) | l.166 | Fixed value | `0.82` | Arbitrary, undocumented |
+| Regex `certification` | l.167 | Fixed value | `0.78` | Arbitrary, undocumented |
+| Deduplication | `_deduplicate` l.234 | Keeps the highest-confidence term per `(normalized_text, term_type, source_section)` | — | Algorithm choice |
+| Evidence list-item split | `_evidence_sentence` | Uses list-fragment evidence if the sentence is longer than `140` chars or contains `≥ 2` delimiters | `140`, `2` | Arbitrary, undocumented |
+
+These are constant labels per extraction method, not per-match
+probabilities. Nothing reads them in scoring or retrieval. Displaying them as
+percentages implies a precision they do not have.
+
+## 4. Section detection confidence (Phase 2)
+
+Persisted on `cv_sections` and `job_sections`, and returned by the API. It is
+not rendered in the UI.
+
+| Value | Where | Formula | Constant | Origin |
+|---|---|---|---|---|
+| Heading-matched section | `services/section_detection_service.py:12` | Dataclass default | `1.0` | Arbitrary |
+| `full_text` fallback or pre-heading text | l.64, 77, 102 | Fixed value | `0.6` | Arbitrary, undocumented |
+
+---
+
+## 5. Taxonomy linking (Phase 4)
+
+Persisted as link candidates and approved links. **Shown to users** in
+`frontend/src/components/TaxonomyReviewPanel.tsx:115` as
+`Math.round(confidence_score*100)%`. The approved canonical label feeds the
+retrieval text (section 2), so these thresholds indirectly affect
+`retrieval_similarity`.
+
+| Value | Where computed | Exact formula | Constants | Origin |
+|---|---|---|---|---|
+| Link `confidence_score`: exact preferred | `taxonomy/linker.py:35` `rank_with_top_uniqueness` | Normalised term equals the concept's normalised preferred label | `1.0` | Arbitrary, documented (`taxonomy-integration.md`) |
+| Exact alternative label | l.39 | Equality with any normalised alternative label | `0.98` | Arbitrary, documented |
+| Fuzzy | l.45 | `f = max over labels of rapidfuzz.fuzz.ratio(term, label)/100`. The candidate is dropped if `f < 0.70`. Otherwise `confidence = round(f · 0.94, 4)`. | `ratio` = normalised Indel similarity | Source (RapidFuzz) |
+| | | | `fuzzy_threshold = 0.70` (l.17) | Arbitrary, documented |
+| | | | Scale `0.94` | Arbitrary, documented |
+| | | | Rounding to `4` d.p. | Arbitrary |
+| Candidates retained | l.17 | Top `max_candidates` after sorting by `(−confidence, label, release, id)` | `5` | Arbitrary, documented |
+| Auto-approval rule | `services/taxonomy_service.py:309` `link_document` | `rank == 1 ∧ unique_top ∧ confidence ≥ 0.95` | `0.95` | Arbitrary, documented (D027 calls it "the existing 0.95 threshold") |
+| Human correction | `taxonomy_service.py:384` | Confidence set to a fixed value on a reviewer's concept replacement | `1.0` | Arbitrary |
+| ESCO↔O*NET mapping confidence | `taxonomy/importer.py:150–157` `_mapping` | Value from the import row, default `1.0`, clamped to `[0,1]` | Default `1.0` | Source if present in the import file; otherwise arbitrary default |
+
+Implied consequence: the fuzzy maximum is `0.94 < 0.95`, so fuzzy links can
+never auto-approve. Only exact preferred and exact alternative matches can.
+The `0.94` scale therefore acts as the "fuzzy is always reviewed" rule.
+
+---
+
+## 6. Retrieval evaluation (Phase 5 offline results)
+
+These are produced by the CLI (`retrieval/cli.py`) and stored as evaluation
+reports. They are not shown in the app UI. Results are recorded in
+`docs/phase5-evaluation-protocol.md`.
+
+| Value | Where computed | Exact formula | Constants | Origin |
+|---|---|---|---|---|
+| Recall@K (per candidate) | `retrieval/evaluation.py:4` `retrieval_metrics` | `|relevant ∩ ranked[:K]| / |relevant|` | `K ∈ {5, 10, 20}` | Formula: Source (standard IR). Choice of K: Arbitrary, documented (D023) |
+| MRR (per candidate) | same, l.16 | `1/rank` of the first relevant job, or `0` if none | — | Source (standard IR) |
+| Relevance rule | `retrieval/benchmark.py:335` `evaluate_pack` | Relevant ⇔ `relevance_grade == "2"` (scale 0/1/2) | Grade 2 only | Arbitrary, documented (D023) |
+| Macro average | `benchmark.py:345` | `Σ metric over eligible candidates / aggregate_binary_query_denominator`, where the denominator is the number of candidates with at least one grade-2 job and no policy exclusion (`evaluation_policy.py:128`) | — | Methodological choice, documented (D031) |
+| Exploratory grade-1-or-2 metrics | `benchmark.py` (`grade_one=True`) | The same formulas with relevance = grade ∈ {1,2}, averaged over candidates that have any relevant job | — | Arbitrary, documented (D023) |
+| Corpus-size gate | `benchmark.py:316` | Rejects evaluation unless `(candidates, jobs, judgments) == (8, 30, 240)` | 8, 30, 240 | Arbitrary (study design), documented |
+| Cohen's κ | `benchmark.py:431` `cohens_kappa` | `p_o` = fraction of equal grades; `p_e = Σ_g (n_left,g · n_right,g)/N²`; `κ = (p_o − p_e)/(1 − p_e)`, null if `p_e = 1` | Unweighted, 3 grades | Source (Cohen 1960) |
+| Blind-export shuffle seed | `benchmark.py:17` | Seeds the pair order for the labelling CSV | `SEED = 20261002` | Arbitrary (a date) |
+| Stored primary results | `phase5-evaluation-protocol.md` | Recall@5 = 0.440476, Recall@10 = 0.630952, Recall@20 = 0.714286, MRR = 0.655065 | — | **Data-derived** (outputs, not constants) |
+
+---
+
+## 7. Other numeric API limits (not scores)
+
+Listed for completeness. These limit list sizes and do not change any score.
+`api/routes/taxonomy.py`: search and list defaults are `20` (max `100`),
+relations are `100` (max `500`), and the review queue is `25` (max `100`).
+All are arbitrary.
+
+---
+
+## Summary of gaps relevant to Phase 6
+
+1. **Legacy weights 2:1 and cut-offs 80/50 are arbitrary and undocumented.**
+   They are not versioned or configurable. MASTER_PLAN requires both for
+   final scoring ("Weights must remain configurable/versioned").
+2. **The legacy matcher and retrieval disagree on which skills count.** The
+   matcher includes pending skills and treats `unknown` requirements as
+   required. Retrieval uses approved candidate skills only. The matcher also
+   ignores taxonomy links entirely.
+3. **The extraction confidences (0.78–0.92) and section confidences (0.6/1.0)
+   are fixed per-method labels.** They are displayed as percentages but not
+   calibrated.
+4. **`retrieval_similarity` is uncalibrated** and falls in a narrow range
+   (about 0.84–0.88 observed). It must stay a retrieval signal, not a
+   user-facing match percentage.
+5. **The taxonomy thresholds (0.70, 0.94, 0.95, 0.98) are documented but not
+   derived.** They could be justified empirically against the reviewed link
+   decisions already stored. No such analysis exists yet. MASTER_PLAN lists
+   taxonomy-linking "confidence/calibration" as a planned evaluation topic.
+6. **For reference, MASTER_PLAN's intended Phase 6 weights** are 0.35
+   semantic similarity, 0.35 required coverage, 0.15 preferred coverage,
+   0.10 occupation alignment, 0.05 qualification/experience alignment, plus a
+   critical-skill penalty. They are planned only. None of them are in code
+   yet, and they are also currently arbitrary.
