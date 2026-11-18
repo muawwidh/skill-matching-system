@@ -172,8 +172,9 @@ for the accepted result above. The accepted evaluation files are unchanged.
 
 What changed between the two runs:
 - Job extraction v3 (D038) was applied additively to the 30 jobs (D039).
-- The new job skills were reviewed. Job embeddings include approved job skills,
-  so all 30 job inputs changed. They were then reindexed with the same model and
+- The new job skills were reviewed. Job embeddings (template v2) include every
+  job skill that is not rejected, pending as well as approved, so all 30 job
+  inputs changed. They were then reindexed with the same model and
   template (`intfloat/multilingual-e5-small@fd1525a9`, `e5-job-profile-v2`).
 - The 8 candidate profile inputs are byte-identical to the freeze (same source
   hashes).
@@ -183,9 +184,17 @@ What changed between the two runs:
 How the rankings were made: the live database was read-only, the service was
 `RetrievalService.jobs_for_user`, and each of the 8 candidates got a ranking of
 the 30 benchmark jobs. One non-benchmark job was removed from the rankings; this
-keeps the relative order of the rest. At the time of the run, 38 job skills on 8
-benchmark jobs were still pending. Pending skills are not part of job
-embeddings.
+keeps the relative order of the rest.
+
+**Unreviewed skills in this state:** at the time of the reindex and the run,
+**38 job skills on 8 benchmark jobs were still pending** (unreviewed). No
+review happened between the reindex and the run. Pending skills are part of
+the v2 job representation: the requirement lists include every non-rejected
+skill (`retrieval/job_budget.py`), and the source hash covers all skill rows.
+These 38 unreviewed skills therefore shaped the "after" rankings. Reviewing
+them changes those 8 job inputs again. (Correction, 2026-11-18: an earlier
+version of this section said pending skills are not part of job embeddings.
+That was wrong.)
 
 **Primary metrics (grade 2), before vs after job extraction v3 + review:**
 

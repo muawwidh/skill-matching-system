@@ -213,7 +213,10 @@ Applied 2026-11-18 to all 31 active jobs (ESCO on), after snapshot
 
 The new job skills were then reviewed in the UI. 38 job skills on 8 evaluation
 jobs were still pending on 2026-11-18. All 31 active job embeddings were
-reindexed after that review (`index jobs`: 31 indexed, 0 failed). Outputs are in
+reindexed after that review (`index jobs`: 31 indexed, 0 failed). v2 job
+embeddings include every non-rejected job skill, so those 38 pending skills
+are in the reindexed embeddings and in the re-run below. Reviewing them
+changes those jobs' inputs again. Outputs are in
 `evaluation/local/job-reextraction-2026-11-18/`.
 
 Phase 5 retrieval was re-run on the same frozen judgments, with candidate
