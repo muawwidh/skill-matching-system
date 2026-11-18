@@ -105,6 +105,16 @@ def main() -> None:
     kappa.add_argument("jobs", type=Path)
     kappa.add_argument("first", type=Path)
     kappa.add_argument("second", type=Path)
+    compare = sub.add_parser("compare-matching",
+                             help="Read-only: rank benchmark jobs with variants A-D and score them (D043)")
+    compare.add_argument("candidates", type=Path)
+    compare.add_argument("jobs", type=Path)
+    compare.add_argument("judgments", type=Path)
+    compare.add_argument("mapping", type=Path, help='{"candidates": {alias: user UUID}, "jobs": {alias: job UUID}}')
+    compare.add_argument("output", type=Path, help="New directory for rankings and results")
+    compare.add_argument("--database-url", required=True)
+    compare.add_argument("--evaluation-policy", type=Path, help="Explicit file-bound zero-grade-2 coverage policy")
+    compare.add_argument("--template", choices=TEMPLATES)
     smoke = sub.add_parser("smoke-model")
     args = parser.parse_args()
     if args.command == "provision-model":
@@ -126,6 +136,11 @@ def main() -> None:
     elif args.command == "export-rankings":
         print(json.dumps(export_rankings(args.candidates, args.jobs, args.mapping,
                                          args.database_url, args.output, template_version=args.template), sort_keys=True))
+    elif args.command == "compare-matching":
+        from app.retrieval.matching_comparison import compare_matching
+        print(json.dumps(compare_matching(args.candidates, args.jobs, args.judgments, args.mapping,
+                                          args.database_url, args.output, args.evaluation_policy,
+                                          args.template), sort_keys=True))
     elif args.command == "kappa":
         candidates, jobs = load_corpus(args.candidates, args.jobs)
         print(json.dumps(cohens_kappa(args.first, args.second, candidates, jobs), sort_keys=True))
