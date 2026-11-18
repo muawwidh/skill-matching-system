@@ -2,6 +2,8 @@
 
 Snapshot of the repository at commit `349e668` (branch `simple-matching`),
 compiled 2026-11-18 by reading the code. No code was changed to produce it.
+Section 1 and the display notes in sections 3 and 5 were updated on
+2026-11-18 for D034.
 
 Scope: every numeric value that is shown to a user or persisted as a result,
 plus every threshold, weight, cut-off or budget that determines one of those
@@ -22,36 +24,49 @@ The only data-derived numbers are evaluation **outputs** (section 6).
 
 ---
 
-## 1. Legacy matcher (`/matches`, Phase 6 prototype)
+## 1. Skill coverage matcher (`/matches`, transitional Phase 6 prototype)
 
-Shown to users in `JobsPage` → `frontend/src/components/JobMatchPanel.tsx`.
-Persisted in `candidate_job_matches`.
+Replaced on 2026-11-18 by D034. The former 2:1 weighted percentage, the
+`unknown`→required rule and the 80/50 explanation cut-offs no longer exist.
+They are listed under "Removed" below.
 
-| Value | Where computed | Exact formula | Constants | Origin |
+Shown to users in `JobsPage` → `frontend/src/components/JobMatchPanel.tsx`
+("Skill coverage"). Persisted in `candidate_job_matches`. Rows are recomputed
+on every `GET /matches/recommendations`.
+
+| Value | Where computed | Exact rule | Constants | Origin |
 |---|---|---|---|---|
-| `score` (0–100, stored with 2 decimals) | `services/matching_service.py:66` `MatchingService._score_job` | `R = required ∪ unknown` and `P = preferred`, using the job's skill `normalized_text` sets. `C` is the candidate's set. `score = round(100 · (2·|R∩C| + 1·|P∩C|) / (2·|R| + 1·|P|), 2)`. The score is `0.0` when the denominator is 0. | `required_weight = 2` (l.76) | Arbitrary, undocumented |
-| | | | `preferred_weight = 1` | Arbitrary, undocumented |
-| | | | `unknown` requirement type counted as required (weight 2) | Arbitrary, undocumented |
-| | | | Multiplier `100`, rounding to `2` d.p. | Arbitrary (presentation) |
-| | | Skill eligibility: `skill_type ∈ {"skill","tool"}` (`_is_matchable_type`, l.123), with `review_status != "rejected"`. **Pending** skills count as matched. (`repositories/document_repository.py:500,512`) | Type set; rejected-only exclusion | Arbitrary, undocumented |
-| | | Equality is an exact string match on `normalized_text`. It uses no taxonomy links, embeddings or partial credit. | — | — |
-| Score displayed (`NN%`) | `frontend/src/components/JobMatchPanel.tsx:32` | `Math.round(score)`. Shows `0%` when no match row exists. | — | Arbitrary (presentation) |
-| `explanation` (text bucket chosen by score) | `services/matching_service.py:127` `_explanation` | First rule that applies: (1) no required skill matched and some missing → "Low match…"; (2) `score ≥ 80` → "Strong…"; (3) `score ≥ 50` → "Partial…"; (4) preferred missing and no required missing → "Required skills are mostly covered…"; (5) otherwise "Limited…". | `80` (l.135) | Arbitrary, undocumented |
-| | | | `50` (l.137) | Arbitrary, undocumented |
-| `candidate_skill_count` | `_score_job` | `|C|` | — | Count |
-| `job_skill_count` | `_score_job` | `|R ∪ P|` | — | Count |
-| Processing-log `score` | `match_my_job` | The same `score`, logged with `round()` in the message text. | — | — |
+| Eligible skills | `repositories/document_repository.py:506,518` `list_matchable_*_skills` | `review_status == "approved"` on both sides | — | Methodological choice, documented (D034) |
+| | `services/matching_service.py:20` | Compared only if `skill_type ∈ SKILL_LIKE_TYPES`. Other approved job terms are listed as "not assessed". | `{skill, tool, domain_knowledge, language}` | Arbitrary, documented (D034) |
+| Concept for a skill | `document_repository.py:524` `approved_skill_concepts` | Approved link on an **active** release, kept only if the skill text still equals its extracted term (same rule as retrieval) | — | Reuses the Phase 4/5 rule |
+| Matched / missing / not compared | `matching_service.py:93` `compute_coverage` | Job skills are grouped by concept (or by name if unlinked). A linked group is matched `taxonomy_concept` if any candidate concept is equal; else matched `skill_name` if an **unlinked** candidate skill has the same name; else missing. An unlinked group is matched `skill_name` if any candidate skill has the same name; else **not compared** and excluded from totals. | — | Methodological choice, documented (D034) |
+| Requirement class | `_job_groups` l.66 | `unknown` → preferred. Required wins if the same skill is listed both ways. | — | Methodological choice, documented (D034) |
+| "Required skills: X of Y matched" | frontend from `matched_required`, `missing_required` | `X = |matched_required|`, `Y = X + |missing_required|` | — | Count |
+| "Preferred skills: X of Y" | as above, preferred lists | as above | — | Count |
+| Chip tooltip | `JobMatchPanel.tsx:11` | `matched_via` → "Matched via taxonomy concept" / "Matched by same skill name" | — | — |
+| `explanation` | `matching_service.py:155` `build_explanation` | Lines built only from the lists: required line, preferred line, "N job skills could not be compared …", "Also required/preferred — not assessed by the system: …" | — | No thresholds |
+| Ranking (response order and JobsPage order) | `matching_service.py:175` `ranking_key`. JobsPage applies it at `pages/JobsPage.tsx:63`. | Lexicographic: (no comparable required skills → last; required coverage desc as an exact `Fraction`; no comparable preferred skills → after; preferred coverage desc; similarity missing → after; similarity desc; job ID) | — | No weights; documented (D034) |
+| Similarity tie-break | `matching_service.py:245` `_retrieval_similarities` | Reuses `RetrievalService.jobs_for_user`. Omitted if the profile or job index is missing or stale. Never displayed. | — | See section 2 |
+| `score` (stored, **not displayed**) | `matching_service.py:278` | `round(100 · |matched_required| / Y_required, 2)`, or `0.0` if `Y_required = 0` | `100`, `2` d.p. | Legacy column kept without migration; not used for ranking |
+| `candidate_skill_count` | `compute_coverage` | Number of approved skill-like candidate skills | — | Count |
+| `job_skill_count` | `_score_job` | `Y_required + Y_preferred` (compared groups only) | — | Count |
 
-Known inconsistencies:
-- Rule (4) can produce a message saying required skills are "mostly covered" when the score is below 50.
-- The "Strong match … required skill coverage" text is chosen on the combined score, not on required coverage alone.
+No constant in this section is a tuned threshold or weight. The remaining
+choices (type set, eligibility, `unknown`→preferred, tie order) are
+methodological rules recorded in D034.
+
+Removed (for traceability): `required_weight = 2` and `preferred_weight = 1`;
+`unknown` counted as required; the `{skill, tool}` type filter; inclusion of
+pending skills; explanation cut-offs `80`/`50`; the `Math.round(score)%`
+display.
 
 ---
 
 ## 2. Dense retrieval (`GET /retrieval/jobs`, Phase 5)
 
-Returned by the API but **not shown in any frontend page**. Ranking is not
-persisted. The embeddings are persisted in `job_embeddings` and
+Returned by the API but **not shown in any frontend page**. Since D034 it is
+also read as the third ranking key of the skill coverage matcher (section 1).
+Ranking is not persisted. The embeddings are persisted in `job_embeddings` and
 `candidate_profile_embeddings`.
 
 | Value | Where computed | Exact formula | Constants | Origin |
@@ -101,10 +116,10 @@ included. Pending skills are excluded, unlike the legacy matcher.
 
 ## 3. Skill extraction confidence (Phase 3)
 
-Persisted on extracted terms, `candidate_skills` and `job_skills`. **Shown to
-users** as `Math.round(confidence_score*100)%` in
-`frontend/src/components/SkillReviewPanel.tsx:103` and
-`CandidateSkillGroups.tsx:69` ("extraction confidence").
+Persisted on extracted terms, `candidate_skills` and `job_skills`, and returned
+by the API. **No longer displayed** since 2026-11-18. `SkillReviewPanel` and
+`CandidateSkillGroups` now show the skill's `source` ("extracted" / "manual")
+instead of the former `Math.round(confidence_score*100)%`.
 
 | Value | Where computed | Formula | Constant | Origin |
 |---|---|---|---|---|
@@ -117,8 +132,8 @@ users** as `Math.round(confidence_score*100)%` in
 | Evidence list-item split | `_evidence_sentence` | Uses list-fragment evidence if the sentence is longer than `140` chars or contains `≥ 2` delimiters | `140`, `2` | Arbitrary, undocumented |
 
 These are constant labels per extraction method, not per-match
-probabilities. Nothing reads them in scoring or retrieval. Displaying them as
-percentages implies a precision they do not have.
+probabilities. Nothing reads them in scoring or retrieval. That is why they
+are no longer displayed as percentages.
 
 ## 4. Section detection confidence (Phase 2)
 
@@ -134,9 +149,10 @@ not rendered in the UI.
 
 ## 5. Taxonomy linking (Phase 4)
 
-Persisted as link candidates and approved links. **Shown to users** in
-`frontend/src/components/TaxonomyReviewPanel.tsx:115` as
-`Math.round(confidence_score*100)%`. The approved canonical label feeds the
+Persisted as link candidates and approved links. The confidence is **no longer
+displayed** since 2026-11-18. `TaxonomyReviewPanel` shows the match type
+instead ("exact preferred label", "exact alternative label", "fuzzy (similar
+spelling)", "human correction"). The approved canonical label feeds the
 retrieval text (section 2), so these thresholds indirectly affect
 `retrieval_similarity`.
 
@@ -190,16 +206,16 @@ All are arbitrary.
 
 ## Summary of gaps relevant to Phase 6
 
-1. **Legacy weights 2:1 and cut-offs 80/50 are arbitrary and undocumented.**
-   They are not versioned or configurable. MASTER_PLAN requires both for
-   final scoring ("Weights must remain configurable/versioned").
-2. **The legacy matcher and retrieval disagree on which skills count.** The
-   matcher includes pending skills and treats `unknown` requirements as
-   required. Retrieval uses approved candidate skills only. The matcher also
-   ignores taxonomy links entirely.
+1. **Resolved for the prototype (D034):** the 2:1 weights and 80/50 cut-offs
+   were removed in favour of coverage counts and lexicographic ranking. Final
+   Phase 6 scoring still needs configurable, versioned weights (MASTER_PLAN).
+2. **Mostly resolved (D034):** the matcher now uses approved skills only and
+   approved taxonomy concepts, with `unknown` counted as preferred. One
+   difference remains: retrieval's job text includes non-rejected (pending)
+   job skills, while the matcher uses approved job skills only.
 3. **The extraction confidences (0.78–0.92) and section confidences (0.6/1.0)
-   are fixed per-method labels.** They are displayed as percentages but not
-   calibrated.
+   are fixed per-method labels.** They are not calibrated. Since D034 they are
+   no longer displayed, but they are still stored and returned by the API.
 4. **`retrieval_similarity` is uncalibrated** and falls in a narrow range
    (about 0.84–0.88 observed). It must stay a retrieval signal, not a
    user-facing match percentage.

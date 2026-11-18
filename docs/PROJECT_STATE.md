@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-08
+Last updated: 2026-11-18
 
 ## Repository
 
@@ -169,9 +169,9 @@ not rewritten. Every extraction made before Stability Batch 4 has a legacy
 occurrence reconciliation key, reprocessing a pre-v2 CV replaces all its
 legacy extraction occurrences even when visible text and offsets are unchanged.
 Approved, rejected and pending extraction reviews reset to newly extracted
-`pending` skills. A previously rejected skill may temporarily enter the
-transitional prototype matcher, which includes pending but excludes rejected
-skills. Taxonomy candidates and selected links for replaced terms are removed;
+`pending` skills. Since D034 the transitional prototype matcher compares
+approved skills only, so reset skills leave coverage until re-approved.
+Taxonomy candidates and selected links for replaced terms are removed;
 taxonomy review audit events remain append-only. The candidate embedding is
 marked stale by the existing invalidation lifecycle. All reprocessed pre-v2
 evidence must be reviewed and relinked again before indexing or evaluation.
@@ -191,21 +191,53 @@ TRANSITIONAL PROTOTYPE
 
 Implemented:
 
-- candidate-job match persistence
-- basic candidate/job skill comparison
-- basic required/preferred weighting
-- matched skills
-- missing skills
-- basic match percentage
-- recommendation endpoints
-- Candidate Match frontend panel
+- candidate-job match persistence (existing `candidate_job_matches` table, no
+  new migration)
+- skill coverage per D034 (2026-11-18), replacing the former 2:1 weighted
+  match percentage and 80/50 explanation cut-offs:
+  - approved skills only on both sides
+  - comparison by approved taxonomy concept when both skills are linked,
+    otherwise by identical normalized text; each matched skill records which
+    applied
+  - `unknown` requirements count as preferred
+  - required and preferred "X of Y matched" counts, with matched and missing
+    canonical labels
+  - unlinked job skills that cannot be compared are excluded from totals and
+    reported
+  - qualification, experience, certification and occupation terms are listed
+    as "not assessed", never scored
+- lexicographic ranking: required coverage, preferred coverage, Phase 5
+  retrieval similarity when indexed, then job ID; similarity is not displayed
+- list-based explanations, with no score buckets
+- recommendations recomputed on every `GET /matches/recommendations`
+- the API returns `matched_required`/`matched_preferred` as
+  `{label, matched_via}` objects; the legacy `score` column stores required
+  coverage × 100 and is not displayed
+- "Skill coverage" Jobs page panel showing counts and chips (the tooltip
+  shows the match route); jobs are listed in ranking order
+- skill review and taxonomy review panels show skill source / link match type
+  instead of fixed confidence percentages
+- inventory of all scores and constants: `docs/score-inventory.md`
+
+Verified 2026-11-18:
+- backend: 365 passed, 6 skipped (model/corpus-gated), including the 7
+  PostgreSQL lifecycle tests against a temporary `phase5_verify` database
+- frontend production build
+- rebuilt local Compose backend/frontend, checked against a real candidate
+  account: 31 ranked jobs, similarity tie-break active after indexing that
+  profile, no percentages in explanations or the served bundle
+
+Known limitations: release-scoped concept IDs do not bridge ESCO and O*NET
+(the existing mapping table is unused). Most real CV and job skills are still
+unapproved or unlinked, so many accounts show few comparable skills.
 
 This DOES NOT replace final Phase 6.
 
 It currently lacks the complete planned:
 
-- dense retrieval flow
-- multi-component versioned scoring
+- dense retrieval flow (top-N retrieval selecting the jobs to score;
+  similarity is currently only a tie-breaker over all active jobs)
+- multi-component configurable, versioned scoring
 - taxonomy-aware partial coverage
 - occupation alignment
 - qualification/experience alignment

@@ -439,3 +439,51 @@ Phase 5 is complete as a repository/methodology checkpoint with the recorded
 limitations. Current-source one-off execution does not claim the latest normal
 Compose image is deployed. Phase 6 has not started, and must preserve the frozen
 Phase 5 baseline under D032.
+
+## D034 - Transitional Matching Reports Skill Coverage, Not A Score
+
+The transitional matcher on the Jobs page no longer produces a match
+percentage. Its former 2:1 required/preferred weights and 80/50 explanation
+cut-offs were arbitrary and undocumented (`docs/score-inventory.md`). It now
+reports coverage counts: "Required skills: X of Y matched" and
+"Preferred skills: X of Y", plus the matched and missing skill labels.
+
+Only approved skills are compared, on both the candidate and the job side.
+Pending and rejected extraction reviews are never treated as evidence. Two
+skills match by taxonomy concept ID when both carry an approved,
+text-consistent link on an active release. Otherwise they match by identical
+normalized text. Each matched skill records which of these applied. When both
+are linked to different concepts, the reviewed links take precedence and no
+name fallback applies. A linked job skill with no matching candidate skill is
+missing. An unlinked job skill with no same-name candidate skill cannot be
+shown to be missing, so it is excluded from the X-of-Y totals and reported as
+"could not be compared". Job requirement type `unknown` counts as preferred,
+not required. When one skill is listed as both, required wins.
+
+Only skill-like types (skill, tool, domain knowledge, language) are compared.
+Approved qualification, experience, certification and occupation terms are
+listed as "not assessed by the system" and never scored. The Phase 6 plan
+treats qualification/experience alignment as a separate component.
+
+Jobs are ranked lexicographically rather than by weighted combination. The
+keys, in order, are:
+1. Required coverage. Jobs with no comparable required skills go last.
+2. Preferred coverage. Within equal required coverage, jobs without
+   comparable preferred skills sort after those with some.
+3. Phase 5 retrieval similarity, when both the profile and the job index are
+   fresh. Unavailable similarity sorts after available similarity.
+4. Job ID.
+
+Coverage is compared as an exact fraction, so 1 of 1 and 2 of 2 tie.
+Similarity is only read for ordering. It is never displayed, and Phase 5
+indexes, templates and evaluation are unchanged (D032). Explanations are
+built only from the stored matched, missing, not-compared and not-assessed
+lists. Recommendations are recomputed on every read, so stored rows cannot
+reflect an older rule or stale reviews. The legacy `score` column is kept
+without a migration and stores required coverage × 100. It is not displayed
+or used for ranking.
+
+Concept IDs are release-scoped. An ESCO and an O*NET concept for the same
+skill do not match. The existing ESCO↔O*NET mapping table is a possible
+future bridge, but it is not used. This remains a transitional prototype, not
+the final Phase 6 scoring, which must still be configurable and versioned.
