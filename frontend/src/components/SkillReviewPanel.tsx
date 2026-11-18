@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, ChevronRight, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
-import { listCvSkills, listJobSkills, reviewCvSkills } from "../api/documents";
-import type { CandidateSkill, JobSkill } from "../types/documents";
+import { listJobSkills } from "../api/documents";
+import type { JobSkill } from "../types/documents";
 import { CandidateSkillGroups, skillSourceLabel } from "./CandidateSkillGroups";
 
 type SkillReviewPanelProps = {
@@ -15,167 +15,101 @@ type SkillReviewPanelProps = {
 export function SkillReviewPanel({ accessToken, ownerId, ownerType }: SkillReviewPanelProps) {
   return ownerType === "cv"
     ? <CandidateSkillGroups key={ownerId} accessToken={accessToken} cvId={ownerId} />
-    : <OccurrenceReviewPanel accessToken={accessToken} ownerId={ownerId} ownerType={ownerType} />;
+    : <JobSkillGroups accessToken={accessToken} jobId={ownerId} />;
 }
 
-function OccurrenceReviewPanel({ accessToken, ownerId, ownerType }: SkillReviewPanelProps) {
-  const queryClient = useQueryClient();
-  const [candidateSkills, setCandidateSkills] = useState<CandidateSkill[]>([]);
-  const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});
+const REQUIREMENT_STRENGTH: Record<string, number> = { required: 3, preferred: 2, unknown: 1 };
 
-  const skillQuery = useQuery({
-    queryKey: [ownerType, ownerId, "skills"],
-    queryFn: () =>
-      ownerType === "cv"
-        ? listCvSkills(accessToken, ownerId)
-        : listJobSkills(accessToken, ownerId),
-  });
+type JobSkillGroup = { key: string; label: string; skillType: string; requirement: string; occurrences: JobSkill[] };
 
-  useEffect(() => {
-    if (ownerType === "cv" && skillQuery.data) {
-      setCandidateSkills(skillQuery.data as CandidateSkill[]);
+// Display-only grouping of repeated extractions; each occurrence keeps its own row, status and evidence.
+function groupJobSkills(skills: JobSkill[]): JobSkillGroup[] {
+  const groups = new Map<string, JobSkillGroup>();
+  for (const skill of skills) {
+    const key = `${skill.normalized_text}::${skill.skill_type}`;
+    const group = groups.get(key) ?? { key, label: skill.raw_text, skillType: skill.skill_type, requirement: "unknown", occurrences: [] };
+    group.occurrences.push(skill);
+    if ((REQUIREMENT_STRENGTH[skill.requirement_type] ?? 0) > (REQUIREMENT_STRENGTH[group.requirement] ?? 0)) {
+      group.requirement = skill.requirement_type;
     }
-  }, [ownerType, skillQuery.data]);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}
 
-  const reviewMutation = useMutation({
-    mutationFn: () => reviewCvSkills(accessToken, ownerId, candidateSkills),
-    onSuccess: (skills) => {
-      setCandidateSkills(skills);
-      queryClient.invalidateQueries({ queryKey: [ownerType, ownerId, "skills"] });
-    },
+function reviewSummary(occurrences: JobSkill[]): string {
+  const counts = occurrences.reduce<Record<string, number>>((result, item) => {
+    result[item.review_status] = (result[item.review_status] ?? 0) + 1;
+    return result;
+  }, {});
+  const entries = Object.entries(counts);
+  return entries.length === 1 ? entries[0][0] : entries.map(([status, count]) => `${count} ${status}`).join(" · ");
+}
+
+function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: string }) {
+  const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});
+  const skillQuery = useQuery({
+    queryKey: ["job", jobId, "skills"],
+    queryFn: () => listJobSkills(accessToken, jobId),
   });
-
-  const skills = skillQuery.data ?? [];
 
   if (skillQuery.isLoading) {
     return <p className="text-sm text-slate-500">Loading extracted skills...</p>;
   }
-
-  if (skills.length === 0) {
+  const groups = groupJobSkills(skillQuery.data ?? []);
+  if (groups.length === 0) {
     return <p className="text-sm text-slate-500">No skills or indicators extracted yet.</p>;
   }
 
   return (
     <div className="mt-4 rounded-md border border-slate-200 bg-white p-3">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-ink">Extracted Skills and Indicators</h3>
-        {ownerType === "cv" ? (
-          <button
-            className="rounded-md bg-ocean px-3 py-1.5 text-sm font-medium text-white"
-            onClick={() => reviewMutation.mutate()}
-            type="button"
-          >
-            Save review
-          </button>
-        ) : null}
-      </div>
-
+      <h3 className="mb-3 text-sm font-semibold text-ink">Extracted Skills and Indicators</h3>
       <div className="space-y-2">
-        {(ownerType === "cv" ? candidateSkills : (skills as JobSkill[])).map((skill, index) => (
-          <article key={skill.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              {ownerType === "cv" ? (
-                <input
-                  className="min-w-36 rounded border border-slate-300 px-2 py-1 text-sm"
-                  onChange={(event) =>
-                    setCandidateSkills((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index
-                          ? { ...item, raw_text: event.target.value, normalized_text: event.target.value.toLowerCase() }
-                          : item,
-                      ),
-                    )
-                  }
-                  value={skill.raw_text}
-                />
-              ) : (
-                <span className="font-medium text-ink">{skill.raw_text}</span>
-              )}
-              <span className="rounded bg-amber-100 px-2 py-1 text-xs text-ember">
-                {skill.skill_type.replace(/_/g, " ")}
-              </span>
-              {ownerType === "job" ? (
-                <span className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700">
-                  {(skill as JobSkill).requirement_type}
+        {groups.map((group) => {
+          const statuses = new Set(group.occurrences.map((item) => item.review_status));
+          const withEvidence = group.occurrences.filter((item) => item.evidence_sentence);
+          return (
+            <article key={group.key} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-ink">{group.label}</span>
+                <span className="rounded bg-amber-100 px-2 py-1 text-xs text-ember">{group.skillType.replace(/_/g, " ")}</span>
+                <span className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700" title="Strongest requirement type among occurrences">
+                  {group.requirement}
                 </span>
+                <span className="text-xs text-slate-500">
+                  {group.occurrences.length} occurrence{group.occurrences.length === 1 ? "" : "s"}
+                </span>
+                <span className="rounded bg-white px-2 py-1 text-xs text-slate-600">
+                  {statuses.size > 1 ? `Mixed: ${reviewSummary(group.occurrences)}` : reviewSummary(group.occurrences)}
+                </span>
+              </div>
+              {withEvidence.length ? (
+                <div className="mt-2">
+                  <button
+                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600"
+                    onClick={() => setExpandedEvidence((current) => ({ ...current, [group.key]: !current[group.key] }))}
+                    type="button"
+                  >
+                    {expandedEvidence[group.key] ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+                    Evidence
+                  </button>
+                  {expandedEvidence[group.key] ? (
+                    <ul className="mt-2 space-y-2">
+                      {group.occurrences.map((item) => (
+                        <li key={item.id} className="rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-600">
+                          <p className="mb-1 text-xs text-slate-500">
+                            {item.raw_text} · {item.requirement_type} · {skillSourceLabel(item.source)} · {item.review_status}
+                          </p>
+                          {item.evidence_sentence || "No evidence text"}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
               ) : null}
-              <span className="text-xs text-slate-500">
-                {skillSourceLabel(skill.source)}
-              </span>
-              <span className="rounded bg-white px-2 py-1 text-xs text-slate-600">
-                {skill.review_status}
-              </span>
-            </div>
-            {skill.evidence_sentence ? (
-              <div className="mt-2">
-                <button
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600"
-                  onClick={() =>
-                    setExpandedEvidence((current) => ({
-                      ...current,
-                      [skill.id]: !current[skill.id],
-                    }))
-                  }
-                  type="button"
-                >
-                  {expandedEvidence[skill.id] ? (
-                    <ChevronDown size={14} aria-hidden="true" />
-                  ) : (
-                    <ChevronRight size={14} aria-hidden="true" />
-                  )}
-                  Evidence
-                </button>
-                {expandedEvidence[skill.id] ? (
-                  <p className="mt-2 rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-600">
-                    {skill.evidence_sentence}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-            {ownerType === "cv" ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  className={`inline-flex h-8 items-center gap-1 rounded-md border px-2 text-xs font-medium ${
-                    skill.review_status === "approved"
-                      ? "border-ocean bg-ocean text-white"
-                      : "border-slate-300 bg-white text-ocean"
-                  }`}
-                  onClick={() =>
-                    setCandidateSkills((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, review_status: "approved" } : item,
-                      ),
-                    )
-                  }
-                  type="button"
-                  aria-label="Approve skill"
-                >
-                  <Check size={16} aria-hidden="true" />
-                  Correct
-                </button>
-                <button
-                  className={`inline-flex h-8 items-center gap-1 rounded-md border px-2 text-xs font-medium ${
-                    skill.review_status === "rejected"
-                      ? "border-red-700 bg-red-700 text-white"
-                      : "border-slate-300 bg-white text-red-700"
-                  }`}
-                  onClick={() =>
-                    setCandidateSkills((current) =>
-                      current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, review_status: "rejected" } : item,
-                      ),
-                    )
-                  }
-                  type="button"
-                  aria-label="Reject skill"
-                >
-                  <X size={16} aria-hidden="true" />
-                  Wrong
-                </button>
-              </div>
-            ) : null}
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </div>
   );
