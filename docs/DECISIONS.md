@@ -440,7 +440,10 @@ limitations. Current-source one-off execution does not claim the latest normal
 Compose image is deployed. Phase 6 has not started, and must preserve the frozen
 Phase 5 baseline under D032.
 
-## D034 - Transitional Matching Reports Skill Coverage, Not A Score
+## D036 - Transitional Matching Reports Skill Coverage, Not A Score
+
+(Numbered D036 to avoid colliding with D034/D035 on branch
+`phase6-explainable-matching`; D034 and D035 are intentionally absent here.)
 
 The transitional matcher on the Jobs page no longer produces a match
 percentage. Its former 2:1 required/preferred weights and 80/50 explanation
@@ -488,7 +491,7 @@ skill do not match. The existing ESCO↔O*NET mapping table is a possible
 future bridge, but it is not used. This remains a transitional prototype, not
 the final Phase 6 scoring, which must still be configurable and versioned.
 
-## D035 - Job Rankings Are Visible Only To Their Owner
+## D037 - Job Rankings Are Visible Only To Their Owner
 
 A candidate's job ranking and skill coverage are shown only to that candidate,
 on the Jobs page ("#N of M"). Administrators and researchers get no
@@ -499,7 +502,7 @@ an employer or reviewer would turn it into a screening tool, which is outside
 its purpose.
 
 Dense retrieval stays an internal ranking signal. It is the tie-breaker under
-D034 and is evaluated offline. It has no candidate-facing page and no
+D036 and is evaluated offline. It has no candidate-facing page and no
 displayed similarity. The only cross-candidate ranking access is the offline
 Phase 5 evaluation export, which is restricted to the isolated
 `phase5_verify` database and its de-identified benchmark accounts (D023).

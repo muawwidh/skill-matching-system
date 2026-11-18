@@ -1,4 +1,4 @@
-"""Transitional skill-coverage matching (Phase 6 prototype; see DECISIONS.md D034).
+"""Transitional skill-coverage matching (Phase 6 prototype; see DECISIONS.md D036).
 
 Coverage is reported as counts, never as a weighted score. Jobs are ranked
 lexicographically by required coverage, preferred coverage, then retrieval

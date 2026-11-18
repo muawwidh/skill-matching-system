@@ -169,7 +169,7 @@ not rewritten. Every extraction made before Stability Batch 4 has a legacy
 occurrence reconciliation key, reprocessing a pre-v2 CV replaces all its
 legacy extraction occurrences even when visible text and offsets are unchanged.
 Approved, rejected and pending extraction reviews reset to newly extracted
-`pending` skills. Since D034 the transitional prototype matcher compares
+`pending` skills. Since D036 the transitional prototype matcher compares
 approved skills only, so reset skills leave coverage until re-approved.
 Taxonomy candidates and selected links for replaced terms are removed;
 taxonomy review audit events remain append-only. The candidate embedding is
@@ -193,7 +193,7 @@ Implemented:
 
 - candidate-job match persistence (existing `candidate_job_matches` table, no
   new migration)
-- skill coverage per D034 (2026-11-18), replacing the former 2:1 weighted
+- skill coverage per D036 (2026-11-18), replacing the former 2:1 weighted
   match percentage and 80/50 explanation cut-offs:
   - approved skills only on both sides
   - comparison by approved taxonomy concept when both skills are linked,
