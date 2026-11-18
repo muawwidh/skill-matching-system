@@ -248,8 +248,9 @@ def test_job_processing_extracts_requirement_skills(client: TestClient, db_sessi
     assert updated.json()["requirement_type"] == target["requirement_type"]
 
 
-def test_matching_recommends_jobs_with_skill_gaps(client: TestClient, db_session: Session) -> None:
+def test_matching_reports_coverage_counts_from_approved_skills(client: TestClient, db_session: Session) -> None:
     headers = auth_headers(client)
+    manager = job_manager_headers(client, db_session)
     cv_response = client.post(
         "/cvs/paste",
         headers=headers,
@@ -260,27 +261,161 @@ def test_matching_recommends_jobs_with_skill_gaps(client: TestClient, db_session
         },
     )
     assert cv_response.status_code == 201
+    cv_id = cv_response.json()["id"]
 
     job_response = client.post(
         "/jobs",
-        headers=job_manager_headers(client, db_session),
+        headers=manager,
         json={
             "title": "API Engineer",
             "company": "Acme",
             "location": "Remote",
             "employment_type": "Full-time",
-            "description": "Required skills\nPython\nDocker\n\nPreferred skills\nFastAPI",
+            "description": "Required skills\nPython\nDocker\nBachelor's degree\n\nPreferred skills\nFastAPI",
         },
     )
     assert job_response.status_code == 201
+    job_id = job_response.json()["id"]
 
-    recommendations_response = client.post("/matches/recommendations/refresh", headers=headers)
-    assert recommendations_response.status_code == 200
-    recommendations = recommendations_response.json()
+    # Pending skills on either side are never compared.
+    pending = client.get("/matches/recommendations", headers=headers).json()[0]
+    assert pending["matched_required"] == [] and pending["matched_preferred"] == []
+    assert pending["missing_required"] == [] and pending["missing_preferred"] == []
+
+    cv_skills = client.get(f"/cvs/{cv_id}/extracted-skills", headers=headers).json()
+    for skill in cv_skills:
+        skill["review_status"] = "approved"
+    assert client.put(f"/cvs/{cv_id}/extracted-skills", headers=headers, json={"skills": cv_skills}).status_code == 200
+    for skill in client.get(f"/jobs/{job_id}/extracted-skills", headers=manager).json():
+        skill["review_status"] = "approved"
+        assert client.put(f"/jobs/{job_id}/extracted-skills/{skill['id']}", headers=manager, json=skill).status_code == 200
+
+    # GET recomputes, so approvals are reflected without an explicit refresh.
+    recommendations = client.get("/matches/recommendations", headers=headers).json()
     assert len(recommendations) == 1
     recommendation = recommendations[0]
-    assert recommendation["score"] == 60.0
-    assert recommendation["matched_required"] == ["python"]
-    assert recommendation["matched_preferred"] == ["fastapi"]
-    assert recommendation["missing_required"] == ["docker"]
+    assert recommendation["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
+    assert recommendation["matched_preferred"] == [{"label": "fastapi", "matched_via": "skill_name"}]
+    # Docker has no approved taxonomy link and no same-name CV skill: not compared, not "missing".
+    assert recommendation["missing_required"] == []
+    assert recommendation["missing_preferred"] == []
+    assert recommendation["score"] == 100.0
+    assert recommendation["job_skill_count"] == 2
+    explanation = recommendation["explanation"].splitlines()
+    assert explanation[0] == "Required skills: 1 of 1 matched (python)."
+    assert explanation[1] == "Preferred skills: 1 of 1 matched (fastapi)."
+    assert "1 job skill could not be compared" in explanation[2] and explanation[2].endswith(": docker.")
+    assert explanation[3] == "Also required — not assessed by the system: bachelor's degree."
+    assert "%" not in recommendation["explanation"]
     assert recommendation["job"]["title"] == "API Engineer"
+
+    refreshed = client.post("/matches/recommendations/refresh", headers=headers)
+    assert refreshed.status_code == 200
+    assert refreshed.json()[0]["matched_required"] == recommendation["matched_required"]
+
+
+def _item(name, concept=None, requirement="", skill_type="skill"):
+    from app.services.matching_service import SkillItem
+
+    return SkillItem(name=name, skill_type=skill_type, concept_id=concept,
+                     concept_label=f"{name} (concept)" if concept else None, requirement=requirement)
+
+
+def test_coverage_prefers_concepts_and_falls_back_to_names_only_when_not_both_linked() -> None:
+    from uuid import uuid4
+
+    from app.services.matching_service import compute_coverage
+
+    python, java, docker, git = uuid4(), uuid4(), uuid4(), uuid4()
+    candidate = [
+        _item("python3", python),          # different name, same concept
+        _item("java", uuid4()),            # same name, different concept
+        _item("docker"),                   # unlinked, same name as a linked job skill
+        _item("excel"),                    # unlinked, same name as an unlinked job skill
+    ]
+    job = [
+        _item("python", python, "required"),
+        _item("java", java, "required"),
+        _item("docker", docker, "required"),
+        _item("git", git, "required"),
+        _item("excel", None, "unknown"),
+        _item("rust", None, "required"),
+    ]
+    result = compute_coverage(candidate, job)
+    assert result.matched_required == [
+        {"label": "docker (concept)", "matched_via": "skill_name"},
+        {"label": "python (concept)", "matched_via": "taxonomy_concept"},
+    ]
+    # Both linked to different concepts: no name fallback, so Java is missing.
+    assert result.missing_required == ["git (concept)", "java (concept)"]
+    # `unknown` counts as preferred.
+    assert result.matched_preferred == [{"label": "excel", "matched_via": "skill_name"}]
+    assert result.not_compared == ["rust"]
+    assert (result.required_total, result.preferred_total) == (4, 1)
+
+
+def test_coverage_deduplicates_and_lists_non_skill_terms_without_scoring() -> None:
+    from uuid import uuid4
+
+    from app.services.matching_service import compute_coverage
+
+    sql = uuid4()
+    job = [
+        _item("sql", sql, "preferred"),
+        _item("sql", sql, "required"),            # same concept listed twice: required wins
+        _item("sql", None, "unknown"),            # unlinked duplicate joins the concept group
+        _item("bachelor's degree", None, "required", "qualification"),
+        _item("3 years experience", None, "unknown", "experience_indicator"),
+        _item("aws certified", None, "preferred", "certification"),
+    ]
+    result = compute_coverage([_item("bachelor's degree", None, "", "qualification")], job)
+    assert result.missing_required == ["sql (concept)"]
+    assert result.matched_preferred == [] and result.missing_preferred == []
+    assert result.not_assessed_required == ["bachelor's degree"]
+    assert result.not_assessed_preferred == ["3 years experience", "aws certified"]
+    assert result.candidate_skill_count == 0
+
+
+def test_ranking_is_lexicographic_without_weights() -> None:
+    from types import SimpleNamespace
+    from uuid import UUID
+
+    from app.services.matching_service import ranking_key
+
+    def match(job, matched_req, total_req, matched_pref=0, total_pref=0):
+        return SimpleNamespace(
+            job_id=UUID(int=job),
+            matched_required=[{}] * matched_req, missing_required=["x"] * (total_req - matched_req),
+            matched_preferred=[{}] * matched_pref, missing_preferred=["x"] * (total_pref - matched_pref),
+        )
+
+    jobs = {
+        "no_required": (match(1, 0, 0, 3, 3), 0.99),
+        "half_required": (match(2, 1, 2, 0, 1), 0.99),
+        "full_no_preferred": (match(3, 2, 2), 0.99),
+        "full_some_preferred": (match(4, 1, 1, 0, 4), None),
+        "third_low_sim": (match(5, 1, 3, 1, 1), 0.10),
+        "third_high_sim": (match(6, 2, 6, 1, 1), 0.90),   # 2/6 == 1/3 exactly
+        "third_unindexed": (match(7, 1, 3, 1, 1), None),
+    }
+    order = sorted(jobs, key=lambda name: ranking_key(*jobs[name]))
+    assert order == ["full_some_preferred", "full_no_preferred", "half_required",
+                     "third_high_sim", "third_low_sim", "third_unindexed", "no_required"]
+
+
+def test_explanation_is_built_from_lists_without_cutoffs() -> None:
+    from app.services.matching_service import CoverageResult, build_explanation
+
+    empty = build_explanation(CoverageResult())
+    assert empty.splitlines() == ["This job lists no comparable required skills.",
+                                  "This job lists no comparable preferred skills."]
+    text = build_explanation(CoverageResult(
+        matched_required=[{"label": "python", "matched_via": "skill_name"}],
+        missing_required=["docker", "sql"], missing_preferred=["kubernetes"],
+        not_compared=["rust", "go"]))
+    lines = text.splitlines()
+    assert lines[0] == "Required skills: 1 of 3 matched (python); missing: docker, sql."
+    assert lines[1] == "Preferred skills: 0 of 1 matched; missing: kubernetes."
+    assert lines[2].startswith("2 job skills could not be compared")
+    for banned in ("%", "Strong", "Partial", "Limited", "Low match"):
+        assert banned not in text

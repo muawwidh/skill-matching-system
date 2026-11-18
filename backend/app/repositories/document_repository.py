@@ -503,9 +503,9 @@ class DocumentRepository:
                 select(CandidateSkill)
                 .where(
                     CandidateSkill.candidate_profile_id == candidate_profile_id,
-                    CandidateSkill.review_status != "rejected",
+                    CandidateSkill.review_status == "approved",
                 )
-                .order_by(CandidateSkill.normalized_text)
+                .order_by(CandidateSkill.normalized_text, CandidateSkill.id)
             )
         )
 
@@ -515,19 +515,54 @@ class DocumentRepository:
                 select(JobSkill)
                 .where(
                     JobSkill.job_id == job_id,
-                    JobSkill.review_status != "rejected",
+                    JobSkill.review_status == "approved",
                 )
-                .order_by(JobSkill.normalized_text)
+                .order_by(JobSkill.normalized_text, JobSkill.id)
             )
         )
+
+    def approved_skill_concepts(
+        self, term_source: str, skills: list[CandidateSkill] | list[JobSkill]
+    ) -> dict[UUID, tuple[UUID, str]]:
+        """Map skill IDs to (concept ID, preferred label) for approved links on active releases.
+
+        A link is ignored when the skill text no longer equals its extracted term,
+        mirroring the consistency rule used for retrieval representations.
+        """
+        term_ids = [skill.extracted_term_id for skill in skills if skill.extracted_term_id]
+        if not term_ids:
+            return {}
+        links = {
+            link.extracted_term_id: link
+            for link in self.db.scalars(
+                select(ApprovedTaxonomyLink).where(
+                    ApprovedTaxonomyLink.term_source == term_source,
+                    ApprovedTaxonomyLink.extracted_term_id.in_(term_ids),
+                )
+            )
+            if link.concept.taxonomy_version.status == "active"
+        }
+        term_model = ExtractedCandidateTerm if term_source == "candidate" else ExtractedJobTerm
+        result: dict[UUID, tuple[UUID, str]] = {}
+        for skill in skills:
+            link = links.get(skill.extracted_term_id)
+            if link is None:
+                continue
+            term = self.db.get(term_model, skill.extracted_term_id)
+            if not term or (skill.raw_text, skill.normalized_text, skill.skill_type) != (
+                term.raw_text, term.normalized_text, term.term_type
+            ):
+                continue
+            result[skill.id] = (link.concept_id, link.concept.preferred_label)
+        return result
 
     def upsert_candidate_job_match(
         self,
         candidate_profile_id: UUID,
         job_id: UUID,
         score: float,
-        matched_required: list[str],
-        matched_preferred: list[str],
+        matched_required: list[dict],
+        matched_preferred: list[dict],
         missing_required: list[str],
         missing_preferred: list[str],
         candidate_skill_count: int,
@@ -560,7 +595,7 @@ class DocumentRepository:
                 select(CandidateJobMatch)
                 .options(selectinload(CandidateJobMatch.job))
                 .where(CandidateJobMatch.candidate_profile_id == candidate_profile_id)
-                .order_by(CandidateJobMatch.score.desc(), CandidateJobMatch.updated_at.desc())
+                .order_by(CandidateJobMatch.job_id)
             )
         )
 

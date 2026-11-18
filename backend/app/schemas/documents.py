@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -168,13 +169,18 @@ class JobSkillUpdate(BaseModel):
     review_status: str = Field(default="approved", max_length=50)
 
 
+class MatchedSkillRead(BaseModel):
+    label: str
+    matched_via: Literal["taxonomy_concept", "skill_name"]
+
+
 class CandidateJobMatchRead(BaseModel):
     id: UUID
     candidate_profile_id: UUID
     job_id: UUID
     score: float
-    matched_required: list[str]
-    matched_preferred: list[str]
+    matched_required: list[MatchedSkillRead]
+    matched_preferred: list[MatchedSkillRead]
     missing_required: list[str]
     missing_preferred: list[str]
     candidate_skill_count: int

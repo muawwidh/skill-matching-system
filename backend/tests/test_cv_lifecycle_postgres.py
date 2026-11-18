@@ -275,7 +275,10 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
             requirement_type="required", evidence_sentence="Python", review_status="approved"))
         db.commit()
         job_id = job.id
-        assert MatchingService(db).match_my_job(db.get(User, user_id), job_id).score == 100.0
+        matched = MatchingService(db).match_my_job(db.get(User, user_id), job_id)
+        # CV Python is concept-linked, the manual job skill is not: name fallback applies.
+        assert matched.matched_required == [{"label": "python", "matched_via": "skill_name"}]
+        assert matched.score == 100.0
         CvService(db).delete_my_cv(db.get(User, user_id), cv1_id)
     with Session(engine) as fresh:
         assert fresh.get(CvDocument, cv1_id) is None
@@ -304,8 +307,13 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         assert fresh.scalar(select(CandidateJobMatch).where(
             CandidateJobMatch.candidate_profile_id == profile_id, CandidateJobMatch.job_id == job_id
         )) is None
-        assert "python" not in MatchingService(fresh)._skill_sets(profile_id, job_id).candidate
-        assert MatchingService(fresh).list_my_recommendations(fresh.get(User, user_id))[0].score == 0.0
+        assert "python" not in {item.name for item in MatchingService(fresh)._candidate_items(profile_id)}
+        recomputed = next(item for item in MatchingService(fresh).list_my_recommendations(fresh.get(User, user_id))
+                          if item.job_id == job_id)
+        # The unlinked job skill no longer has a same-name CV skill: it is not compared, never "missing".
+        assert recomputed.matched_required == [] and recomputed.missing_required == []
+        assert recomputed.score == 0.0
+        assert "1 job skill could not be compared" in recomputed.explanation
         source = RetrievalRepository(fresh).profile_input(profile_id)
         assert source is not None and "Python" not in source.text and "Docker" in source.text
         refreshed = RetrievalService(fresh).index_profile(profile_id, FakeEmbedder())
