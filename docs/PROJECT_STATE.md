@@ -274,9 +274,11 @@ Implemented:
     other wording); the former "could not be compared" category is removed
   - qualification, experience, certification and occupation terms are listed
     as "not assessed", never scored
-- lexicographic ranking: required coverage, preferred coverage, then (D040)
-  matched required and matched preferred counts, Phase 5 retrieval similarity
-  when indexed, then job ID; similarity is not displayed
+- ranking (D044, 2026-11-18): Phase 5 retrieval similarity, highest first,
+  then job ID. Jobs without a fresh embedding, or every job when the profile
+  index is missing or stale, go last. Coverage explains each job but does not
+  change the order. The former lexicographic coverage order (D036/D040) is
+  kept only for the offline comparison (D043). Similarity is not displayed
 - list-based explanations, with no score buckets
 - recommendations recomputed on every `GET /matches/recommendations`
 - the API returns `matched_required`/`matched_preferred` as

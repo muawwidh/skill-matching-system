@@ -406,11 +406,36 @@ def test_coverage_deduplicates_and_lists_non_skill_terms_without_scoring() -> No
     assert result.candidate_skill_count == 0
 
 
-def test_ranking_is_lexicographic_without_weights() -> None:
+def test_app_ranking_follows_retrieval_similarity_and_puts_unindexed_jobs_last() -> None:
     from types import SimpleNamespace
     from uuid import UUID
 
     from app.services.matching_service import ranking_key
+
+    def match(job, matched_req, total_req):
+        return SimpleNamespace(job_id=UUID(int=job), matched_required=[{}] * matched_req,
+                               missing_required=[{}] * (total_req - matched_req),
+                               matched_preferred=[], missing_preferred=[])
+
+    jobs = {
+        "full_coverage_low_sim": (match(1, 3, 3), 0.20),
+        "no_coverage_high_sim": (match(2, 0, 3), 0.90),
+        "unindexed_full_coverage": (match(3, 3, 3), None),
+        "unindexed_first_id": (match(0, 0, 0), None),
+        "same_sim_higher_id": (match(9, 0, 1), 0.50),
+        "same_sim_lower_id": (match(8, 1, 1), 0.50),
+    }
+    order = sorted(jobs, key=lambda name: ranking_key(*jobs[name]))
+    # Coverage never changes the order; equal similarity falls to job ID; no similarity goes last.
+    assert order == ["no_coverage_high_sim", "same_sim_lower_id", "same_sim_higher_id",
+                     "full_coverage_low_sim", "unindexed_first_id", "unindexed_full_coverage"]
+
+
+def test_ranking_is_lexicographic_without_weights() -> None:
+    from types import SimpleNamespace
+    from uuid import UUID
+
+    from app.services.matching_service import coverage_ranking_key as ranking_key
 
     def match(job, matched_req, total_req, matched_pref=0, total_pref=0):
         return SimpleNamespace(
@@ -438,7 +463,7 @@ def test_ranking_prefers_more_matched_skills_when_fractions_tie() -> None:
     from types import SimpleNamespace
     from uuid import UUID
 
-    from app.services.matching_service import ranking_key
+    from app.services.matching_service import coverage_ranking_key as ranking_key
 
     def match(job, matched_req, total_req, matched_pref=0, total_pref=0):
         return SimpleNamespace(

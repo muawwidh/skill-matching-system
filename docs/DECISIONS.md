@@ -468,6 +468,7 @@ Approved qualification, experience, certification and occupation terms are
 listed as "not assessed by the system" and never scored. The Phase 6 plan
 treats qualification/experience alignment as a separate component.
 
+(Ranking superseded by D044: the app now orders by retrieval similarity.)
 Jobs are ranked lexicographically rather than by weighted combination. The
 keys, in order, are:
 1. Required coverage. Jobs with no comparable required skills go last.
@@ -826,4 +827,51 @@ ranking is decided by ties for half of the candidates, so changes to the
 coverage rule should not be judged on these numbers alone. Final Phase 6
 scoring must still be configurable and versioned. Any future weight must come
 from data other than this benchmark, or be declared before it is measured.
+
+## D044 - Retrieval Ranks, Coverage Explains
+
+The Jobs page orders jobs by Phase 5 retrieval similarity: variant A of D043.
+This replaces the lexicographic coverage order of D036/D040.
+
+Rules:
+- Ties fall to job ID.
+- A job without a fresh similarity goes last. This covers a missing or stale
+  job embedding, and every job when the candidate's profile index is missing
+  or stale.
+- "#N of M" is the position in this order.
+- The skill-coverage panel is unchanged: matched and missing skills, X of Y
+  counts, and the explanation. It explains each job and no longer affects the
+  order.
+- The similarity value is still not displayed.
+
+Evidence: the offline comparison on the frozen Phase 5 benchmark
+(`docs/verification/matching-variant-comparison.md`), macro averages over the
+7 evaluable queries:
+
+| Variant | Recall@5 | Recall@10 | Recall@20 | MRR | nDCG@10 |
+| --- | --- | --- | --- | --- | --- |
+| A retrieval only | 0.512 | 0.595 | 0.857 | 0.620 | 0.704 |
+| B coverage, name only | 0.107 | 0.310 | 0.548 | 0.151 | 0.306 |
+| C coverage, concept then name | 0.107 | 0.310 | 0.548 | 0.150 | 0.317 |
+| D coverage + similarity tie-break (former app) | 0.107 | 0.214 | 0.643 | 0.154 | 0.382 |
+
+A leads on every macro metric. Per query, the exception is Q6: B to D place
+its relevant job at rank 9 to 11, against 19 for A. Q6 is one of the
+zero-match candidates, so that comes from the tie order and the
+"has required skills" flag, not from matched skills.
+
+Limits of this evidence:
+- n = 7, one rater, no significance test.
+- For 4 of 8 candidates, coverage matched no skill in any benchmark job. The
+  coverage ranking there was decided by ties.
+- The labels judge overall fit, not skill coverage.
+
+The decision rests on that ranking signal being the better-measured one. It
+makes no claim that coverage is wrong as an explanation.
+
+There are still no weights. A is a single score, and coverage is no longer
+combined with it. Choosing A on this benchmark is a selection between four
+fixed variants, not fitting. The Phase 5 limitations still apply: no
+generalization to hiring accuracy, and this is not an automated decision.
+Final Phase 6 scoring must still be configurable and versioned.
 

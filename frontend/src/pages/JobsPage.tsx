@@ -59,7 +59,7 @@ export function JobsPage() {
     },
   });
 
-  // The backend returns coverage rows already ranked; keep that order and put jobs without a row last.
+  // The backend returns rows ranked by retrieval similarity (D044); keep that order and put jobs without a row last.
   const coverageRank = new Map(recommendationsQuery.data?.map((match, index) => [match.job_id, index]) ?? []);
   const unranked = coverageRank.size;
   const orderedJobs = [...(jobsQuery.data ?? [])].sort(

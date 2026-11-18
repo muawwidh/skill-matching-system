@@ -17,7 +17,7 @@ Scoring uses:
 | A | Retrieval only: cosine similarity (Phase 5), ties by job ID |
 | B | Skill coverage with **name matching only** (taxonomy links ignored), lexicographic, ties by job ID |
 | C | Skill coverage, taxonomy concept first, then name (current rule, D036/D040), lexicographic, ties by job ID |
-| D | Current app: C, with retrieval similarity as the tie-break before job ID |
+| D | The app order at the time: C, with retrieval similarity as the tie-break before job ID. Replaced by A in D044. |
 
 ## Macro averages (7 evaluable queries)
 

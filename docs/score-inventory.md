@@ -45,15 +45,16 @@ on every `GET /matches/recommendations`.
 | "Preferred skills: X of Y" | as above, preferred lists | as above | — | Count |
 | Chip tooltips | `JobMatchPanel.tsx` | Covered: `matched_via` → "Matched via taxonomy concept" / "Matched by same skill name". Missing: `checked_via` → "Not found in your CV by taxonomy concept or name" / "Not found in your CV by name (may appear under a different wording)" | — | — |
 | `explanation` | `matching_service.py` `build_explanation` | Lines built only from the lists: required line, preferred line, "Checked by name only (may appear in your CV under a different wording): …", "Also required/preferred — not assessed by the system: …" | — | No thresholds |
-| Ranking (response order and JobsPage order) | `matching_service.py` `ranking_key`. JobsPage applies it at `pages/JobsPage.tsx:63`. | Lexicographic: (no required skills → last; required coverage desc as an exact `Fraction`; no preferred skills → after; preferred coverage desc; matched required count desc; matched preferred count desc; similarity missing → after; similarity desc; job ID) | — | No weights; documented (D036, D040) |
-| Similarity tie-break | `matching_service.py:245` `_retrieval_similarities` | Reuses `RetrievalService.jobs_for_user`. Omitted if the profile or job index is missing or stale. Never displayed. | — | See section 2 |
+| Ranking (response order, JobsPage order and "#N of M") | `matching_service.py` `ranking_key`. JobsPage keeps the response order at `pages/JobsPage.tsx:63`. | Since D044: (similarity missing → last; retrieval similarity desc; job ID). Coverage does not affect the order. | — | No weights; documented (D044) |
+| Similarity | `matching_service.py` `_retrieval_similarities` | Reuses `RetrievalService.jobs_for_user`. Omitted if the profile or job index is missing or stale; the job then sorts last. Never displayed. | — | See section 2 |
+| Former coverage order (offline only) | `matching_service.py` `coverage_ranking_key` | Lexicographic: (no required skills → last; required coverage desc as an exact `Fraction`; no preferred skills → after; preferred coverage desc; matched required count desc; matched preferred count desc; similarity missing → after; similarity desc; job ID). Used only by `compare-matching` variants B–D. | — | App order until D044 (D036, D040, D043) |
 | `score` (stored, **not displayed**) | `matching_service.py:278` | `round(100 · |matched_required| / Y_required, 2)`, or `0.0` if `Y_required = 0` | `100`, `2` d.p. | Legacy column kept without migration; not used for ranking |
 | `candidate_skill_count` | `compute_coverage` | Number of approved skill-like candidate skills | — | Count |
 | `job_skill_count` | `_score_job` | `Y_required + Y_preferred` (all skill-like groups) | — | Count |
 
 No constant in this section is a tuned threshold or weight. The remaining
-choices (type set, eligibility, `unknown`→preferred, tie order) are
-methodological rules recorded in D036.
+choices (type set, eligibility, `unknown`→preferred) are methodological
+rules recorded in D036. The order is retrieval similarity (D044).
 
 Removed (for traceability): `required_weight = 2` and `preferred_weight = 1`;
 `unknown` counted as required; the `{skill, tool}` type filter; inclusion of
@@ -64,8 +65,9 @@ display; the "could not be compared" exclusion of unlinked job skills (D040).
 
 ## 2. Dense retrieval (`GET /retrieval/jobs`, Phase 5)
 
-Returned by the API but **not shown in any frontend page**. Since D036 it is
-also read as the third ranking key of the skill coverage matcher (section 1).
+Returned by the API but **not shown in any frontend page**. Since D044 it is
+the order of the Jobs page and of "#N of M" (section 1). The similarity value
+itself is never displayed.
 Ranking is not persisted. The embeddings are persisted in `job_embeddings` and
 `candidate_profile_embeddings`.
 
@@ -207,7 +209,8 @@ All are arbitrary.
 ## Summary of gaps relevant to Phase 6
 
 1. **Resolved for the prototype (D036):** the 2:1 weights and 80/50 cut-offs
-   were removed in favour of coverage counts and lexicographic ranking. Final
+   were removed in favour of coverage counts. Ranking is lexicographic coverage
+   until D044, retrieval similarity after it. Final
    Phase 6 scoring still needs configurable, versioned weights (MASTER_PLAN).
 2. **Mostly resolved (D036):** the matcher now uses approved skills only and
    approved taxonomy concepts, with `unknown` counted as preferred. One

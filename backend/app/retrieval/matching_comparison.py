@@ -9,7 +9,7 @@ Variants (no weights; each is a lexicographic order or a single score):
   A  retrieval only: cosine similarity (Phase 5), ties by job ID
   B  skill coverage, name matching only (taxonomy links ignored), ties by job ID
   C  skill coverage, taxonomy concept first then name (current rule), ties by job ID
-  D  current app: C with retrieval similarity as tie-break, then job ID
+  D  C with retrieval similarity as tie-break, then job ID (the app order until D044)
 """
 import json
 import math
@@ -28,7 +28,7 @@ VARIANTS = {
     "A": "retrieval only (cosine similarity), ties by job ID",
     "B": "skill coverage, name matching only, lexicographic, ties by job ID",
     "C": "skill coverage, taxonomy concept then name (current rule), lexicographic, ties by job ID",
-    "D": "current app: C with retrieval-similarity tie-break, then job ID",
+    "D": "C with retrieval-similarity tie-break, then job ID (app order until D044)",
 }
 METRICS = ("recall_at_5", "recall_at_10", "recall_at_20", "mrr", "ndcg_at_10")
 NO_SIGNIFICANCE = ("Seven evaluable queries, one rater: differences between variants are descriptive only. "
@@ -56,7 +56,7 @@ def coverage_order(candidate_items: list, job_items: dict[str, list], job_db_ids
     use_concepts=False drops every taxonomy link on both sides, so only identical
     normalized names match. Without `similarity`, ties fall through to job ID.
     """
-    from app.services.matching_service import compute_coverage, ranking_key
+    from app.services.matching_service import compute_coverage, coverage_ranking_key
 
     def strip(items):
         return items if use_concepts else [replace(item, concept_id=None, concept_label=None) for item in items]
@@ -69,7 +69,7 @@ def coverage_order(candidate_items: list, job_items: dict[str, list], job_db_ids
                                 missing_required=result.missing_required,
                                 matched_preferred=result.matched_preferred,
                                 missing_preferred=result.missing_preferred)
-        keyed.append((ranking_key(match, (similarity or {}).get(alias)), alias))
+        keyed.append((coverage_ranking_key(match, (similarity or {}).get(alias)), alias))
     return [alias for _, alias in sorted(keyed)]
 
 

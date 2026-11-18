@@ -1,8 +1,9 @@
-"""Transitional skill-coverage matching (Phase 6 prototype; see DECISIONS.md D036).
+"""Transitional skill-coverage matching (Phase 6 prototype; see DECISIONS.md D036, D044).
 
-Coverage is reported as counts, never as a weighted score. Jobs are ranked
-lexicographically by required coverage, preferred coverage, matched counts,
-then retrieval similarity, so no hand-picked weights combine the signals (D040).
+Retrieval ranks, coverage explains (D044): jobs are ordered by Phase 5
+retrieval similarity, and skill coverage is reported per job as counts, never
+as a weighted score. The former lexicographic coverage order is kept as
+`coverage_ranking_key` for the offline comparison (D043).
 """
 from dataclasses import dataclass, field
 from fractions import Fraction
@@ -171,7 +172,18 @@ def build_explanation(result: CoverageResult) -> str:
 
 
 def ranking_key(match: CandidateJobMatch, similarity: float | None) -> tuple:
-    """Lexicographic order (D040): required coverage, preferred coverage,
+    """App order (D044): retrieval similarity, highest first, then job ID.
+
+    Jobs without a fresh similarity (job or profile not indexed, or stale) go
+    last. Coverage does not affect the order; it explains each job.
+    """
+    return (similarity is None, -(similarity or 0.0), str(match.job_id))
+
+
+def coverage_ranking_key(match: CandidateJobMatch, similarity: float | None) -> tuple:
+    """Former app order, kept for the offline comparison (D043, variants B-D).
+
+    Lexicographic (D040): required coverage, preferred coverage,
     matched required count, matched preferred count, retrieval similarity, job ID.
 
     Jobs without required skills sort last; within equal required coverage,
@@ -244,7 +256,7 @@ class MatchingService:
         return sorted(matches, key=lambda match: ranking_key(match, similarities.get(match.job_id)))
 
     def _retrieval_similarities(self, user: User, job_count: int) -> dict[UUID, float]:
-        """Similarity is a tie-breaker only; unavailable or stale indexes simply omit it."""
+        """Similarity orders the jobs (D044); unavailable or stale indexes simply omit it."""
         from app.services.retrieval_service import RetrievalService
 
         try:

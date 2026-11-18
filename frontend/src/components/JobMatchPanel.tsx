@@ -79,7 +79,7 @@ export function JobMatchPanel({ match, isRefreshing, onRefresh, rank, rankTotal 
           {rank !== undefined ? (
             <span
               className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
-              title="Order: required coverage, then preferred coverage, then more matched skills, then retrieval similarity, then job ID"
+              title="Order: semantic similarity between your profile and the job (jobs not yet indexed last). Skill coverage below explains the job; it does not change the order."
             >
               #{rank} of {rankTotal}
             </span>
