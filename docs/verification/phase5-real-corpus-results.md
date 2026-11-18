@@ -164,3 +164,65 @@ denominators and all 19 positive ranks without exporting restricted text.
 This documentation/interpretation step does not access the application
 database or perform runtime writes. It preserves the immutable evaluation
 outputs and adds only documentation plus a new private interpretation report.
+
+## Re-run After Job Extraction v3 and Review (2026-11-18)
+
+This is a **separate measurement of a later system state**, not a replacement
+for the accepted result above. The accepted evaluation files are unchanged.
+
+What changed between the two runs:
+- Job extraction v3 (D038) was applied additively to the 30 jobs (D039).
+- The new job skills were reviewed. Job embeddings include approved job skills,
+  so all 30 job inputs changed. They were then reindexed with the same model and
+  template (`intfloat/multilingual-e5-small@fd1525a9`, `e5-job-profile-v2`).
+- The 8 candidate profile inputs are byte-identical to the freeze (same source
+  hashes).
+- Same frozen judgments (240 pairs), the same coverage policy (7/8, denominator
+  7) and the same committed evaluator (`evaluate_pack`).
+
+How the rankings were made: the live database was read-only, the service was
+`RetrievalService.jobs_for_user`, and each of the 8 candidates got a ranking of
+the 30 benchmark jobs. One non-benchmark job was removed from the rankings; this
+keeps the relative order of the rest. At the time of the run, 38 job skills on 8
+benchmark jobs were still pending. Pending skills are not part of job
+embeddings.
+
+**Primary metrics (grade 2), before vs after job extraction v3 + review:**
+
+| Metric | Before (accepted) | After | Change |
+| --- | --- | --- | --- |
+| Recall@5 | 37/84 = 0.440476 | 37/84 = 0.440476 | 0 |
+| Recall@10 | 53/84 = 0.630952 | 25/42 = 0.595238 | −0.035714 |
+| Recall@20 | 5/7 = 0.714286 | 6/7 = 0.857143 | +0.142857 |
+| MRR | 1261/1925 = 0.655065 | 4289/6916 = 0.620156 | −0.034909 |
+
+**Changes per query (seven evaluable queries):**
+- Recall@10 fell for one query, from 3 of 4 to 2 of 4.
+- MRR fell for one query: its first positive moved from rank 2 to rank 4.
+- One query whose only positive was at rank 22 now has it at rank 19, inside
+  the top 20.
+- The other sole-positive query moved from rank 25 to rank 26.
+- The other three queries are unchanged.
+
+With seven queries, each change is driven by one or two jobs moving a few
+ranks. This is not evidence that extraction v3 improves or harms retrieval in
+general.
+
+**Exploratory metrics (grade 1 or 2, denominator 8), before → after:**
+
+| Metric | Before | After |
+| --- | --- | --- |
+| Recall@5 | 0.401419 | 0.401419 |
+| Recall@10 | 0.753136 | 0.715636 |
+| Recall@20 | 0.936218 | 0.947527 |
+| MRR | 0.937500 | 0.916667 |
+
+Private files are in
+`evaluation/local/phase5-rerun-after-job-v3-review-20261118/` (git-ignored):
+- `rankings-after.jsonl`, SHA-256
+  `a711c35f34bb63a4abd9862ab50ab1bd802c7c44a5cb25cfb0b421e67c8ade24`;
+- `evaluation-after.json`;
+- the read-only ranking runner and its input.
+
+Unlike the accepted run, this one did not use the blind two-pass container
+protocol or table fingerprints. It is a development measurement.

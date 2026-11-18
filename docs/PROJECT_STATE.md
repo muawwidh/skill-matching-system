@@ -190,10 +190,6 @@ updated or reprocessed from now on:
   (`esco_vocabulary@v3:ESCO-1.2.1:o7`).
 
 CV extraction remains `v2`. Stored job sections still use the shared detector.
-Existing job terms are unchanged until re-extracted. Reprocessing a job through
-the API still replaces its terms; that path has not yet been changed to
-preserve reviews.
-
 Additive re-extraction of existing jobs (D039) is implemented as
 `python -m app.services.job_service reextract`. It is a dry-run by default and
 writes only with `--apply`. Job create/edit now uses the same reconciliation;
@@ -211,11 +207,24 @@ Applied 2026-11-18 to all 31 active jobs (ESCO on), after snapshot
   job links are unchanged;
 - a second run finds no changes.
 
-All 31 job embeddings are **stale** and were deliberately not reindexed:
-pending job skills are reviewed first. Until reindexing, the retrieval
-tie-break in skill coverage is unavailable for those jobs. Approved-only
-matching is unaffected until new skills are approved. Outputs are in
+The new job skills were then reviewed in the UI. 38 job skills on 8 evaluation
+jobs were still pending on 2026-11-18. All 31 active job embeddings were
+reindexed after that review (`index jobs`: 31 indexed, 0 failed). Outputs are in
 `evaluation/local/job-reextraction-2026-11-18/`.
+
+Phase 5 retrieval was re-run on the same frozen judgments, with candidate
+profiles unchanged. Before vs after job extraction v3 + review:
+
+| Metric | Before | After |
+| --- | --- | --- |
+| Recall@5 | 37/84 = 0.440476 | 37/84 = 0.440476 |
+| Recall@10 | 53/84 = 0.630952 | 25/42 = 0.595238 |
+| Recall@20 | 5/7 = 0.714286 | 6/7 = 0.857143 |
+| MRR | 1261/1925 = 0.655065 | 4289/6916 = 0.620156 |
+
+The accepted Phase 5 result is unchanged; the second column measures a later
+state. Details and limitations are in
+`docs/verification/phase5-real-corpus-results.md`.
 
 ## Early Matching Prototype
 
