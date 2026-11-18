@@ -487,3 +487,19 @@ Concept IDs are release-scoped. An ESCO and an O*NET concept for the same
 skill do not match. The existing ESCO↔O*NET mapping table is a possible
 future bridge, but it is not used. This remains a transitional prototype, not
 the final Phase 6 scoring, which must still be configurable and versioned.
+
+## D035 - Job Rankings Are Visible Only To Their Owner
+
+A candidate's job ranking and skill coverage are shown only to that candidate,
+on the Jobs page ("#N of M"). Administrators and researchers get no
+per-candidate ranking view or endpoint. Their dashboard overview contains
+aggregate counts only (purpose limitation and data minimisation). The system
+is career decision support for the candidate. A view ranking candidates for
+an employer or reviewer would turn it into a screening tool, which is outside
+its purpose.
+
+Dense retrieval stays an internal ranking signal. It is the tie-breaker under
+D034 and is evaluated offline. It has no candidate-facing page and no
+displayed similarity. The only cross-candidate ranking access is the offline
+Phase 5 evaluation export, which is restricted to the isolated
+`phase5_verify` database and its de-identified benchmark accounts (D023).
