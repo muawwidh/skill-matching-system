@@ -326,7 +326,10 @@ Status: IMPLEMENTED 2026-11-18 (no migration)
   with count queries in the existing repositories.
 - The Dashboard shows a "System overview" section with "X of Y" tables, and
   no percentages, only to users with the admin role. The request is never
-  made for other users.
+  made for other users. Since 2026-11-18 it shows only four tables: taxonomy
+  releases, candidates and jobs, skill review, and taxonomy links. There is
+  no generated timestamp. The API still returns the mapping, retrieval-index
+  and timestamp fields; the page just doesn't show them.
 - One local development account was granted the admin role on 2026-11-18
   with `python -m app.utils.manage_role <email> admin`. With that account,
   `GET /admin/overview` returned 200, and researchers and candidates still got

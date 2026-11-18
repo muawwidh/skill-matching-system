@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { getSystemOverview } from "../api/documents";
 import { useAuth } from "../features/auth/AuthProvider";
-import type { IndexCoverage, LinkCoverage, ReviewCounts, SystemOverview } from "../types/documents";
+import type { LinkCoverage, ReviewCounts, SystemOverview } from "../types/documents";
 
 const of = (count: number, total: number) => `${count} of ${total}`;
 
@@ -37,11 +37,9 @@ const linkRow = (label: string, links: LinkCoverage) => [
   of(links.pending_link, links.approved_skills),
   of(links.no_link, links.approved_skills),
 ];
-const indexCell = (coverage: IndexCoverage) =>
-  coverage.indexed === null ? `unknown of ${coverage.eligible}` : of(coverage.indexed, coverage.eligible);
 
 function OverviewTables({ data }: { data: SystemOverview }) {
-  const { taxonomy, candidates, jobs, skills, taxonomy_links: links, retrieval_index: index } = data;
+  const { taxonomy, candidates, jobs, skills, taxonomy_links: links } = data;
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <OverviewTable
@@ -56,14 +54,6 @@ function OverviewTables({ data }: { data: SystemOverview }) {
             {release.other}
           </span>,
         ])}
-      />
-      <OverviewTable
-        title="ESCO↔O*NET mapping rows"
-        head={["ESCO release", "O*NET release", "Rows"]}
-        rows={[
-          ...taxonomy.esco_onet_mappings.map((pair) => [pair.esco_version, pair.onet_version, pair.rows]),
-          ["All", "", taxonomy.esco_onet_mappings_total],
-        ]}
       />
       <OverviewTable
         title="Candidates and jobs"
@@ -90,20 +80,7 @@ function OverviewTables({ data }: { data: SystemOverview }) {
         head={["Side", "Approved link", "Pending suggestion", "No link"]}
         rows={[linkRow("CV", links.cv), linkRow("Job", links.job)]}
       />
-      <OverviewTable
-        title="Retrieval index (current vectors)"
-        head={["Item", "Indexed of eligible"]}
-        rows={[
-          ["Candidate profiles", indexCell(index.profiles)],
-          ["Jobs", indexCell(index.jobs)],
-          ["Model", <span className="break-all font-mono text-xs">{index.model_id} @ {index.model_revision}</span>],
-          ["Template", <span className="font-mono text-xs">{index.template_version}</span>],
-        ]}
-      />
-      <p className="text-xs text-slate-500 lg:col-span-2">
-        * {candidates.cvs.failed_note}
-        {index.note ? ` ${index.note}` : ""}
-      </p>
+      <p className="text-xs text-slate-500 lg:col-span-2">* {candidates.cvs.failed_note}</p>
     </div>
   );
 }
@@ -112,14 +89,9 @@ function SystemOverviewSection({ accessToken }: { accessToken: string }) {
   const overview = useQuery({ queryKey: ["admin", "overview"], queryFn: () => getSystemOverview(accessToken) });
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <ServerCog size={22} className="text-ocean" aria-hidden="true" />
-          <h2 className="text-xl font-semibold text-ink">System overview</h2>
-        </div>
-        {overview.data ? (
-          <p className="text-xs text-slate-500">Generated {new Date(overview.data.generated_at).toLocaleString()}</p>
-        ) : null}
+      <div className="mb-4 flex items-center gap-2">
+        <ServerCog size={22} className="text-ocean" aria-hidden="true" />
+        <h2 className="text-xl font-semibold text-ink">System overview</h2>
       </div>
       {overview.isPending ? <p className="text-sm text-slate-500">Loading counts…</p> : null}
       {overview.error ? <p className="text-sm text-red-700">{overview.error.message}</p> : null}
