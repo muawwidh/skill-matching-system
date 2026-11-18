@@ -213,6 +213,31 @@ class TaxonomyRepository:
             ).unique()
         )
 
+    def esco_vocabulary_release(self) -> TaxonomyVersion | None:
+        """Most recently imported active, non-sample ESCO release."""
+        return self.db.scalar(
+            select(TaxonomyVersion)
+            .join(TaxonomySource, TaxonomySource.id == TaxonomyVersion.source_id)
+            .where(TaxonomySource.code == "ESCO", TaxonomyVersion.status == "active", TaxonomyVersion.is_sample.is_(False))
+            .order_by(TaxonomyVersion.imported_at.desc())
+            .limit(1)
+        )
+
+    def esco_vocabulary_rows(self, version_id: UUID) -> tuple[list[tuple], list[tuple]]:
+        """(concept id, type, metadata) for skill/knowledge concepts and their non-hidden labels."""
+        concepts = self.db.execute(
+            select(TaxonomyConcept.id, TaxonomyConcept.concept_type, TaxonomyConcept.metadata_json, TaxonomyConcept.preferred_label)
+            .where(TaxonomyConcept.taxonomy_version_id == version_id, TaxonomyConcept.concept_type.in_(["skill", "knowledge"]))
+        ).all()
+        labels = self.db.execute(
+            select(TaxonomyLabel.concept_id, TaxonomyLabel.label)
+            .join(TaxonomyConcept, TaxonomyConcept.id == TaxonomyLabel.concept_id)
+            .where(TaxonomyConcept.taxonomy_version_id == version_id,
+                   TaxonomyConcept.concept_type.in_(["skill", "knowledge"]),
+                   TaxonomyLabel.label_type != "hidden")
+        ).all()
+        return [tuple(row) for row in concepts], [tuple(row) for row in labels]
+
     def search_concepts(
         self, query: str, source_code: str | None, concept_type: str | None, limit: int
     ) -> list[TaxonomyConcept]:

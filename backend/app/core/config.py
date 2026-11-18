@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     ADMIN_ROLE: str = "admin"
     RESEARCHER_ROLE: str = "researcher"
     DENSE_TEMPLATE_VERSION: Literal["e5-job-profile-v1", "e5-job-profile-v2"] = "e5-job-profile-v2"
+    # Job extraction v3: add ESCO skill/knowledge labels (filter O7) as a second dictionary.
+    # Off = curated dictionary only, for old-vs-new comparison (DECISIONS.md D038).
+    JOB_EXTRACTION_ESCO_VOCABULARY: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",

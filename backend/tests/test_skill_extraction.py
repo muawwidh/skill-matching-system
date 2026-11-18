@@ -3,14 +3,33 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import ExtractedCandidateTerm, ExtractedJobTerm, Role, User
+from datetime import datetime, timezone
+from uuid import UUID
+
+from app.core.config import settings
+from app.db.models import (
+    ExtractedCandidateTerm,
+    ExtractedJobTerm,
+    JobSkill,
+    Role,
+    TaxonomyConcept,
+    TaxonomyLabel,
+    TaxonomySource,
+    TaxonomyVersion,
+    User,
+)
 from app.nlp.skill_extractor import (
+    ESCO_DIGITAL_SCHEME,
     EXTRACTION_CONTRACT_VERSION,
+    JOB_EXTRACTION_CONTRACT_VERSION,
+    EscoConceptLabels,
+    EscoVocabulary,
     SkillDictionary,
     SkillDictionaryEntry,
     SkillExtractor,
 )
-from app.services.section_detection_service import SectionDetectionService
+from app.services.job_service import build_job_extractor
+from app.services.section_detection_service import SectionDetectionService, detect_job_segments
 
 
 def auth_headers(client: TestClient) -> dict[str, str]:
@@ -160,7 +179,7 @@ def test_optional_spacy_method_keeps_distinct_versioned_provenance() -> None:
 def test_versioned_extraction_methods_are_persisted_for_candidate_and_job(
     client: TestClient, db_session: Session
 ) -> None:
-    assert EXTRACTION_CONTRACT_VERSION == "v2"
+    assert (EXTRACTION_CONTRACT_VERSION, JOB_EXTRACTION_CONTRACT_VERSION) == ("v2", "v3")
     headers = auth_headers(client)
     cv = client.post(
         "/cvs/paste",
@@ -179,8 +198,11 @@ def test_versioned_extraction_methods_are_persisted_for_candidate_and_job(
     assert job.status_code == 201
     candidate_methods = set(db_session.scalars(select(ExtractedCandidateTerm.extraction_method)))
     job_methods = set(db_session.scalars(select(ExtractedJobTerm.extraction_method)))
+    # CV extraction keeps contract v2; job extraction moved to v3 (D038).
     assert {"dictionary@v2", "regex@v2"} <= candidate_methods
-    assert {"dictionary@v2", "regex@v2"} <= job_methods
+    assert not any(method.endswith("@v3") for method in candidate_methods)
+    assert {"dictionary@v3", "regex@v3"} <= job_methods
+    assert not any("@v2" in method for method in job_methods)
 
 
 def test_cv_processing_extracts_and_reviews_candidate_skills(client: TestClient) -> None:
@@ -421,3 +443,169 @@ def test_explanation_is_built_from_lists_without_cutoffs() -> None:
     assert lines[2].startswith("2 job skills could not be compared")
     for banned in ("%", "Strong", "Partial", "Limited", "Low match"):
         assert banned not in text
+
+
+# ---- Job extraction contract v3 (D038) ------------------------------------------------------
+
+JOB_POSTING = """Data Engineer
+About the Role
+You will build pipelines with Git.
+Qualifications
+3-5 years of relevant experience with Python.
+Desirable
+Docker
+Bonus: Kubernetes
+Benefits
+Free AWS training and Agile coaching.
+Equal Opportunity
+We use SQL to track nothing.
+How to Apply
+Send a Linux screenshot."""
+
+
+def _job_terms(text: str, extractor: SkillExtractor | None = None):
+    return (extractor or SkillExtractor()).extract_from_sections(detect_job_segments(text), text, "job")
+
+
+def test_job_requirement_types_follow_section_headings_and_skip_excluded_sections() -> None:
+    terms = _job_terms(JOB_POSTING)
+    by_name = {term.normalized_text: term for term in terms}
+    assert by_name["git"].requirement_type == "unknown" and by_name["git"].source_section == "responsibilities"
+    assert by_name["python"].requirement_type == "required"
+    assert by_name["3-5 years of relevant experience"].requirement_type == "required"
+    assert by_name["docker"].requirement_type == "preferred"
+    assert by_name["kubernetes"].requirement_type == "preferred"  # inline "Bonus:" heading
+    # Benefits, EEO and application text is not extracted at all.
+    assert not {"aws", "agile", "sql", "linux"} & set(by_name)
+    assert all(JOB_POSTING[term.start_char:term.end_char] == term.raw_text for term in terms)
+    assert {term.extraction_method for term in terms} == {"dictionary@v3", "regex@v3"}
+
+
+def test_job_segments_treat_text_without_headings_as_unknown_full_text() -> None:
+    text = "We want Python and Docker skills."
+    sections = detect_job_segments(text)
+    assert [(s.section_type, s.content) for s in sections] == [("full_text", text)]
+    assert {term.requirement_type for term in _job_terms(text)} == {"unknown"}
+
+
+def test_excluded_headings_only_count_when_standing_alone() -> None:
+    text = "Requirements\nSalary: competitive\nPython"
+    terms = _job_terms(text)
+    assert [(term.normalized_text, term.requirement_type) for term in terms] == [("python", "required")]
+
+
+def test_shared_section_detector_is_unchanged_for_job_headings() -> None:
+    # Stored job sections and CV sections still use the v2 heading rules.
+    types = [section.section_type for section in SectionDetectionService().detect(JOB_POSTING)]
+    assert "preferred_skills" not in types and types[-1] == "qualifications"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("3-5 years of relevant experience", "3-5 years of relevant experience"),
+        ("1 to 3 years of HR experience", "1 to 3 years of hr experience"),
+        ("0\u20132 years of hands-on laboratory experience", "0\u20132 years of hands-on laboratory experience"),
+        ("3+ years embedded firmware development experience", "3+ years embedded firmware development experience"),
+        ("at least 1 year of\nhands-on experience", "1 year of hands-on experience"),
+        ("5 years experience", "5 years experience"),
+    ],
+)
+def test_job_experience_pattern_matches_ranges(text: str, expected: str) -> None:
+    terms = [term for term in _job_terms(text) if term.term_type == "experience_indicator"]
+    assert [term.normalized_text for term in terms] == [expected]
+
+
+@pytest.mark.parametrize("text", ["5 years ago we shipped", "experience in 3 projects", "2 years of a long and varied career experience"])
+def test_job_experience_pattern_rejects_non_requirements(text: str) -> None:
+    assert not [term for term in _job_terms(text) if term.term_type == "experience_indicator"]
+
+
+def test_cv_extraction_keeps_v2_experience_pattern() -> None:
+    text = "3-5 years of relevant experience. 5 years experience."
+    terms = SkillExtractor().extract_from_sections(SectionDetectionService().detect(text), text, "candidate")
+    assert [term.normalized_text for term in terms if term.term_type == "experience_indicator"] == ["5 years experience"]
+
+
+def _vocabulary() -> EscoVocabulary:
+    concept = EscoConceptLabels
+    return EscoVocabulary.from_concepts(
+        [
+            concept("skill", "cross-sector", True, ("Python (computer programming)", "Python")),
+            concept("skill", "cross-sector", True, ("LESS",)),
+            concept("skill", "cross-sector", True, ("R",)),
+            concept("knowledge", "sector-specific", False, ("statistics", "statistical analysis")),
+            concept("skill", "cross-sector", False, ("root cause analysis",)),
+            concept("skill", "transversal", False, ("work independently",)),
+            concept("skill", "transversal", False, ("communication",)),
+            concept("knowledge", "cross-sector", True, ("database management systems", "database")),
+        ],
+        "ESCO-test",
+    )
+
+
+def test_esco_vocabulary_applies_filter_o7() -> None:
+    vocabulary = _vocabulary()
+    text = "Do root cause analysis and statistical analysis, work independently with communication, R and LESS."
+    found = {label for _, _, label, _ in vocabulary.find(text)}
+    # multi-word non-transversal and digital labels match; transversal, single-word non-digital and 1-char do not.
+    assert found == {"root cause analysis", "statistical analysis", "less"}
+    assert not vocabulary.find("we need less paperwork")  # ESCO spells it "LESS"
+    assert [label for _, _, label, _ in vocabulary.find("python, database")] == ["database"]  # "Python" is cased
+    assert {label: kind for _, _, label, kind in vocabulary.find("Python and database management systems")} == {
+        "python": "skill", "database management systems": "domain_knowledge"}
+
+
+def test_esco_terms_never_duplicate_dictionary_matches_and_record_version() -> None:
+    text = "Requirements\nPython and database management systems.\nDo root cause analysis."
+    terms = _job_terms(text, SkillExtractor(esco_vocabulary=_vocabulary()))
+    by_name = {term.normalized_text: term for term in terms}
+    assert by_name["python"].extraction_method == "dictionary@v3"  # curated dictionary wins on overlap
+    esco = [term for term in terms if term.extraction_method.startswith("esco_vocabulary")]
+    assert {term.normalized_text for term in esco} == {"database management systems", "root cause analysis"}
+    assert {term.extraction_method for term in esco} == {"esco_vocabulary@v3:ESCO-test:o7"}
+    assert all(term.requirement_type == "required" and text[term.start_char:term.end_char] == term.raw_text for term in esco)
+
+
+def _seed_esco_release(db_session: Session, is_sample: bool = False) -> None:
+    source = TaxonomySource(code="ESCO", name="ESCO")
+    version = TaxonomyVersion(source=source, version="9.9", status="active", is_sample=is_sample,
+                              imported_at=datetime.now(timezone.utc))
+    db_session.add_all([source, version])
+    db_session.flush()
+    for index, (label, reuse, schemes, alternatives) in enumerate([
+        ("root cause analysis", "cross-sector", "", ()),
+        ("PostgreSQL", "cross-sector", ESCO_DIGITAL_SCHEME, ()),
+        ("communication", "transversal", "", ("communicate",)),
+    ]):
+        concept = TaxonomyConcept(taxonomy_version_id=version.id, external_id=f"esco:test:{index}", preferred_label=label,
+                                  normalized_label=label.lower(), concept_type="skill",
+                                  metadata_json={"source": {"reuseLevel": reuse, "inScheme": schemes}})
+        concept.labels = [TaxonomyLabel(label=alt, normalized_label=alt, label_type="alternative") for alt in alternatives]
+        db_session.add(concept)
+    db_session.commit()
+
+
+def test_esco_vocabulary_config_switch_compares_old_and_new(client: TestClient, db_session: Session, monkeypatch) -> None:
+    _seed_esco_release(db_session)
+    assert build_job_extractor(db_session, use_esco_vocabulary=False).esco_vocabulary is None
+    assert build_job_extractor(db_session, use_esco_vocabulary=True).esco_vocabulary.version == "ESCO-9.9"
+    headers = job_manager_headers(client, db_session)
+    description = "Requirements\nRoot cause analysis and communication."
+
+    def process(enabled: bool) -> set[tuple[str, str]]:
+        monkeypatch.setattr(settings, "JOB_EXTRACTION_ESCO_VOCABULARY", enabled)
+        job = client.post("/jobs", headers=headers, json={
+            "title": f"Ops {enabled}", "company": "Example", "location": "Remote",
+            "employment_type": "Full-time", "description": description})
+        assert job.status_code == 201
+        rows = db_session.scalars(select(JobSkill).where(JobSkill.job_id == UUID(job.json()["id"])))
+        return {(row.normalized_text, row.requirement_type) for row in rows}
+
+    assert process(False) == set()
+    assert process(True) == {("root cause analysis", "required")}  # transversal "communication" filtered out
+
+
+def test_sample_esco_releases_are_never_used_as_vocabulary(db_session: Session) -> None:
+    _seed_esco_release(db_session, is_sample=True)
+    assert build_job_extractor(db_session, use_esco_vocabulary=True).esco_vocabulary is None

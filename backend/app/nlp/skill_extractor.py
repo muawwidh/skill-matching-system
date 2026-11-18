@@ -1,10 +1,26 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 import json
 from pathlib import Path
 import re
 
+from app.taxonomy.normalization import normalize_taxonomy_text
 
+
+# CV extraction stays on v2. Job extraction v3 (DECISIONS.md D038) adds heading-based
+# requirement types, experience ranges and the optional ESCO label vocabulary.
 EXTRACTION_CONTRACT_VERSION = "v2"
+JOB_EXTRACTION_CONTRACT_VERSION = "v3"
+
+_EXPERIENCE_V2 = r"\b\d+\+?\s+(?:years?|yrs?)\s+(?:of\s+)?experience\b"
+# v3: ranges ("3-5", "1 to 3", "0–2"), "3+ years", and up to three words before "experience".
+_EXPERIENCE_V3 = (
+    r"\b\d+(?:\s*(?:-|–|to)\s*\d+)?\+?\s*(?:years?|yrs?)['’]?\s+(?:of\s+)?"
+    r"(?:[a-z-]+\s+){0,3}?experience\b"
+)
+ESCO_DIGITAL_SCHEME = "http://data.europa.eu/esco/concept-scheme/6c930acd-c104-4ece-acf7-f44fd7333036"
+ESCO_VOCABULARY_FILTER = "o7"
+_ESCO_TOKEN = re.compile(r"[A-Za-z0-9+#.]+")
 
 
 @dataclass(frozen=True)
@@ -50,10 +66,89 @@ class SkillDictionary:
         )
 
 
+@dataclass(frozen=True)
+class EscoConceptLabels:
+    concept_type: str  # "skill" or "knowledge"
+    reuse_level: str
+    digital: bool
+    labels: tuple[str, ...]  # preferred and alternative labels as published
+
+
+@dataclass(frozen=True)
+class _VocabularyEntry:
+    term_type: str
+    cased_forms: frozenset[str]
+
+
+class EscoVocabulary:
+    """ESCO skill/knowledge labels filtered by rule O7 (DECISIONS.md D038).
+
+    A label is usable if its concept is in the ESCO Digital collection, or the
+    label has at least two words and the concept is not transversal. Single-word
+    labels must be at least two characters and, when ESCO spells them with
+    capitals (e.g. "Python", "LESS"), must appear with one of those spellings.
+    """
+
+    MAX_TOKENS = 8
+
+    def __init__(self, entries: dict[str, _VocabularyEntry], version: str) -> None:
+        self.entries = entries
+        self.version = version
+
+    @classmethod
+    def from_concepts(cls, concepts: Iterable[EscoConceptLabels], version: str) -> "EscoVocabulary":
+        forms: dict[str, set[str]] = {}
+        allowed: dict[str, set[str]] = {}
+        for concept in concepts:
+            for label in concept.labels:
+                key = normalize_taxonomy_text(label)
+                if not key:
+                    continue
+                if " " not in key:
+                    forms.setdefault(key, set()).add(label.strip())
+                multi_word = " " in key
+                if concept.digital or (multi_word and concept.reuse_level != "transversal"):
+                    if not multi_word and len(key) < 2:
+                        continue
+                    allowed.setdefault(key, set()).add(concept.concept_type)
+        entries = {
+            key: _VocabularyEntry(
+                term_type="skill" if "skill" in types else "domain_knowledge",
+                cased_forms=frozenset(f for f in forms.get(key, ()) if f != f.lower()) if " " not in key else frozenset(),
+            )
+            for key, types in allowed.items()
+        }
+        return cls(entries, version)
+
+    def find(self, text: str) -> list[tuple[int, int, str, str]]:
+        """Longest non-overlapping label matches within each line: (start, end, label, term_type)."""
+        found: list[tuple[int, int, str, str]] = []
+        for line in re.finditer(r"[^\n]+", text):
+            tokens = []
+            for match in _ESCO_TOKEN.finditer(line.group(0)):
+                value = match.group(0).rstrip(".")
+                if value:
+                    start = line.start() + match.start()
+                    tokens.append((value, start, start + len(value)))
+            index = 0
+            while index < len(tokens):
+                for size in range(min(self.MAX_TOKENS, len(tokens) - index), 0, -1):
+                    key = " ".join(token[0].lower() for token in tokens[index:index + size])
+                    entry = self.entries.get(key)
+                    if entry and (size > 1 or not entry.cased_forms or tokens[index][0] in entry.cased_forms):
+                        found.append((tokens[index][1], tokens[index + size - 1][2], key, entry.term_type))
+                        index += size
+                        break
+                else:
+                    index += 1
+        return found
+
+
 class SkillExtractor:
-    def __init__(self, dictionary: SkillDictionary | None = None) -> None:
+    def __init__(self, dictionary: SkillDictionary | None = None, esco_vocabulary: EscoVocabulary | None = None) -> None:
         dictionary_path = Path(__file__).resolve().with_name("skill_dictionary.json")
         self.dictionary = dictionary or SkillDictionary.from_json(dictionary_path)
+        self.esco_vocabulary = esco_vocabulary
         self.spacy_nlp = None
         self.spacy_matcher = None
         self._configure_spacy_matcher()
@@ -65,26 +160,68 @@ class SkillExtractor:
         document_kind: str,
     ) -> list[ExtractedTerm]:
         terms: list[ExtractedTerm] = []
+        version = JOB_EXTRACTION_CONTRACT_VERSION if document_kind == "job" else EXTRACTION_CONTRACT_VERSION
         for section in sections:
             section_offset = self._section_offset(full_text, section.content, section.start_char)
             requirement_type = self._requirement_type(section.section_type, document_kind)
-            terms.extend(
-                self._extract_dictionary_terms(
-                    section.content,
-                    section.section_type,
-                    section_offset,
-                    requirement_type,
-                )
+            dictionary_terms = self._extract_dictionary_terms(
+                section.content,
+                section.section_type,
+                section_offset,
+                requirement_type,
+                version,
             )
+            terms.extend(dictionary_terms)
             terms.extend(
                 self._extract_regex_terms(
                     section.content,
                     section.section_type,
                     section_offset,
                     requirement_type,
+                    version,
                 )
             )
+            if document_kind == "job" and self.esco_vocabulary is not None:
+                terms.extend(
+                    self._extract_esco_terms(
+                        section.content, section.section_type, section_offset, requirement_type, dictionary_terms
+                    )
+                )
         return self._deduplicate(terms)
+
+    def _extract_esco_terms(
+        self,
+        text: str,
+        source_section: str,
+        section_offset: int,
+        requirement_type: str,
+        dictionary_terms: list[ExtractedTerm],
+    ) -> list[ExtractedTerm]:
+        """ESCO label matches that do not overlap a curated dictionary match."""
+        taken = [(term.start_char, term.end_char) for term in dictionary_terms]
+        terms: list[ExtractedTerm] = []
+        for start, end, label, term_type in self.esco_vocabulary.find(text):
+            absolute = (section_offset + start, section_offset + end)
+            if any(absolute[0] < other_end and other_start < absolute[1] for other_start, other_end in taken):
+                continue
+            terms.append(
+                ExtractedTerm(
+                    raw_text=text[start:end],
+                    normalized_text=label,
+                    term_type=term_type,
+                    source_section=source_section,
+                    evidence_sentence=self._evidence_sentence(text, start, end),
+                    extraction_method=(
+                        f"esco_vocabulary@{JOB_EXTRACTION_CONTRACT_VERSION}:"
+                        f"{self.esco_vocabulary.version}:{ESCO_VOCABULARY_FILTER}"
+                    ),
+                    confidence_score=0.8,
+                    start_char=absolute[0],
+                    end_char=absolute[1],
+                    requirement_type=requirement_type,
+                )
+            )
+        return terms
 
     def _extract_dictionary_terms(
         self,
@@ -92,6 +229,7 @@ class SkillExtractor:
         source_section: str,
         section_offset: int,
         requirement_type: str,
+        version: str = EXTRACTION_CONTRACT_VERSION,
     ) -> list[ExtractedTerm]:
         terms: list[ExtractedTerm] = []
         if self.spacy_matcher is not None and self.spacy_nlp is not None:
@@ -100,6 +238,7 @@ class SkillExtractor:
                 source_section,
                 section_offset,
                 requirement_type,
+                version,
             )
         for entry in self.dictionary.entries:
             for alias in sorted(entry.aliases, key=lambda value: (-len(value), value.casefold(), value)):
@@ -117,7 +256,7 @@ class SkillExtractor:
                             term_type=entry.term_type,
                             source_section=source_section,
                             evidence_sentence=self._evidence_sentence(text, match.start(), match.end()),
-                            extraction_method=f"dictionary@{EXTRACTION_CONTRACT_VERSION}",
+                            extraction_method=f"dictionary@{version}",
                             confidence_score=0.9,
                             start_char=start,
                             end_char=end,
@@ -132,6 +271,7 @@ class SkillExtractor:
         source_section: str,
         section_offset: int,
         requirement_type: str,
+        version: str = EXTRACTION_CONTRACT_VERSION,
     ) -> list[ExtractedTerm]:
         doc = self.spacy_nlp(text)
         terms: list[ExtractedTerm] = []
@@ -145,7 +285,7 @@ class SkillExtractor:
                     term_type=term_type,
                     source_section=source_section,
                     evidence_sentence=self._evidence_sentence(text, span.start_char, span.end_char),
-                    extraction_method=f"spacy_phrase_matcher@{EXTRACTION_CONTRACT_VERSION}",
+                    extraction_method=f"spacy_phrase_matcher@{version}",
                     confidence_score=0.92,
                     start_char=section_offset + span.start_char,
                     end_char=section_offset + span.end_char,
@@ -160,9 +300,11 @@ class SkillExtractor:
         source_section: str,
         section_offset: int,
         requirement_type: str,
+        version: str = EXTRACTION_CONTRACT_VERSION,
     ) -> list[ExtractedTerm]:
+        experience = _EXPERIENCE_V3 if version == JOB_EXTRACTION_CONTRACT_VERSION else _EXPERIENCE_V2
         patterns = [
-            ("experience_indicator", r"\b\d+\+?\s+(?:years?|yrs?)\s+(?:of\s+)?experience\b", 0.86),
+            ("experience_indicator", experience, 0.86),
             ("qualification", r"\b(?:bachelor|master|msc|bsc|phd|doctorate)\b(?:['’]s)?(?:\s+degree)?", 0.82),
             ("certification", r"\b(?:certified|certification|certificate|aws certified|azure certified)\b", 0.78),
         ]
@@ -172,11 +314,15 @@ class SkillExtractor:
                 terms.append(
                     ExtractedTerm(
                         raw_text=match.group(0),
-                        normalized_text=match.group(0).lower(),
+                        normalized_text=(
+                            " ".join(match.group(0).lower().split())
+                            if version == JOB_EXTRACTION_CONTRACT_VERSION
+                            else match.group(0).lower()
+                        ),
                         term_type=term_type,
                         source_section=source_section,
                         evidence_sentence=self._evidence_sentence(text, match.start(), match.end()),
-                        extraction_method=f"regex@{EXTRACTION_CONTRACT_VERSION}",
+                        extraction_method=f"regex@{version}",
                         confidence_score=confidence,
                         start_char=section_offset + match.start(),
                         end_char=section_offset + match.end(),
@@ -196,7 +342,7 @@ class SkillExtractor:
     def _requirement_type(section_type: str, document_kind: str) -> str:
         if document_kind != "job":
             return "candidate_evidence"
-        if section_type == "required_skills":
+        if section_type in {"required_skills", "qualifications"}:
             return "required"
         if section_type == "preferred_skills":
             return "preferred"

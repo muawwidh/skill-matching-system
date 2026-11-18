@@ -179,6 +179,21 @@ This contract boundary does not safely migrate reviews. There is no requirement
 to reprocess reviewed legacy CVs immediately: leave them untouched unless
 deliberately regenerating and re-reviewing their evidence.
 
+Job extraction contract `v3` (D038, 2026-11-18) applies to jobs created,
+updated or reprocessed from now on:
+- requirement type follows section headings via the job-only
+  `detect_job_segments`;
+- benefits, EEO and application text is not extracted;
+- the experience pattern accepts ranges;
+- with `JOB_EXTRACTION_ESCO_VOCABULARY` (default on), ESCO 1.2.1 skill and
+  knowledge labels filtered by rule O7 are a second dictionary
+  (`esco_vocabulary@v3:ESCO-1.2.1:o7`).
+
+CV extraction remains `v2`. Stored job sections still use the shared detector.
+Existing job terms are unchanged until re-extracted. Reprocessing a job through
+the API still replaces its terms; that path has not yet been changed to
+preserve reviews.
+
 ## Early Matching Prototype
 
 Migration:

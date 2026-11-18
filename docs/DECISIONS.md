@@ -506,3 +506,80 @@ D036 and is evaluated offline. It has no candidate-facing page and no
 displayed similarity. The only cross-candidate ranking access is the offline
 Phase 5 evaluation export, which is restricted to the isolated
 `phase5_verify` database and its de-identified benchmark accounts (D023).
+
+## D038 - Job Extraction Contract v3: Heading Requirements, Experience Ranges, ESCO Vocabulary
+
+Job extraction moves to contract `v3`. CV extraction stays on `v2`. Three
+changes:
+
+(a) **Requirement type from section headings.** A job-only segmentation
+(`detect_job_segments`) reuses the predeclared heading table of the frozen
+retrieval v2 template (`job_budget.HEADINGS`) plus "must have", "bonus" and
+"qualifications". Requirements and Qualifications sections give `required`.
+Preferred, Desirable, Nice to have and Bonus give `preferred`. Responsibilities,
+summary, company context and untitled text give `unknown`. Text under
+Benefits, Equal Opportunity / EEO, How to apply, application or screening
+questions, Compensation, Salary and Why join us is not extracted. Excluded
+headings count only when they stand alone on their line. The shared
+`SectionDetectionService.detect` is unchanged. CV sections and stored job
+sections (display and retrieval input) are not affected.
+
+(b) **ESCO labels as a second dictionary, filter O7.** This uses the preferred
+and alternative labels of skill/knowledge concepts in the active, non-sample
+ESCO release (here 1.2.1; 96,108 usable labels after filtering). A label is
+used if its concept is in the ESCO Digital collection (concept scheme
+`6c930acd-…`, 1,284 concepts, identical to `digitalSkillsCollection_en.csv`),
+or if the label has at least two words and the concept is not transversal.
+Single-word labels need at least two characters. When ESCO capitalises one
+(e.g. "Python", "LESS"), it must appear with that spelling. The longest
+non-overlapping match wins within a line. Curated dictionary matches win any
+overlap. ESCO terms are stored with method `esco_vocabulary@v3:ESCO-<release>:o7`
+and fixed confidence 0.8, an uncalibrated label like the other per-method
+values. They are linked to taxonomy concepts by the normal linker. Config
+`JOB_EXTRACTION_ESCO_VOCABULARY` (default on) switches the vocabulary off for
+old-vs-new comparison.
+
+(c) **Experience ranges.** The job experience pattern accepts "3-5", "1 to 3"
+and "0–2" ranges, "3+ years", and up to three words before "experience".
+
+**Justification (stage-1 diagnosis on the 30 Phase 5 evaluation jobs,
+2026-11-18, in memory, no DB writes):**
+
+| Measure | v2 | v3 |
+|---|---|---|
+| Terms by requirement (a) | 9 required / 8 preferred / 75 unknown of 92 | 54 / 13 / 29 of 96 |
+| Experience matches (c) | 5 in 5 jobs | 20 in 16 jobs |
+
+- For (a), 11 jobs have no heading the v2 detector recognises, 51 terms change
+  type and 2 terms under benefits, EEO or how-to-apply text are dropped.
+- For iCapital "Data Feed Operations – Associate", (a) changes the result from
+  0 of 7 terms required to 4 of 7.
+
+ESCO filter options compared (b), as distinct concepts over the 30 jobs:
+
+| Option | Concepts |
+|---|---|
+| all labels | 436 |
+| multi-word only | 142 |
+| Digital collection only | 151 |
+| non-transversal | 365 |
+| multi-word and non-transversal | 125 |
+| Digital, or multi-word and non-transversal | 224 |
+| O7 (previous, plus the casing guard) | 200 |
+
+The rejected options fail for these reasons:
+- **All labels and non-transversal:** they admit generic words ("communication"
+  in 25 jobs, "it", "re", "plan", "lead", "integrity").
+- **Multi-word only:** loses Python, SQL and PostgreSQL.
+- **Digital collection only:** keeps "it", "r" (from R&D), "less" and "source".
+
+O7's remaining known false positives are "It" at sentence start (4 jobs),
+"Taleo" in application boilerplate and "operational excellence". The
+implemented v3 reproduces these counts:
+- ESCO switch off: 111 terms (the 96 above plus the 15 additional experience
+  matches).
+- ESCO switch on: 355 terms, 244 of them from the vocabulary.
+
+Vocabulary terms add review workload, so they enter as `pending` evidence like
+every extraction. Existing jobs are not re-extracted by this decision. Any
+re-extraction must preserve review decisions; see the follow-up entry.

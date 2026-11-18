@@ -142,3 +142,119 @@ class SectionDetectionService:
         if match.group("separator"):
             return True
         return remaining_line == ""
+
+
+# ---- Job requirement segmentation (extraction contract v3; DECISIONS.md D038) -------------
+# Reuses the predeclared heading table of the frozen retrieval v2 template, plus the
+# headings below. Text under excluded headings (benefits, EEO, application details) is
+# not passed to extraction at all.
+JOB_EXCLUDED_HEADINGS = (
+    "benefits", "perks", "what we offer", "equal opportunity", "equal employment opportunity", "eeo",
+    "how to apply", "application process", "application questions", "screening questions", "compensation",
+    "salary", "pay range", "why join us",
+)
+_JOB_EXTRA_HEADINGS = (
+    ("must have", "requirements"), ("must haves", "requirements"), ("must-haves", "requirements"),
+    ("qualifications", "requirements"), ("minimum qualifications", "requirements"),
+    ("bonus", "preferences"), ("nice-to-have", "preferences"), ("nice to haves", "preferences"),
+)
+JOB_SEGMENT_TYPES = {
+    "requirements": "required_skills",
+    "preferences": "preferred_skills",
+    "responsibilities": "responsibilities",
+    "summary": "summary",
+    "context": "summary",
+}
+JOB_SEGMENTATION_METHOD = "job_heading_rules@v3"
+_MAX_HEADING_LENGTH = 70
+
+
+def _job_heading_aliases() -> list[tuple[str, str]]:
+    from app.retrieval.job_budget import HEADINGS
+
+    pairs = {(alias, kind) for kind, aliases in HEADINGS.items() for alias in aliases}
+    pairs |= set(_JOB_EXTRA_HEADINGS)
+    pairs |= {(alias, "excluded") for alias in JOB_EXCLUDED_HEADINGS}
+    # An excluded heading also listed as generic context (e.g. "benefits") is excluded.
+    pairs = {(a, k) for a, k in pairs if not (k == "context" and a in JOB_EXCLUDED_HEADINGS)}
+    return sorted(pairs, key=lambda pair: (-len(pair[0]), pair[0], pair[1]))
+
+
+_JOB_ALIASES = _job_heading_aliases()
+_INLINE_SEPARATOR = re.compile(r"[ \t]*(?::|[-–][ \t])[ \t]*(?=\S)")
+
+
+def classify_job_heading(line: str) -> tuple[str, int] | None:
+    """Return (heading class, offset where same-line content starts) or None.
+
+    A heading stands alone on its line (optionally ending in ':' or '?') or,
+    except for excluded headings, is followed by ':' / ' - ' and content on the
+    same line. Bulleted lines are never headings.
+    """
+    stripped = line.strip()
+    if not stripped or stripped[0] in "-*•·" and not stripped.startswith("**"):
+        return None
+    lead = len(line) - len(line.lstrip())
+    body = stripped.strip("*#_ ").replace("’", "'")
+    lead += stripped.find(body[:1]) if body else 0
+    lower = body.lower()
+    for alias, kind in _JOB_ALIASES:
+        if not lower.startswith(alias):
+            continue
+        rest = body[len(alias):]
+        if re.fullmatch(r"\s*\??\s*:?\s*\**", rest) and len(body) <= _MAX_HEADING_LENGTH:
+            return kind, len(line)
+        separator = _INLINE_SEPARATOR.match(rest)
+        # Excluded headings must stand alone: an inline "Salary: ..." must not swallow what follows.
+        if separator and kind != "excluded":
+            return kind, lead + len(alias) + separator.end()
+    from app.retrieval.job_budget import _GENERIC_HEADING
+
+    if len(body) <= _MAX_HEADING_LENGTH:
+        generic = _GENERIC_HEADING.fullmatch(body.rstrip(":?* "))
+        if generic and not generic.group(2):
+            word = generic.group(1).lower()
+            return ("responsibilities" if word in {"responsibilities", "duties", "accountabilities"} else "requirements"), len(line)
+    return None
+
+
+def detect_job_segments(text: str) -> list[DetectedSection]:
+    """Split a job description into requirement segments for extraction.
+
+    Text before the first recognised heading (or a description without any)
+    is `full_text`, whose requirement type stays unknown. Excluded segments are
+    omitted, so nothing under them is extracted.
+    """
+    segments: list[tuple[str, str, int, int]] = []
+    current_kind, current_heading, start, position = "full_text", "Full text", 0, 0
+    for line in text.splitlines(keepends=True):
+        classified = classify_job_heading(line.rstrip("\r\n"))
+        if classified:
+            segments.append((current_kind, current_heading, start, position))
+            heading_text = line.rstrip("\r\n")[: classified[1]]
+            current_kind, current_heading = classified[0], heading_text.strip().strip("*#:_-–? ")
+            start = position + classified[1]
+        position += len(line)
+    segments.append((current_kind, current_heading, start, position))
+
+    sections: list[DetectedSection] = []
+    for kind, heading, segment_start, segment_end in segments:
+        if kind == "excluded":
+            continue
+        span = text[segment_start:segment_end]
+        content = span.strip()
+        if not content:
+            continue
+        content_start = segment_start + len(span) - len(span.lstrip())
+        sections.append(
+            DetectedSection(
+                section_type="full_text" if kind == "full_text" else JOB_SEGMENT_TYPES[kind],
+                heading=heading,
+                content=content,
+                start_char=content_start,
+                end_char=content_start + len(content),
+                confidence_score=0.6 if kind == "full_text" else 1.0,
+                extraction_method=JOB_SEGMENTATION_METHOD,
+            )
+        )
+    return sections
