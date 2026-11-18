@@ -125,6 +125,8 @@ export function JobsPage() {
                 isRefreshing={refreshMatchesMutation.isPending}
                 match={recommendationsQuery.data?.find((match) => match.job_id === item.id)}
                 onRefresh={() => refreshMatchesMutation.mutate()}
+                rank={coverageRank.has(item.id) ? (coverageRank.get(item.id) as number) + 1 : undefined}
+                rankTotal={coverageRank.size}
               />
               {accessToken ? (
                 <SkillReviewPanel accessToken={accessToken} ownerId={item.id} ownerType="job" />
