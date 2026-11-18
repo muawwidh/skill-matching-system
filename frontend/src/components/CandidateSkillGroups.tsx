@@ -5,6 +5,13 @@ import { useState } from "react";
 import { listCvSkillGroups, reviewCvSkills } from "../api/documents";
 import type { CandidateSkill } from "../types/documents";
 
+// Shows how a skill entered the profile instead of a fixed per-method confidence number.
+export function skillSourceLabel(source: string): string {
+  if (source === "extraction") return "extracted";
+  if (source === "manual_review") return "manual";
+  return source.replace(/_/g, " ");
+}
+
 export function CandidateSkillGroups({ accessToken, cvId }: { accessToken: string; cvId: string }) {
   const cache = useQueryClient();
   const [drafts, setDrafts] = useState<Record<string, Partial<CandidateSkill>>>({});
@@ -66,7 +73,7 @@ export function CandidateSkillGroups({ accessToken, cvId }: { accessToken: strin
             <input aria-label={`Skill occurrence ${item.id}`} value={item.raw_text} disabled={save.isPending}
               className="w-full min-w-0 rounded border border-slate-300 px-2 py-1 text-sm sm:w-64"
               onChange={(event) => edit(item.id, { raw_text: event.target.value, normalized_text: event.target.value.toLowerCase() })} />
-            <span className="text-xs text-slate-500">{item.skill_type} · {Math.round(item.confidence_score * 100)}% extraction confidence · {item.review_status}</span>
+            <span className="text-xs text-slate-500">{item.skill_type} · {skillSourceLabel(item.source)} · {item.review_status}</span>
           </div>
           <p className="my-2 whitespace-pre-wrap break-words text-sm text-slate-600">{item.evidence_sentence || "No evidence text"}</p>
           <div className="flex flex-wrap gap-2">

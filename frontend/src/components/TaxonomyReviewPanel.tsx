@@ -7,6 +7,14 @@ import type { TaxonomyLinkCandidate, TaxonomyReviewGroup } from "../types/taxono
 
 type Action = { group: TaxonomyReviewGroup; candidate: TaxonomyLinkCandidate; status: "approved" | "rejected" };
 const button = "inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-2 text-sm disabled:opacity-50";
+const MATCH_METHOD_LABELS: Record<string, string> = {
+  exact_preferred: "exact preferred label",
+  exact_alternative: "exact alternative label",
+  fuzzy: "fuzzy (similar spelling)",
+  human_correction: "human correction",
+};
+// The match type is shown instead of a fixed per-method confidence number.
+const matchMethodLabel = (method: string) => MATCH_METHOD_LABELS[method] ?? method.replace(/_/g, " ");
 
 function ReviewHistory({ accessToken, group }: { accessToken: string; group: TaxonomyReviewGroup }) {
   const [open, setOpen] = useState(false);
@@ -112,7 +120,7 @@ export function TaxonomyReviewPanel({ accessToken }: { accessToken: string }) {
         return <li className="flex flex-wrap items-center justify-between gap-3 py-3" key={item.id}>
           <div className="min-w-0 flex-1 basis-56 break-words">
             <p className="text-sm font-medium">{item.rank}. {item.concept.preferred_label}</p>
-            <p className="mt-1 text-xs text-slate-500">{item.concept.source_code} {item.concept.taxonomy_version} · {item.match_method.replace(/_/g, " ")} · {Math.round(item.confidence_score * 100)}%</p>
+            <p className="mt-1 text-xs text-slate-500">{item.concept.source_code} {item.concept.taxonomy_version} · {matchMethodLabel(item.match_method)}</p>
             <p className={`mt-1 text-xs ${selected ? "font-semibold text-ocean" : "text-slate-600"}`} title={item.review_status === "superseded" ? "Previously selected; not marked incorrect" : undefined}>
               {selected ? "Selected" : item.review_status === "approved" ? "Inconsistent: not selected" : item.review_status === "superseded" ? "Superseded (previous selection)" : item.review_status}
             </p>

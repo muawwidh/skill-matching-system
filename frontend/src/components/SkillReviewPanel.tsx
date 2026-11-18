@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { listCvSkills, listJobSkills, reviewCvSkills } from "../api/documents";
 import type { CandidateSkill, JobSkill } from "../types/documents";
-import { CandidateSkillGroups } from "./CandidateSkillGroups";
+import { CandidateSkillGroups, skillSourceLabel } from "./CandidateSkillGroups";
 
 type SkillReviewPanelProps = {
   accessToken: string;
@@ -100,7 +100,7 @@ function OccurrenceReviewPanel({ accessToken, ownerId, ownerType }: SkillReviewP
                 </span>
               ) : null}
               <span className="text-xs text-slate-500">
-                {Math.round(skill.confidence_score * 100)}%
+                {skillSourceLabel(skill.source)}
               </span>
               <span className="rounded bg-white px-2 py-1 text-xs text-slate-600">
                 {skill.review_status}
