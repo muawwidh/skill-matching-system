@@ -156,6 +156,7 @@ class JobSkillRead(BaseModel):
     confidence_score: float
     review_status: str
     source: str
+    source_section: str = ""
 
     model_config = {"from_attributes": True}
 

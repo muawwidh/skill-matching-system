@@ -70,6 +70,8 @@ export type CandidateSkill = {
 
 export type JobSkill = CandidateSkill & {
   requirement_type: string;
+  /** Detected section of the extracted occurrence; empty for manual skills. */
+  source_section?: string;
 };
 
 export type CandidateSkillGroup = {

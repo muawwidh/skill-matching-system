@@ -37,6 +37,13 @@ function groupJobSkills(skills: JobSkill[]): JobSkillGroup[] {
   return [...groups.values()];
 }
 
+const sectionLabel = (section: string) => section.replace(/_/g, " ").replace(/^full text$/, "untitled text");
+
+// Distinct detected sections of a group's occurrences, in first-seen order.
+function sectionList(occurrences: JobSkill[]): string {
+  return [...new Set(occurrences.map((item) => item.source_section).filter(Boolean) as string[])].map(sectionLabel).join(", ");
+}
+
 function reviewSummary(occurrences: JobSkill[]): string {
   const counts = occurrences.reduce<Record<string, number>>((result, item) => {
     result[item.review_status] = (result[item.review_status] ?? 0) + 1;
@@ -78,6 +85,7 @@ function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: st
                 </span>
                 <span className="text-xs text-slate-500">
                   {group.occurrences.length} occurrence{group.occurrences.length === 1 ? "" : "s"}
+                  {sectionList(group.occurrences) ? ` · from ${sectionList(group.occurrences)}` : ""}
                 </span>
                 <span className="rounded bg-white px-2 py-1 text-xs text-slate-600">
                   {statuses.size > 1 ? `Mixed: ${reviewSummary(group.occurrences)}` : reviewSummary(group.occurrences)}
@@ -98,7 +106,7 @@ function JobSkillGroups({ accessToken, jobId }: { accessToken: string; jobId: st
                       {group.occurrences.map((item) => (
                         <li key={item.id} className="rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-600">
                           <p className="mb-1 text-xs text-slate-500">
-                            {item.raw_text} · {item.requirement_type} · {skillSourceLabel(item.source)} · {item.review_status}
+                            {item.raw_text} · {item.requirement_type}{item.source_section ? ` · ${sectionLabel(item.source_section)}` : ""} · {skillSourceLabel(item.source)} · {item.review_status}
                           </p>
                           {item.evidence_sentence || "No evidence text"}
                         </li>

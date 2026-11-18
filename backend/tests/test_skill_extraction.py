@@ -238,6 +238,8 @@ def test_job_processing_extracts_requirement_skills(client: TestClient, db_sessi
     assert by_name["python"] == "required"
     assert by_name["docker"] == "required"
     assert by_name["kubernetes"] == "preferred"
+    sections = {skill["normalized_text"]: skill["source_section"] for skill in skills}
+    assert sections["python"] == "required_skills" and sections["kubernetes"] == "preferred_skills"
     assert all("occurrences" not in skill and "taxonomy" not in skill for skill in skills)
     target = skills[0]
     target["review_status"] = "rejected"

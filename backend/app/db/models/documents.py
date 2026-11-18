@@ -186,6 +186,14 @@ class JobSkill(TimestampMixin, Base):
     review_status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
     source: Mapped[str] = mapped_column(String(80), default="extraction", nullable=False)
 
+    # Read-only view of the extraction evidence; no schema change (the FK already exists).
+    extracted_term: Mapped["ExtractedJobTerm | None"] = relationship(lazy="selectin", viewonly=True)
+
+    @property
+    def source_section(self) -> str:
+        """Detected section the occurrence was extracted from; empty for manual skills."""
+        return self.extracted_term.source_section if self.extracted_term else ""
+
 
 class CandidateJobMatch(TimestampMixin, Base):
     __tablename__ = "candidate_job_matches"
