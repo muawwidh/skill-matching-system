@@ -82,7 +82,11 @@ Implemented:
 - Docker
 - Nginx
 - authentication
-- refresh tokens
+- refresh tokens (since 2026-11-18 the frontend API client renews an expired
+  access token on a 401 through `/auth/refresh` and retries the request once;
+  concurrent 401s share one refresh because refresh tokens rotate; a rejected
+  refresh ends the session; `npm test` runs these client tests with Node's
+  built-in runner)
 - RBAC foundation
 - SQLAlchemy
 - Alembic

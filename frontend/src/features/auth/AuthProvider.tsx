@@ -1,7 +1,8 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { getCurrentUser } from "../../api/auth";
+import { setSessionListener } from "../../api/client";
 import type { TokenPair, User } from "../../types/auth";
 import { clearTokens, getAccessToken, saveTokens } from "./tokenStorage";
 
@@ -17,6 +18,12 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(() => getAccessToken());
+
+  // The API client renews an expired access token on 401; mirror the result here.
+  useEffect(() => {
+    setSessionListener(setAccessToken);
+    return () => setSessionListener(null);
+  }, []);
 
   const userQuery = useQuery({
     queryKey: ["current-user", accessToken],
