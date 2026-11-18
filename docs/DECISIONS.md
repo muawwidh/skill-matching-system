@@ -458,9 +458,9 @@ text-consistent link on an active release. Otherwise they match by identical
 normalized text. Each matched skill records which of these applied. When both
 are linked to different concepts, the reviewed links take precedence and no
 name fallback applies. A linked job skill with no matching candidate skill is
-missing. An unlinked job skill with no same-name candidate skill cannot be
-shown to be missing, so it is excluded from the X-of-Y totals and reported as
-"could not be compared". Job requirement type `unknown` counts as preferred,
+missing. An unlinked job skill with no same-name candidate skill was at first
+excluded as "could not be compared"; D040 replaced this, and it now counts as
+missing. Job requirement type `unknown` counts as preferred,
 not required. When one skill is listed as both, required wins.
 
 Only skill-like types (skill, tool, domain knowledge, language) are compared.
@@ -477,11 +477,13 @@ keys, in order, are:
    fresh. Unavailable similarity sorts after available similarity.
 4. Job ID.
 
-Coverage is compared as an exact fraction, so 1 of 1 and 2 of 2 tie.
+D040 inserts the matched counts between keys 2 and 3.
+
+Coverage is compared as an exact fraction, so 1 of 1 and 2 of 2 have equal
+coverage.
 Similarity is only read for ordering. It is never displayed, and Phase 5
 indexes, templates and evaluation are unchanged (D032). Explanations are
-built only from the stored matched, missing, not-compared and not-assessed
-lists. Recommendations are recomputed on every read, so stored rows cannot
+built only from the stored matched, missing and not-assessed lists. Recommendations are recomputed on every read, so stored rows cannot
 reflect an older rule or stale reviews. The legacy `score` column is kept
 without a migration and stores required coverage × 100. It is not displayed
 or used for ranking.
@@ -663,3 +665,38 @@ The dry-run outputs reviewed before applying are in
 Final plan, ESCO on: 31 jobs, 271 new pending terms (249 from ESCO), 9
 approved unknown skills given a type, 19 reviewed differences reported only,
 14 reviewer-edited spans kept and 2 vanished occurrences kept.
+
+## D040 - Unlinked Job Skills Not Found By Name Count As Missing
+
+This replaces the "could not be compared" rule of D036. An approved
+skill-like job skill without an approved taxonomy link, and with no candidate
+skill of the same normalized name, now counts as **missing**. It is included
+in the X-of-Y totals. Each missing entry records how it was checked:
+`checked_via` is `taxonomy_concept` (linked: looked for by concept, then by
+name) or `skill_name` (unlinked: looked for by name only). The name-only chip
+has the tooltip "Not found in your CV by name (may appear under a different
+wording)", and the explanation lists those skills on a separate line. The
+"could not be compared" category no longer exists.
+
+Reason: excluding these skills shrank the denominator. A job could show
+"1 of 1 matched" while several of its approved requirements were absent from
+the CV under any wording. Showing them as missing, with the caveat, is the more conservative
+reading for a decision-support tool. The cost is false "missing" results when
+the CV states the skill in different words; the tooltip and explanation say so.
+
+Ranking keys (D036), in order:
+1. required coverage;
+2. preferred coverage;
+3. number of matched required skills, then number of matched preferred
+   skills, more first;
+4. retrieval similarity;
+5. job ID.
+Key 3 is new and applies only when both coverage fractions tie: 2 of 2 now
+ranks before 1 of 1. It uses counts, not weights. Required comes before
+preferred, as in keys 1 and 2.
+
+There is no migration. `missing_required` and `missing_preferred` in
+`candidate_job_matches` now hold `{label, checked_via}` objects instead of
+bare labels. Rows are recomputed on every read. The response schema reads a
+bare-label row from before this change as `taxonomy_concept`: under D036 only
+linked skills could be missing.

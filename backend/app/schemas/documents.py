@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CandidateProfileRead(BaseModel):
@@ -175,6 +175,20 @@ class MatchedSkillRead(BaseModel):
     matched_via: Literal["taxonomy_concept", "skill_name"]
 
 
+class MissingSkillRead(BaseModel):
+    label: str
+    # Name-only checks cannot rule out the skill appearing under other wording.
+    checked_via: Literal["taxonomy_concept", "skill_name"]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _legacy_label(cls, value):
+        # Rows written before D040 stored bare labels; those were all concept-checked.
+        if isinstance(value, str):
+            return {"label": value, "checked_via": "taxonomy_concept"}
+        return value
+
+
 class CandidateJobMatchRead(BaseModel):
     id: UUID
     candidate_profile_id: UUID
@@ -182,8 +196,8 @@ class CandidateJobMatchRead(BaseModel):
     score: float
     matched_required: list[MatchedSkillRead]
     matched_preferred: list[MatchedSkillRead]
-    missing_required: list[str]
-    missing_preferred: list[str]
+    missing_required: list[MissingSkillRead]
+    missing_preferred: list[MissingSkillRead]
     candidate_skill_count: int
     job_skill_count: int
     explanation: str

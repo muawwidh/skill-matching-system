@@ -249,16 +249,19 @@ Implemented:
   - `unknown` requirements count as preferred
   - required and preferred "X of Y matched" counts, with matched and missing
     canonical labels
-  - unlinked job skills that cannot be compared are excluded from totals and
-    reported
+  - since D040, an unlinked job skill with no same-name CV skill counts as
+    missing ("checked by name only", with a tooltip that it may appear under
+    other wording); the former "could not be compared" category is removed
   - qualification, experience, certification and occupation terms are listed
     as "not assessed", never scored
-- lexicographic ranking: required coverage, preferred coverage, Phase 5
-  retrieval similarity when indexed, then job ID; similarity is not displayed
+- lexicographic ranking: required coverage, preferred coverage, then (D040)
+  matched required and matched preferred counts, Phase 5 retrieval similarity
+  when indexed, then job ID; similarity is not displayed
 - list-based explanations, with no score buckets
 - recommendations recomputed on every `GET /matches/recommendations`
 - the API returns `matched_required`/`matched_preferred` as
-  `{label, matched_via}` objects; the legacy `score` column stores required
+  `{label, matched_via}` objects and the missing lists as
+  `{label, checked_via}` objects; the legacy `score` column stores required
   coverage × 100 and is not displayed
 - "Skill coverage" Jobs page panel showing counts and chips (the tooltip
   shows the match route); jobs are listed in ranking order

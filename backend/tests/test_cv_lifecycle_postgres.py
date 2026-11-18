@@ -310,10 +310,11 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         assert "python" not in {item.name for item in MatchingService(fresh)._candidate_items(profile_id)}
         recomputed = next(item for item in MatchingService(fresh).list_my_recommendations(fresh.get(User, user_id))
                           if item.job_id == job_id)
-        # The unlinked job skill no longer has a same-name CV skill: it is not compared, never "missing".
-        assert recomputed.matched_required == [] and recomputed.missing_required == []
+        # The unlinked job skill no longer has a same-name CV skill: missing, checked by name only.
+        assert recomputed.matched_required == []
+        assert recomputed.missing_required == [{"label": "python", "checked_via": "skill_name"}]
         assert recomputed.score == 0.0
-        assert "1 job skill could not be compared" in recomputed.explanation
+        assert "could not be compared" not in recomputed.explanation
         source = RetrievalRepository(fresh).profile_input(profile_id)
         assert source is not None and "Python" not in source.text and "Docker" in source.text
         refreshed = RetrievalService(fresh).index_profile(profile_id, FakeEmbedder())

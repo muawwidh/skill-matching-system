@@ -320,15 +320,16 @@ def test_matching_reports_coverage_counts_from_approved_skills(client: TestClien
     recommendation = recommendations[0]
     assert recommendation["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
     assert recommendation["matched_preferred"] == [{"label": "fastapi", "matched_via": "skill_name"}]
-    # Docker has no approved taxonomy link and no same-name CV skill: not compared, not "missing".
-    assert recommendation["missing_required"] == []
+    # Docker has no approved taxonomy link and no same-name CV skill: missing, checked by name only.
+    assert recommendation["missing_required"] == [{"label": "docker", "checked_via": "skill_name"}]
     assert recommendation["missing_preferred"] == []
-    assert recommendation["score"] == 100.0
-    assert recommendation["job_skill_count"] == 2
+    assert recommendation["score"] == 50.0
+    assert recommendation["job_skill_count"] == 3
     explanation = recommendation["explanation"].splitlines()
-    assert explanation[0] == "Required skills: 1 of 1 matched (python)."
+    assert explanation[0] == "Required skills: 1 of 2 matched (python); missing: docker."
     assert explanation[1] == "Preferred skills: 1 of 1 matched (fastapi)."
-    assert "1 job skill could not be compared" in explanation[2] and explanation[2].endswith(": docker.")
+    assert explanation[2] == ("Checked by name only (may appear in your CV under a different wording): docker.")
+    assert "could not be compared" not in recommendation["explanation"]
     assert explanation[3] == "Also required — not assessed by the system: bachelor's degree."
     assert "%" not in recommendation["explanation"]
     assert recommendation["job"]["title"] == "API Engineer"
@@ -371,11 +372,16 @@ def test_coverage_prefers_concepts_and_falls_back_to_names_only_when_not_both_li
         {"label": "python (concept)", "matched_via": "taxonomy_concept"},
     ]
     # Both linked to different concepts: no name fallback, so Java is missing.
-    assert result.missing_required == ["git (concept)", "java (concept)"]
+    # An unlinked job skill without a same-name CV skill is missing, checked by name only.
+    assert result.missing_required == [
+        {"label": "git (concept)", "checked_via": "taxonomy_concept"},
+        {"label": "java (concept)", "checked_via": "taxonomy_concept"},
+        {"label": "rust", "checked_via": "skill_name"},
+    ]
     # `unknown` counts as preferred.
     assert result.matched_preferred == [{"label": "excel", "matched_via": "skill_name"}]
-    assert result.not_compared == ["rust"]
-    assert (result.required_total, result.preferred_total) == (4, 1)
+    assert not hasattr(result, "not_compared")
+    assert (result.required_total, result.preferred_total) == (5, 1)
 
 
 def test_coverage_deduplicates_and_lists_non_skill_terms_without_scoring() -> None:
@@ -393,7 +399,7 @@ def test_coverage_deduplicates_and_lists_non_skill_terms_without_scoring() -> No
         _item("aws certified", None, "preferred", "certification"),
     ]
     result = compute_coverage([_item("bachelor's degree", None, "", "qualification")], job)
-    assert result.missing_required == ["sql (concept)"]
+    assert result.missing_required == [{"label": "sql (concept)", "checked_via": "taxonomy_concept"}]
     assert result.matched_preferred == [] and result.missing_preferred == []
     assert result.not_assessed_required == ["bachelor's degree"]
     assert result.not_assessed_preferred == ["3 years experience", "aws certified"]
@@ -423,8 +429,44 @@ def test_ranking_is_lexicographic_without_weights() -> None:
         "third_unindexed": (match(7, 1, 3, 1, 1), None),
     }
     order = sorted(jobs, key=lambda name: ranking_key(*jobs[name]))
+    # Equal fractions: more matched skills first (2 of 6 before 1 of 3), then similarity.
     assert order == ["full_some_preferred", "full_no_preferred", "half_required",
                      "third_high_sim", "third_low_sim", "third_unindexed", "no_required"]
+
+
+def test_ranking_prefers_more_matched_skills_when_fractions_tie() -> None:
+    from types import SimpleNamespace
+    from uuid import UUID
+
+    from app.services.matching_service import ranking_key
+
+    def match(job, matched_req, total_req, matched_pref=0, total_pref=0):
+        return SimpleNamespace(
+            job_id=UUID(int=job),
+            matched_required=[{}] * matched_req, missing_required=[{}] * (total_req - matched_req),
+            matched_preferred=[{}] * matched_pref, missing_preferred=[{}] * (total_pref - matched_pref),
+        )
+
+    jobs = {
+        "one_of_one_high_sim": (match(1, 1, 1), 0.99),
+        "two_of_two_low_sim": (match(2, 2, 2), 0.10),
+        "two_of_two_more_preferred": (match(3, 2, 2, 2, 4), None),
+        "two_of_two_fewer_preferred": (match(4, 2, 2, 1, 2), 0.99),
+        "one_of_two_high_sim": (match(5, 1, 2), 0.99),
+        "two_of_four_low_sim": (match(6, 2, 4), 0.10),
+    }
+    order = sorted(jobs, key=lambda name: ranking_key(*jobs[name]))
+    assert order == ["two_of_two_more_preferred", "two_of_two_fewer_preferred",
+                     "two_of_two_low_sim", "one_of_one_high_sim",
+                     "two_of_four_low_sim", "one_of_two_high_sim"]
+
+
+def test_missing_skill_schema_reads_legacy_bare_labels() -> None:
+    from app.schemas.documents import MissingSkillRead
+
+    # Rows written before D040 held bare labels; only concept-checked skills were stored as missing.
+    assert MissingSkillRead.model_validate("git").model_dump() == {"label": "git", "checked_via": "taxonomy_concept"}
+    assert MissingSkillRead.model_validate({"label": "rust", "checked_via": "skill_name"}).checked_via == "skill_name"
 
 
 def test_explanation_is_built_from_lists_without_cutoffs() -> None:
@@ -435,12 +477,14 @@ def test_explanation_is_built_from_lists_without_cutoffs() -> None:
                                   "This job lists no comparable preferred skills."]
     text = build_explanation(CoverageResult(
         matched_required=[{"label": "python", "matched_via": "skill_name"}],
-        missing_required=["docker", "sql"], missing_preferred=["kubernetes"],
-        not_compared=["rust", "go"]))
+        missing_required=[{"label": "docker", "checked_via": "taxonomy_concept"},
+                          {"label": "sql", "checked_via": "skill_name"}],
+        missing_preferred=[{"label": "kubernetes", "checked_via": "skill_name"}]))
     lines = text.splitlines()
     assert lines[0] == "Required skills: 1 of 3 matched (python); missing: docker, sql."
     assert lines[1] == "Preferred skills: 0 of 1 matched; missing: kubernetes."
-    assert lines[2].startswith("2 job skills could not be compared")
+    assert lines[2] == "Checked by name only (may appear in your CV under a different wording): sql, kubernetes."
+    assert len(lines) == 3
     for banned in ("%", "Strong", "Partial", "Limited", "Low match"):
         assert banned not in text
 

@@ -3,7 +3,7 @@
 Snapshot of the repository at commit `349e668` (branch `simple-matching`),
 compiled 2026-11-18 by reading the code. No code was changed to produce it.
 Section 1 and the display notes in sections 3 and 5 were updated on
-2026-11-18 for D036.
+2026-11-18 for D036, and section 1 again for D040.
 
 Scope: every numeric value that is shown to a user or persisted as a result,
 plus every threshold, weight, cut-off or budget that determines one of those
@@ -39,17 +39,17 @@ on every `GET /matches/recommendations`.
 | Eligible skills | `repositories/document_repository.py:506,518` `list_matchable_*_skills` | `review_status == "approved"` on both sides | — | Methodological choice, documented (D036) |
 | | `services/matching_service.py:20` | Compared only if `skill_type ∈ SKILL_LIKE_TYPES`. Other approved job terms are listed as "not assessed". | `{skill, tool, domain_knowledge, language}` | Arbitrary, documented (D036) |
 | Concept for a skill | `document_repository.py:524` `approved_skill_concepts` | Approved link on an **active** release, kept only if the skill text still equals its extracted term (same rule as retrieval) | — | Reuses the Phase 4/5 rule |
-| Matched / missing / not compared | `matching_service.py:93` `compute_coverage` | Job skills are grouped by concept (or by name if unlinked). A linked group is matched `taxonomy_concept` if any candidate concept is equal; else matched `skill_name` if an **unlinked** candidate skill has the same name; else missing. An unlinked group is matched `skill_name` if any candidate skill has the same name; else **not compared** and excluded from totals. | — | Methodological choice, documented (D036) |
+| Matched / missing | `matching_service.py` `compute_coverage` | Job skills are grouped by concept (or by name if unlinked). A linked group is matched `taxonomy_concept` if any candidate concept is equal; else matched `skill_name` if an **unlinked** candidate skill has the same name; else missing with `checked_via = taxonomy_concept`. An unlinked group is matched `skill_name` if any candidate skill has the same name; else missing with `checked_via = skill_name`. Every compared group counts in the totals. | — | Methodological choice, documented (D036, D040) |
 | Requirement class | `_job_groups` l.66 | `unknown` → preferred. Required wins if the same skill is listed both ways. | — | Methodological choice, documented (D036) |
 | "Required skills: X of Y matched" | frontend from `matched_required`, `missing_required` | `X = |matched_required|`, `Y = X + |missing_required|` | — | Count |
 | "Preferred skills: X of Y" | as above, preferred lists | as above | — | Count |
-| Chip tooltip | `JobMatchPanel.tsx:11` | `matched_via` → "Matched via taxonomy concept" / "Matched by same skill name" | — | — |
-| `explanation` | `matching_service.py:155` `build_explanation` | Lines built only from the lists: required line, preferred line, "N job skills could not be compared …", "Also required/preferred — not assessed by the system: …" | — | No thresholds |
-| Ranking (response order and JobsPage order) | `matching_service.py:175` `ranking_key`. JobsPage applies it at `pages/JobsPage.tsx:63`. | Lexicographic: (no comparable required skills → last; required coverage desc as an exact `Fraction`; no comparable preferred skills → after; preferred coverage desc; similarity missing → after; similarity desc; job ID) | — | No weights; documented (D036) |
+| Chip tooltips | `JobMatchPanel.tsx` | Covered: `matched_via` → "Matched via taxonomy concept" / "Matched by same skill name". Missing: `checked_via` → "Not found in your CV by taxonomy concept or name" / "Not found in your CV by name (may appear under a different wording)" | — | — |
+| `explanation` | `matching_service.py` `build_explanation` | Lines built only from the lists: required line, preferred line, "Checked by name only (may appear in your CV under a different wording): …", "Also required/preferred — not assessed by the system: …" | — | No thresholds |
+| Ranking (response order and JobsPage order) | `matching_service.py` `ranking_key`. JobsPage applies it at `pages/JobsPage.tsx:63`. | Lexicographic: (no required skills → last; required coverage desc as an exact `Fraction`; no preferred skills → after; preferred coverage desc; matched required count desc; matched preferred count desc; similarity missing → after; similarity desc; job ID) | — | No weights; documented (D036, D040) |
 | Similarity tie-break | `matching_service.py:245` `_retrieval_similarities` | Reuses `RetrievalService.jobs_for_user`. Omitted if the profile or job index is missing or stale. Never displayed. | — | See section 2 |
 | `score` (stored, **not displayed**) | `matching_service.py:278` | `round(100 · |matched_required| / Y_required, 2)`, or `0.0` if `Y_required = 0` | `100`, `2` d.p. | Legacy column kept without migration; not used for ranking |
 | `candidate_skill_count` | `compute_coverage` | Number of approved skill-like candidate skills | — | Count |
-| `job_skill_count` | `_score_job` | `Y_required + Y_preferred` (compared groups only) | — | Count |
+| `job_skill_count` | `_score_job` | `Y_required + Y_preferred` (all skill-like groups) | — | Count |
 
 No constant in this section is a tuned threshold or weight. The remaining
 choices (type set, eligibility, `unknown`→preferred, tie order) are
@@ -58,7 +58,7 @@ methodological rules recorded in D036.
 Removed (for traceability): `required_weight = 2` and `preferred_weight = 1`;
 `unknown` counted as required; the `{skill, tool}` type filter; inclusion of
 pending skills; explanation cut-offs `80`/`50`; the `Math.round(score)%`
-display.
+display; the "could not be compared" exclusion of unlinked job skills (D040).
 
 ---
 

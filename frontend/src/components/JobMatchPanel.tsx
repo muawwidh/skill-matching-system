@@ -1,6 +1,6 @@
 import { AlertTriangle, CheckCircle2, ListChecks, RefreshCw } from "lucide-react";
 
-import type { CandidateJobMatch, MatchedSkill } from "../types/documents";
+import type { CandidateJobMatch, MatchedSkill, MissingSkill } from "../types/documents";
 
 type JobMatchPanelProps = {
   match?: CandidateJobMatch;
@@ -35,15 +35,24 @@ function MatchedChips({ items }: { items: MatchedSkill[] }) {
   );
 }
 
-function MissingChips({ items }: { items: string[] }) {
+const CHECKED_VIA_LABEL: Record<MissingSkill["checked_via"], string> = {
+  taxonomy_concept: "Not found in your CV by taxonomy concept or name",
+  skill_name: "Not found in your CV by name (may appear under a different wording)",
+};
+
+function MissingChips({ items }: { items: MissingSkill[] }) {
   if (items.length === 0) {
     return <span className="text-sm text-slate-500">None</span>;
   }
   return (
     <div className="flex flex-wrap gap-1.5">
       {items.map((item) => (
-        <span className="rounded bg-red-50 px-2 py-1 text-xs text-red-800" key={item}>
-          {item}
+        <span
+          className="cursor-help rounded bg-red-50 px-2 py-1 text-xs text-red-800"
+          key={item.label}
+          title={CHECKED_VIA_LABEL[item.checked_via]}
+        >
+          {item.label}
         </span>
       ))}
     </div>
@@ -55,7 +64,7 @@ function CoverageCount({ label, matched, missing }: { label: string; matched: nu
   return (
     <p className="text-sm text-ink">
       <span className="font-medium">{label}:</span>{" "}
-      {total === 0 ? "none listed that can be compared" : `${matched} of ${total} matched`}
+      {total === 0 ? "none listed" : `${matched} of ${total} matched`}
     </p>
   );
 }
@@ -70,7 +79,7 @@ export function JobMatchPanel({ match, isRefreshing, onRefresh, rank, rankTotal 
           {rank !== undefined ? (
             <span
               className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
-              title="Order: required coverage, then preferred coverage, then retrieval similarity, then job ID"
+              title="Order: required coverage, then preferred coverage, then more matched skills, then retrieval similarity, then job ID"
             >
               #{rank} of {rankTotal}
             </span>

@@ -1,8 +1,8 @@
 """Transitional skill-coverage matching (Phase 6 prototype; see DECISIONS.md D036).
 
 Coverage is reported as counts, never as a weighted score. Jobs are ranked
-lexicographically by required coverage, preferred coverage, then retrieval
-similarity, so no hand-picked weights combine the signals.
+lexicographically by required coverage, preferred coverage, matched counts,
+then retrieval similarity, so no hand-picked weights combine the signals (D040).
 """
 from dataclasses import dataclass, field
 from fractions import Fraction
@@ -20,6 +20,9 @@ from app.repositories.document_repository import DocumentRepository
 SKILL_LIKE_TYPES = frozenset({"skill", "tool", "domain_knowledge", "language"})
 MATCHED_VIA_CONCEPT = "taxonomy_concept"
 MATCHED_VIA_NAME = "skill_name"
+# How a missing job skill was looked for: by taxonomy concept (and name), or by name only.
+CHECKED_VIA_CONCEPT = "taxonomy_concept"
+CHECKED_VIA_NAME = "skill_name"
 
 
 @dataclass(frozen=True)
@@ -35,9 +38,8 @@ class SkillItem:
 class CoverageResult:
     matched_required: list[dict] = field(default_factory=list)
     matched_preferred: list[dict] = field(default_factory=list)
-    missing_required: list[str] = field(default_factory=list)
-    missing_preferred: list[str] = field(default_factory=list)
-    not_compared: list[str] = field(default_factory=list)
+    missing_required: list[dict] = field(default_factory=list)
+    missing_preferred: list[dict] = field(default_factory=list)
     not_assessed_required: list[str] = field(default_factory=list)
     not_assessed_preferred: list[str] = field(default_factory=list)
     candidate_skill_count: int = 0
@@ -94,9 +96,10 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
     """Compare approved candidate and job skills.
 
     Two skills match by taxonomy concept when both carry an approved link;
-    otherwise they match by identical normalized name. A job skill without an
-    approved link that no candidate skill names cannot be shown to be missing,
-    so it is reported as not compared and excluded from the X-of-Y totals.
+    otherwise they match by identical normalized name. Every compared job skill
+    is either matched or missing. A missing skill records whether it was looked
+    for by concept or by name only; a name-only miss may still be in the CV
+    under different wording.
     """
     candidate = [item for item in candidate_items if item.skill_type in SKILL_LIKE_TYPES]
     candidate_concepts = {item.concept_id for item in candidate if item.concept_id is not None}
@@ -104,9 +107,9 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
     all_candidate_names = {item.name for item in candidate}
 
     result = CoverageResult(candidate_skill_count=len(candidate))
-    not_compared: list[str] = []
     for group in _job_groups([item for item in job_items if item.skill_type in SKILL_LIKE_TYPES]):
         if group.concept_id is not None:
+            checked_via = CHECKED_VIA_CONCEPT
             if group.concept_id in candidate_concepts:
                 via = MATCHED_VIA_CONCEPT
             elif group.names & unlinked_candidate_names:
@@ -114,24 +117,21 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
             else:
                 via = None
         else:
+            checked_via = CHECKED_VIA_NAME
             via = MATCHED_VIA_NAME if group.names & all_candidate_names else None
-            if via is None:
-                not_compared.append(group.label)
-                continue
         if via is not None:
             target = result.matched_required if group.required else result.matched_preferred
             target.append({"label": group.label, "matched_via": via})
         else:
-            (result.missing_required if group.required else result.missing_preferred).append(group.label)
+            target = result.missing_required if group.required else result.missing_preferred
+            target.append({"label": group.label, "checked_via": checked_via})
 
     def by_label(entry: dict) -> tuple[str, str]:
         return entry["label"].casefold(), entry["label"]
 
-    result.matched_required.sort(key=by_label)
-    result.matched_preferred.sort(key=by_label)
-    result.missing_required = _sorted_labels(result.missing_required)
-    result.missing_preferred = _sorted_labels(result.missing_preferred)
-    result.not_compared = _sorted_labels(not_compared)
+    for entries in (result.matched_required, result.matched_preferred,
+                    result.missing_required, result.missing_preferred):
+        entries.sort(key=by_label)
     other = [item for item in job_items if item.skill_type not in SKILL_LIKE_TYPES]
     result.not_assessed_required = _sorted_labels(i.name for i in other if i.requirement == "required")
     result.not_assessed_preferred = _sorted_labels(
@@ -140,7 +140,7 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
     return result
 
 
-def _coverage_line(kind: str, matched: list[dict], missing: list[str]) -> str:
+def _coverage_line(kind: str, matched: list[dict], missing: list[dict]) -> str:
     total = len(matched) + len(missing)
     if total == 0:
         return f"This job lists no comparable {kind} skills."
@@ -148,23 +148,21 @@ def _coverage_line(kind: str, matched: list[dict], missing: list[str]) -> str:
     if matched:
         line += " (" + ", ".join(entry["label"] for entry in matched) + ")"
     if missing:
-        line += "; missing: " + ", ".join(missing)
+        line += "; missing: " + ", ".join(entry["label"] for entry in missing)
     return line + "."
 
 
 def build_explanation(result: CoverageResult) -> str:
-    """Describe coverage using only the stored matched/missing/excluded lists."""
+    """Describe coverage using only the stored matched/missing/not-assessed lists."""
     lines = [
         _coverage_line("required", result.matched_required, result.missing_required),
         _coverage_line("preferred", result.matched_preferred, result.missing_preferred),
     ]
-    if result.not_compared:
-        count = len(result.not_compared)
-        lines.append(
-            f"{count} job skill{'s' if count != 1 else ''} could not be compared "
-            "(no approved taxonomy link and no skill with the same name in your profile): "
-            + ", ".join(result.not_compared) + "."
-        )
+    by_name = [entry["label"] for entry in result.missing_required + result.missing_preferred
+               if entry["checked_via"] == CHECKED_VIA_NAME]
+    if by_name:
+        lines.append("Checked by name only (may appear in your CV under a different wording): "
+                     + ", ".join(by_name) + ".")
     if result.not_assessed_required:
         lines.append("Also required — not assessed by the system: " + ", ".join(result.not_assessed_required) + ".")
     if result.not_assessed_preferred:
@@ -173,11 +171,13 @@ def build_explanation(result: CoverageResult) -> str:
 
 
 def ranking_key(match: CandidateJobMatch, similarity: float | None) -> tuple:
-    """Lexicographic order: required coverage, preferred coverage, retrieval similarity, job ID.
+    """Lexicographic order (D040): required coverage, preferred coverage,
+    matched required count, matched preferred count, retrieval similarity, job ID.
 
-    Jobs without comparable required skills sort last; within equal required
-    coverage, jobs without comparable preferred skills sort after those with
-    some. Missing similarity (job or profile not indexed) sorts after present.
+    Jobs without required skills sort last; within equal required coverage,
+    jobs without preferred skills sort after those with some. When both
+    fractions tie, more matched skills rank first (2 of 2 before 1 of 1).
+    Missing similarity (job or profile not indexed) sorts after present.
     """
     required_total = len(match.matched_required) + len(match.missing_required)
     preferred_total = len(match.matched_preferred) + len(match.missing_preferred)
@@ -186,6 +186,7 @@ def ranking_key(match: CandidateJobMatch, similarity: float | None) -> tuple:
     return (
         required_total == 0, -required,
         preferred_total == 0, -preferred,
+        -len(match.matched_required), -len(match.matched_preferred),
         similarity is None, -(similarity or 0.0),
         str(match.job_id),
     )

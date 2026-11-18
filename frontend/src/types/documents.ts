@@ -87,6 +87,12 @@ export type MatchedSkill = {
   matched_via: "taxonomy_concept" | "skill_name";
 };
 
+export type MissingSkill = {
+  label: string;
+  /** "skill_name": the job skill has no approved taxonomy link, so it was looked for by name only. */
+  checked_via: "taxonomy_concept" | "skill_name";
+};
+
 // The API also returns a legacy `score` column; it is intentionally not typed here so it cannot be displayed.
 export type CandidateJobMatch = {
   id: string;
@@ -94,8 +100,8 @@ export type CandidateJobMatch = {
   job_id: string;
   matched_required: MatchedSkill[];
   matched_preferred: MatchedSkill[];
-  missing_required: string[];
-  missing_preferred: string[];
+  missing_required: MissingSkill[];
+  missing_preferred: MissingSkill[];
   candidate_skill_count: number;
   job_skill_count: number;
   explanation: string;
