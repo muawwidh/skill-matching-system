@@ -80,13 +80,18 @@ export type CandidateSkillGroup = {
   occurrences: CandidateSkill[];
 };
 
+export type MatchedSkill = {
+  label: string;
+  matched_via: "taxonomy_concept" | "skill_name";
+};
+
+// The API also returns a legacy `score` column; it is intentionally not typed here so it cannot be displayed.
 export type CandidateJobMatch = {
   id: string;
   candidate_profile_id: string;
   job_id: string;
-  score: number;
-  matched_required: string[];
-  matched_preferred: string[];
+  matched_required: MatchedSkill[];
+  matched_preferred: MatchedSkill[];
   missing_required: string[];
   missing_preferred: string[];
   candidate_skill_count: number;

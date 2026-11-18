@@ -59,6 +59,13 @@ export function JobsPage() {
     },
   });
 
+  // The backend returns coverage rows already ranked; keep that order and put jobs without a row last.
+  const coverageRank = new Map(recommendationsQuery.data?.map((match, index) => [match.job_id, index]) ?? []);
+  const unranked = coverageRank.size;
+  const orderedJobs = [...(jobsQuery.data ?? [])].sort(
+    (left, right) => (coverageRank.get(left.id) ?? unranked) - (coverageRank.get(right.id) ?? unranked),
+  );
+
   function submitJob(event: FormEvent) {
     event.preventDefault();
     if (canManageJobs) createMutation.mutate();
@@ -95,7 +102,7 @@ export function JobsPage() {
       </form> : null}
 
       <section className="space-y-4">
-          {jobsQuery.data?.map((item) => (
+          {orderedJobs.map((item) => (
             <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
