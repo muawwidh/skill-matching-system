@@ -659,8 +659,9 @@ def test_additive_reextraction_keeps_reviews_and_adds_new_terms_as_pending(
     plan = service.plan(job)
     assert [t.normalized_text for t in plan.new_terms] == ["3-5 years of relevant experience"]
     assert [(s.normalized_text, new) for _, s, new in plan.pending_type_changes] == [("git", "required")]
-    assert sorted((s.normalized_text, new) for _, s, new in plan.reviewed_type_changes) == [
-        ("docker", "required"), ("python", "required")]
+    # Approved unknown -> required is applied (review kept); a rejected skill is only reported.
+    assert [(s.normalized_text, new) for _, s, new in plan.approved_upgrades] == [("python", "required")]
+    assert [(s.normalized_text, new) for _, s, new in plan.reviewed_type_changes] == [("docker", "required")]
     assert [term.normalized_text for term, _ in plan.vanished] == ["aws"]  # now under Benefits
     db_session.rollback()  # planning writes nothing
     assert {s.id: (s.review_status, s.requirement_type) for s in
@@ -668,15 +669,17 @@ def test_additive_reextraction_keeps_reviews_and_adds_new_terms_as_pending(
 
     service.apply(job, service.plan(job))
     after = {s.normalized_text: s for s in db_session.scalars(select(JobSkill).where(JobSkill.job_id == job.id))}
-    assert (after["python"].review_status, after["python"].requirement_type) == ("approved", "unknown")
+    assert (after["python"].review_status, after["python"].requirement_type) == ("approved", "required")
     assert (after["docker"].review_status, after["docker"].requirement_type) == ("rejected", "unknown")
     assert (after["git"].review_status, after["git"].requirement_type) == ("pending", "required")
     assert after["aws"].id == skills["aws"].id  # vanished occurrence kept
     new = after["3-5 years of relevant experience"]
     assert (new.review_status, new.requirement_type, new.source) == ("pending", "required", "extraction")
     assert db_session.scalar(select(ExtractedJobTerm.extraction_method).where(ExtractedJobTerm.id == new.extracted_term_id)) == "regex@v3"
-    log = db_session.scalar(select(ProcessingLog).where(ProcessingLog.stage == "additive_reextraction"))
-    assert log is not None and log.metadata_json["new_terms"] == 1
+    logs = db_session.scalars(select(ProcessingLog).where(ProcessingLog.stage == "additive_reextraction",
+                                                         ProcessingLog.entity_id == job.id))
+    assert any(log.metadata_json["new_terms"] == 1 and log.metadata_json["approved_unknown_upgrades"] == 1
+               for log in logs)
 
     # Idempotent: a second run finds nothing new and changes nothing.
     second = service.plan(job)
@@ -724,3 +727,61 @@ def test_reextraction_does_not_re_add_text_a_reviewer_corrected(client: TestClie
     [(stored_term, kept_skill, fresh)] = plan.reviewer_edited
     assert (kept_skill.normalized_text, kept_skill.review_status, fresh.normalized_text) == (
         "nabcep certification", "approved", "certification")
+
+
+# ---- Job create/edit uses the same additive reconciliation (D039) -----------------------------
+
+def _create_job(client: TestClient, headers: dict, description: str) -> dict:
+    response = client.post("/jobs", headers=headers, json={
+        "title": "Edited", "company": "Example", "location": "Remote", "employment_type": "Full-time",
+        "description": description})
+    assert response.status_code == 201
+    return response.json()
+
+
+def _edit_job(client: TestClient, headers: dict, job_id: str, description: str) -> None:
+    response = client.put(f"/jobs/{job_id}", headers=headers, json={
+        "title": "Edited", "company": "Example", "location": "Remote", "employment_type": "Full-time",
+        "description": description, "status": "processed"})
+    assert response.status_code == 200
+
+
+def _skills(client: TestClient, headers: dict, job_id: str) -> list[dict]:
+    return client.get(f"/jobs/{job_id}/extracted-skills", headers=headers).json()
+
+
+def test_job_edit_keeps_reviews_and_does_not_duplicate_skills(client: TestClient, db_session: Session) -> None:
+    from app.db.models import Job
+
+    headers = job_manager_headers(client, db_session)
+    job = _create_job(client, headers, "Requirements\nPython\nDocker")
+    python = next(s for s in _skills(client, headers, job["id"]) if s["normalized_text"] == "python")
+    python.update(review_status="approved")
+    assert client.put(f"/jobs/{job['id']}/extracted-skills/{python['id']}", headers=headers, json=python).status_code == 200
+
+    _edit_job(client, headers, job["id"], "Requirements\nPython\nDocker")  # unchanged text
+    assert sorted(s["normalized_text"] for s in _skills(client, headers, job["id"])) == ["docker", "python"]
+
+    # Prepending text shifts every offset; the reviewed occurrence moves instead of being duplicated.
+    _edit_job(client, headers, job["id"], "About the job\nWe build tools with Git.\nRequirements\nPython\nDocker")
+    skills = _skills(client, headers, job["id"])
+    assert sorted(s["normalized_text"] for s in skills) == ["docker", "git", "python"]
+    kept = next(s for s in skills if s["normalized_text"] == "python")
+    assert (kept["id"], kept["review_status"]) == (python["id"], "approved")
+    assert next(s for s in skills if s["normalized_text"] == "git")["review_status"] == "pending"
+    db_session.expire_all()
+    stored = db_session.get(Job, UUID(job["id"]))
+    term = db_session.scalar(select(ExtractedJobTerm).where(ExtractedJobTerm.id == db_session.get(JobSkill, UUID(kept["id"])).extracted_term_id))
+    assert stored.cleaned_description[term.start_char:term.end_char] == "Python"
+
+
+def test_job_edit_keeps_evidence_for_removed_text_and_adds_new_terms_as_pending(
+    client: TestClient, db_session: Session
+) -> None:
+    headers = job_manager_headers(client, db_session)
+    job = _create_job(client, headers, "Requirements\nPython\nDocker")
+    _edit_job(client, headers, job["id"], "Requirements\nPython\nKubernetes")
+    by_name = {s["normalized_text"]: s for s in _skills(client, headers, job["id"])}
+    assert set(by_name) == {"python", "docker", "kubernetes"}  # removed Docker evidence kept for review
+    assert by_name["kubernetes"]["review_status"] == "pending"
+    assert by_name["kubernetes"]["requirement_type"] == "required"

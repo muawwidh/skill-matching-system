@@ -140,13 +140,14 @@ class JobService:
         # uses the job requirement segmentation, which also drops benefits/EEO/application text.
         sections = self.section_detector.detect(job.cleaned_description)
         self.repository.replace_job_sections(job, sections)
-        terms = self.skill_extractor.extract_from_sections(
-            sections=detect_job_segments(job.cleaned_description),
-            full_text=job.cleaned_description,
-            document_kind="job",
-        )
-        self.repository.replace_job_terms(job, terms)
-        TaxonomyService(self.db).link_document_if_taxonomy_available("job", job.id)
+        from app.repositories.retrieval_repository import RetrievalRepository
+        RetrievalRepository(self.db).invalidate_job(job.id)
+        # Additive like `reextract` (D039): reviews, links and vanished evidence are kept;
+        # occurrences moved by an edit keep their review with updated offsets.
+        reconciler = JobReextractionService(self.db, extractor=self.skill_extractor)
+        plan = reconciler.plan(job, allow_moves=True)
+        reconciler.apply(job, plan)
+        terms = plan.new_terms
         job.status = "processed"
         job.error_message = ""
         job.processed_at = datetime.now(timezone.utc)
@@ -155,8 +156,9 @@ class JobService:
             job.id,
             "document_processing",
             "success",
-            f"Detected {len(sections)} job sections and {len(terms)} extracted terms.",
-            {"section_count": len(sections), "term_count": len(terms)},
+            f"Detected {len(sections)} job sections and {len(terms)} new extracted terms.",
+            {"section_count": len(sections), "term_count": len(terms), "matched": plan.matched,
+             "moved": len(plan.moved), "vanished_kept": len(plan.vanished)},
         )
 
 
@@ -167,8 +169,11 @@ class JobReextractionPlan:
     """Difference between a job's stored extraction and a fresh one.
 
     Occurrences match on (normalized text, type, start, end). Matched items keep
-    their review status and links. Only a pending skill may take a new
-    requirement type; reviewed ones are reported. A fresh term on the exact span
+    their review status and links. A pending skill takes a new requirement type;
+    an approved one only from unknown to required/preferred; other differences
+    on reviewed skills are reported. With `allow_moves` (job edits), a stored
+    occurrence with the same text, type and evidence sentence at a different
+    span is "moved": it keeps its review and gets the new offsets. A fresh term on the exact span
     of a stored occurrence whose text or type was edited (by a reviewer) is
     paired with it and not added. Remaining stored occurrences are kept and
     reported as vanished.
@@ -180,13 +185,15 @@ class JobReextractionPlan:
     matched: int = 0
     new_terms: list[ExtractedTerm] = field(default_factory=list)
     pending_type_changes: list[tuple[ExtractedJobTerm, JobSkill, str]] = field(default_factory=list)
+    approved_upgrades: list[tuple[ExtractedJobTerm, JobSkill, str]] = field(default_factory=list)
     reviewed_type_changes: list[tuple[ExtractedJobTerm, JobSkill, str]] = field(default_factory=list)
+    moved: list[tuple[ExtractedJobTerm, JobSkill | None, ExtractedTerm]] = field(default_factory=list)
     reviewer_edited: list[tuple[ExtractedJobTerm, JobSkill | None, ExtractedTerm]] = field(default_factory=list)
     vanished: list[tuple[ExtractedJobTerm, JobSkill | None]] = field(default_factory=list)
 
     @property
     def changes_data(self) -> bool:
-        return bool(self.new_terms or self.pending_type_changes)
+        return bool(self.new_terms or self.pending_type_changes or self.approved_upgrades or self.moved)
 
 
 def _occurrence_key(normalized_text: str, term_type: str, start: int, end: int) -> tuple:
@@ -197,6 +204,7 @@ def plan_job_reextraction(
     job: Job,
     stored: list[tuple[ExtractedJobTerm, JobSkill | None]],
     extracted: list[ExtractedTerm],
+    allow_moves: bool = False,
 ) -> JobReextractionPlan:
     plan = JobReextractionPlan(job_id=job.id, title=job.title, company=job.company)
     available: dict[tuple, list[tuple[ExtractedJobTerm, JobSkill | None]]] = defaultdict(list)
@@ -212,9 +220,23 @@ def plan_job_reextraction(
         stored_term, skill = bucket.pop(0)
         matched_ids.add(stored_term.id)
         plan.matched += 1
-        if skill is not None and skill.requirement_type != term.requirement_type:
-            target = plan.pending_type_changes if skill.review_status == "pending" else plan.reviewed_type_changes
-            target.append((stored_term, skill, term.requirement_type))
+        _classify_type_change(plan, stored_term, skill, term.requirement_type)
+    if allow_moves:
+        by_evidence: dict[tuple, list[tuple[ExtractedJobTerm, JobSkill | None]]] = defaultdict(list)
+        for term, skill in stored:
+            if term.id not in matched_ids:
+                by_evidence[(term.normalized_text, term.term_type, term.evidence_sentence)].append((term, skill))
+        still_unmatched = []
+        for term in unmatched:
+            bucket = by_evidence.get((term.normalized_text, term.term_type, term.evidence_sentence))
+            if bucket:
+                stored_term, skill = bucket.pop(0)
+                matched_ids.add(stored_term.id)
+                plan.moved.append((stored_term, skill, term))
+                _classify_type_change(plan, stored_term, skill, term.requirement_type)
+            else:
+                still_unmatched.append(term)
+        unmatched = still_unmatched
     by_span: dict[tuple[int, int], list[tuple[ExtractedJobTerm, JobSkill | None]]] = defaultdict(list)
     for term, skill in stored:
         if term.id not in matched_ids:
@@ -231,32 +253,51 @@ def plan_job_reextraction(
     return plan
 
 
+def _classify_type_change(plan: JobReextractionPlan, stored_term: ExtractedJobTerm, skill: JobSkill | None, new_type: str) -> None:
+    if skill is None or skill.requirement_type == new_type:
+        return
+    if skill.review_status == "pending":
+        plan.pending_type_changes.append((stored_term, skill, new_type))
+    elif skill.review_status == "approved" and skill.requirement_type == "unknown" and new_type in {"required", "preferred"}:
+        plan.approved_upgrades.append((stored_term, skill, new_type))
+    else:
+        plan.reviewed_type_changes.append((stored_term, skill, new_type))
+
+
 class JobReextractionService:
-    def __init__(self, db: Session, use_esco_vocabulary: bool | None = None) -> None:
+    def __init__(
+        self, db: Session, use_esco_vocabulary: bool | None = None, extractor: SkillExtractor | None = None
+    ) -> None:
         self.db = db
         self.repository = DocumentRepository(db)
-        self.extractor = build_job_extractor(db, use_esco_vocabulary)
+        self.extractor = extractor or build_job_extractor(db, use_esco_vocabulary)
 
-    def plan(self, job: Job) -> JobReextractionPlan:
+    def plan(self, job: Job, allow_moves: bool = False) -> JobReextractionPlan:
         """Read-only: extract from the stored cleaned text and compare."""
         text = job.cleaned_description
         terms = self.extractor.extract_from_sections(detect_job_segments(text), text, "job")
-        return plan_job_reextraction(job, self.repository.job_extraction_state(job.id), terms)
+        return plan_job_reextraction(job, self.repository.job_extraction_state(job.id), terms, allow_moves)
 
     def apply(self, job: Job, plan: JobReextractionPlan) -> list[UUID]:
         """Add new terms as pending and retype pending skills; nothing is deleted or re-reviewed."""
         if not plan.changes_data:
             return []
-        for stored_term, skill, requirement_type in plan.pending_type_changes:
+        # Requirement type only; review status, edits and links stay as reviewed.
+        for stored_term, skill, requirement_type in [*plan.pending_type_changes, *plan.approved_upgrades]:
             stored_term.requirement_type = requirement_type
             skill.requirement_type = requirement_type
+        for stored_term, _, fresh in plan.moved:
+            stored_term.start_char, stored_term.end_char = fresh.start_char, fresh.end_char
+            stored_term.source_section = fresh.source_section
         new_ids = self.repository.add_job_terms(job, plan.new_terms)
         from app.repositories.retrieval_repository import RetrievalRepository
         RetrievalRepository(self.db).invalidate_job(job.id)
         self.repository.add_processing_log(
             "job", job.id, "additive_reextraction", "success",
-            f"Added {len(new_ids)} pending terms; retyped {len(plan.pending_type_changes)} pending skills.",
+            f"Added {len(new_ids)} pending terms; retyped {len(plan.pending_type_changes)} pending and "
+            f"{len(plan.approved_upgrades)} approved (unknown) skills.",
             {"new_terms": len(new_ids), "pending_type_changes": len(plan.pending_type_changes),
+             "approved_unknown_upgrades": len(plan.approved_upgrades), "moved": len(plan.moved),
              "reviewed_type_changes_reported": len(plan.reviewed_type_changes),
              "vanished_kept": len(plan.vanished), "reviewer_edited_kept": len(plan.reviewer_edited),
              "matched": plan.matched,
@@ -279,7 +320,7 @@ def _print_plan(plan: JobReextractionPlan, verbose: bool) -> None:
     print(
         f"{str(plan.job_id)[:8]}  {plan.title[:38]:<38} {plan.company[:16]:<16} "
         f"matched {plan.matched:>3} | new {len(plan.new_terms):>3} (r/p/u {_requirement_counts(t.requirement_type for t in plan.new_terms)}, "
-        f"esco {esco}) | retype pending {len(plan.pending_type_changes):>2} | reviewed differs {len(plan.reviewed_type_changes):>2} "
+        f"esco {esco}) | retype pending {len(plan.pending_type_changes):>2} | approved unknown->typed {len(plan.approved_upgrades):>2} | reviewed differs {len(plan.reviewed_type_changes):>2} "
         f"| edited kept {len(plan.reviewer_edited):>2} | vanished {len(plan.vanished):>2} (reviewed {vanished_reviewed})"
     )
     if not verbose:
@@ -288,6 +329,8 @@ def _print_plan(plan: JobReextractionPlan, verbose: bool) -> None:
         print(f"    + {term.normalized_text!r} [{term.term_type}] {term.requirement_type} in {term.source_section} ({term.extraction_method})")
     for _, skill, new_type in plan.pending_type_changes:
         print(f"    ~ {skill.normalized_text!r} pending: {skill.requirement_type} -> {new_type}")
+    for _, skill, new_type in plan.approved_upgrades:
+        print(f"    ^ {skill.normalized_text!r} approved: unknown -> {new_type} (review kept)")
     for _, skill, new_type in plan.reviewed_type_changes:
         print(f"    ! {skill.normalized_text!r} {skill.review_status}: stays {skill.requirement_type}, v3 says {new_type}")
     for stored_term, skill, term in plan.reviewer_edited:
@@ -327,7 +370,7 @@ def main(argv: list[str] | None = None) -> int:
             _print_plan(plan, args.verbose)
             totals.update(matched=plan.matched, new=len(plan.new_terms), retype_pending=len(plan.pending_type_changes),
                           reviewed_differs=len(plan.reviewed_type_changes), vanished=len(plan.vanished),
-                          reviewer_edited=len(plan.reviewer_edited),
+                          reviewer_edited=len(plan.reviewer_edited), approved_upgrades=len(plan.approved_upgrades),
                           new_esco=sum(t.extraction_method.startswith("esco_vocabulary") for t in plan.new_terms))
             if plan.changes_data:
                 changed.append(job.id)
