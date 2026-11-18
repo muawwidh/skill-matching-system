@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import Role, User
@@ -81,3 +81,80 @@ def test_job_mutation_permission_matrix(
             assert client.get(read_path, headers=headers).status_code == 200
     if role in {"admin", "researcher"}:
         assert {item["name"] for item in client.get("/auth/me", headers=headers).json()["roles"]} == {"candidate", role}
+
+
+OVERVIEW_KEYS = {"generated_at", "taxonomy", "candidates", "jobs", "skills", "taxonomy_links", "retrieval_index"}
+
+
+def test_admin_overview_returns_counts(client: TestClient, db_session: Session) -> None:
+    candidate = headers_for(client, db_session, "candidate", "overview")
+    admin = headers_for(client, db_session, "admin", "overview")
+    assert client.post("/cvs/paste", headers=candidate, json={
+        "text": "Skills\nPython\nSQL", "original_filename": "cv.txt", "consent_to_process": True,
+    }).status_code == 201
+    created = client.post("/jobs", headers=admin, json=JOB)
+    assert created.status_code == 201
+    assert client.post("/jobs", headers=admin, json={**JOB, "title": "Archived role"}).status_code == 201
+    archived_id = client.get("/jobs", headers=admin).json()
+    archived_id = next(item["id"] for item in archived_id if item["title"] == "Archived role")
+    assert client.post(f"/jobs/{archived_id}/archive", headers=admin).status_code in {200, 204}
+
+    response = client.get("/admin/overview", headers=admin)
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == OVERVIEW_KEYS
+    assert set(body["taxonomy"]) == {"releases", "esco_onet_mappings_total", "esco_onet_mappings"}
+    assert body["taxonomy"]["releases"] == [] and body["taxonomy"]["esco_onet_mappings_total"] == 0
+    expected_accounts = db_session.scalar(
+        select(func.count(func.distinct(User.id))).join(User.roles).where(Role.name == "candidate"))
+    assert body["candidates"]["accounts"] == expected_accounts
+    cvs = body["candidates"]["cvs"]
+    assert (cvs["uploaded"], cvs["processed"], cvs["failed"]) == (1, 1, 0) and cvs["failed_note"]
+    assert body["jobs"] == {"total": 2, "active": 1, "archived": 1}
+    cv_skills = body["skills"]["cv_extracted"]
+    assert cv_skills["total"] >= 2 and cv_skills["pending"] == cv_skills["total"]
+    assert body["skills"]["cv_added_manually"]["total"] == 0
+    assert body["skills"]["job_extracted"]["pending"] == body["skills"]["job_extracted"]["total"] >= 4
+    # No approved skills yet, so nothing can carry a link and no profile is eligible for indexing.
+    assert body["taxonomy_links"]["cv"] == {"approved_skills": 0, "approved_link": 0, "pending_link": 0, "no_link": 0}
+    index = body["retrieval_index"]
+    assert set(index) == {"model_id", "model_revision", "template_version", "profiles", "jobs", "note"}
+    assert index["profiles"] == {"eligible": 0, "indexed": 0}
+    assert index["jobs"] == {"eligible": 1, "indexed": 0}
+    assert "%" not in response.text
+
+
+def test_admin_overview_link_coverage_counts_approved_skills(client: TestClient, db_session: Session) -> None:
+    candidate = headers_for(client, db_session, "candidate", "links")
+    admin = headers_for(client, db_session, "admin", "links")
+    cv_id = client.post("/cvs/paste", headers=candidate, json={
+        "text": "Skills\nPython\nSQL", "original_filename": "cv.txt", "consent_to_process": True,
+    }).json()["id"]
+    skills = client.get(f"/cvs/{cv_id}/extracted-skills", headers=candidate).json()
+    skills[0]["review_status"] = "approved"
+    assert client.put(f"/cvs/{cv_id}/extracted-skills", headers=candidate, json={"skills": skills}).status_code == 200
+
+    body = client.get("/admin/overview", headers=admin).json()
+    assert body["skills"]["cv_extracted"]["approved"] == 1
+    assert body["taxonomy_links"]["cv"] == {"approved_skills": 1, "approved_link": 0, "pending_link": 0, "no_link": 1}
+    assert body["retrieval_index"]["profiles"] == {"eligible": 1, "indexed": 0}
+
+
+@pytest.mark.parametrize("role", ["candidate", "researcher"])
+def test_admin_overview_is_admin_only(client: TestClient, db_session: Session, role: str) -> None:
+    response = client.get("/admin/overview", headers=headers_for(client, db_session, role, "denied"))
+    assert response.status_code == 403
+    assert client.get("/admin/overview").status_code in {401, 403}
+
+
+def test_admin_overview_does_not_write(client: TestClient, db_session: Session) -> None:
+    from app.db.models import CandidateJobMatch, CandidateProfile, ProcessingLog
+
+    admin = headers_for(client, db_session, "admin", "readonly")
+    before = [db_session.scalar(select(func.count()).select_from(model))
+              for model in (CandidateProfile, CandidateJobMatch, ProcessingLog)]
+    assert client.get("/admin/overview", headers=admin).status_code == 200
+    db_session.expire_all()
+    after = [db_session.scalar(select(func.count()).select_from(model))
+             for model in (CandidateProfile, CandidateJobMatch, ProcessingLog)]
+    assert before == after

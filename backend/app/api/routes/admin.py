@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import require_roles
 from app.core.config import settings
 from app.db.session import get_db
-from app.schemas.documents import ProcessingLogRead
+from app.schemas.documents import ProcessingLogRead, SystemOverviewRead
 from app.schemas.taxonomy import TaxonomyLinkCandidateRead
-from app.services.processing_log_service import ProcessingLogService
+from app.services.processing_log_service import ProcessingLogService, SystemOverviewService
 from app.services.taxonomy_service import TaxonomyService
 
 router = APIRouter(
@@ -27,3 +27,13 @@ def list_taxonomy_mappings_for_review(
     db: Session = Depends(get_db),
 ) -> list[TaxonomyLinkCandidateRead]:
     return TaxonomyService(db).pending_links()
+
+
+@router.get(
+    "/overview",
+    response_model=SystemOverviewRead,
+    # Narrower than the router guard: administrators only, not researchers.
+    dependencies=[Depends(require_roles(settings.ADMIN_ROLE))],
+)
+def system_overview(db: Session = Depends(get_db)) -> SystemOverviewRead:
+    return SystemOverviewService(db).overview()

@@ -1,6 +1,132 @@
-import { Database, FileText, Gauge, LockKeyhole, Network, UserRound } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Database, FileText, Gauge, LockKeyhole, Network, ServerCog, UserRound } from "lucide-react";
+import type { ReactNode } from "react";
 
+import { getSystemOverview } from "../api/documents";
 import { useAuth } from "../features/auth/AuthProvider";
+import type { IndexCoverage, LinkCoverage, ReviewCounts, SystemOverview } from "../types/documents";
+
+const of = (count: number, total: number) => `${count} of ${total}`;
+
+function OverviewTable({ title, head, rows }: { title: string; head: string[]; rows: ReactNode[][] }) {
+  return (
+    <div className="min-w-0">
+      <h3 className="mb-2 text-sm font-semibold text-ink">{title}</h3>
+      <div className="overflow-x-auto rounded-md border border-slate-200">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>{head.map((cell) => <th className="px-3 py-2 font-medium" key={cell}>{cell}</th>)}</tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {rows.map((row, index) => (
+              <tr key={index}>{row.map((cell, column) => <td className="px-3 py-2 text-slate-700" key={column}>{cell}</td>)}</tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const reviewRow = (label: string, counts: ReviewCounts) => [
+  label, of(counts.approved, counts.total), of(counts.pending, counts.total), of(counts.rejected, counts.total),
+];
+const linkRow = (label: string, links: LinkCoverage) => [
+  label,
+  of(links.approved_link, links.approved_skills),
+  of(links.pending_link, links.approved_skills),
+  of(links.no_link, links.approved_skills),
+];
+const indexCell = (coverage: IndexCoverage) =>
+  coverage.indexed === null ? `unknown of ${coverage.eligible}` : of(coverage.indexed, coverage.eligible);
+
+function OverviewTables({ data }: { data: SystemOverview }) {
+  const { taxonomy, candidates, jobs, skills, taxonomy_links: links, retrieval_index: index } = data;
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      <OverviewTable
+        title="Taxonomy releases"
+        head={["Release", "Status", "Skills", "Occupations", "Other"]}
+        rows={taxonomy.releases.map((release) => [
+          `${release.source} ${release.version}`,
+          `${release.status}${release.is_sample ? " (sample data)" : ""}`,
+          release.skills,
+          release.occupations,
+          <span title={Object.entries(release.by_type).map(([type, count]) => `${type}: ${count}`).join("\n")}>
+            {release.other}
+          </span>,
+        ])}
+      />
+      <OverviewTable
+        title="ESCO↔O*NET mapping rows"
+        head={["ESCO release", "O*NET release", "Rows"]}
+        rows={[
+          ...taxonomy.esco_onet_mappings.map((pair) => [pair.esco_version, pair.onet_version, pair.rows]),
+          ["All", "", taxonomy.esco_onet_mappings_total],
+        ]}
+      />
+      <OverviewTable
+        title="Candidates and jobs"
+        head={["Item", "Count"]}
+        rows={[
+          ["Candidate accounts", candidates.accounts],
+          ["CVs processed", `${of(candidates.cvs.processed, candidates.cvs.uploaded)} uploaded`],
+          ["CVs failed", <span title={candidates.cvs.failed_note}>{of(candidates.cvs.failed, candidates.cvs.uploaded)} uploaded*</span>],
+          ["Jobs active", of(jobs.active, jobs.total)],
+          ["Jobs archived", of(jobs.archived, jobs.total)],
+        ]}
+      />
+      <OverviewTable
+        title="Skill review"
+        head={["Skills", "Approved", "Pending", "Rejected"]}
+        rows={[
+          reviewRow("CV, extracted", skills.cv_extracted),
+          reviewRow("CV, added manually", skills.cv_added_manually),
+          reviewRow("Job, extracted", skills.job_extracted),
+        ]}
+      />
+      <OverviewTable
+        title="Taxonomy links on approved skills"
+        head={["Side", "Approved link", "Pending suggestion", "No link"]}
+        rows={[linkRow("CV", links.cv), linkRow("Job", links.job)]}
+      />
+      <OverviewTable
+        title="Retrieval index (current vectors)"
+        head={["Item", "Indexed of eligible"]}
+        rows={[
+          ["Candidate profiles", indexCell(index.profiles)],
+          ["Jobs", indexCell(index.jobs)],
+          ["Model", <span className="break-all font-mono text-xs">{index.model_id} @ {index.model_revision}</span>],
+          ["Template", <span className="font-mono text-xs">{index.template_version}</span>],
+        ]}
+      />
+      <p className="text-xs text-slate-500 lg:col-span-2">
+        * {candidates.cvs.failed_note}
+        {index.note ? ` ${index.note}` : ""}
+      </p>
+    </div>
+  );
+}
+
+function SystemOverviewSection({ accessToken }: { accessToken: string }) {
+  const overview = useQuery({ queryKey: ["admin", "overview"], queryFn: () => getSystemOverview(accessToken) });
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <ServerCog size={22} className="text-ocean" aria-hidden="true" />
+          <h2 className="text-xl font-semibold text-ink">System overview</h2>
+        </div>
+        {overview.data ? (
+          <p className="text-xs text-slate-500">Generated {new Date(overview.data.generated_at).toLocaleString()}</p>
+        ) : null}
+      </div>
+      {overview.isPending ? <p className="text-sm text-slate-500">Loading counts…</p> : null}
+      {overview.error ? <p className="text-sm text-red-700">{overview.error.message}</p> : null}
+      {overview.data ? <OverviewTables data={overview.data} /> : null}
+    </section>
+  );
+}
 
 const phaseCards = [
   { title: "Authentication", text: "Registration, login, refresh-token storage, and role-aware access are active.", icon: LockKeyhole },
@@ -12,7 +138,8 @@ const phaseCards = [
 ];
 
 export function DashboardPage() {
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
+  const isAdmin = user?.roles.some((role) => role.name === "admin") ?? false;
 
   return (
     <div className="space-y-8">
@@ -24,6 +151,9 @@ export function DashboardPage() {
           semantic retrieval, matching, and evaluation are added.
         </p>
       </section>
+
+      {/* Mounted only for administrators, so the overview request is never made for anyone else. */}
+      {isAdmin && accessToken ? <SystemOverviewSection accessToken={accessToken} /> : null}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {phaseCards.map((card) => {

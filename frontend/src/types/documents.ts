@@ -99,3 +99,38 @@ export type CandidateJobMatch = {
   explanation: string;
   job: Job;
 };
+
+// Administrator system overview (GET /admin/overview). Read-only counts.
+export type ReviewCounts = { approved: number; pending: number; rejected: number; total: number };
+export type LinkCoverage = { approved_skills: number; approved_link: number; pending_link: number; no_link: number };
+export type IndexCoverage = { eligible: number; indexed: number | null };
+
+export type SystemOverview = {
+  generated_at: string;
+  taxonomy: {
+    releases: {
+      source: string;
+      version: string;
+      status: string;
+      is_sample: boolean;
+      skills: number;
+      occupations: number;
+      other: number;
+      by_type: Record<string, number>;
+    }[];
+    esco_onet_mappings_total: number;
+    esco_onet_mappings: { esco_version: string; onet_version: string; rows: number }[];
+  };
+  candidates: { accounts: number; cvs: { uploaded: number; processed: number; failed: number; failed_note: string } };
+  jobs: { total: number; active: number; archived: number };
+  skills: { cv_extracted: ReviewCounts; cv_added_manually: ReviewCounts; job_extracted: ReviewCounts };
+  taxonomy_links: { cv: LinkCoverage; job: LinkCoverage };
+  retrieval_index: {
+    model_id: string;
+    model_revision: string;
+    template_version: string;
+    profiles: IndexCoverage;
+    jobs: IndexCoverage;
+    note: string;
+  };
+};

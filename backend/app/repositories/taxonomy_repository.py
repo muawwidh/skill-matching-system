@@ -523,3 +523,29 @@ class TaxonomyRepository:
                 .order_by(EscoOnetMapping.created_at.desc())
             )
         )
+
+    def overview_concept_counts(self) -> list[tuple]:
+        """(source code, version, status, is_sample, concept_type or None, count) per release and type."""
+        return list(self.db.execute(
+            select(TaxonomySource.code, TaxonomyVersion.version, TaxonomyVersion.status,
+                   TaxonomyVersion.is_sample, TaxonomyConcept.concept_type, func.count(TaxonomyConcept.id))
+            .join(TaxonomyVersion, TaxonomyVersion.source_id == TaxonomySource.id)
+            .outerjoin(TaxonomyConcept, TaxonomyConcept.taxonomy_version_id == TaxonomyVersion.id)
+            .group_by(TaxonomySource.code, TaxonomyVersion.version, TaxonomyVersion.status,
+                      TaxonomyVersion.is_sample, TaxonomyConcept.concept_type)
+            .order_by(TaxonomySource.code, TaxonomyVersion.version, TaxonomyConcept.concept_type)
+        ).all())
+
+    def overview_mapping_counts(self) -> list[tuple]:
+        """(ESCO release, O*NET release, row count) for ESCO↔O*NET mapping rows."""
+        esco_version = TaxonomyVersion.__table__.alias("esco_version")
+        onet_version = TaxonomyVersion.__table__.alias("onet_version")
+        return list(self.db.execute(
+            select(esco_version.c.version, onet_version.c.version, func.count(EscoOnetMapping.id))
+            .join(TaxonomyConcept, TaxonomyConcept.id == EscoOnetMapping.esco_concept_id)
+            .join(esco_version, esco_version.c.id == TaxonomyConcept.taxonomy_version_id)
+            .join(Occupation, Occupation.id == EscoOnetMapping.onet_occupation_id)
+            .join(onet_version, onet_version.c.id == Occupation.taxonomy_version_id)
+            .group_by(esco_version.c.version, onet_version.c.version)
+            .order_by(esco_version.c.version, onet_version.c.version)
+        ).all())

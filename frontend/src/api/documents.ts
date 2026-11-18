@@ -8,6 +8,7 @@ import type {
   JobPayload,
   JobSkill,
   ProcessingLog,
+  SystemOverview,
 } from "../types/documents";
 
 export function pasteCv(accessToken: string, text: string, consentToProcess: boolean) {
@@ -98,4 +99,8 @@ export function refreshRecommendations(accessToken: string) {
     method: "POST",
     accessToken,
   });
+}
+
+export function getSystemOverview(accessToken: string) {
+  return apiRequest<SystemOverview>("/admin/overview", { accessToken });
 }

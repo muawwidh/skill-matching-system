@@ -189,3 +189,95 @@ class CandidateJobMatchRead(BaseModel):
     job: JobRead
 
     model_config = {"from_attributes": True}
+
+
+# --- Administrator system overview (read-only counts; ratios are shown as "X of Y") ---
+
+class TaxonomyReleaseCounts(BaseModel):
+    source: str
+    version: str
+    status: str
+    is_sample: bool
+    skills: int
+    occupations: int
+    other: int
+    by_type: dict[str, int]
+
+
+class MappingReleaseCounts(BaseModel):
+    esco_version: str
+    onet_version: str
+    rows: int
+
+
+class TaxonomyOverview(BaseModel):
+    releases: list[TaxonomyReleaseCounts]
+    esco_onet_mappings_total: int
+    esco_onet_mappings: list[MappingReleaseCounts]
+
+
+class CvCounts(BaseModel):
+    uploaded: int
+    processed: int
+    failed: int
+    failed_note: str
+
+
+class CandidateOverview(BaseModel):
+    accounts: int
+    cvs: CvCounts
+
+
+class JobOverview(BaseModel):
+    total: int
+    active: int
+    archived: int
+
+
+class ReviewCounts(BaseModel):
+    approved: int
+    pending: int
+    rejected: int
+    total: int
+
+
+class SkillOverview(BaseModel):
+    cv_extracted: ReviewCounts
+    cv_added_manually: ReviewCounts
+    job_extracted: ReviewCounts
+
+
+class LinkCoverage(BaseModel):
+    approved_skills: int
+    approved_link: int
+    pending_link: int
+    no_link: int
+
+
+class TaxonomyLinkOverview(BaseModel):
+    cv: LinkCoverage
+    job: LinkCoverage
+
+
+class IndexCoverage(BaseModel):
+    eligible: int
+    indexed: int | None
+
+
+class RetrievalIndexOverview(BaseModel):
+    model_id: str
+    model_revision: str
+    template_version: str
+    profiles: IndexCoverage
+    jobs: IndexCoverage
+    note: str
+
+
+class SystemOverviewRead(BaseModel):
+    generated_at: datetime
+    taxonomy: TaxonomyOverview
+    candidates: CandidateOverview
+    jobs: JobOverview
+    skills: SkillOverview
+    taxonomy_links: TaxonomyLinkOverview
+    retrieval_index: RetrievalIndexOverview

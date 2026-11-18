@@ -98,3 +98,42 @@ class RetrievalService:
                 if len(results) == limit:
                     break
         return results
+
+    def index_overview(self) -> dict:
+        """Read-only index coverage for the configured model and template.
+
+        Eligibility and freshness mirror `index_profile`, `index_job` and
+        `jobs_for_user`: "indexed" means a ready vector whose source hash
+        equals the current input, so stale vectors are not counted.
+        """
+        from sqlalchemy import select
+        from app.retrieval.representation import MODEL_ID, MODEL_REVISION
+
+        profiles = {"eligible": 0, "indexed": 0}
+        for profile in self.db.scalars(select(CandidateProfile)):
+            if profile.status != "active" or not profile.consent_to_process_cv:
+                continue
+            value = self.repository.profile_input(profile.id)
+            if value is None:
+                continue
+            profiles["eligible"] += 1
+            existing = self.repository.profile_embedding(profile.id)
+            if existing and existing.status == "ready" and existing.source_hash == value.source_hash:
+                profiles["indexed"] += 1
+
+        eligible_jobs = list(self.db.scalars(select(Job).where(Job.status == "processed")))
+        jobs: dict = {"eligible": len(eligible_jobs), "indexed": 0}
+        note = ""
+        try:
+            for job in eligible_jobs:
+                existing = self.db.scalar(self._job_embedding_query(job.id))
+                if existing and existing.status == "ready" and \
+                        existing.source_hash == self.repository.job_input(job).source_hash:
+                    jobs["indexed"] += 1
+        except RuntimeError:
+            # Template v2 job freshness needs the pinned local tokenizer.
+            jobs["indexed"] = None
+            note = "Job index freshness unavailable: pinned local tokenizer not found."
+        return {"model_id": MODEL_ID, "model_revision": MODEL_REVISION,
+                "template_version": self.repository.template_version,
+                "profiles": profiles, "jobs": jobs, "note": note}

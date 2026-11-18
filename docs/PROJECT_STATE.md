@@ -244,6 +244,36 @@ It currently lacks the complete planned:
 - critical-skill penalties
 - complete evidence-backed explanation system
 
+## Administrator System Overview
+
+Status: IMPLEMENTED 2026-11-18 (no migration)
+
+- `GET /admin/overview` is administrator-only. It is narrower than the
+  admin/researcher router guard, so researchers and candidates get 403.
+- It is read-only and reports:
+  - taxonomy concepts per release (skills / occupations / other, with the
+    full per-type breakdown and sample-release flag)
+  - ESCO↔O*NET mapping rows per release pair
+  - candidate accounts
+  - stored / processed / failed CVs (failed uploads are rejected before
+    storage, so they are not counted)
+  - total / active / archived jobs
+  - approved / pending / rejected skills for CV-extracted, CV-manual and
+    job-extracted skills
+  - taxonomy-link state of approved skills, using the same "approved link"
+    rule as matching and retrieval
+  - retrieval index coverage (current vectors of eligible profiles/jobs),
+    with model ID, revision and template
+  - generation time
+- Implemented in `SystemOverviewService` (`services/processing_log_service.py`),
+  with count queries in the existing repositories.
+- The Dashboard shows a "System overview" section with "X of Y" tables, and
+  no percentages, only to users with the admin role. The request is never
+  made for other users.
+- No account in the local development database currently has the admin role.
+  The section is verified by API tests and a direct read-only service run
+  against that database, not yet in the browser.
+
 ## Phase 4 — Taxonomy Integration
 
 Migration status at Phase 4 closure (historical snapshot, not current repository head):

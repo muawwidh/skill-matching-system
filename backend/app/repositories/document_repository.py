@@ -1,7 +1,7 @@
 from collections import Counter, defaultdict
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import (
@@ -17,8 +17,10 @@ from app.db.models import (
     JobSection,
     JobSkill,
     ProcessingLog,
+    Role,
     TaxonomyLinkCandidate,
     TaxonomyConcept,
+    User,
 )
 from app.nlp.skill_extractor import ExtractedTerm
 from app.services.section_detection_service import DetectedSection
@@ -670,3 +672,37 @@ class DocumentRepository:
         if entity_type:
             statement = statement.where(ProcessingLog.entity_type == entity_type)
         return list(self.db.scalars(statement))
+
+    # --- Read-only counts for the administrator system overview -------------------------
+
+    def count_users_with_role(self, role_name: str) -> int:
+        return self.db.scalar(
+            select(func.count(func.distinct(User.id))).join(User.roles).where(Role.name == role_name)
+        ) or 0
+
+    def count_by(self, column, *where) -> dict[str, int]:
+        """Row counts grouped by one column, e.g. `count_by(Job.status)`."""
+        return {key: count for key, count in self.db.execute(
+            select(column, func.count()).where(*where).group_by(column)
+        ).all()}
+
+    def taxonomy_link_coverage(self, term_source: str) -> dict[str, int]:
+        """Approved skills split by taxonomy-link state: approved, pending suggestion, or none.
+
+        "approved" uses the same rule as matching and retrieval: an approved link on an
+        active release whose term text still equals the skill text.
+        """
+        model = CandidateSkill if term_source == "candidate" else JobSkill
+        skills = list(self.db.scalars(select(model).where(model.review_status == "approved")))
+        linked = self.approved_skill_concepts(term_source, skills)
+        unlinked_terms = {s.extracted_term_id for s in skills if s.id not in linked and s.extracted_term_id}
+        pending_terms = set(self.db.scalars(
+            select(TaxonomyLinkCandidate.extracted_term_id).where(
+                TaxonomyLinkCandidate.term_source == term_source,
+                TaxonomyLinkCandidate.review_status == "pending",
+                TaxonomyLinkCandidate.extracted_term_id.in_(unlinked_terms),
+            ).distinct()
+        )) if unlinked_terms else set()
+        pending = sum(1 for s in skills if s.id not in linked and s.extracted_term_id in pending_terms)
+        return {"approved_skills": len(skills), "approved_link": len(linked),
+                "pending_link": pending, "no_link": len(skills) - len(linked) - pending}
