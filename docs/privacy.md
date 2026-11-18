@@ -12,6 +12,9 @@ Phase 1 privacy controls:
 - Uploaded files are parsed into text and are not written to persistent file storage in this baseline.
 - Job rankings and skill coverage are visible only to the candidate they belong to; administrators and
   researchers see aggregate counts only, with no per-candidate ranking view (D037).
+- Deleting a CV removes that CV's extracted skills, links and stored matches and marks the profile
+  embedding stale; skills the candidate added by hand belong to the profile and stay until the
+  candidate removes them in skill review (D041).
 
 Future phases must add explicit CV-processing consent, data deletion, retention controls, audit logs,
 and exclusion of age, gender, religion, nationality, marital status, photographs, and other unrelated

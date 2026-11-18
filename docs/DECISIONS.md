@@ -704,3 +704,90 @@ There is no migration. `missing_required` and `missing_preferred` in
 bare labels. Rows are recomputed on every read. The response schema reads a
 bare-label row from before this change as `taxonomy_concept`: under D036 only
 linked skills could be missing.
+
+## D041 - A Candidate Profile Combines All Of Its CVs
+
+This records the current behaviour; nothing was changed. A candidate profile
+can hold several CVs. Its skills are the union of:
+- extraction skills from all of its CVs, whatever their processing status;
+- skills the candidate added by hand during review (`source = manual_review`).
+  These belong to the profile, not to one CV, and are shown in every CV's
+  review list.
+
+Both consumers use that union, and both read only **approved** skills:
+- **Retrieval profile embedding:** `RetrievalRepository.profile_input` and
+  `candidate_representation`. The text holds approved skills, with canonical
+  labels and evidence, deduplicated. The source hash covers every skill row of
+  the profile, including pending and rejected rows. Any added, changed or
+  removed row therefore makes the embedding stale, even when the text is
+  unchanged.
+- **Skill-coverage matching:** `list_matchable_candidate_skills`. A skill
+  listed in two CVs counts once, because coverage compares sets of concepts
+  and names.
+
+**Deleting a CV** (`CvService.delete_my_cv` →
+`DocumentRepository.delete_cv_document`):
+- deletes that CV's extracted terms, extraction skills and taxonomy links or
+  link candidates, together with the document and its sections;
+- marks the profile embedding stale;
+- deletes all of the profile's stored match rows. They are recomputed on the
+  next read, from the remaining CVs and manual skills.
+
+Skills from other CVs and manually added skills stay. Taxonomy review audit
+events stay, because they are append-only. The deletion itself is logged.
+
+Reason for keeping this: one profile is the unit of decision support and of
+the Phase 5 benchmark, and the union is the simplest rule a candidate can
+predict. Per-CV profiles would need a choice of active CV, which the
+candidate-facing flow does not have.
+
+## D042 - CV Extraction Does Not Get The ESCO Vocabulary (Known Asymmetry)
+
+Job extraction v3 (D038) adds the O7-filtered ESCO vocabulary and experience
+ranges. CV extraction stays on contract v2: the 25-entry curated dictionary
+plus regex rules. **This asymmetry is a known limitation.** A job can list an
+ESCO-labelled skill that the CV states in the same words, and it is still
+reported missing unless the candidate approved or added that skill.
+
+Diagnosis (2026-11-18, in memory, no writes):
+- **Method:** the 8 evaluation candidates' CVs were run through the
+  extractor with the O7 vocabulary, the same filter and the same rule that
+  dictionary matches win on overlap. Auto-linking used the production rule
+  (rank 1, unique top, confidence ≥ 0.95).
+- **New terms:** 56 unique terms (78 occurrences); 55 would be auto-linked.
+- **Coverage gain:** even if every new term were approved, only **70 of
+  1,275** currently missing job skills would become matched, **5.5%**.
+  "Missing" counts each candidate × job × missing skill across the 30
+  benchmark jobs. The gains fall almost entirely to four engineering
+  candidates on the electronics, firmware and robotics jobs.
+
+False-positive types seen:
+- **Degree and field-of-study names read as skills** ("electrical
+  engineering", "electronics", "electronic systems", "informatics"). One
+  candidate's whole gain (10 matches) came only from degree lines. Jobs have
+  the same effect, so these matches are often qualification against
+  qualification rather than skill against skill.
+- **Role descriptors and earlier job titles** ("instrumentation engineering").
+- **Partial spans** ("system design" from "embedded-system design", "ide" from
+  "STM32Cube IDE").
+- **Singular/plural near-duplicates** ("pcb"/"pcbs", "control
+  system"/"control systems").
+
+Decision: **CV ESCO re-extraction is not implemented.**
+- The gain is small, and its share of false positives is high.
+- Any CV re-extraction would change all 8 frozen Phase 5 candidate inputs.
+  New pending rows change the source hash. Once approved, they change the
+  profile text.
+- The existing CV reprocess path (`replace_candidate_terms`) deletes
+  occurrences no longer extracted, with their reviews. A safe version would
+  need an additive path like D039.
+
+The evaluation candidate profiles are **largely manually curated**. Across the
+database there are 107 approved manually added candidate skills and 79
+approved extracted ones. All 107 manual skills belong to the 8 evaluation
+profiles, which hold only 30 approved extracted skills. For the benchmark, CV extraction quality therefore matters less
+than reviewer curation, as the Phase 5 limitations already state. If CV
+vocabulary matching is revisited, degree and education lines must be handled
+first, for example by typing those matches as qualifications or skipping
+education sections. The same handling should then be checked on jobs.
+
