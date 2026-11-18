@@ -152,6 +152,10 @@ JOB_EXCLUDED_HEADINGS = (
     "benefits", "perks", "what we offer", "equal opportunity", "equal employment opportunity", "eeo",
     "how to apply", "application process", "application questions", "screening questions", "compensation",
     "salary", "pay range", "why join us",
+    # Company values and culture statements describe the employer, not requirements.
+    "values", "our values", "core values", "our core values", "company values", "our culture",
+    "culture and values", "values and behaviours", "values & behaviours", "values and behaviors",
+    "attributes aligned with core values", "attributes aligned with our values",
 )
 _JOB_EXTRA_HEADINGS = (
     ("must have", "requirements"), ("must haves", "requirements"), ("must-haves", "requirements"),

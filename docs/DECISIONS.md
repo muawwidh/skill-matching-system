@@ -521,8 +521,12 @@ retrieval v2 template (`job_budget.HEADINGS`) plus "must have", "bonus" and
 Preferred, Desirable, Nice to have and Bonus give `preferred`. Responsibilities,
 summary, company context and untitled text give `unknown`. Text under
 Benefits, Equal Opportunity / EEO, How to apply, application or screening
-questions, Compensation, Salary and Why join us is not extracted. Excluded
-headings count only when they stand alone on their line. The shared
+questions, Compensation, Salary and Why join us is not extracted. Since
+2026-11-18 company values and culture headings are also excluded ("Values",
+"Our/Core/Company Values", "Our Culture", "Values and Behaviours", "Attributes
+aligned with Core Values"). They describe the employer, not the role. When the
+list was extended, no stored term on any active job came from such a section.
+Excluded headings count only when they stand alone on their line. The shared
 `SectionDetectionService.detect` is unchanged. CV sections and stored job
 sections (display and retrieval input) are not affected.
 

@@ -183,7 +183,7 @@ Job extraction contract `v3` (D038, 2026-11-18) applies to jobs created,
 updated or reprocessed from now on:
 - requirement type follows section headings via the job-only
   `detect_job_segments`;
-- benefits, EEO and application text is not extracted;
+- benefits, EEO, application and company-values/culture text is not extracted;
 - the experience pattern accepts ranges;
 - with `JOB_EXTRACTION_ESCO_VOCABULARY` (default on), ESCO 1.2.1 skill and
   knowledge labels filtered by rule O7 are a second dictionary

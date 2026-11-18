@@ -29,7 +29,7 @@ from app.nlp.skill_extractor import (
     SkillExtractor,
 )
 from app.services.job_service import build_job_extractor
-from app.services.section_detection_service import SectionDetectionService, detect_job_segments
+from app.services.section_detection_service import SectionDetectionService, classify_job_heading, detect_job_segments
 
 
 def auth_headers(client: TestClient) -> dict[str, str]:
@@ -536,6 +536,20 @@ def test_excluded_headings_only_count_when_standing_alone() -> None:
     text = "Requirements\nSalary: competitive\nPython"
     terms = _job_terms(text)
     assert [(term.normalized_text, term.requirement_type) for term in terms] == [("python", "required")]
+
+
+@pytest.mark.parametrize("heading", ["Attributes aligned with Core Values", "OUR VALUES", "Core Values:",
+                                     "Our Culture", "Values & Behaviours"])
+def test_company_values_headings_are_skipped(heading) -> None:
+    text = f"Requirements\nPython\n{heading}\nCustomer Focus: delivers SQL and Docker value.\nPreferred skills\nGit"
+    assert classify_job_heading(heading) == ("excluded", len(heading))
+    assert [(t.normalized_text, t.requirement_type) for t in _job_terms(text)] == [("python", "required"), ("git", "preferred")]
+
+
+@pytest.mark.parametrize("line", ["Skills and Attributes", "Key Competencies", "Values: integrity",
+                                  "Values & Behaviour Framework (PDF, 2.7MB)"])
+def test_values_exclusion_does_not_catch_requirement_or_inline_lines(line) -> None:
+    assert classify_job_heading(line) is None
 
 
 def test_shared_section_detector_is_unchanged_for_job_headings() -> None:
