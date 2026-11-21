@@ -319,12 +319,10 @@ class MatchingService:
 
     @staticmethod
     def _unindexed_job_count(retrieval, active_jobs: list[Job], exclude_sources=frozenset()) -> int:
-        try:
-            fresh = retrieval.fresh_job_ids(exclude_sources)
-        except RuntimeError:
-            # Job freshness under template v2 needs the pinned tokenizer; report every job as unknown.
-            return len(active_jobs)
-        return sum(1 for job in active_jobs if job.id not in fresh)
+        # Stored embedding status, not rebuilt representations: rebuilding every job took
+        # about 29 s per request with 978 jobs (2026-11-21).
+        ready = retrieval.ready_job_ids(exclude_sources)
+        return sum(1 for job in active_jobs if job.id not in ready)
 
     def match_my_job(self, user: User, job_id: UUID) -> dict:
         """Coverage of one active job for the candidate, computed on read (D049)."""

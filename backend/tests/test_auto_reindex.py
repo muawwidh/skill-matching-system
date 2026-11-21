@@ -179,3 +179,27 @@ def test_disabled_setting_keeps_the_cli_only_behaviour(client, db_session, monke
     review_all(client, headers, paste_cv(client, headers), "approved")
     assert fake.calls == 0
     assert readiness(db_session, email) == "profile_not_indexed"
+
+
+def test_ready_job_ids_follow_stored_status_without_rebuilding_inputs(client, db_session, embedder, monkeypatch):
+    """The Jobs page unindexed count reads stored status only (2026-11-21 latency fix)."""
+    headers, email = register(client, "staff2@example.com")
+    user = db_session.scalar(select(User).where(User.email == email))
+    user.roles.append(Role(name="admin", description="Job management"))
+    db_session.commit()
+    ids = [client.post("/jobs", headers=headers, json={
+        "title": f"Engineer {n}", "company": "Acme", "location": "", "employment_type": "",
+        "description": "Required skills\nPython"}).json()["id"] for n in range(2)]
+    service = RetrievalService(db_session)
+    expected = set(service.fresh_job_ids())
+    assert {str(i) for i in expected} == set(ids)
+
+    def must_not_rebuild(*args, **kwargs):
+        raise AssertionError("representation rebuilt")
+    monkeypatch.setattr(RetrievalRepository, "job_input", must_not_rebuild)
+    assert service.ready_job_ids() == expected
+    assert service.ready_job_ids(exclude_sources={"manual"}) == set()
+    # A stale vector (job changed, not yet re-embedded) is not ready.
+    stale = next(iter(expected))
+    db_session.query(JobEmbedding).filter(JobEmbedding.job_id == stale).update({"status": "stale"})
+    assert service.ready_job_ids() == expected - {stale}

@@ -76,6 +76,7 @@ def fake_retrieval(monkeypatch):
     monkeypatch.setattr(RetrievalService, "profile_readiness", readiness)
     monkeypatch.setattr(RetrievalService, "retrieve", retrieve)
     monkeypatch.setattr(RetrievalService, "fresh_job_ids", fresh_job_ids)
+    monkeypatch.setattr(RetrievalService, "ready_job_ids", fresh_job_ids)
     return state
 
 

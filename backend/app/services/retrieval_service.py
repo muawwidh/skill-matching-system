@@ -126,6 +126,24 @@ class RetrievalService:
                     break
         return results
 
+    def ready_job_ids(self, exclude_sources=None) -> set[UUID]:
+        """Processed jobs with a stored `ready` vector for the current model, revision and template.
+
+        One query on stored status, no representation is rebuilt. Status stays current
+        because every job change marks its vector stale and re-embeds it (D046).
+        """
+        from sqlalchemy import select
+        from app.db.models import JobEmbedding
+        from app.retrieval.representation import MODEL_ID, MODEL_REVISION
+
+        statement = (select(Job.id).join(JobEmbedding, JobEmbedding.job_id == Job.id)
+                     .where(Job.status == "processed", JobEmbedding.status == "ready",
+                            JobEmbedding.model_id == MODEL_ID, JobEmbedding.model_revision == MODEL_REVISION,
+                            JobEmbedding.template_version == self.repository.template_version))
+        if exclude_sources:
+            statement = statement.where(Job.source.not_in(sorted(exclude_sources)))
+        return set(self.db.scalars(statement))
+
     def fresh_job_ids(self, exclude_sources=None) -> set[UUID]:
         """IDs of processed jobs with a ready vector whose hash equals the current input.
 
