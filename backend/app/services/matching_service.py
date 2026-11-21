@@ -25,6 +25,9 @@ MATCHED_VIA_NAME = "skill_name"
 # How a missing job skill was looked for: by taxonomy concept (and name), or by name only.
 CHECKED_VIA_CONCEPT = "taxonomy_concept"
 CHECKED_VIA_NAME = "skill_name"
+# Partial coverage (D050): a missing concept-linked job skill whose direct ESCO broader
+# skill/knowledge concept is also a direct broader concept of one of the candidate's skills.
+BroaderMap = dict[UUID, dict[UUID, str]]
 
 
 @dataclass(frozen=True)
@@ -42,17 +45,19 @@ class CoverageResult:
     matched_preferred: list[dict] = field(default_factory=list)
     missing_required: list[dict] = field(default_factory=list)
     missing_preferred: list[dict] = field(default_factory=list)
+    partial_required: list[dict] = field(default_factory=list)
+    partial_preferred: list[dict] = field(default_factory=list)
     not_assessed_required: list[str] = field(default_factory=list)
     not_assessed_preferred: list[str] = field(default_factory=list)
     candidate_skill_count: int = 0
 
     @property
     def required_total(self) -> int:
-        return len(self.matched_required) + len(self.missing_required)
+        return len(self.matched_required) + len(self.partial_required) + len(self.missing_required)
 
     @property
     def preferred_total(self) -> int:
-        return len(self.matched_preferred) + len(self.missing_preferred)
+        return len(self.matched_preferred) + len(self.partial_preferred) + len(self.missing_preferred)
 
 
 @dataclass
@@ -94,19 +99,31 @@ def _job_groups(job_items: list[SkillItem]) -> list[_JobGroup]:
     return [*by_concept.values(), *by_name.values()]
 
 
-def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem]) -> CoverageResult:
+def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem],
+                     broader: BroaderMap | None = None) -> CoverageResult:
     """Compare approved candidate and job skills.
 
     Two skills match by taxonomy concept when both carry an approved link;
     otherwise they match by identical normalized name. Every compared job skill
-    is either matched or missing. A missing skill records whether it was looked
-    for by concept or by name only; a name-only miss may still be in the CV
-    under different wording.
+    is matched, partially covered or missing. A missing skill records whether it
+    was looked for by concept or by name only; a name-only miss may still be in
+    the CV under different wording.
+
+    With `broader` (D050), a concept-linked job skill that is not matched is
+    partially covered when it shares a direct ESCO broader skill/knowledge
+    concept with a concept-linked candidate skill. Without it (offline
+    comparison, D043) there is no partial class.
     """
     candidate = [item for item in candidate_items if item.skill_type in SKILL_LIKE_TYPES]
     candidate_concepts = {item.concept_id for item in candidate if item.concept_id is not None}
     unlinked_candidate_names = {item.name for item in candidate if item.concept_id is None}
     all_candidate_names = {item.name for item in candidate}
+    # Broader concept ID -> (broader label, candidate skill label) for the evidence text.
+    candidate_broader: dict[UUID, tuple[str, str]] = {}
+    for item in sorted((i for i in candidate if i.concept_id is not None),
+                       key=lambda i: ((i.concept_label or i.name).casefold(), str(i.concept_id))):
+        for parent_id, parent_label in (broader or {}).get(item.concept_id, {}).items():
+            candidate_broader.setdefault(parent_id, (parent_label, item.concept_label or item.name))
 
     result = CoverageResult(candidate_skill_count=len(candidate))
     for group in _job_groups([item for item in job_items if item.skill_type in SKILL_LIKE_TYPES]):
@@ -121,9 +138,17 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
         else:
             checked_via = CHECKED_VIA_NAME
             via = MATCHED_VIA_NAME if group.names & all_candidate_names else None
+        shared = sorted(
+            (candidate_broader[parent_id] for parent_id in (broader or {}).get(group.concept_id, {})
+             if parent_id in candidate_broader),
+            key=lambda pair: (pair[0].casefold(), pair[1].casefold()),
+        ) if via is None and group.concept_id is not None else []
         if via is not None:
             target = result.matched_required if group.required else result.matched_preferred
             target.append({"label": group.label, "matched_via": via})
+        elif shared:
+            target = result.partial_required if group.required else result.partial_preferred
+            target.append({"label": group.label, "broader_concept": shared[0][0], "candidate_skill": shared[0][1]})
         else:
             target = result.missing_required if group.required else result.missing_preferred
             target.append({"label": group.label, "checked_via": checked_via})
@@ -132,6 +157,7 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
         return entry["label"].casefold(), entry["label"]
 
     for entries in (result.matched_required, result.matched_preferred,
+                    result.partial_required, result.partial_preferred,
                     result.missing_required, result.missing_preferred):
         entries.sort(key=by_label)
     other = [item for item in job_items if item.skill_type not in SKILL_LIKE_TYPES]
@@ -142,23 +168,27 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
     return result
 
 
-def _coverage_line(kind: str, matched: list[dict], missing: list[dict]) -> str:
-    total = len(matched) + len(missing)
+def _coverage_line(kind: str, matched: list[dict], missing: list[dict], partial: list[dict] = ()) -> str:
+    total = len(matched) + len(partial) + len(missing)
     if total == 0:
         return f"This job lists no comparable {kind} skills."
     line = f"{kind.capitalize()} skills: {len(matched)} of {total} matched"
     if matched:
         line += " (" + ", ".join(entry["label"] for entry in matched) + ")"
+    if partial:
+        line += "; partially covered: " + ", ".join(
+            f"{entry['label']} (your skill {entry['candidate_skill']} shares the broader ESCO concept "
+            f"{entry['broader_concept']})" for entry in partial)
     if missing:
         line += "; missing: " + ", ".join(entry["label"] for entry in missing)
     return line + "."
 
 
 def build_explanation(result: CoverageResult) -> str:
-    """Describe coverage using only the stored matched/missing/not-assessed lists."""
+    """Describe coverage using only the matched/partial/missing/not-assessed lists."""
     lines = [
-        _coverage_line("required", result.matched_required, result.missing_required),
-        _coverage_line("preferred", result.matched_preferred, result.missing_preferred),
+        _coverage_line("required", result.matched_required, result.missing_required, result.partial_required),
+        _coverage_line("preferred", result.matched_preferred, result.missing_preferred, result.partial_preferred),
     ]
     by_name = [entry["label"] for entry in result.missing_required + result.missing_preferred
                if entry["checked_via"] == CHECKED_VIA_NAME]
@@ -308,7 +338,10 @@ class MatchingService:
         )
 
     def _coverage(self, job: Job, candidate_items: list[SkillItem]) -> dict:
-        result = compute_coverage(candidate_items, self._job_items(job.id))
+        job_items = self._job_items(job.id)
+        concepts = {item.concept_id for item in candidate_items + job_items if item.concept_id is not None}
+        broader = self.repository.specific_esco_broader_concepts(concepts)
+        result = compute_coverage(candidate_items, job_items, broader)
         return {
             "job_id": job.id,
             "job": job,
@@ -316,6 +349,8 @@ class MatchingService:
             "matched_preferred": result.matched_preferred,
             "missing_required": result.missing_required,
             "missing_preferred": result.missing_preferred,
+            "partial_required": result.partial_required,
+            "partial_preferred": result.partial_preferred,
             "candidate_skill_count": result.candidate_skill_count,
             "job_skill_count": result.required_total + result.preferred_total,
             "explanation": build_explanation(result),

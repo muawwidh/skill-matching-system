@@ -987,3 +987,23 @@ The `candidate_job_matches` table is no longer written; it is kept until the
 owner approves dropping it, and its legacy rows are still deleted with a CV
 (D041) or an account (D047). Explanations therefore always derive from the
 current approved skills and links.
+
+## D050 - Partially Covered Via A Shared Specific ESCO Broader Concept
+
+Decided by the project owner on 2026-11-21. Coverage classes are Matched,
+Partially covered and Missing. A concept-linked job skill that is not matched
+is partially covered when it and a concept-linked candidate skill have a
+common direct ESCO `broader` concept whose type is `skill` or `knowledge`, in
+the active ESCO release. Broader ESCO skill groups do not count: in ESCO 1.2.1
+they have a median of 13 and up to 217 member skills, and on the 2026-11-21
+development data they accounted for 145 of the 185 entries a "any shared
+broader concept" rule would have changed. With the specific-parent rule, 40
+entries (22 required, 18 preferred) in 36 of 341 profile-job pairs change from
+Missing to Partially covered.
+
+Partially covered skills are not counted as matched ("X of Y matched" keeps
+its meaning; Y includes them). The explanation names the job skill, the
+candidate skill and the shared broader concept, all from stored links and
+release relationships. Name-only skills and O*NET concepts are never partial.
+Coverage still never changes the order (D045). The offline comparison (D043)
+is unchanged because it does not supply broader relationships.

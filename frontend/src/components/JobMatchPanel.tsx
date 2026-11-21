@@ -1,6 +1,6 @@
-import { AlertTriangle, CheckCircle2, ListChecks } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleDashed, ListChecks } from "lucide-react";
 
-import type { MatchedSkill, MissingSkill, RecommendationItem } from "../types/documents";
+import type { MatchedSkill, MissingSkill, PartialSkill, RecommendationItem } from "../types/documents";
 
 type JobMatchPanelProps = {
   match: RecommendationItem;
@@ -56,17 +56,35 @@ function MissingChips({ items }: { items: MissingSkill[] }) {
   );
 }
 
-function CoverageCount({ label, matched, missing }: { label: string; matched: number; missing: number }) {
-  const total = matched + missing;
+function PartialChips({ items }: { items: PartialSkill[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <span
+          className="cursor-help rounded bg-amber-50 px-2 py-1 text-xs text-amber-900"
+          key={item.label}
+          title={`Not in your CV, but your skill "${item.candidate_skill}" shares the broader ESCO concept "${item.broader_concept}"`}
+        >
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function CoverageCount({ label, matched, partial, missing }: { label: string; matched: number; partial: number; missing: number }) {
+  const total = matched + partial + missing;
   return (
     <p className="text-sm text-ink">
       <span className="font-medium">{label}:</span>{" "}
       {total === 0 ? "none listed" : `${matched} of ${total} matched`}
+      {partial > 0 ? `, ${partial} partially covered` : ""}
     </p>
   );
 }
 
 export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
+  const partial = [...match.partial_required, ...match.partial_preferred];
   return (
     <section className="mt-4 rounded-md border border-slate-200 bg-white p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -80,8 +98,8 @@ export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
         </span>
       </div>
       <div className="mt-3 space-y-1">
-        <CoverageCount label="Required skills" matched={match.matched_required.length} missing={match.missing_required.length} />
-        <CoverageCount label="Preferred skills" matched={match.matched_preferred.length} missing={match.missing_preferred.length} />
+        <CoverageCount label="Required skills" matched={match.matched_required.length} partial={match.partial_required.length} missing={match.missing_required.length} />
+        <CoverageCount label="Preferred skills" matched={match.matched_preferred.length} partial={match.partial_preferred.length} missing={match.missing_preferred.length} />
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
@@ -91,6 +109,15 @@ export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
           </div>
           <MatchedChips items={[...match.matched_required, ...match.matched_preferred]} />
         </div>
+        {partial.length > 0 ? (
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 md:col-span-2">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-900">
+              <CircleDashed size={16} aria-hidden="true" />
+              Partially covered skills
+            </div>
+            <PartialChips items={partial} />
+          </div>
+        ) : null}
         <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
           <div className="mb-2 flex items-center gap-2 text-sm font-medium text-red-800">
             <AlertTriangle size={16} aria-hidden="true" />

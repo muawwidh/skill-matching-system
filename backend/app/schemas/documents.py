@@ -216,6 +216,14 @@ class MissingSkillRead(BaseModel):
         return value
 
 
+class PartialSkillRead(BaseModel):
+    """A job skill not matched, but sharing a direct ESCO broader skill/knowledge concept
+    with one of the candidate's skills (D050)."""
+    label: str
+    broader_concept: str
+    candidate_skill: str
+
+
 class JobCoverageRead(BaseModel):
     """Skill coverage of one job for the signed-in candidate, computed on read (D049)."""
     job_id: UUID
@@ -223,6 +231,8 @@ class JobCoverageRead(BaseModel):
     matched_preferred: list[MatchedSkillRead]
     missing_required: list[MissingSkillRead]
     missing_preferred: list[MissingSkillRead]
+    partial_required: list[PartialSkillRead] = []
+    partial_preferred: list[PartialSkillRead] = []
     candidate_skill_count: int
     job_skill_count: int
     explanation: str
@@ -237,6 +247,8 @@ class RecommendationItem(BaseModel):
     matched_preferred: list[MatchedSkillRead]
     missing_required: list[MissingSkillRead]
     missing_preferred: list[MissingSkillRead]
+    partial_required: list[PartialSkillRead] = []
+    partial_preferred: list[PartialSkillRead] = []
     candidate_skill_count: int
     job_skill_count: int
     explanation: str

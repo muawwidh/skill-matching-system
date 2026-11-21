@@ -2,7 +2,7 @@ from collections import Counter, defaultdict
 from uuid import UUID
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, aliased, selectinload
 
 from app.db.models import (
     ApprovedTaxonomyLink,
@@ -593,6 +593,37 @@ class DocumentRepository:
                 .order_by(JobSkill.normalized_text, JobSkill.id)
             )
         )
+
+    def specific_esco_broader_concepts(self, concept_ids: set[UUID]) -> dict[UUID, dict[UUID, str]]:
+        """Direct ESCO broader concepts that are themselves skills or knowledge (D050).
+
+        Maps each given concept to {broader concept ID: preferred label}. Broader
+        ESCO skill groups are left out on purpose: they are wide (median 13,
+        up to 217 member skills in ESCO 1.2.1) and would overstate similarity.
+        Only relationships in the concept's own active release are used.
+        """
+        from app.db.models import TaxonomyRelationship, TaxonomySource, TaxonomyVersion
+
+        if not concept_ids:
+            return {}
+        broader = aliased(TaxonomyConcept)
+        rows = self.db.execute(
+            select(TaxonomyRelationship.source_concept_id, broader.id, broader.preferred_label)
+            .join(broader, broader.id == TaxonomyRelationship.target_concept_id)
+            .join(TaxonomyVersion, TaxonomyVersion.id == TaxonomyRelationship.taxonomy_version_id)
+            .join(TaxonomySource, TaxonomySource.id == TaxonomyVersion.source_id)
+            .where(
+                TaxonomyRelationship.source_concept_id.in_(concept_ids),
+                TaxonomyRelationship.relationship_type == "broader",
+                TaxonomySource.code == "ESCO",
+                TaxonomyVersion.status == "active",
+                broader.concept_type.in_(("skill", "knowledge")),
+            )
+        ).all()
+        result: dict[UUID, dict[UUID, str]] = {}
+        for child, parent, label in rows:
+            result.setdefault(child, {})[parent] = label
+        return result
 
     def approved_skill_concepts(
         self, term_source: str, skills: list[CandidateSkill] | list[JobSkill]

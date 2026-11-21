@@ -337,6 +337,18 @@ no migration, no table dropped).
   PostgreSQL lifecycle tests updated and run against a disposable pgvector
   database (17 passed).
 
+Item 7 (2026-11-21): "Partially covered" coverage class (D050, no migration).
+- Measured first, read-only on the development DB (11 profiles with approved
+  skills x 31 jobs = 341 pairs): any shared direct ESCO broader concept would
+  change 185 missing entries in 96 pairs; restricted to skill/knowledge
+  parents, 40 entries (22 required, 18 preferred) in 36 pairs. The owner chose
+  the restricted rule; the implementation reproduces 22/18/36 on that data.
+- `DocumentRepository.specific_esco_broader_concepts`, `compute_coverage(...,
+  broader)`, `partial_required`/`partial_preferred` on recommendations and
+  `GET /matches/jobs/{id}`, explanation line, amber "Partially covered skills"
+  on the Jobs page. Evaluation profiles and jobs are unchanged.
+- Tests: `tests/test_partial_coverage.py`.
+
 ## Early Matching Prototype
 
 Migration:

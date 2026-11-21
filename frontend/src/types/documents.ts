@@ -87,6 +87,9 @@ export type MatchedSkill = {
   matched_via: "taxonomy_concept" | "skill_name";
 };
 
+/** Not matched, but shares a direct ESCO broader skill/knowledge concept with a CV skill (D050). */
+export type PartialSkill = { label: string; broader_concept: string; candidate_skill: string };
+
 export type MissingSkill = {
   label: string;
   /** "skill_name": the job skill has no approved taxonomy link, so it was looked for by name only. */
@@ -112,6 +115,8 @@ export type RecommendationItem = {
   matched_preferred: MatchedSkill[];
   missing_required: MissingSkill[];
   missing_preferred: MissingSkill[];
+  partial_required: PartialSkill[];
+  partial_preferred: PartialSkill[];
   candidate_skill_count: number;
   job_skill_count: number;
   explanation: string;
