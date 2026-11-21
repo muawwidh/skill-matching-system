@@ -23,10 +23,14 @@ Scoring uses:
 
 | Variant | Recall@5 | Recall@10 | Recall@20 | MRR | nDCG@10 |
 | --- | --- | --- | --- | --- | --- |
-| A | 43/84 = 0.512 | 25/42 = 0.595 | 6/7 = 0.857 | 0.620 | 0.704 |
+| A | 43/84 = 0.512 | 25/42 = 0.595 | 6/7 = 0.857 | 0.620 | 0.703 |
 | B | 3/28 = 0.107 | 13/42 = 0.310 | 23/42 = 0.548 | 0.151 | 0.306 |
 | C | 3/28 = 0.107 | 13/42 = 0.310 | 23/42 = 0.548 | 0.150 | 0.317 |
 | D | 3/28 = 0.107 | 3/14 = 0.214 | 9/14 = 0.643 | 0.154 | 0.382 |
+
+nDCG@10 for A is 0.70349; it was first published as 0.704 (rounding error,
+corrected 2026-11-21). All other values were re-checked against the stored
+output.
 
 ## Per query
 

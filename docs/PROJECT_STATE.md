@@ -420,13 +420,25 @@ cap 1,000 for this run).
   takes the rest (two full loads of 22,259 concepts / 170,721 labels per job,
   about 3.1 s each, plus a linear fuzzy scan, about 0.08 s per term).
 - Jobs page: median 31.0 s, max 31.8 s (20 runs, 978 candidate-visible jobs).
-  29.2 s of it is `fresh_job_ids` rebuilding every job's representation for
+  29.2 s of it was `fresh_job_ids` rebuilding every job's representation for
   the unindexed count; the exact vector search takes 12 ms, so no pgvector
-  index is needed. Not fixed yet.
+  index is needed. Fixed in the follow-ups below.
 - Evaluation isolation: compare-matching rankings A-D are byte-identical to
   the final labelled run, and `evaluate` output is byte-identical
   (Recall@5 43/84, MRR 4289/6916). Private outputs in
   `evaluation/local/live-import-isolation-check-20261121/`.
+
+Follow-ups (2026-11-21), details in `docs/verification/live-jobs-2026-11-21.md`:
+1. Jobs page unindexed count from stored embedding status
+   (`RetrievalService.ready_job_ids`): median 31.0 s -> 2.24 s.
+2. Taxonomy linking through a cached in-memory concept index
+   (`app/taxonomy/concept_index.py`; `TaxonomyLinker` stays the reference):
+   7.47 s -> 0.099 s per job, identical candidates and automatic approvals.
+3. Staff review queues default to CV, manual and evaluation terms; `scope`
+   filter for live jobs (D057). Suggestions are kept.
+4. Per-source share of the live-job cap, `LIVE_JOBS_MAX_SOURCE_SHARE` 0.7
+   (D058); applies from the next import.
+5. nDCG@10 for variant A corrected to 0.703 (0.70349).
 
 ## Early Matching Prototype
 

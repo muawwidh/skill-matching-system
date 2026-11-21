@@ -855,7 +855,7 @@ Evidence: the offline comparison on the frozen Phase 5 benchmark
 
 | Variant | Recall@5 | Recall@10 | Recall@20 | MRR | nDCG@10 |
 | --- | --- | --- | --- | --- | --- |
-| A retrieval only | 0.512 | 0.595 | 0.857 | 0.620 | 0.704 |
+| A retrieval only | 0.512 | 0.595 | 0.857 | 0.620 | 0.703 |
 | B coverage, name only | 0.107 | 0.310 | 0.548 | 0.151 | 0.306 |
 | C coverage, concept then name | 0.107 | 0.310 | 0.548 | 0.150 | 0.317 |
 | D coverage + similarity tie-break (former app) | 0.107 | 0.214 | 0.643 | 0.154 | 0.382 |

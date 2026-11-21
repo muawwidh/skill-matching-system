@@ -276,3 +276,8 @@ Private outputs are in
   `5410babf3e44f893a9fb054b6b5d96644d877addf01c7ef8ee174a9740ac1842`;
 - `phase5-final-evaluation.json`, SHA-256
   `3dfe8438c668c2169a2837a6fcd704f611983b711311a32a958860e9dfe91fa2`.
+
+## Isolation from live jobs (2026-11-21)
+
+After 977 live jobs were imported, the final labelled run was repeated and is
+byte-identical (rankings and metrics). See `live-jobs-2026-11-21.md`.
