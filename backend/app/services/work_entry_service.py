@@ -21,6 +21,10 @@ def current_month(today: date | None = None) -> date:
     return date(today.year, today.month, 1)
 
 
+# Similar-meaning threshold for CV title detection (dev CVs, 2026-11-21): role-word parts had a
+# median nearest-label similarity of 0.918, company parts 0.863 and other parts p90 0.886.
+TITLE_SIMILARITY = 0.92
+
 class WorkEntryService:
     def __init__(self, db: Session, today: date | None = None) -> None:
         self.db = db
@@ -114,17 +118,35 @@ class WorkEntryService:
                 seen.add(m.concept_id)
         return results
 
+    def _title_signal(self):
+        """Occupation signal for CV title detection: a strong string match to an ESCO occupation
+        (>= 0.95) or similar meaning (nearest label similarity >= TITLE_SIMILARITY)."""
+        from app.taxonomy.occupation_embeddings import nearest_occupations
+        from app.taxonomy.occupations import AUTO_APPROVE_CONFIDENCE
+
+        catalog = occupation_catalog(self.db)
+        cache: dict[str, bool] = {}
+
+        def signal(text: str) -> bool:
+            if text not in cache:
+                strong = any(m.confidence >= AUTO_APPROVE_CONFIDENCE for m in catalog.suggest(text, 1))
+                cache[text] = strong or any(sim >= TITLE_SIMILARITY for _, sim in nearest_occupations(self.db, text, 1))
+            return cache[text]
+        return signal
+
     def detected(self, user: User) -> list[dict]:
         """Dated entries found in the candidate's processed CVs that are not entered yet."""
         profile_id = self._profile_id(user)
         stored = {(e.start_month, e.end_month) for e in self.repository.list_entries(profile_id)}
         found: dict[tuple, dict] = {}
+        signal = self._title_signal()
         for text in self.repository.work_section_texts(profile_id, WORK_SECTIONS):
-            for item in detect_entries(text, self.today):
+            for item in detect_entries(text, self.today, signal):
                 key = (item.start_month, item.end_month)
                 if key in stored or key in found:
                     continue
-                found[key] = {"title": item.title, "start_month": date_to_month(item.start_month),
+                found[key] = {"title": item.title, "title_choices": list(item.title_choices),
+                              "start_month": date_to_month(item.start_month),
                               "end_month": date_to_month(item.end_month), "month_precision": item.month_precision}
         self.db.commit()
         return sorted(found.values(), key=lambda e: e["start_month"], reverse=True)

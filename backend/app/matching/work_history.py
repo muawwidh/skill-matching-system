@@ -2,14 +2,19 @@
 
 Nothing detected here is stored or used for matching until the candidate
 confirms it. Detection looks for a date range on one line ("Jan 2020 -
-Present", "03/2018 - 05/2020", "2016 - 2019") in work-experience sections
-and takes the rest of that line, or the line above, as a title guess.
+Present", "03/2018 - 05/2020", "2016 - 2019") in work-experience sections.
+The job title is chosen from the parts next to it by signal, never a
+company-like part; when uncertain the candidate is asked to choose
+(`app/matching/work_titles.py`).
 """
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
+from typing import Callable
+
+from app.matching.work_titles import choose_title, parts, short_line
 
 _MONTHS = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6, "jul": 7, "aug": 8, "sep": 9, "oct": 10,
            "nov": 11, "dec": 12}
@@ -19,16 +24,16 @@ _DATE = (rf"(?:{_MONTH}\.?,?\s+(?:19|20)\d{{2}}|\d{{1,2}}\s*[/.]\s*(?:19|20)\d{{
          rf"(?:19|20)\d{{2}}\s*[/.-]\s*\d{{1,2}}(?!\d)|(?:19|20)\d{{2}})")
 _OPEN = r"(?:present|current|now|today|ongoing|to date)"
 RANGE = re.compile(rf"(?P<start>{_DATE})\s*(?:–|—|-|to|until|till)\s*(?P<end>{_DATE}|{_OPEN})", re.I)
-_SPLIT = re.compile(r"\s+(?:at|@)\s+|\s+[|–—-]\s+|,\s+|\t")
 WORK_SECTIONS = frozenset({"work_experience", "experience", "full_text"})
 
 
 @dataclass(frozen=True)
 class DetectedEntry:
-    title: str
+    title: str  # "" when uncertain: the candidate chooses from `title_choices` or types it
     start_month: date
     end_month: date | None  # None: present
     month_precision: bool  # False when a date had only a year
+    title_choices: tuple[str, ...] = field(default=())
 
 
 def parse_month(value: str, is_end: bool, today: date) -> tuple[date | None, bool]:
@@ -55,20 +60,25 @@ def parse_month(value: str, is_end: bool, today: date) -> tuple[date | None, boo
     return None, False
 
 
-def _title_guess(line: str, match: re.Match, previous: str) -> str:
-    rest = (line[:match.start()] + " " + line[match.end():]).strip(" ,|–—-:()\t")
-    candidate = rest if len(re.sub(r"[^A-Za-z]", "", rest)) >= 3 else previous
-    return _SPLIT.split(candidate.strip())[0].strip(" ,|–—-:()")[:255] if candidate else ""
+def _adjacent_parts(lines: list[str], index: int, reach: int = 2) -> list[str]:
+    """Parts of up to `reach` lines above and below, nearest first; a direction stops at another
+    date range, a bullet or a sentence."""
+    by_distance: list[list[str]] = [[] for _ in range(reach)]
+    for step in (-1, 1):
+        for distance in range(1, reach + 1):
+            j = index + step * distance
+            if not 0 <= j < len(lines) or RANGE.search(lines[j]) or not short_line(lines[j]):
+                break
+            by_distance[distance - 1].extend(parts(lines[j]))
+    return [part for row in by_distance for part in row]
 
 
-def detect_entries(text: str, today: date) -> list[DetectedEntry]:
+def detect_entries(text: str, today: date, occupation_signal: Callable[[str], bool] | None = None
+                   ) -> list[DetectedEntry]:
     entries: list[DetectedEntry] = []
-    previous = ""
     current_month = date(today.year, today.month, 1)
-    for raw in (text or "").splitlines():
-        line = raw.strip()
-        if not line:
-            continue
+    lines = [raw.strip() for raw in (text or "").splitlines() if raw.strip()]
+    for index, line in enumerate(lines):
         for match in RANGE.finditer(line):
             start, start_known = parse_month(match["start"], False, today)
             end, end_known = parse_month(match["end"], True, today)
@@ -76,6 +86,7 @@ def detect_entries(text: str, today: date) -> list[DetectedEntry]:
                 continue
             if match["end"] and not re.fullmatch(_OPEN, match["end"].strip(), re.I) and end is None:
                 continue
-            entries.append(DetectedEntry(_title_guess(line, match, previous), start, end, start_known and end_known))
-        previous = line
+            same_line = parts(line[:match.start()] + " | " + line[match.end():])
+            choice = choose_title(same_line, _adjacent_parts(lines, index), occupation_signal)
+            entries.append(DetectedEntry(choice.title, start, end, start_known and end_known, tuple(choice.choices)))
     return entries

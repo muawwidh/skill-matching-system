@@ -6,7 +6,7 @@ import { createWorkEntry, deleteWorkEntry, listDetectedWorkEntries, listWorkEntr
 import type { DetectedWorkEntry, Occupation, WorkEntry, WorkEntryPayload } from "../types/experience";
 import { OccupationPicker } from "./OccupationPicker";
 
-type Draft = WorkEntryPayload & { id: string | null; present: boolean; occupation: Occupation | null };
+type Draft = WorkEntryPayload & { id: string | null; present: boolean; occupation: Occupation | null; titleChoices?: string[] };
 
 const emptyDraft: Draft = {
   id: null,
@@ -76,7 +76,7 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
 
   function useDetected(item: DetectedWorkEntry) {
     setDraft({ ...emptyDraft, title: item.title, start_month: item.start_month, end_month: item.end_month,
-      present: item.end_month === null, source: "cv_detected" });
+      present: item.end_month === null, source: "cv_detected", titleChoices: item.title ? [] : item.title_choices ?? [] });
   }
 
   function submit(event: FormEvent) {
@@ -105,6 +105,24 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
 
       {draft ? (
         <form className="mt-4 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3" onSubmit={submit}>
+          {draft.titleChoices && draft.titleChoices.length > 0 ? (
+            <fieldset className="text-sm">
+              <legend className="text-slate-700">Which of these is your job title?</legend>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {draft.titleChoices.map((choice) => (
+                  <button
+                    key={choice}
+                    className={`rounded-md border px-2 py-1 ${draft.title === choice ? "border-ocean bg-ocean/10" : "border-slate-300"}`}
+                    onClick={() => setDraft({ ...draft, title: choice })}
+                    type="button"
+                  >
+                    {choice}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">Or type it below if none of these is right.</p>
+            </fieldset>
+          ) : null}
           <label className="block text-sm">
             <span className="text-slate-700">Job title</span>
             <input className={`mt-1 w-full ${field}`} maxLength={255} required value={draft.title}
@@ -181,7 +199,7 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
             {detected.data.map((item) => (
               <li key={`${item.start_month}-${item.end_month}`} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span>
-                  {item.title || "Untitled"} · {monthLabel(item.start_month)} – {monthLabel(item.end_month)}
+                  {item.title || (item.title_choices?.length ? "Job title to choose" : "Untitled")} · {monthLabel(item.start_month)} – {monthLabel(item.end_month)}
                   {item.month_precision ? "" : " (year only: check the months)"}
                 </span>
                 <button className="rounded-md border border-slate-300 px-2 py-1 text-xs" onClick={() => useDetected(item)} type="button">

@@ -65,7 +65,8 @@ class WorkEntryRead(BaseModel):
 
 class DetectedWorkEntryRead(BaseModel):
     """A dated entry found in the candidate's CV; shown to pre-fill the form, never stored by itself."""
-    title: str
+    title: str  # "" when uncertain: ask with `title_choices`
+    title_choices: list[str] = []  # "Which of these is your job title?"; never company-like parts
     start_month: str
     end_month: str | None
     month_precision: bool

@@ -21,4 +21,11 @@ export type WorkEntryPayload = {
   source: "manual" | "cv_detected";
 };
 
-export type DetectedWorkEntry = { title: string; start_month: string; end_month: string | null; month_precision: boolean };
+export type DetectedWorkEntry = {
+  title: string;
+  /** Offered when the title is uncertain ("" title); never company lines. */
+  title_choices?: string[];
+  start_month: string;
+  end_month: string | null;
+  month_precision: boolean;
+};

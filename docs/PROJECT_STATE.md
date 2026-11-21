@@ -604,6 +604,19 @@ Occupation suggestions by meaning (2026-11-21):
 - Never used for job occupations (rejected in D060).
 - Tests: `tests/test_occupation_embeddings.py`.
 
+CV work-entry title fix (2026-11-21): the pre-fill took the first part of
+the date line or the line above, often the company. Now
+(`app/matching/work_titles.py`): parts of the date line, then up to two
+lines above and below (stopping at another date range, a bullet or a
+sentence) are classified. A legal form (GmbH, Ltd, UAB, AS, Oy, SIA, S.A.,
+...) always marks a company; organisation words (University, Bank, ...)
+mark a company only without a role signal. Title-like parts have a role
+word or an occupation signal (string match >= 0.95 or nearest-label
+similarity >= 0.92). A single title-like part on the date line, else on the
+adjacent lines, is the title; otherwise the form asks "Which of these is
+your job title?" (title-like parts, or up to 4 non-company parts). Company
+parts are never offered or stored. Tests: `tests/test_work_titles.py`.
+
 ## Early Matching Prototype
 
 Migration:

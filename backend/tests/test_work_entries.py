@@ -75,6 +75,7 @@ def test_detected_entries_prefill_from_cv_dates_and_skip_stored_ones(client, db_
     assert {(d["start_month"], d["end_month"], d["month_precision"]) for d in detected} == {
         ("2019-01", "2021-03", True), ("2016-01", "2018-12", False)}
     assert {d["title"] for d in detected} == {"Software Engineer", "Data Analyst"}
+    assert all(d["title_choices"] == [] for d in detected)
     assert db_session.scalar(select(func.count()).select_from(CandidateWorkEntry)) == 0  # nothing stored
     client.post("/candidates/me/work-entries", headers=headers, json={
         "title": "Software Engineer", "start_month": "2019-01", "end_month": "2021-03", "source": "cv_detected"})
@@ -97,3 +98,11 @@ def test_account_deletion_removes_work_entries(client, db_session):
     assert client.post("/auth/delete-account", headers=headers,
                        json={"password": "correct-horse-password"}).status_code == 204
     assert db_session.scalar(select(func.count()).select_from(CandidateWorkEntry)) == 0
+
+
+def test_detected_entry_asks_instead_of_offering_the_company(client, db_session):
+    add_esco_occupations(db_session)
+    headers = register(client, "candidate@example.com")
+    _paste_cv(client, headers, "Work Experience\nExample GmbH | Northwind | 2016 - 2018\n\nSkills\nPython")
+    detected = client.get("/candidates/me/work-entries/detected", headers=headers).json()
+    assert [(d["title"], d["title_choices"]) for d in detected] == [("", ["Northwind"])]
