@@ -407,6 +407,27 @@ Item 5 (2026-11-21): retrieval scope (D056, no migration).
 - On the development DB the candidate view currently holds 1 active manual
   job until live jobs are imported (item 6).
 
+Item 6 (2026-11-21): first live import on the development DB (snapshot
+`~/skillgap-db-snapshots/skillgap-pre-live-import-20261121T131017Z.dump`,
+cap 1,000 for this run).
+- Fetched 7,339 (Arbeitnow 2,792, Greenhouse 4,547); 977 created (Arbeitnow
+  911, Greenhouse 66), 23 content duplicates; skipped 139 duplicate IDs,
+  1,286 non-English, 2,342 outside Europe and not remote, 2,572 over the cap.
+- 7.36 extracted skills per job; 75.7 % of job skills have an automatically
+  approved taxonomy link; 20,184 link candidates left pending.
+- 11,007 s in total: about 50 s fetch, 11.1 s per job for the pipeline,
+  155 s to embed all 977. Extraction takes about 5 ms per job; taxonomy linking
+  takes the rest (two full loads of 22,259 concepts / 170,721 labels per job,
+  about 3.1 s each, plus a linear fuzzy scan, about 0.08 s per term).
+- Jobs page: median 31.0 s, max 31.8 s (20 runs, 978 candidate-visible jobs).
+  29.2 s of it is `fresh_job_ids` rebuilding every job's representation for
+  the unindexed count; the exact vector search takes 12 ms, so no pgvector
+  index is needed. Not fixed yet.
+- Evaluation isolation: compare-matching rankings A-D are byte-identical to
+  the final labelled run, and `evaluate` output is byte-identical
+  (Recall@5 43/84, MRR 4289/6916). Private outputs in
+  `evaluation/local/live-import-isolation-check-20261121/`.
+
 ## Early Matching Prototype
 
 Migration:
