@@ -546,6 +546,16 @@ Item 4 (2026-11-21): job occupation.
   21 three-digit ISCO groups. Linking all titles: 0.69 s cold, 6 ms warm.
 - Tests: `tests/test_job_occupation.py`.
 
+Item 5 (2026-11-21): relevance.
+- `ExperienceService.candidate_periods/relevant_months/assess`: entries with
+  a chosen occupation ("present" = current month); related when the entry's
+  and the job's occupations share the 3-digit ISCO group; overlapping and
+  adjacent months merged (`merged_months`), relevant months summed. Shown
+  years are whole half-years rounded down; "meets" compares months with
+  minimum x 12. No assessment without a job minimum, a determined job
+  occupation and at least one entry with an occupation.
+- Tests: `tests/test_relevant_experience.py`, `tests/test_experience.py`.
+
 ## Early Matching Prototype
 
 Migration:
