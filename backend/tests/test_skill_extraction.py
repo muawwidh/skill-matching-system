@@ -323,10 +323,10 @@ def test_matching_reports_coverage_counts_from_approved_skills(
     assert len(recommendations["results"]) == 1
     recommendation = recommendations["results"][0]
     assert recommendation["rank"] == 1 and recommendation["job_id"] == job_id
-    assert recommendation["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
-    assert recommendation["matched_preferred"] == [{"label": "fastapi", "matched_via": "skill_name"}]
+    assert recommendation["matched_required"] == [{"label": "python", "matched_via": "skill_name", "reviewed": True}]
+    assert recommendation["matched_preferred"] == [{"label": "fastapi", "matched_via": "skill_name", "reviewed": True}]
     # Docker has no approved taxonomy link and no same-name CV skill: missing, checked by name only.
-    assert recommendation["missing_required"] == [{"label": "docker", "checked_via": "skill_name"}]
+    assert recommendation["missing_required"] == [{"label": "docker", "checked_via": "skill_name", "reviewed": True}]
     assert recommendation["missing_preferred"] == []
     assert "score" not in recommendation and "retrieval_similarity" not in recommendation
     assert recommendation["job_skill_count"] == 3
@@ -470,7 +470,7 @@ def test_missing_skill_schema_reads_legacy_bare_labels() -> None:
     from app.schemas.documents import MissingSkillRead
 
     # Rows written before D040 held bare labels; only concept-checked skills were stored as missing.
-    assert MissingSkillRead.model_validate("git").model_dump() == {"label": "git", "checked_via": "taxonomy_concept"}
+    assert MissingSkillRead.model_validate("git").model_dump() == {"label": "git", "checked_via": "taxonomy_concept", "reviewed": True}
     assert MissingSkillRead.model_validate({"label": "rust", "checked_via": "skill_name"}).checked_via == "skill_name"
 
 
