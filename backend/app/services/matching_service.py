@@ -311,8 +311,12 @@ class MatchingService:
         start = (page - 1) * page_size
         results = []
         if ranked[start:start + page_size]:
+            from app.services.experience_service import ExperienceService
+
             candidate_items = self._candidate_items(profile.id)
-            results = [{"rank": start + offset, **self._coverage(job, candidate_items)}
+            experience = ExperienceService(self.db)
+            results = [{"rank": start + offset, **self._coverage(job, candidate_items),
+                        "job_occupation": experience.job_occupation(job)}
                        for offset, job in enumerate(ranked[start:start + page_size], start=1)]
         # Before the commit, which would expire and reload every active job one by one.
         unindexed = self._unindexed_job_count(retrieval, active_jobs, excluded)

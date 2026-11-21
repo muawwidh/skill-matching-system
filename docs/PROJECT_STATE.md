@@ -536,6 +536,16 @@ Item 3 (2026-11-21): occupation choice.
 - Work entry form: radio list of the suggestions plus "None of these".
 - Tests: `tests/test_occupation_suggestions.py`.
 
+Item 4 (2026-11-21): job occupation.
+- `ExperienceService.job_occupation`: cleaned job title linked to an ESCO
+  occupation with the existing automatic-approval rule (unique top,
+  confidence >= 0.95); otherwise "occupation not determined". Manual and
+  live jobs only, computed on read (memoized per title); evaluation jobs are
+  never linked. Recommendations carry `job_occupation`; the job card shows it.
+- Dev DB: 230 of 977 live jobs (23.5 %) and the 1 manual job determined,
+  21 three-digit ISCO groups. Linking all titles: 0.69 s cold, 6 ms warm.
+- Tests: `tests/test_job_occupation.py`.
+
 ## Early Matching Prototype
 
 Migration:

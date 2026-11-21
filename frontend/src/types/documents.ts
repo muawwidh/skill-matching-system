@@ -117,7 +117,17 @@ export type MatchingProfile = {
 };
 
 /** One retrieved job (D045): its retrieval rank, explained by skill coverage. */
+/** The job title's ESCO occupation (D060); determined false = "occupation not determined". */
+export type JobOccupation = {
+  determined: boolean;
+  concept_id: string | null;
+  label: string | null;
+  isco_code: string | null;
+  isco_unit_group: string;
+};
+
 export type RecommendationItem = {
+  job_occupation?: JobOccupation | null;
   rank: number;
   job_id: string;
   matched_required: MatchedSkill[];

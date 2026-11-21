@@ -10,6 +10,7 @@ import {
   RECOMMENDATION_PAGE_SIZES,
   refreshRecommendations,
 } from "../api/documents";
+import { JobExperienceLine } from "../components/JobExperienceLine";
 import { JobMatchPanel } from "../components/JobMatchPanel";
 import { SectionList } from "../components/SectionList";
 import { LiveJobImportPanel } from "../components/LiveJobImportPanel";
@@ -243,6 +244,7 @@ export function JobsPage() {
           {pager}
           {recommendations?.results.map((item) => (
             <JobCard key={item.job_id} job={item.job}>
+              <JobExperienceLine item={item} />
               <JobMatchPanel match={item} rankTotal={recommendations.total} />
               {accessToken ? (
                 <SkillReviewPanel

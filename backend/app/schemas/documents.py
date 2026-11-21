@@ -257,6 +257,15 @@ class JobCoverageRead(BaseModel):
     job: JobRead
 
 
+class JobOccupationRead(BaseModel):
+    """The job title's ESCO occupation (D060), or `determined: false` ("occupation not determined")."""
+    determined: bool
+    concept_id: UUID | None = None
+    label: str | None = None
+    isco_code: str | None = None
+    isco_unit_group: str = ""
+
+
 class RecommendationItem(BaseModel):
     """One retrieved job (D045): its position in the top-N, explained by skill coverage."""
     rank: int
@@ -271,6 +280,7 @@ class RecommendationItem(BaseModel):
     job_skill_count: int
     explanation: str
     job: JobRead
+    job_occupation: JobOccupationRead | None = None
 
 
 class RecommendationList(BaseModel):
