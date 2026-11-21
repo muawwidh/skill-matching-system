@@ -494,6 +494,22 @@ Startup cache warm-up (2026-11-21, D059):
   after the warm-up has finished 0.49-0.50 s; during the warm-up 3.4-3.7 s.
 - Tests: `tests/test_warmup.py`.
 
+## Relevant Experience (reduced version, D060)
+
+Item 1 (2026-11-21): minimum required years.
+- `app/matching/experience.py` `minimum_required_years(text)`: digits 1-25
+  or number words, "+", ranges (lower bound); accepted when followed by
+  experience/expertise/track record, or when requirement-shaped (+, range,
+  cue such as "at least", line start) and followed by in/of/as/... or an
+  -ing verb; dropped in clauses with company-age, data-retention or benefit
+  cues (history, founded, for over, over the last, next N years, years
+  running, of service, sabbatical, retained, kept for, ago, on the market,
+  ...) or preference cues; the first remaining mention counts. Computed on
+  read from the job text; nothing stored, extraction unchanged.
+- Live jobs with a minimum: 428 of 977 (43.8 %), up from 359 (36.7 %) via
+  the extracted experience indicators; no values above 15.
+- Tests: `tests/test_experience.py`.
+
 ## Early Matching Prototype
 
 Migration:
