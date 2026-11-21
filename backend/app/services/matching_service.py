@@ -37,6 +37,8 @@ class SkillItem:
     concept_id: UUID | None = None
     concept_label: str | None = None
     requirement: str = ""
+    # False for a pending skill on a live job: automatically extracted, not reviewed (D054).
+    reviewed: bool = True
 
 
 @dataclass
@@ -66,6 +68,7 @@ class _JobGroup:
     concept_id: UUID | None
     names: set[str]
     required: bool
+    reviewed: bool = False
 
 
 def _sorted_labels(values) -> list[str]:
@@ -88,6 +91,7 @@ def _job_groups(job_items: list[SkillItem]) -> list[_JobGroup]:
         )
         group.names.add(item.name)
         group.required |= item.requirement == "required"
+        group.reviewed |= item.reviewed
     by_name: dict[str, _JobGroup] = {}
     for item in job_items:
         if item.concept_id is not None:
@@ -96,6 +100,7 @@ def _job_groups(job_items: list[SkillItem]) -> list[_JobGroup]:
         if group is None:
             group = by_name.setdefault(item.name, _JobGroup(item.name, None, {item.name}, False))
         group.required |= item.requirement == "required"
+        group.reviewed |= item.reviewed
     return [*by_concept.values(), *by_name.values()]
 
 
@@ -143,15 +148,18 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
              if parent_id in candidate_broader),
             key=lambda pair: (pair[0].casefold(), pair[1].casefold()),
         ) if via is None and group.concept_id is not None else []
+        # A group is reviewed when any of its occurrences is approved; only then is the flag omitted.
+        flag = {} if group.reviewed else {"reviewed": False}
         if via is not None:
             target = result.matched_required if group.required else result.matched_preferred
-            target.append({"label": group.label, "matched_via": via})
+            target.append({"label": group.label, "matched_via": via, **flag})
         elif shared:
             target = result.partial_required if group.required else result.partial_preferred
-            target.append({"label": group.label, "broader_concept": shared[0][0], "candidate_skill": shared[0][1]})
+            target.append({"label": group.label, "broader_concept": shared[0][0], "candidate_skill": shared[0][1],
+                           **flag})
         else:
             target = result.missing_required if group.required else result.missing_preferred
-            target.append({"label": group.label, "checked_via": checked_via})
+            target.append({"label": group.label, "checked_via": checked_via, **flag})
 
     def by_label(entry: dict) -> tuple[str, str]:
         return entry["label"].casefold(), entry["label"]
@@ -191,6 +199,12 @@ def build_explanation(result: CoverageResult) -> str:
     for entry in result.partial_required + result.partial_preferred:
         lines.append(f"{entry['label']}: not in your CV, but related: you have {entry['candidate_skill']} "
                      f"(same ESCO area: {entry['broader_concept']}).")
+    unreviewed = [entry["label"] for entry in (result.matched_required + result.matched_preferred
+                                               + result.partial_required + result.partial_preferred
+                                               + result.missing_required + result.missing_preferred)
+                  if entry.get("reviewed") is False]
+    if unreviewed:
+        lines.append("Automatically extracted, not reviewed: " + ", ".join(unreviewed) + ".")
     by_name = [entry["label"] for entry in result.missing_required + result.missing_preferred
                if entry["checked_via"] == CHECKED_VIA_NAME]
     if by_name:
@@ -323,8 +337,9 @@ class MatchingService:
         concepts = self.repository.approved_skill_concepts("candidate", skills)
         return [self._item(skill, concepts.get(skill.id), "") for skill in skills]
 
-    def _job_items(self, job_id: UUID) -> list[SkillItem]:
-        skills = self.repository.list_matchable_job_skills(job_id)
+    def _job_items(self, job_id: UUID, include_unreviewed: bool = False) -> list[SkillItem]:
+        """Approved job skills; with `include_unreviewed` (live jobs, D054) also pending ones."""
+        skills = self.repository.list_matchable_job_skills(job_id, include_unreviewed)
         concepts = self.repository.approved_skill_concepts("job", skills)
         return [self._item(skill, concepts.get(skill.id), skill.requirement_type) for skill in skills]
 
@@ -336,10 +351,14 @@ class MatchingService:
             concept_id=concept[0] if concept else None,
             concept_label=concept[1] if concept else None,
             requirement=requirement,
+            reviewed=skill.review_status == "approved",
         )
 
     def _coverage(self, job: Job, candidate_items: list[SkillItem]) -> dict:
-        job_items = self._job_items(job.id)
+        from app.job_sources import NON_LIVE_SOURCES
+
+        # Live jobs are rarely reviewed: their pending skills count, flagged as not reviewed (D054).
+        job_items = self._job_items(job.id, include_unreviewed=job.source not in NON_LIVE_SOURCES)
         concepts = {item.concept_id for item in candidate_items + job_items if item.concept_id is not None}
         broader = self.repository.specific_esco_broader_concepts(concepts)
         result = compute_coverage(candidate_items, job_items, broader)

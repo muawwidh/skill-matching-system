@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # Re-embed a profile/job automatically after a committed change (D046). The CLI stays for bulk runs.
     AUTO_REINDEX: bool = True
 
-    # Live job import (D052-D055). Lists accept "a,b" or a JSON array.
+    # Live job import (D052-D056). Lists accept "a,b" or a JSON array.
     LIVE_JOB_SOURCES: str = "arbeitnow,greenhouse"
     # Greenhouse job-board tokens, verified 2026-11-21 to return EU/remote English postings.
     GREENHOUSE_BOARDS: str = (
@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     LIVE_JOBS_ARCHIVE_AFTER_DAYS: int = Field(default=14, ge=1)
     JOB_SOURCE_MIN_INTERVAL_SECONDS: float = Field(default=1.5, ge=0)
     JOB_SOURCE_USER_AGENT: str = "skillgap-job-import/0.1"
-    # Jobs page scope (D054): evaluation jobs are not shown to candidates unless enabled.
+    # Jobs page scope (D056): evaluation jobs are not shown to candidates unless enabled.
     CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS: bool = False
 
     model_config = SettingsConfigDict(

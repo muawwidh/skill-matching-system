@@ -8,6 +8,10 @@ type JobMatchPanelProps = {
   rankTotal: number;
 };
 
+const UNREVIEWED = "automatically extracted, not reviewed";
+const unreviewedClass = (item: { reviewed?: boolean }) => (item.reviewed === false ? " border border-dashed border-slate-400" : "");
+const unreviewedNote = (item: { reviewed?: boolean }) => (item.reviewed === false ? ` · ${UNREVIEWED}` : "");
+
 const MATCHED_VIA_LABEL: Record<MatchedSkill["matched_via"], string> = {
   taxonomy_concept: "Matched via taxonomy concept",
   skill_name: "Matched by same skill name",
@@ -21,9 +25,9 @@ function MatchedChips({ items }: { items: MatchedSkill[] }) {
     <div className="flex flex-wrap gap-1.5">
       {items.map((item) => (
         <span
-          className="cursor-help rounded bg-emerald-50 px-2 py-1 text-xs text-emerald-800"
+          className={`cursor-help rounded bg-emerald-50 px-2 py-1 text-xs text-emerald-800${unreviewedClass(item)}`}
           key={item.label}
-          title={MATCHED_VIA_LABEL[item.matched_via]}
+          title={MATCHED_VIA_LABEL[item.matched_via] + unreviewedNote(item)}
         >
           {item.label}
         </span>
@@ -45,9 +49,9 @@ function MissingChips({ items }: { items: MissingSkill[] }) {
     <div className="flex flex-wrap gap-1.5">
       {items.map((item) => (
         <span
-          className="cursor-help rounded bg-red-50 px-2 py-1 text-xs text-red-800"
+          className={`cursor-help rounded bg-red-50 px-2 py-1 text-xs text-red-800${unreviewedClass(item)}`}
           key={item.label}
-          title={CHECKED_VIA_LABEL[item.checked_via]}
+          title={CHECKED_VIA_LABEL[item.checked_via] + unreviewedNote(item)}
         >
           {item.label}
         </span>
@@ -61,9 +65,9 @@ function PartialChips({ items }: { items: PartialSkill[] }) {
     <div className="flex flex-wrap gap-1.5">
       {items.map((item) => (
         <span
-          className="cursor-help rounded bg-amber-50 px-2 py-1 text-xs text-amber-900"
+          className={`cursor-help rounded bg-amber-50 px-2 py-1 text-xs text-amber-900${unreviewedClass(item)}`}
           key={item.label}
-          title={`Not in your CV, but related: you have ${item.candidate_skill} (same ESCO area: ${item.broader_concept})`}
+          title={`Not in your CV, but related: you have ${item.candidate_skill} (same ESCO area: ${item.broader_concept})${unreviewedNote(item)}`}
         >
           {item.label}
         </span>
@@ -85,6 +89,9 @@ function CoverageCount({ label, matched, partial, missing }: { label: string; ma
 
 export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
   const partial = [...match.partial_required, ...match.partial_preferred];
+  const hasUnreviewed = [
+    ...match.matched_required, ...match.matched_preferred, ...partial, ...match.missing_required, ...match.missing_preferred,
+  ].some((item) => item.reviewed === false);
   return (
     <section className="mt-4 rounded-md border border-slate-200 bg-white p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -126,6 +133,11 @@ export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
           <MissingChips items={[...match.missing_required, ...match.missing_preferred]} />
         </div>
       </div>
+      {hasUnreviewed ? (
+        <p className="mt-3 text-xs text-slate-600">
+          Skills with a dashed outline were {UNREVIEWED}: they come from the job posting text and may be incomplete or wrong.
+        </p>
+      ) : null}
       <p className="mt-3 whitespace-pre-line text-xs text-slate-600">{match.explanation}</p>
     </section>
   );

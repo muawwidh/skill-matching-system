@@ -214,12 +214,15 @@ class JobSkillUpdate(BaseModel):
 class MatchedSkillRead(BaseModel):
     label: str
     matched_via: Literal["taxonomy_concept", "skill_name"]
+    # False: an automatically extracted job skill nobody reviewed (live jobs, D054).
+    reviewed: bool = True
 
 
 class MissingSkillRead(BaseModel):
     label: str
     # Name-only checks cannot rule out the skill appearing under other wording.
     checked_via: Literal["taxonomy_concept", "skill_name"]
+    reviewed: bool = True
 
     @model_validator(mode="before")
     @classmethod
@@ -236,6 +239,7 @@ class PartialSkillRead(BaseModel):
     label: str
     broader_concept: str
     candidate_skill: str
+    reviewed: bool = True
 
 
 class JobCoverageRead(BaseModel):

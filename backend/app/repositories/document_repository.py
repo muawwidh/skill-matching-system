@@ -577,13 +577,15 @@ class DocumentRepository:
             )
         )
 
-    def list_matchable_job_skills(self, job_id: UUID) -> list[JobSkill]:
+    def list_matchable_job_skills(self, job_id: UUID, include_unreviewed: bool = False) -> list[JobSkill]:
+        """Approved job skills; with `include_unreviewed` also pending ones. Rejected never (D054)."""
+        statuses = ("approved", "pending") if include_unreviewed else ("approved",)
         return list(
             self.db.scalars(
                 select(JobSkill)
                 .where(
                     JobSkill.job_id == job_id,
-                    JobSkill.review_status == "approved",
+                    JobSkill.review_status.in_(statuses),
                 )
                 .order_by(JobSkill.normalized_text, JobSkill.id)
             )

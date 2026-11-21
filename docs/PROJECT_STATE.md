@@ -386,6 +386,14 @@ Item 3 (2026-11-21): live job import (D055, no migration).
   `tests/test_contact_stripping.py`.
 - Not yet run against the live APIs on the development DB (item 6).
 
+Item 4 (2026-11-21): unreviewed skills on live jobs (D054, no migration).
+- `list_matchable_job_skills(job_id, include_unreviewed)`; `SkillItem.reviewed`;
+  coverage entries carry `reviewed: false` when only pending occurrences
+  exist; explanation line "Automatically extracted, not reviewed: ...".
+- Jobs page: dashed outline, tooltip and note for unreviewed skills.
+- Tests: `tests/test_live_job_coverage.py` (flagging, live vs manual vs
+  evaluation, rejected excluded, admin review still works).
+
 ## Early Matching Prototype
 
 Migration:

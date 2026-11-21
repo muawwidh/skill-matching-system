@@ -90,15 +90,19 @@ export type CandidateSkillGroup = {
 export type MatchedSkill = {
   label: string;
   matched_via: "taxonomy_concept" | "skill_name";
+  /** false: automatically extracted, not reviewed (live jobs, D054). */
+  reviewed?: boolean;
 };
 
 /** Not matched, but shares a direct ESCO broader skill/knowledge concept with a CV skill (D050). */
-export type PartialSkill = { label: string; broader_concept: string; candidate_skill: string };
+export type PartialSkill = { label: string; broader_concept: string; candidate_skill: string; reviewed?: boolean };
 
 export type MissingSkill = {
   label: string;
   /** "skill_name": the job skill has no approved taxonomy link, so it was looked for by name only. */
   checked_via: "taxonomy_concept" | "skill_name";
+  /** false: automatically extracted, not reviewed (live jobs, D054). */
+  reviewed?: boolean;
 };
 
 export type SkillStatusCounts = { approved: number; pending: number; rejected: number };

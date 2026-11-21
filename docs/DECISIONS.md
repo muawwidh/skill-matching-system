@@ -1083,3 +1083,18 @@ daily Compose service) runs one at a time and:
 
 Each run is stored as a `job_import` processing log with all counts.
 Manual and evaluation jobs are never changed by the import.
+
+## D054 - Unreviewed Skills On Live Jobs Count For Coverage, Flagged
+
+Decided by the project owner on 2026-11-21. This narrows D036's approved-only
+rule for job skills. On live jobs (any source other than `manual` and
+`evaluation`), pending skills are used for coverage, because about 1,500
+postings cannot all be reviewed; rejected skills are never used. Every
+coverage entry that rests only on unreviewed occurrences carries
+`reviewed: false`, the Jobs page shows it with a dashed outline and the note
+"automatically extracted, not reviewed", and the explanation lists those
+skills. Manual and evaluation jobs keep approved-only coverage, and the
+offline comparison (D043) is unchanged. Candidate skills stay approved-only.
+Administrators can still review live job skills; an approved occurrence makes
+the skill reviewed. Job embeddings already included pending skills (only
+rejected ones are left out), so retrieval is unchanged.
