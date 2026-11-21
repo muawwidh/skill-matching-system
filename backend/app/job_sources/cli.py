@@ -20,7 +20,32 @@ def main(argv: list[str] | None = None) -> int:
     verify = commands.add_parser("verify-sources", help="Call each configured Greenhouse board and report job counts.")
     verify.add_argument("--boards", help="Comma-separated tokens to check instead of GREENHOUSE_BOARDS.")
     commands.add_parser("import-live-jobs", help="Fetch, filter, dedupe and process live jobs; archive stale ones.")
+    sample = commands.add_parser("sample-extraction",
+                                 help="Read-only: write a seeded labelling sample of live jobs' extracted skills.")
+    sample.add_argument("--out", type=Path, required=True,
+                        help="New directory, e.g. evaluation/local/live-extraction-sample-<date> (git-ignored).")
+    sample.add_argument("--size", type=int, default=20)
+    sample.add_argument("--seed", type=int, default=20261121)
+    score = commands.add_parser("score-extraction",
+                                help="Precision and missed required skills from a labelled labels.csv.")
+    score.add_argument("--labels", type=Path, required=True)
     args = parser.parse_args(argv)
+
+    if args.command == "sample-extraction":
+        from app.job_sources.extraction_sample import sample as write_sample
+
+        with SessionLocal(info={DISABLED_KEY: True}) as db:
+            result = write_sample(db, args.out, args.size, args.seed)
+        print(json.dumps({"directory": str(result.directory), "population": result.population,
+                          "jobs": len(result.job_ids), "skill_rows": result.skill_rows, "seed": args.seed},
+                         sort_keys=True))
+        return 0
+
+    if args.command == "score-extraction":
+        from app.job_sources.extraction_sample import score as score_labels
+
+        print(json.dumps(score_labels(args.labels), indent=2, sort_keys=True))
+        return 0
 
     if args.command == "import-live-jobs":
         from app.job_sources.registry import build_adapters

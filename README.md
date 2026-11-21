@@ -162,6 +162,17 @@ docker compose exec backend python -m app.job_sources.cli mark-evaluation-jobs -
 
 Administrators can also start an import with "Run import" on the Jobs page.
 
+Labelling the extraction on live jobs (read-only on the database; run from
+`backend/` with `DATABASE_URL` pointing at the database, output under the
+git-ignored `evaluation/local/`):
+
+```bash
+# Seeded random sample of 20 active live jobs -> labels.csv, postings.md, manifest.json
+python -m app.job_sources.cli sample-extraction --out ../evaluation/local/live-extraction-sample-<date> --size 20 --seed 20261121
+# After filling `label` (correct/incorrect) and `missed_required_skills` (';'-separated, or 'none')
+python -m app.job_sources.cli score-extraction --labels ../evaluation/local/live-extraction-sample-<date>/labels.csv
+```
+
 ## Environment Variables
 
 Key variables are documented in `.env.example`.

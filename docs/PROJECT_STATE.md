@@ -464,6 +464,22 @@ Jobs page paging (2026-11-21, D059):
   "Pending" for all job skills.
 - Tests: `tests/test_review_queue_scope.py`, `frontend/tests/reviewStatus.test.ts`.
 
+Live-job extraction labelling sample (2026-11-21):
+- `python -m app.job_sources.cli sample-extraction --out DIR [--size 20]
+  [--seed 20261121]` (`app/job_sources/extraction_sample.py`): seeded random
+  sample of active live jobs; read-only transaction, never overwrites a
+  non-empty directory. Writes `labels.csv` (a `job` row per job with
+  `missed_required_skills`, then a `skill` row per distinct extracted,
+  non-rejected skill with `label`), `postings.md` (posting text and numbered
+  skills) and `manifest.json` (seed, population, job IDs, SHA-256).
+- `score-extraction --labels FILE`: precision (overall, by skill type,
+  requirement and status) and missed required skills (total, jobs with any,
+  mean per labelled job); blank cells count as not labelled.
+- Generated: `evaluation/local/live-extraction-sample-20261121-seed20261121/`
+  (git-ignored): 20 of 977 live jobs (18 Arbeitnow, 2 Greenhouse), 145 skill
+  rows, all automatic. Awaiting labels.
+- Tests: `tests/test_extraction_sample.py`.
+
 ## Early Matching Prototype
 
 Migration:
