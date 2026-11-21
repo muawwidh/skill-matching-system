@@ -417,7 +417,27 @@ class TaxonomyRepository:
                 item.reviewed_by = actor_id
                 item.reviewed_at = datetime.now(timezone.utc)
 
-    def review_terms(self, state: str, query: str, limit: int, offset: int):
+    @staticmethod
+    def review_scope_filter(scope: str):
+        """Which link suggestions a staff review queue shows (D057).
+
+        "default": CV terms and terms of manual/evaluation jobs; "live": terms of live
+        jobs only; "all": everything. Live-job suggestions are kept, just not listed by default.
+        """
+        from app.db.models import ExtractedJobTerm, Job
+        from app.job_sources import NON_LIVE_SOURCES
+
+        candidate = TaxonomyLinkCandidate
+        live_terms = (select(ExtractedJobTerm.id).join(Job, Job.id == ExtractedJobTerm.job_id)
+                      .where(Job.source.not_in(sorted(NON_LIVE_SOURCES))))
+        is_live = and_(candidate.term_source == "job", candidate.extracted_term_id.in_(live_terms))
+        if scope == "live":
+            return is_live
+        if scope == "default":
+            return ~is_live
+        return None
+
+    def review_terms(self, state: str, query: str, limit: int, offset: int, scope: str = "default"):
         candidate = TaxonomyLinkCandidate
         selected = select(ApprovedTaxonomyLink.id).where(
             ApprovedTaxonomyLink.term_source == candidate.term_source,
@@ -429,12 +449,16 @@ class TaxonomyRepository:
             statement = statement.where(~selected, candidate.review_status == "pending")
         elif state == "selected":
             statement = statement.where(selected)
+        term_id = None
         if query:
             try:
                 term_id = UUID(query)
                 statement = statement.where(candidate.extracted_term_id == term_id)
             except ValueError:
                 statement = statement.where(candidate.raw_text.contains(query, autoescape=True))
+        scope_filter = self.review_scope_filter(scope)
+        if scope_filter is not None and term_id is None:  # a lookup by term ID finds the term in any scope
+            statement = statement.where(scope_filter)
         return self.db.execute(statement.order_by(func.max(candidate.updated_at).desc(),
             candidate.term_source, candidate.extracted_term_id).offset(offset).limit(limit)).all()
 
@@ -464,7 +488,8 @@ class TaxonomyRepository:
             .execution_options(populate_existing=True)
         )
 
-    def pending_link_candidates(self, limit: int = 200) -> list[TaxonomyLinkCandidate]:
+    def pending_link_candidates(self, limit: int = 200, scope: str = "default") -> list[TaxonomyLinkCandidate]:
+        scope_filter = self.review_scope_filter(scope)
         return list(
             self.db.scalars(
                 select(TaxonomyLinkCandidate)
@@ -475,6 +500,7 @@ class TaxonomyRepository:
                     selectinload(TaxonomyLinkCandidate.concept).selectinload(TaxonomyConcept.labels),
                 )
                 .where(TaxonomyLinkCandidate.review_status == "pending")
+                .where(*([scope_filter] if scope_filter is not None else []))
                 .where(~select(ApprovedTaxonomyLink.id).where(and_(
                     ApprovedTaxonomyLink.term_source == TaxonomyLinkCandidate.term_source,
                     ApprovedTaxonomyLink.extracted_term_id == TaxonomyLinkCandidate.extracted_term_id,

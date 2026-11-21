@@ -34,9 +34,11 @@ taxonomy_admin = require_roles(settings.ADMIN_ROLE, settings.RESEARCHER_ROLE)
 def review_groups(
     state: str = Query("pending", pattern="^(pending|selected|all)$"),
     q: str = Query("", max_length=200), limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0),
+    scope: str = Query("default", pattern="^(default|live|all)$"),
     current_user: User = Depends(taxonomy_admin), db: Session = Depends(get_db),
 ) -> TaxonomyReviewPage:
-    return TaxonomyService(db).review_groups(state, q, limit, offset)
+    # default: CV, manual and evaluation job terms; live: live-job terms only (D057).
+    return TaxonomyService(db).review_groups(state, q, limit, offset, scope)
 
 
 @router.get("/reviews/{term_source}/{term_id}/history", response_model=list[TaxonomyReviewEventRead])

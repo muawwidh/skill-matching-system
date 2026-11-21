@@ -24,9 +24,10 @@ def list_processing_logs(
 
 @router.get("/mappings/review", response_model=list[TaxonomyLinkCandidateRead])
 def list_taxonomy_mappings_for_review(
+    scope: str = Query("default", pattern="^(default|live|all)$"),
     db: Session = Depends(get_db),
 ) -> list[TaxonomyLinkCandidateRead]:
-    return TaxonomyService(db).pending_links()
+    return TaxonomyService(db).pending_links(scope)
 
 
 @router.get(

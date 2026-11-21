@@ -1110,3 +1110,16 @@ coverage-ordering comparison (D043) search only `source = evaluation`, so live
 jobs added later cannot change their results; `retrieval index jobs --source
 evaluation` re-indexes only that set. The filter is applied in the exact
 vector search itself, so top-N is taken within the allowed sources.
+
+## D057 - Live-Job Link Suggestions Are Not In The Default Review Queue
+
+Decided by the project owner on 2026-11-21. The first live import left
+20,184 pending taxonomy link suggestions on live jobs, which would bury the
+suggestions staff are expected to review. The staff review queues
+(`GET /taxonomy/reviews`, `GET /admin/mappings/review`) therefore default to
+`scope=default`: CV terms and terms of manual and evaluation jobs.
+`scope=live` lists only live-job terms and `scope=all` lists everything; the
+Taxonomy page has a selector for this. A lookup by extracted term ID ignores
+the scope. Live-job suggestions are kept and stay reviewable; high-confidence
+deterministic matches are still approved automatically, and coverage on live
+jobs uses those links as before (D054).

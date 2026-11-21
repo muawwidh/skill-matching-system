@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, ArrowRightLeft, Check, History, Search, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-import { listTaxonomyReviewHistory, listTaxonomyReviews, reviewTaxonomyLink } from "../api/taxonomy";
+import { listTaxonomyReviewHistory, listTaxonomyReviews, reviewTaxonomyLink, type TaxonomyReviewScope } from "../api/taxonomy";
 import type { TaxonomyLinkCandidate, TaxonomyReviewGroup } from "../types/taxonomy";
 
 type Action = { group: TaxonomyReviewGroup; candidate: TaxonomyLinkCandidate; status: "approved" | "rejected" };
@@ -67,11 +67,12 @@ export function TaxonomyReviewPanel({ accessToken }: { accessToken: string }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("");
   const [offset, setOffset] = useState(0);
+  const [scope, setScope] = useState<TaxonomyReviewScope>("default");
   const [confirmation, setConfirmation] = useState<Action | null>(null);
   const [notice, setNotice] = useState("");
   const reviews = useQuery({
-    queryKey: ["taxonomy", "reviews", state, filter, offset],
-    queryFn: () => listTaxonomyReviews(accessToken, state, filter, offset),
+    queryKey: ["taxonomy", "reviews", state, filter, offset, scope],
+    queryFn: () => listTaxonomyReviews(accessToken, state, filter, offset, scope),
   });
   const mutation = useMutation({
     mutationFn: (action: Action) => reviewTaxonomyLink(accessToken, action.candidate.id, action.status,
@@ -106,6 +107,15 @@ export function TaxonomyReviewPanel({ accessToken }: { accessToken: string }) {
       <input aria-label="Find review term" placeholder="Term or extracted term ID" className="min-w-0 flex-1 rounded border border-slate-300 px-3 py-2 text-sm" value={query} onChange={(event) => setQuery(event.target.value)} />
       <button className={button} aria-label="Find review" title="Find review" type="submit"><Search size={16} /></button>
     </form>
+    <label className="mt-3 flex max-w-xl items-center gap-2 text-sm text-slate-700">
+      Show suggestions for
+      <select aria-label="Review scope" className="rounded border border-slate-300 px-2 py-1 text-sm" value={scope}
+        onChange={(event) => { setScope(event.target.value as TaxonomyReviewScope); setOffset(0); }}>
+        <option value="default">CVs, manual and evaluation jobs</option>
+        <option value="live">Live jobs (imported)</option>
+        <option value="all">Everything</option>
+      </select>
+    </label>
     {notice ? <p role="status" className="mt-3 text-sm text-ocean">{notice}</p> : null}
     {mutation.error || reviews.error ? <p role="alert" className="mt-3 text-sm text-red-700">{(mutation.error ?? reviews.error)?.message}</p> : null}
     {reviews.isLoading ? <p className="py-4 text-sm">Loading reviews...</p> : null}

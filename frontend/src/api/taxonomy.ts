@@ -24,7 +24,7 @@ export function listTaxonomyMappings(accessToken: string) {
 }
 
 export function listPendingTaxonomyLinks(accessToken: string) {
-  return apiRequest<TaxonomyLinkCandidate[]>("/admin/mappings/review", { accessToken });
+  return apiRequest<TaxonomyLinkCandidate[]>("/admin/mappings/review?scope=default", { accessToken });
 }
 
 export function importBundledTaxonomySample(accessToken: string) {
@@ -68,8 +68,11 @@ export function reviewTaxonomyLink(
   });
 }
 
-export function listTaxonomyReviews(accessToken: string, state: string, query: string, offset: number) {
-  const params = new URLSearchParams({ state, q: query, offset: String(offset), limit: "20" });
+export type TaxonomyReviewScope = "default" | "live" | "all";
+
+export function listTaxonomyReviews(accessToken: string, state: string, query: string, offset: number,
+                                    scope: TaxonomyReviewScope = "default") {
+  const params = new URLSearchParams({ state, q: query, offset: String(offset), limit: "20", scope });
   return apiRequest<{ items: TaxonomyReviewGroup[]; has_more: boolean }>(`/taxonomy/reviews?${params}`, { accessToken });
 }
 

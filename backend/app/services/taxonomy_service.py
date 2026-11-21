@@ -343,8 +343,8 @@ class TaxonomyService:
             return None
         return self.link_document(term_source, document_id, term_ids=term_ids)
 
-    def pending_links(self) -> list[TaxonomyLinkCandidateRead]:
-        return [self._candidate_read(item) for item in self.repository.pending_link_candidates()]
+    def pending_links(self, scope: str = "default") -> list[TaxonomyLinkCandidateRead]:
+        return [self._candidate_read(item) for item in self.repository.pending_link_candidates(scope=scope)]
 
     def review_link(
         self,
@@ -428,8 +428,8 @@ class TaxonomyService:
                 for item in self.repository.term_candidates(term_source, term_id)],
         }
 
-    def review_groups(self, state: str, query: str, limit: int, offset: int) -> TaxonomyReviewPage:
-        terms = self.repository.review_terms(state, query.strip(), limit + 1, offset)
+    def review_groups(self, state: str, query: str, limit: int, offset: int, scope: str = "default") -> TaxonomyReviewPage:
+        terms = self.repository.review_terms(state, query.strip(), limit + 1, offset, scope)
         groups = [self._review_group(term_source, term_id) for term_source, term_id in terms[:limit]]
         return TaxonomyReviewPage(items=[group for group in groups if group], has_more=len(terms) > limit)
 
