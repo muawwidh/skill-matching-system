@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.db.models import (CandidateJobMatch, CandidateProfile, CandidateProfileEmbedding, CandidateSkill,
+from app.db.models import (CandidateProfile, CandidateProfileEmbedding, CandidateSkill,
                            Job, JobEmbedding, JobSkill, User)
 from app.services.retrieval_service import RetrievalService
 from test_retrieval import FakeEmbedder
@@ -41,21 +41,31 @@ def pg_retrieval(monkeypatch):
         with Session(engine) as db:
             user = db.scalars(select(User).order_by(User.email)).first()
             profile = CandidateProfile(user_id=user.id, consent_to_process_cv=True)
-            job = Job(title="Python Engineer", company="Example", location="Vilnius",
-                      employment_type="full time", description="Build Python APIs",
-                      cleaned_description="Build Python APIs", status="processed")
-            db.add_all([profile, job])
+            db.add(profile)
             db.flush()
-            db.add_all([CandidateSkill(candidate_profile_id=profile.id, raw_text="Python",
-                            normalized_text="python", review_status="approved", source="manual_review"),
-                        JobSkill(job_id=job.id, raw_text="Python", normalized_text="python",
-                            requirement_type="required", review_status="pending", source="manual_review"),
-                        CandidateJobMatch(candidate_profile_id=profile.id, job_id=job.id, score=77,
-                            matched_required=[], matched_preferred=[], missing_required=[], missing_preferred=[],
-                            candidate_skill_count=1, job_skill_count=1, explanation="Preexisting score")])
+            # The jobs table is at its 0007 shape here, so the job and a legacy match row use SQL.
+            job_id = uuid4()
+            db.execute(text("INSERT INTO jobs (id, title, company, location, employment_type, description, "
+                            "cleaned_description, status, source, error_message) VALUES (:id, 'Python Engineer', "
+                            "'Example', 'Vilnius', 'full time', 'Build Python APIs', 'Build Python APIs', "
+                            "'processed', 'manual', '')"), {"id": job_id})
+            db.add(CandidateSkill(candidate_profile_id=profile.id, raw_text="Python",
+                       normalized_text="python", review_status="approved", source="manual_review"))
+            db.execute(text("INSERT INTO job_skills (id, job_id, raw_text, normalized_text, skill_type, "
+                            "requirement_type, evidence_sentence, confidence_score, review_status, source) VALUES "
+                            "(:id, :job, 'Python', 'python', 'skill', 'required', '', 0, 'pending', 'manual_review')"),
+                       {"id": uuid4(), "job": job_id})
+            db.execute(text("INSERT INTO candidate_job_matches (id, candidate_profile_id, job_id, score, "
+                            "matched_required, matched_preferred, missing_required, missing_preferred, "
+                            "candidate_skill_count, job_skill_count, explanation) VALUES (:id, :p, :j, 77, "
+                            "'[]', '[]', '[]', '[]', 1, 1, 'Preexisting score')"),
+                       {"id": uuid4(), "p": profile.id, "j": job_id})
             db.commit()
-            profile_id, job_id, user_id = profile.id, job.id, user.id
+            profile_id, user_id = profile.id, user.id
         command.upgrade(config, "0008_dense_retrieval")
+        with engine.connect() as connection:
+            assert connection.scalar(text("select score from candidate_job_matches")) == 77
+        command.upgrade(config, "head")
         yield engine, config, profile_id, job_id, user_id
     finally:
         engine.dispose()
@@ -67,18 +77,24 @@ def pg_retrieval(monkeypatch):
 def test_populated_upgrade_extension_dimension_downgrade_reupgrade(pg_retrieval):
     engine, config, profile_id, job_id, user_id = pg_retrieval
     with engine.connect() as connection:
-        assert connection.scalar(text("select version_num from alembic_version")) == "0008_dense_retrieval"
+        assert connection.scalar(text("select version_num from alembic_version")) == "0009_live_jobs"
         assert connection.scalar(text("select extversion from pg_extension where extname='vector'"))
         assert connection.scalar(text("select format_type(a.atttypid,a.atttypmod) from pg_attribute a "
             "where a.attrelid='job_embeddings'::regclass and a.attname='embedding'")) == "vector(384)"
         assert connection.scalar(text("select count(*) from taxonomy_concepts")) == 3
         assert connection.scalar(text("select count(*) from approved_taxonomy_links")) == 2
-        assert connection.scalar(text("select score from candidate_job_matches")) == 77
+        # 0009: the unused match table is dropped; existing jobs keep source=manual.
+        assert connection.scalar(text("select to_regclass('candidate_job_matches')")) is None
+        assert connection.scalar(text("select source from jobs")) == "manual"
+    command.downgrade(config, "0008_dense_retrieval")
+    with engine.connect() as connection:
+        assert connection.scalar(text("select count(*) from candidate_job_matches")) == 0
+        assert connection.scalar(text("select count(*) from jobs")) == 1
     command.downgrade(config, "0007_taxonomy_review_audit")
     with engine.connect() as connection:
         assert connection.scalar(text("select count(*) from candidate_skills")) == 1
         assert connection.scalar(text("select to_regclass('job_embeddings')")) is None
-    command.upgrade(config, "0008_dense_retrieval")
+    command.upgrade(config, "head")
     with engine.connect() as connection:
         assert connection.scalar(text("select count(*) from jobs")) == 1
 
@@ -107,7 +123,6 @@ def test_fresh_session_cosine_tie_filters_uniqueness_cascade_and_retry(pg_retrie
         assert [item["job_id"] for item in matches] == sorted([job_id, other_id])
         assert all(item["retrieval_similarity"] > 0 for item in matches)
         assert all(item["rank"] == index + 1 for index, item in enumerate(matches))
-        assert fresh.scalar(select(CandidateJobMatch.score)) == 77
         assert not fresh.scalars(select(JobEmbedding).where(JobEmbedding.job_id == archived_id)).all()
         assert RetrievalService(fresh).index_profile(profile_id, fake).outcome == "unchanged"
         assert len(fake.texts) == 3
@@ -178,7 +193,6 @@ def test_v1_v2_persist_separately_and_query_rejects_template_mismatch(pg_retriev
         v1_query = next(p for p in profiles if p.template_version == TEMPLATE_V1)
         with pytest.raises(ValueError, match="template"):
             RetrievalService(fresh, TEMPLATE_V2).repository.exact_jobs(v1_query, 20)
-        assert fresh.scalar(select(CandidateJobMatch.score)) == 77
 
 
 def test_invalidation_stales_all_coexisting_template_versions(pg_retrieval):

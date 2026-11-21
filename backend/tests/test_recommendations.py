@@ -116,12 +116,13 @@ def test_missing_model_artifacts_report_retrieval_unavailable(client, db_session
 # --- D049: candidate accounts only, computed on read -------------------------------
 
 
-def match_rows(db_session: Session) -> int:
+def row_counts(db_session: Session) -> dict[str, int]:
     from sqlalchemy import func
 
-    from app.db.models import CandidateJobMatch
+    from app.db.base import Base
     db_session.expire_all()
-    return db_session.scalar(select(func.count()).select_from(CandidateJobMatch))
+    return {name: db_session.scalar(select(func.count()).select_from(table))
+            for name, table in Base.metadata.tables.items()}
 
 
 def test_matches_are_computed_on_read_without_storing_rows(client, db_session, fake_retrieval):
@@ -132,16 +133,19 @@ def test_matches_are_computed_on_read_without_storing_rows(client, db_session, f
     headers = candidate_with_skills(client)
     fake_retrieval["indexed_profile"] = True
 
+    client.get("/matches/recommendations", headers=headers)  # creates the profile row if missing
+    before = row_counts(db_session)
     for _ in range(2):
         body = client.get("/matches/recommendations", headers=headers).json()
         assert [item["job_id"] for item in body["results"]] == [job_id]
-    assert client.post("/matches/recommendations/refresh", headers=headers).status_code == 200
     coverage = client.get(f"/matches/jobs/{job_id}", headers=headers)
     assert coverage.status_code == 200
     assert coverage.json()["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
     assert "score" not in coverage.json() and "rank" not in coverage.json()
     assert client.get(f"/matches/jobs/{archived}", headers=headers).status_code == 404
-    assert match_rows(db_session) == 0
+    assert row_counts(db_session) == before
+    assert "candidate_job_matches" not in before  # dropped in migration 0009
+    assert client.post("/matches/recommendations/refresh", headers=headers).status_code == 200
     # The former write endpoint is gone.
     assert client.post(f"/matches/jobs/{job_id}", headers=headers).status_code == 405
 

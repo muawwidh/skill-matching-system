@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session, aliased, selectinload
 
 from app.db.models import (
     ApprovedTaxonomyLink,
-    CandidateJobMatch,
     CandidateProfile,
     CandidateSkill,
     CvDocument,
@@ -109,16 +108,13 @@ class DocumentRepository:
         )
         self._delete_extraction_skills(term_ids)
         self._delete_taxonomy_links("candidate", term_ids)
-        self.db.query(CandidateJobMatch).filter(
-            CandidateJobMatch.candidate_profile_id == document.candidate_profile_id
-        ).delete(synchronize_session=False)
         self.db.delete(document)
         self.db.flush()
 
     def delete_candidate_profile_data(self, profile: CandidateProfile) -> dict[str, int]:
         """Erase everything derived from one candidate profile (account deletion).
 
-        Deletes match rows, embeddings, skills (extracted and manual), taxonomy
+        Deletes embeddings, skills (extracted and manual), taxonomy
         link suggestions, selected links and their review events, processing
         logs, extracted terms, CV sections and CVs, then the profile. Deletes are
         explicit, so the result does not depend on database cascade settings.
@@ -135,7 +131,6 @@ class DocumentRepository:
         def delete(name: str, model, *where) -> None:
             counts[name] = self.db.query(model).filter(*where).delete(synchronize_session=False)
 
-        delete("matches", CandidateJobMatch, CandidateJobMatch.candidate_profile_id == profile.id)
         delete("embeddings", CandidateProfileEmbedding, CandidateProfileEmbedding.candidate_profile_id == profile.id)
         delete("skills", CandidateSkill, CandidateSkill.candidate_profile_id == profile.id)
         if term_ids:

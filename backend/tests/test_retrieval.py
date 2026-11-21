@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.api.dependencies.auth import get_current_user
-from app.db.models import (CandidateJobMatch, CandidateProfileEmbedding, CandidateSkill, Job,
+from app.db.models import (CandidateProfileEmbedding, CandidateSkill, Job,
                            JobEmbedding, JobSkill, Role, User, ExtractedCandidateTerm)
 from app.db.session import get_db
 from app.main import create_app
@@ -113,7 +113,6 @@ def test_index_idempotent_invalidation_failure_retry_and_score_isolation(db_sess
     assert service.index_profile(profile.id, fake).outcome == "unchanged"
     assert service.index_job(job.id, fake).outcome == "unchanged"
     assert len(fake.texts) == 2
-    assert not db.scalars(select(CandidateJobMatch)).all()
 
     DocumentRepository(db).update_candidate_skill(skill, "Python", "python", "skill", "Changed evidence", "approved")
     assert db.scalar(select(CandidateProfileEmbedding)).status == "stale"
@@ -134,7 +133,6 @@ def test_index_idempotent_invalidation_failure_retry_and_score_isolation(db_sess
     db.commit()
     assert service.index_job(job.id, fake).outcome == "indexed"
     assert "Required skills" not in fake.texts[-1]
-    assert not db.scalars(select(CandidateJobMatch)).all()
 
 
 def test_retrieval_auth_readiness_and_ownership(db_session):

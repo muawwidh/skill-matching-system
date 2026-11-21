@@ -13,7 +13,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.models import CandidateJobMatch, Job, User
+from app.db.models import Job, User
 from app.repositories.document_repository import DocumentRepository
 
 # Types compared as skills. Every other approved job term type (qualification,
@@ -216,7 +216,7 @@ PROFILE_MESSAGES = {
 }
 
 
-def coverage_ranking_key(match: CandidateJobMatch, similarity: float | None) -> tuple:
+def coverage_ranking_key(match, similarity: float | None) -> tuple:
     """Former app order, kept for the offline comparison (D043, variants B-D).
 
     Lexicographic (D040): required coverage, preferred coverage,

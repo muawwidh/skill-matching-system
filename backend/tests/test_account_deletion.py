@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models import (ApprovedTaxonomyLink, CandidateJobMatch, CandidateProfile, CandidateProfileEmbedding,
+from app.db.models import (ApprovedTaxonomyLink, CandidateProfile, CandidateProfileEmbedding,
                            CandidateSkill, CvDocument, CvSection, ExtractedCandidateTerm, ProcessingLog,
                            RefreshToken, Role, TaxonomyLinkCandidate, User)
 from app.db.models.taxonomy import TaxonomyReviewEvent
@@ -34,7 +34,7 @@ def count(db: Session, model, *where) -> int:
 
 
 def populate(client: TestClient, db: Session, email: str) -> dict[str, str]:
-    """A candidate with two CVs, reviewed and manual skills, a taxonomy link and review, an embedding and a match row."""
+    """A candidate with two CVs, reviewed and manual skills, a taxonomy link and review and an embedding."""
     headers = register(client, email)
     for text in ("Skills\nPython\nFastAPI", "Skills\nSQL"):
         cv = client.post("/cvs/paste", headers=headers, json={
@@ -54,20 +54,8 @@ def populate(client: TestClient, db: Session, email: str) -> dict[str, str]:
     staff.roles.append(db.scalar(select(Role).where(Role.name == "admin")) or Role(name="admin", description=""))
     db.commit()
     TaxonomyService(db).review_link(candidate.id, "rejected", None, staff)
-    db.add(CandidateJobMatch(candidate_profile_id=profile.id, job_id=_job(db), score=0.0, matched_required=[],
-                             matched_preferred=[], missing_required=[], missing_preferred=[],
-                             candidate_skill_count=0, job_skill_count=0, explanation=""))
     db.commit()
     return headers
-
-
-def _job(db: Session):
-    from app.db.models import Job
-    job = Job(title="Job", company="", location="", employment_type="", description="x",
-              cleaned_description="x", status="processed")
-    db.add(job)
-    db.flush()
-    return job.id
 
 
 def test_account_deletion_removes_all_candidate_data(client, db_session):
@@ -97,7 +85,6 @@ def test_account_deletion_removes_all_candidate_data(client, db_session):
         (ApprovedTaxonomyLink, ApprovedTaxonomyLink.extracted_term_id.in_(terms)),
         (TaxonomyReviewEvent, TaxonomyReviewEvent.extracted_term_id.in_(terms)),
         (CandidateProfileEmbedding, CandidateProfileEmbedding.candidate_profile_id == profile_id),
-        (CandidateJobMatch, CandidateJobMatch.candidate_profile_id == profile_id),
         (ProcessingLog, ProcessingLog.entity_id.in_([profile_id, *documents])),
         (RefreshToken, RefreshToken.user_id == user_id),
     ):

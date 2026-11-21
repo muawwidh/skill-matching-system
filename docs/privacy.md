@@ -32,7 +32,7 @@ password (`POST /auth/delete-account`, D047). This deletes:
 - the candidate profile and all CVs, CV sections and extracted terms;
 - all candidate skills, extracted and manual, with their review decisions;
 - taxonomy link suggestions, selected links and taxonomy review events for the candidate's skills;
-- the profile embedding and any stored job-match rows;
+- the profile embedding;
 - processing logs that refer to the profile or its CVs.
 
 Nothing that identifies the account is kept. Data outside the candidate's own records is unchanged (jobs,

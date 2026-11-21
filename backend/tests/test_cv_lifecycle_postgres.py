@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user
 from app.db.models import (
-    ApprovedTaxonomyLink, CandidateJobMatch, CandidateProfileEmbedding, CandidateSkill, CvDocument,
+    ApprovedTaxonomyLink, CandidateProfileEmbedding, CandidateSkill, CvDocument,
     ExtractedCandidateTerm, Job, JobSkill, TaxonomyConcept, TaxonomyLinkCandidate, TaxonomyVersion, User,
 )
 from app.db.models.taxonomy import TaxonomyReviewEvent
@@ -278,11 +278,6 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         matched = MatchingService(db).match_my_job(db.get(User, user_id), job_id)
         # CV Python is concept-linked, the manual job skill is not: name fallback applies.
         assert matched["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
-        # A legacy stored match row (written before D049) is removed with the CV.
-        db.add(CandidateJobMatch(candidate_profile_id=profile_id, job_id=job_id, score=100.0,
-            matched_required=matched["matched_required"], matched_preferred=[], missing_required=[],
-            missing_preferred=[], candidate_skill_count=1, job_skill_count=1, explanation=""))
-        db.commit()
         CvService(db).delete_my_cv(db.get(User, user_id), cv1_id)
     with Session(engine) as fresh:
         assert fresh.get(CvDocument, cv1_id) is None
@@ -308,17 +303,11 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         assert len(list(fresh.scalars(select(TaxonomyReviewEvent).where(
             TaxonomyReviewEvent.extracted_term_id.in_(cv1_term_ids)
         )))) == len(original["events"])
-        assert fresh.scalar(select(CandidateJobMatch).where(
-            CandidateJobMatch.candidate_profile_id == profile_id, CandidateJobMatch.job_id == job_id
-        )) is None
         assert "python" not in {item.name for item in MatchingService(fresh)._candidate_items(profile_id)}
         recomputed = MatchingService(fresh).match_my_job(fresh.get(User, user_id), job_id)
         # The unlinked job skill no longer has a same-name CV skill: missing, checked by name only.
         assert recomputed["matched_required"] == []
         assert recomputed["missing_required"] == [{"label": "python", "checked_via": "skill_name"}]
-        # Computed on read: no new match row is stored (D049).
-        assert fresh.scalar(select(CandidateJobMatch).where(
-            CandidateJobMatch.candidate_profile_id == profile_id)) is None
         assert "could not be compared" not in recomputed["explanation"]
         source = RetrievalRepository(fresh).profile_input(profile_id)
         assert source is not None and "Python" not in source.text and "Docker" in source.text
@@ -415,25 +404,16 @@ def test_cv_deletion_rolls_back_all_derived_rows(pg_database, monkeypatch):
         db.commit()
         job_id = job.id
         assert MatchingService(db).match_my_job(user, job_id)["matched_required"]
-        # A legacy stored match row (written before D049), to check it survives a failed deletion.
-        db.add(CandidateJobMatch(candidate_profile_id=profile_id, job_id=job_id, score=100.0,
-            matched_required=[], matched_preferred=[], missing_required=[], missing_preferred=[],
-            candidate_skill_count=1, job_skill_count=1, explanation=""))
-        db.commit()
         assert RetrievalService(db).index_profile(profile_id, FakeEmbedder()).outcome == "indexed"
         db.commit()
         before_cv = persisted_row(cv)
         before = taxonomy_snapshot(db, cv_id)
         before_embedding = persisted_rows(db, CandidateProfileEmbedding,
             CandidateProfileEmbedding.candidate_profile_id == profile_id)
-        before_match = persisted_rows(db, CandidateJobMatch,
-            CandidateJobMatch.candidate_profile_id == profile_id)
-        assert before["events"] and before["links"] and before_embedding and before_match
+        assert before["events"] and before["links"] and before_embedding
 
         def fail_after_delete(*args, **kwargs):
             assert not document_rows(db, cv_id)[1]
-            assert not persisted_rows(db, CandidateJobMatch,
-                CandidateJobMatch.candidate_profile_id == profile_id)
             embedding = db.scalar(select(CandidateProfileEmbedding).where(
                 CandidateProfileEmbedding.candidate_profile_id == profile_id))
             assert embedding is not None and embedding.status == "stale"
@@ -448,6 +428,4 @@ def test_cv_deletion_rolls_back_all_derived_rows(pg_database, monkeypatch):
         assert taxonomy_snapshot(fresh, cv_id) == before
         assert persisted_rows(fresh, CandidateProfileEmbedding,
             CandidateProfileEmbedding.candidate_profile_id == profile_id) == before_embedding
-        assert persisted_rows(fresh, CandidateJobMatch,
-            CandidateJobMatch.candidate_profile_id == profile_id) == before_match
         assert fresh.get(User, user_id) is not None

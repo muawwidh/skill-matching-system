@@ -322,8 +322,7 @@ no migration, no table dropped).
   `score`) store nothing; `POST /matches/recommendations/refresh` only adds a
   processing log. Removed `upsert_candidate_job_match`,
   `list_candidate_job_matches` and `CandidateJobMatchRead` (unused).
-- `candidate_job_matches` is kept: legacy rows are still deleted with a CV or
-  account. Dropping it needs a migration and the owner's approval.
+- `candidate_job_matches` was dropped in migration 0009 (Stage 2).
 - Tests: `tests/test_recommendations.py` (no rows written across GET,
   refresh and per-job coverage; staff, role-less and anonymous refused);
   PostgreSQL lifecycle tests updated and run against a disposable pgvector
@@ -340,6 +339,22 @@ Item 7 (2026-11-21): "Related skill in your profile" coverage class (D050, no mi
   `GET /matches/jobs/{id}`, explanation line, amber "Related skill in your profile"
   on the Jobs page. Evaluation profiles and jobs are unchanged.
 - Tests: `tests/test_partial_coverage.py`.
+
+## Live Jobs — Stage 2
+
+Item 1 (2026-11-21): migration `0009_live_jobs` (D052).
+- `jobs`: `external_id`, `external_url`, `posted_at`, `last_seen_at`,
+  `content_hash`; unique `(source, external_id)`; indexes on
+  `(source, status)` and `content_hash`. `candidate_job_matches` dropped
+  (downgrade recreates it empty). `CandidateJobMatch` model removed.
+- `python -m app.job_sources.cli mark-evaluation-jobs --mapping <file>` tags
+  the 30 evaluation jobs (reads only job IDs; accepts both mapping shapes).
+- Development DB (2026-11-21): snapshot taken with `pg_dump -Fc` outside the
+  repository before migrating; now at `0009_live_jobs` with 30 `evaluation`
+  jobs, 1 processed and 11 archived `manual` jobs; all 31 job embeddings
+  still `ready`.
+- Tests: `tests/test_evaluation_job_tagging.py`; PostgreSQL migration tests
+  updated to head 0009 (upgrade, downgrade to 0008/0007, re-upgrade).
 
 ## Early Matching Prototype
 

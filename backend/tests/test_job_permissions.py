@@ -148,13 +148,13 @@ def test_admin_overview_is_admin_only(client: TestClient, db_session: Session, r
 
 
 def test_admin_overview_does_not_write(client: TestClient, db_session: Session) -> None:
-    from app.db.models import CandidateJobMatch, CandidateProfile, ProcessingLog
+    from app.db.models import CandidateProfile, ProcessingLog
 
     admin = headers_for(client, db_session, "admin", "readonly")
     before = [db_session.scalar(select(func.count()).select_from(model))
-              for model in (CandidateProfile, CandidateJobMatch, ProcessingLog)]
+              for model in (CandidateProfile, ProcessingLog)]
     assert client.get("/admin/overview", headers=admin).status_code == 200
     db_session.expire_all()
     after = [db_session.scalar(select(func.count()).select_from(model))
-             for model in (CandidateProfile, CandidateJobMatch, ProcessingLog)]
+             for model in (CandidateProfile, ProcessingLog)]
     assert before == after

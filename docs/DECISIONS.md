@@ -983,9 +983,8 @@ candidate role and refuse administrator and researcher accounts, so
 per-candidate rankings stay with their candidate (consistent with D037).
 Retrieval and skill coverage are computed when read and are not stored:
 `GET /matches/recommendations` and `GET /matches/jobs/{id}` write no rows.
-The `candidate_job_matches` table is no longer written; it is kept until the
-owner approves dropping it, and its legacy rows are still deleted with a CV
-(D041) or an account (D047). Explanations therefore always derive from the
+The `candidate_job_matches` table is no longer written; the owner approved
+dropping it, and migration 0009 removes it (D052). Explanations therefore always derive from the
 current approved skills and links.
 
 ## D050 - Related Skill Via A Shared Specific ESCO Broader Concept
@@ -1017,3 +1016,18 @@ Decided by the project owner on 2026-11-21. The proposed per-CV switch
 candidate's CVs and manual skills feed matching (D041); a candidate who does
 not want a CV used deletes it, and the "Your matching profile" box shows what
 is included.
+
+## D052 - Job Sources And The Fixed Evaluation Set
+
+Decided by the project owner on 2026-11-21. Every job has a `source`:
+`evaluation` (the fixed 30-job evaluation set), `manual` (created in the app)
+or the name of a live source adapter (`arbeitnow`, `greenhouse`, ...). Live
+jobs carry `external_id`, `external_url`, `posted_at`, `last_seen_at` and a
+`content_hash`; `(source, external_id)` is unique. Migration 0009 adds these
+columns, keeps every existing job as `manual`, and drops the unused
+`candidate_job_matches` table (D049). The evaluation jobs are identified only
+by the private evaluation mapping, so they are tagged by a separate command
+(`python -m app.job_sources.cli mark-evaluation-jobs --mapping ...`) that
+changes nothing but `source` and refuses unless exactly 30 existing manual or
+evaluation jobs are listed. Job text, skills, reviews and embeddings of the
+evaluation set are not modified by tagging.

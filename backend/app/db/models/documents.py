@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -121,9 +121,20 @@ class Job(TimestampMixin, Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     cleaned_description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="draft", nullable=False)
+    # evaluation | manual | a live source adapter name such as arbeitnow or greenhouse (D052).
     source: Mapped[str] = mapped_column(String(80), default="manual", nullable=False)
     error_message: Mapped[str] = mapped_column(Text, default="", nullable=False)
     processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    external_id: Mapped[str] = mapped_column(String(255), nullable=True)
+    external_url: Mapped[str] = mapped_column(String(1000), default="", nullable=False)
+    posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    content_hash: Mapped[str] = mapped_column(String(64), default="", nullable=False, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("source", "external_id", name="uq_jobs_source_external_id"),
+        Index("ix_jobs_source_status", "source", "status"),
+    )
 
     sections: Mapped[list["JobSection"]] = relationship(
         back_populates="job",
@@ -193,27 +204,6 @@ class JobSkill(TimestampMixin, Base):
     def source_section(self) -> str:
         """Detected section the occurrence was extracted from; empty for manual skills."""
         return self.extracted_term.source_section if self.extracted_term else ""
-
-
-class CandidateJobMatch(TimestampMixin, Base):
-    __tablename__ = "candidate_job_matches"
-
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    candidate_profile_id: Mapped[UUID] = mapped_column(
-        ForeignKey("candidate_profiles.id", ondelete="CASCADE")
-    )
-    job_id: Mapped[UUID] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"))
-    score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    matched_required: Mapped[list] = mapped_column(JsonColumn, default=list, nullable=False)
-    matched_preferred: Mapped[list] = mapped_column(JsonColumn, default=list, nullable=False)
-    missing_required: Mapped[list] = mapped_column(JsonColumn, default=list, nullable=False)
-    missing_preferred: Mapped[list] = mapped_column(JsonColumn, default=list, nullable=False)
-    candidate_skill_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    job_skill_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    explanation: Mapped[str] = mapped_column(Text, default="", nullable=False)
-
-    candidate_profile: Mapped[CandidateProfile] = relationship(lazy="selectin")
-    job: Mapped[Job] = relationship(lazy="selectin")
 
 
 class ProcessingLog(TimestampMixin, Base):

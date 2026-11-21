@@ -1,6 +1,5 @@
 from app.db.models.auth import RefreshToken, Role, User, user_roles
 from app.db.models.documents import (
-    CandidateJobMatch,
     CandidateProfile,
     CandidateSkill,
     CvDocument,
@@ -28,7 +27,6 @@ from app.db.models.retrieval import CandidateProfileEmbedding, JobEmbedding
 __all__ = [
     "CandidateProfile",
     "CandidateProfileEmbedding",
-    "CandidateJobMatch",
     "CandidateSkill",
     "CvDocument",
     "CvSection",
