@@ -23,11 +23,13 @@ from app.db.models.taxonomy import (
     TaxonomyVersion,
 )
 from app.db.models.retrieval import CandidateProfileEmbedding, JobEmbedding
+from app.db.models.experience import CandidateWorkEntry
 
 __all__ = [
     "CandidateProfile",
     "CandidateProfileEmbedding",
     "CandidateSkill",
+    "CandidateWorkEntry",
     "CvDocument",
     "CvSection",
     "ExtractedCandidateTerm",

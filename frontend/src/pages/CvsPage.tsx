@@ -8,10 +8,14 @@ import { MatchingProfileBox } from "../components/MatchingProfileBox";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { TextPreview } from "../components/TextPreview";
+import { WorkEntriesPanel } from "../components/WorkEntriesPanel";
 import { useAuth } from "../features/auth/AuthProvider";
 
 export function CvsPage() {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
+  const roles = user?.roles.map((role) => role.name) ?? [];
+  // Work entries are candidate-only (D060), like job matching.
+  const isCandidate = roles.includes("candidate") && !roles.includes("admin") && !roles.includes("researcher");
   const queryClient = useQueryClient();
   const [cvText, setCvText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -113,6 +117,7 @@ export function CvsPage() {
 
       <div className="space-y-6">
       {accessToken ? <MatchingProfileBox accessToken={accessToken} /> : null}
+      {accessToken && isCandidate ? <WorkEntriesPanel accessToken={accessToken} /> : null}
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="text-xl font-semibold text-ink">Processed CVs</h2>
         <div className="mt-4 space-y-4">

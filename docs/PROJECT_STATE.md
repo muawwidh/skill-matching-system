@@ -510,6 +510,23 @@ Item 1 (2026-11-21): minimum required years.
   the extracted experience indicators; no values above 15.
 - Tests: `tests/test_experience.py`.
 
+Item 2 (2026-11-21): work entries.
+- Migration `0010_candidate_work_entries`: `candidate_work_entries` (title,
+  start_month, end_month NULL = present, occupation_concept_id, source
+  manual/cv_detected). No employer column.
+- `GET/POST /candidates/me/work-entries`, `PUT/DELETE .../{id}`,
+  `GET .../detected` (dated entries found in the candidate's CV
+  work-experience/full-text sections, not stored; `app/matching/work_history.py`).
+  Candidate accounts only; months as YYYY-MM, no future months, at most 50
+  entries; an occupation must be an active ESCO occupation.
+- CVs page: "Work experience" panel (add, edit, delete; "Detected in your
+  CV" entries pre-fill the form).
+- Included in account deletion and `docs/privacy.md`.
+- `app/taxonomy/occupations.py`: occupation-only catalog (linker restricted
+  to active ESCO occupations, ISCO unit group per occupation via "broader"),
+  cached per active taxonomy.
+- Tests: `tests/test_work_entries.py` (fixture `tests/esco_occupations.py`).
+
 ## Early Matching Prototype
 
 Migration:
