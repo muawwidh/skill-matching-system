@@ -290,8 +290,11 @@ class TaxonomyService:
     def link_document(
         self, term_source: str, document_id: UUID, term_ids: set[UUID] | None = None
     ) -> TaxonomyLinkRunResult:
-        concepts = self.repository.active_concepts()
-        if not concepts:
+        from app.taxonomy.concept_index import active_concept_index
+
+        # Built once and reused until the active taxonomy changes; same ranking as TaxonomyLinker.
+        index = active_concept_index(self.db)
+        if not len(index):
             raise HTTPException(status_code=409, detail="Import an ESCO or O*NET taxonomy release before linking terms.")
         terms = (
             self.repository.candidate_terms_for_document(document_id)
@@ -304,7 +307,7 @@ class TaxonomyService:
         auto_approved = 0
         for term in terms:
             self.repository.replace_link_candidates(term_source, term.id)
-            ranked, unique_top = self.linker.rank_with_top_uniqueness(term.normalized_text, concepts)
+            ranked, unique_top = index.rank_with_top_uniqueness(term.normalized_text)
             for rank, result in enumerate(ranked, start=1):
                 should_auto_approve = rank == 1 and unique_top and result.confidence >= 0.95
                 candidate = self.repository.add_link_candidate(
@@ -334,7 +337,9 @@ class TaxonomyService:
     def link_document_if_taxonomy_available(
         self, term_source: str, document_id: UUID, term_ids: set[UUID] | None = None
     ) -> TaxonomyLinkRunResult | None:
-        if not self.repository.active_concepts():
+        from app.taxonomy.concept_index import active_concept_index
+
+        if not len(active_concept_index(self.db)):
             return None
         return self.link_document(term_source, document_id, term_ids=term_ids)
 
