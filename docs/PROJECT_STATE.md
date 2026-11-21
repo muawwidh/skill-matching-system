@@ -581,6 +581,12 @@ Item 7 (2026-11-21): related-experience filter.
 Item 8 (2026-11-21): decision record D060 (self-entered, explanation and
 user-chosen filter, never scored; fairness and data-minimisation reasoning).
 
+Verification (2026-11-21): migrations 0010 and 0011 applied to the dev DB
+(snapshot taken first); backend and frontend rebuilt. Offline evaluation
+isolation: compare-matching rankings A-D, the comparison output and the
+`evaluate` output are byte-identical to the live-import isolation check.
+Private outputs: `evaluation/local/relevant-experience-isolation-check-20261121/`.
+
 ## Early Matching Prototype
 
 Migration:
