@@ -184,3 +184,13 @@ def test_job_read_carries_attribution_only_for_live_sources():
     assert JobRead(**base, source="greenhouse").attribution["name"] == "Greenhouse job board"
     assert JobRead(**base, source="manual").attribution is None
     assert JobRead(**base, source="evaluation").attribution is None
+
+
+def test_allocate_respects_share_and_fills_with_other_sources():
+    from app.job_sources.selection import allocate, source_limit
+    items = [("a", 9), ("a", 8), ("a", 7), ("a", 6), ("b", 5), ("b", 1)]
+    kept, over_share, over_cap = allocate(items, 4, 0.5, lambda i: i[0], lambda i: (i[1],))
+    assert kept == [("a", 9), ("a", 8), ("b", 5), ("b", 1)] and over_share == [("a", 7), ("a", 6)] and over_cap == []
+    kept, over_share, over_cap = allocate(items, 3, 1.0, lambda i: i[0], lambda i: (i[1],))
+    assert kept == [("a", 9), ("a", 8), ("a", 7)] and over_cap == [("a", 6), ("b", 5), ("b", 1)]
+    assert source_limit(1000, 0.7) == 700 and source_limit(1, 0.5) == 1 and source_limit(10, 1.0) == 10

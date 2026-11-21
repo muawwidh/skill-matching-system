@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     LIVE_JOBS_EUROPE_OR_REMOTE_ONLY: bool = True
     LIVE_JOBS_ENGLISH_ONLY: bool = True
     LIVE_JOBS_MAX_ACTIVE: int = Field(default=1500, ge=1)
+    # No source above this share of LIVE_JOBS_MAX_ACTIVE (D058); 1.0 switches the limit off.
+    LIVE_JOBS_MAX_SOURCE_SHARE: float = Field(default=0.7, gt=0, le=1)
     LIVE_JOBS_ARCHIVE_AFTER_DAYS: int = Field(default=14, ge=1)
     JOB_SOURCE_MIN_INTERVAL_SECONDS: float = Field(default=1.5, ge=0)
     JOB_SOURCE_USER_AGENT: str = "skillgap-job-import/0.1"

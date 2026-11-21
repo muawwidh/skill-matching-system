@@ -18,8 +18,13 @@ function RunSummary({ run }: { run: JobImportRun }) {
       </p>
       <p>
         Skipped: {sum(run.skipped_language)} not in English, {run.skipped_location ?? 0} outside Europe and not remote.
-        Archived: {run.archived_not_seen ?? 0} no longer listed, {run.archived_over_cap ?? 0} over the cap.
-        Active live jobs: {run.active_live_jobs ?? 0}.
+        Not imported: {run.over_source_share_not_imported ?? 0} over a source's share of the cap.
+        Archived: {run.archived_not_seen ?? 0} no longer listed, {run.archived_over_cap ?? 0} over the cap,{" "}
+        {run.archived_over_source_share ?? 0} over a source's share.
+        Active live jobs: {run.active_live_jobs ?? 0}
+        {run.active_live_jobs_by_source
+          ? ` (${Object.entries(run.active_live_jobs_by_source).map(([source, count]) => `${source} ${count}`).join(", ")})`
+          : ""}.
       </p>
       {errors.length ? <p className="text-amber-800">Source errors: {errors.slice(0, 5).join("; ")}</p> : null}
     </div>

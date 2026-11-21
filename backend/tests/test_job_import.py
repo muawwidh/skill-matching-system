@@ -114,11 +114,12 @@ def test_recently_seen_jobs_survive_a_failed_fetch(db_session):
 
 
 def test_cap_keeps_the_newest_live_jobs(db_session):
-    report = run(db_session, LIVE_JOBS_MAX_ACTIVE=2)
+    # Share limit off: pure newest-first cap.
+    report = run(db_session, LIVE_JOBS_MAX_ACTIVE=2, LIVE_JOBS_MAX_SOURCE_SHARE=1.0)
     assert report["over_cap_not_imported"] == 2 and report["outcomes"] == {"created": 2}
     assert set(live_jobs(db_session)) == {"support-specialist-remote-1003", "backend-engineer-berlin-1001"}
     # Lowering the cap later archives the oldest active live jobs.
-    report = run(db_session, now=NOW + timedelta(hours=1), LIVE_JOBS_MAX_ACTIVE=1)
+    report = run(db_session, now=NOW + timedelta(hours=1), LIVE_JOBS_MAX_ACTIVE=1, LIVE_JOBS_MAX_SOURCE_SHARE=1.0)
     assert report["archived_over_cap"] == 1 and report["active_live_jobs"] == 1
     assert live_jobs(db_session)["support-specialist-remote-1003"].status == "processed"
 
@@ -173,3 +174,24 @@ def test_changed_jobs_are_embedded_once_at_the_end(db_session, monkeypatch):
 def auto_reindex_disabled_key_cleared(db_session) -> bool:
     from app.retrieval.auto_reindex import DISABLED_KEY
     return DISABLED_KEY not in db_session.info
+
+
+def test_source_share_limits_each_source_and_others_fill_the_cap(db_session):
+    # 4 eligible postings: Arbeitnow 1003 and 1001 (newest), Greenhouse 5005 and 5001.
+    report = run(db_session, LIVE_JOBS_MAX_ACTIVE=3, LIVE_JOBS_MAX_SOURCE_SHARE=0.5)  # limit floor(1.5) = 1
+    assert report["outcomes"] == {"created": 2} and report["over_source_share_not_imported"] == 2
+    assert set(live_jobs(db_session)) == {"support-specialist-remote-1003", "exampleco:5005"}
+    report = run(db_session, now=NOW + timedelta(hours=1), LIVE_JOBS_MAX_ACTIVE=3, LIVE_JOBS_MAX_SOURCE_SHARE=0.7)
+    # limit floor(2.1) = 2: both Arbeitnow postings fit; one Greenhouse posting fills the third place.
+    assert report["outcomes"] == {"created": 1, "unchanged": 2} and report["active_live_jobs_by_source"] == {
+        "arbeitnow": 2, "greenhouse": 1}
+
+
+def test_lowering_the_share_archives_the_oldest_jobs_of_the_dominant_source(db_session):
+    run(db_session, LIVE_JOBS_MAX_SOURCE_SHARE=1.0)  # 2 Arbeitnow + 2 Greenhouse
+    report = run(db_session, now=NOW + timedelta(hours=1), LIVE_JOBS_MAX_ACTIVE=4, LIVE_JOBS_MAX_SOURCE_SHARE=0.25)
+    assert report["archived_over_source_share"] == 2 and report["active_live_jobs_by_source"] == {
+        "arbeitnow": 1, "greenhouse": 1}
+    jobs = live_jobs(db_session)
+    assert jobs["support-specialist-remote-1003"].status == "processed"  # newest Arbeitnow kept
+    assert jobs["backend-engineer-berlin-1001"].status == "archived"

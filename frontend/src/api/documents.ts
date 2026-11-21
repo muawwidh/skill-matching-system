@@ -141,6 +141,9 @@ export type JobImportRun = {
   skipped_location?: number;
   archived_not_seen?: number;
   archived_over_cap?: number;
+  archived_over_source_share?: number;
+  over_source_share_not_imported?: number;
+  active_live_jobs_by_source?: Record<string, number>;
   active_live_jobs?: number;
   sources?: Record<string, { fetched: number; requests: number; errors: string[] }>;
 };

@@ -20,7 +20,7 @@ from app.db.models import Job, ProcessingLog
 from app.job_sources import NON_LIVE_SOURCES
 from app.job_sources.base import FetchReport, JobPosting
 from app.job_sources.http import JsonClient
-from app.job_sources.selection import select_postings
+from app.job_sources.selection import allocate, select_postings
 from app.job_sources.text import content_hash, strip_contact_details
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.retrieval_repository import RetrievalRepository
@@ -81,7 +81,7 @@ class JobImportService:
         europe_only = frozenset(a.name for a in self.adapters if getattr(a, "europe_only", False))
         selected, selection = select_postings(
             fetched, self.config.LIVE_JOBS_MAX_ACTIVE, self.config.LIVE_JOBS_ENGLISH_ONLY,
-            self.config.LIVE_JOBS_EUROPE_OR_REMOTE_ONLY, europe_only)
+            self.config.LIVE_JOBS_EUROPE_OR_REMOTE_ONLY, europe_only, self.config.LIVE_JOBS_MAX_SOURCE_SHARE)
 
         outcomes: Counter = Counter()
         changed: set[UUID] = set()
@@ -99,7 +99,9 @@ class JobImportService:
                 changed.add(job_id)
 
         archived_unseen = self._archive(self._unseen_jobs(), "not_seen")
-        archived_over_cap = self._archive(self._over_cap_jobs(), "over_cap")
+        over_share, over_cap = self._over_cap_jobs()
+        archived_over_share = self._archive(over_share, "over_source_share")
+        archived_over_cap = self._archive(over_cap, "over_cap")
         embedding = auto_reindex.reindex(self.db.get_bind(), set(), changed) if self.embed and changed else {}
 
         report = {
@@ -115,11 +117,14 @@ class JobImportService:
             "skipped_empty": selection.skipped_empty,
             "skipped_duplicate_id": selection.skipped_duplicate_id,
             "over_cap_not_imported": selection.over_cap,
+            "over_source_share_not_imported": selection.over_source_share,
             "selected": selection.selected,
             "outcomes": dict(outcomes),
             "failures": failures[:50],
             "archived_not_seen": archived_unseen,
             "archived_over_cap": archived_over_cap,
+            "archived_over_source_share": archived_over_share,
+            "active_live_jobs_by_source": self._active_live_by_source(),
             "embedding": embedding,
             "active_live_jobs": self._active_live_count(),
         }
@@ -198,13 +203,20 @@ class JobImportService:
             _live_filter(), Job.status != "archived",
             (Job.last_seen_at.is_(None)) | (Job.last_seen_at < cutoff))))
 
-    def _over_cap_jobs(self) -> list[Job]:
+    def _over_cap_jobs(self) -> tuple[list[Job], list[Job]]:
+        """Active live jobs beyond their source's share, and beyond the cap; oldest go first (D058)."""
         active = list(self.db.scalars(select(Job).where(_live_filter(), Job.status != "archived")))
-        if len(active) <= self.config.LIVE_JOBS_MAX_ACTIVE:
-            return []
         oldest = datetime.min.replace(tzinfo=timezone.utc)
-        active.sort(key=lambda job: (job.posted_at or oldest, str(job.id)), reverse=True)
-        return active[self.config.LIVE_JOBS_MAX_ACTIVE:]
+
+        def newest_first(job: Job) -> tuple:
+            posted = job.posted_at or oldest
+            # SQLite returns naive datetimes; they are stored in UTC.
+            return (posted if posted.tzinfo else posted.replace(tzinfo=timezone.utc), str(job.id))
+
+        _, over_share, over_cap = allocate(
+            active, self.config.LIVE_JOBS_MAX_ACTIVE, self.config.LIVE_JOBS_MAX_SOURCE_SHARE,
+            lambda job: job.source, newest_first)
+        return over_share, over_cap
 
     def _archive(self, jobs: list[Job], reason: str) -> int:
         retrieval = RetrievalRepository(self.db)
@@ -215,6 +227,10 @@ class JobImportService:
                                                f"Live job archived ({reason}).", {"reason": reason})
         self.db.commit()
         return len(jobs)
+
+    def _active_live_by_source(self) -> dict[str, int]:
+        return dict(self.db.execute(select(Job.source, func.count()).where(_live_filter(), Job.status != "archived")
+                                    .group_by(Job.source)).all())
 
     def _active_live_count(self) -> int:
         return self.db.scalar(select(func.count()).select_from(Job).where(_live_filter(), Job.status != "archived"))

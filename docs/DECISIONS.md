@@ -1123,3 +1123,16 @@ Taxonomy page has a selector for this. A lookup by extracted term ID ignores
 the scope. Live-job suggestions are kept and stay reviewable; high-confidence
 deterministic matches are still approved automatically, and coverage on live
 jobs uses those links as before (D054).
+
+## D058 - Per-Source Share Of The Live-Job Cap
+
+Decided by the project owner on 2026-11-21. The cap kept the newest postings
+across all sources, and Arbeitnow postings are usually newer, so the first
+import held 911 Arbeitnow and 66 Greenhouse jobs. No source may now hold more
+than `LIVE_JOBS_MAX_SOURCE_SHARE` (default 0.7) of `LIVE_JOBS_MAX_ACTIVE`,
+that is floor(share x cap). Postings are taken newest first; a posting is
+skipped once its source is full, so other sources fill the remaining places
+and the cap can still be reached. The same rule decides which active live
+jobs the import archives (oldest of a source beyond its share). It applies
+from the next import; with the current data that import archives the oldest
+Arbeitnow jobs above 70 % of the cap. 1.0 switches the limit off.
