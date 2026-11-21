@@ -481,6 +481,19 @@ Live-job extraction labelling sample (2026-11-21):
   rows, all automatic. Awaiting labels.
 - Tests: `tests/test_extraction_sample.py`.
 
+Startup cache warm-up (2026-11-21, D059):
+- `app/retrieval/warmup.py`: at startup (FastAPI lifespan) a daemon thread
+  builds the representation of every processed job with a ready vector
+  (1,008 jobs in about 30 s), read-only; it pauses while any HTTP request is
+  in flight (middleware). `WARM_JOB_CACHE_ON_STARTUP` (default true) turns it
+  off; tests set it to false.
+- `load_local_tokenizer` is now locked, so concurrent first loads share one
+  tokenizer instance (the cache is keyed by it); a race there made the second
+  request after a restart miss the cache.
+- First Jobs page request after a restart (page 1 of 10): before 4.5-4.7 s;
+  after the warm-up has finished 0.49-0.50 s; during the warm-up 3.4-3.7 s.
+- Tests: `tests/test_warmup.py`.
+
 ## Early Matching Prototype
 
 Migration:

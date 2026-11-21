@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,12 +7,35 @@ from app.api.routes import admin, auth, candidates, cvs, health, jobs, matches, 
 from app.core.config import settings
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    if settings.WARM_JOB_CACHE_ON_STARTUP:
+        from app.retrieval.warmup import start_background_warmup
+
+        # In the background: the server accepts requests at once (D059).
+        app.state.warmup_thread = start_background_warmup()
+    yield
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.APP_VERSION,
         description="Transparent skill gap and job matching research platform.",
+        lifespan=lifespan,
     )
+
+    if settings.WARM_JOB_CACHE_ON_STARTUP:
+        from app.retrieval import warmup
+
+        @app.middleware("http")
+        async def pause_warmup_during_requests(request, call_next):
+            # The startup warm-up yields to requests (D059).
+            warmup.request_started()
+            try:
+                return await call_next(request)
+            finally:
+                warmup.request_finished()
 
     app.add_middleware(
         CORSMiddleware,

@@ -11,6 +11,8 @@ os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key-with-enough-length"
 # Tests that cover automatic re-embedding enable it explicitly with a fake embedder.
 os.environ["AUTO_REINDEX"] = "false"
+# Startup cache warm-up runs its own session against the configured database; tests call it directly.
+os.environ["WARM_JOB_CACHE_ON_STARTUP"] = "false"
 
 from app.db import models  # noqa: F401, E402
 from app.db.base import Base  # noqa: E402

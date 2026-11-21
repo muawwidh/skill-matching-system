@@ -1,3 +1,4 @@
+import threading
 from pathlib import Path
 from functools import lru_cache
 from typing import Protocol
@@ -9,8 +10,21 @@ class Embedder(Protocol):
     def encode(self, text: str) -> list[float]: ...
 
 
-@lru_cache(maxsize=2)
+_tokenizer_lock = threading.Lock()
+
+
 def load_local_tokenizer(path: str | None = None):
+    """The pinned tokenizer, loaded once per path and process.
+
+    Locked so concurrent first calls (startup warm-up and a request) share one
+    instance: the job representation cache is keyed by the tokenizer instance.
+    """
+    with _tokenizer_lock:
+        return _load_local_tokenizer(path)
+
+
+@lru_cache(maxsize=2)
+def _load_local_tokenizer(path: str | None = None):
     from os import environ
     location = Path(path or environ.get("DENSE_MODEL_PATH", "../models/multilingual-e5-small-fd1525a"))
     if not location.is_dir() or not (location / "revision.txt").exists():

@@ -1154,4 +1154,6 @@ are unchanged (D045). Job representations used for the freshness check of
 retrieved jobs are memoized in process by a digest of their exact inputs; the
 build is a pure function of those inputs and the pinned tokenizer, so results
 are identical and any change to a job, its skills, links or sections is a new
-key.
+key. At startup a background thread fills this cache for every job with a
+ready vector (`WARM_JOB_CACHE_ON_STARTUP`, default true); it pauses while any
+request is in flight and changes nothing in the database.

@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     RECOMMENDATION_TOP_N: int = Field(default=100, ge=1, le=500)
     # Re-embed a profile/job automatically after a committed change (D046). The CLI stays for bulk runs.
     AUTO_REINDEX: bool = True
+    # Build job representations for the retrieval freshness check in a background thread
+    # at startup, so the first Jobs page after a restart is not slow (D059).
+    WARM_JOB_CACHE_ON_STARTUP: bool = True
 
     # Live job import (D052-D056). Lists accept "a,b" or a JSON array.
     LIVE_JOB_SOURCES: str = "arbeitnow,greenhouse"
