@@ -10,6 +10,13 @@ from app.retrieval.embedder import Embedder
 from app.retrieval.representation import DIMENSION
 
 
+PROFILE_STATUS_DETAIL = {
+    "profile_not_ready": "Candidate profile is not ready for retrieval.",
+    "no_approved_skills": "Approve at least one extracted skill before retrieval.",
+    "profile_not_indexed": "Candidate profile index is missing or stale. Run the indexing command.",
+}
+
+
 @dataclass(frozen=True)
 class IndexResult:
     outcome: str
@@ -65,20 +72,35 @@ class RetrievalService:
         if len(vector) != DIMENSION or not all(isfinite(x) for x in vector) or not any(vector):
             raise ValueError("Embedder returned an invalid 384-dimensional vector.")
 
-    def jobs_for_user(self, user: User, limit: int) -> list[dict]:
+    def profile_readiness(self, user: User) -> tuple[str, object | None]:
+        """Why a candidate's profile can or cannot be used for retrieval.
+
+        Returns (status, query embedding). Status is one of PROFILE_STATUSES; the
+        embedding is set only for "ready".
+        """
         from sqlalchemy import select
-        from app.db.models import CandidateProfile
-        from app.retrieval.representation import MODEL_ID, MODEL_REVISION
 
         profile = self.db.scalar(select(CandidateProfile).where(CandidateProfile.user_id == user.id))
         if not profile or profile.status != "active" or not profile.consent_to_process_cv:
-            raise HTTPException(status_code=409, detail="Candidate profile is not ready for retrieval.")
+            return "profile_not_ready", None
         source = self.repository.profile_input(profile.id)
         if source is None:
-            raise HTTPException(status_code=409, detail="Approve at least one extracted skill before retrieval.")
+            return "no_approved_skills", None
         query = self.repository.profile_embedding(profile.id)
         if not query or query.status != "ready" or query.source_hash != source.source_hash:
-            raise HTTPException(status_code=409, detail="Candidate profile index is missing or stale. Run the indexing command.")
+            return "profile_not_indexed", None
+        return "ready", query
+
+    def jobs_for_user(self, user: User, limit: int) -> list[dict]:
+        state, query = self.profile_readiness(user)
+        if state != "ready":
+            raise HTTPException(status_code=409, detail=PROFILE_STATUS_DETAIL[state])
+        return self.retrieve(query, limit)
+
+    def retrieve(self, query, limit: int) -> list[dict]:
+        """Top-`limit` processed jobs by exact cosine similarity; jobs with stale vectors are skipped."""
+        from app.retrieval.representation import MODEL_ID, MODEL_REVISION
+
         results = []
         offset = 0
         while len(results) < limit:
@@ -98,6 +120,21 @@ class RetrievalService:
                 if len(results) == limit:
                     break
         return results
+
+    def fresh_job_ids(self) -> set[UUID]:
+        """IDs of processed jobs with a ready vector whose hash equals the current input.
+
+        Raises RuntimeError when template v2 cannot be built (pinned tokenizer missing).
+        """
+        from sqlalchemy import select
+
+        fresh = set()
+        for job in self.db.scalars(select(Job).where(Job.status == "processed")):
+            existing = self.db.scalar(self._job_embedding_query(job.id))
+            if existing and existing.status == "ready" and \
+                    existing.source_hash == self.repository.job_input(job).source_hash:
+                fresh.add(job.id)
+        return fresh
 
     def index_overview(self) -> dict:
         """Read-only index coverage for the configured model and template.

@@ -155,29 +155,25 @@ Do not silently lower thresholds just to increase automatic matching.
 
 Dense retrieval belongs to Phase 5.
 
-Embeddings retrieve top-N relevant jobs.
+Embeddings retrieve top-N relevant jobs (N configurable, default 50).
 
-Vector similarity is NOT the final match score.
+The retrieval order is the job ranking shown to candidates (DECISIONS.md D045).
+Vector similarity is not displayed and is not combined into any match score.
 
 Embedding model/version information must be recorded for reproducibility.
 
 ## Matching
 
-A basic matching prototype already exists from earlier development.
+Final matching design (DECISIONS.md D045):
 
-It belongs conceptually to Phase 6 and must NOT be mistaken for the
-completed final matching system.
+- retrieval returns the top-N jobs by similarity; that order is the ranking
+- skill coverage (required/preferred "X of Y matched", matched and missing
+  skills) explains each retrieved job and never changes the order
+- there is no weighted match score
 
-Final Phase 6 scoring must be transparent, configurable and versioned.
-
-Planned components include:
-
-- semantic similarity
-- required skill coverage
-- preferred skill coverage
-- occupation alignment
-- qualification/experience alignment
-- critical-skill penalty
+The MASTER_PLAN weighted Phase 6 formula and the `phase6-explainable-matching`
+branch design (D034/D035) are retired. Do not reintroduce weights without a
+new decision.
 
 ## Skill Gaps
 

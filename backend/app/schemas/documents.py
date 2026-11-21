@@ -206,6 +206,36 @@ class CandidateJobMatchRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class RecommendationItem(BaseModel):
+    """One retrieved job (D045): its position in the top-N, explained by skill coverage."""
+    rank: int
+    job_id: UUID
+    matched_required: list[MatchedSkillRead]
+    matched_preferred: list[MatchedSkillRead]
+    missing_required: list[MissingSkillRead]
+    missing_preferred: list[MissingSkillRead]
+    candidate_skill_count: int
+    job_skill_count: int
+    explanation: str
+    job: JobRead
+
+
+class RecommendationList(BaseModel):
+    """Top-N retrieval result for the signed-in candidate.
+
+    `status` is "ready" or the reason no retrieval was possible
+    ("profile_not_ready", "no_approved_skills", "profile_not_indexed"); `results`
+    is then empty. `unindexed_jobs` counts active jobs that cannot be retrieved
+    because they have no current embedding.
+    """
+    status: str
+    message: str
+    top_n: int
+    active_jobs: int
+    unindexed_jobs: int
+    results: list[RecommendationItem]
+
+
 # --- Administrator system overview (read-only counts; ratios are shown as "X of Y") ---
 
 class TaxonomyReleaseCounts(BaseModel):

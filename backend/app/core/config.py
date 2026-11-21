@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     # Job extraction v3: add ESCO skill/knowledge labels (filter O7) as a second dictionary.
     # Off = curated dictionary only, for old-vs-new comparison (DECISIONS.md D038).
     JOB_EXTRACTION_ESCO_VOCABULARY: bool = True
+    # Jobs page (D045): retrieval returns the top-N jobs by similarity; coverage explains each one.
+    RECOMMENDATION_TOP_N: int = Field(default=50, ge=1, le=500)
 
     model_config = SettingsConfigDict(
         env_file=".env",

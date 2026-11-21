@@ -130,6 +130,11 @@ Initial intended scoring configuration:
 
 Weights must remain configurable/versioned.
 
+**Retired 2026-11-21 (DECISIONS.md D045).** The weighted formula above is not
+the final design. Final matching: retrieval returns the top-N jobs (N
+configurable, default 50) by similarity; skill coverage explains each result
+and does not change the order. There is no weighted match score.
+
 ## Phase 7 — Recommendation Experience
 
 - recommendation list

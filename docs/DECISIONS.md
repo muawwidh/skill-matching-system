@@ -504,8 +504,9 @@ is career decision support for the candidate. A view ranking candidates for
 an employer or reviewer would turn it into a screening tool, which is outside
 its purpose.
 
-Dense retrieval stays an internal ranking signal. It is the tie-breaker under
-D036 and is evaluated offline. It has no candidate-facing page and no
+Dense retrieval stays an internal ranking signal. (Since D045 it selects and
+orders the top-N jobs; originally it was the tie-breaker under D036.) It is
+evaluated offline. It has no candidate-facing page and no
 displayed similarity. The only cross-candidate ranking access is the offline
 Phase 5 evaluation export, which is restricted to the isolated
 `phase5_verify` database and its de-identified benchmark accounts (D023).
@@ -830,6 +831,10 @@ from data other than this benchmark, or be declared before it is measured.
 
 ## D044 - Retrieval Ranks, Coverage Explains
 
+(Superseded by D045 on 2026-11-21: retrieval now returns the top-N jobs
+instead of ordering every active job; jobs without a current embedding are no
+longer listed last but are not retrieved.)
+
 The Jobs page orders jobs by Phase 5 retrieval similarity: variant A of D043.
 This replaces the lexicographic coverage order of D036/D040.
 
@@ -875,3 +880,34 @@ fixed variants, not fitting. The Phase 5 limitations still apply: no
 generalization to hiring accuracy, and this is not an automated decision.
 Final Phase 6 scoring must still be configurable and versioned.
 
+
+## D045 - Final Matching Design: Top-N Retrieval, Coverage Explains
+
+Decided by the project owner on 2026-11-21. This is the final matching design.
+It supersedes the ranking rule of D044 and retires two earlier designs:
+- the MASTER_PLAN Phase 6 weighted formula (0.35 semantic similarity, 0.35
+  required coverage, 0.15 preferred coverage, 0.10 occupation, 0.05
+  qualification/experience, critical-skill penalty);
+- the `phase6-explainable-matching` branch design (its D034 policy
+  `matching-policy-v1` with 7:3:2:1 structured weights, and D035). That branch
+  is not merged, and its migrations 0009–0011 are not part of this line.
+
+Rules:
+- Phase 5 retrieval returns the top-N active jobs for the candidate's profile
+  by exact cosine similarity. N is `RECOMMENDATION_TOP_N` (default 50).
+- That order is the ranking. "#N of M" is the position among the M retrieved
+  jobs (M ≤ N).
+- Each retrieved job is explained by skill coverage under the existing rules
+  (D036, D040): required and preferred "X of Y matched", matched and missing
+  labels, and how each was checked. Coverage never changes the order.
+- Similarity stays an internal value and is not displayed.
+- Jobs without a current embedding are not retrieved. Their number is reported
+  ("N active jobs are not yet indexed").
+- If the candidate's profile cannot be used (no consenting profile, no
+  approved skill, no up-to-date embedding, or model artifacts missing), the
+  Jobs page shows a notice with the reason and no ranking.
+
+Relation to D009/D022: retrieval still only selects and orders jobs. There is
+no match score, weighted or otherwise. Coverage is an explanation, not a
+score component. Still no weights, so nothing is fitted to the Phase 5
+benchmark (D043). The frozen Phase 5 baseline is unchanged (D032).

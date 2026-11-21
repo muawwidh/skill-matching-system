@@ -93,10 +93,9 @@ export type MissingSkill = {
   checked_via: "taxonomy_concept" | "skill_name";
 };
 
-// The API also returns a legacy `score` column; it is intentionally not typed here so it cannot be displayed.
-export type CandidateJobMatch = {
-  id: string;
-  candidate_profile_id: string;
+/** One retrieved job (D045): its retrieval rank, explained by skill coverage. */
+export type RecommendationItem = {
+  rank: number;
   job_id: string;
   matched_required: MatchedSkill[];
   matched_preferred: MatchedSkill[];
@@ -106,6 +105,22 @@ export type CandidateJobMatch = {
   job_skill_count: number;
   explanation: string;
   job: Job;
+};
+
+export type RecommendationStatus =
+  | "ready"
+  | "profile_not_ready"
+  | "no_approved_skills"
+  | "profile_not_indexed"
+  | "retrieval_unavailable";
+
+export type RecommendationList = {
+  status: RecommendationStatus;
+  message: string;
+  top_n: number;
+  active_jobs: number;
+  unindexed_jobs: number;
+  results: RecommendationItem[];
 };
 
 // Administrator system overview (GET /admin/overview). Read-only counts.

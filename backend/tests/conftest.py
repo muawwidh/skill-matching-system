@@ -37,6 +37,46 @@ def synthetic_retrieval_tokenizer(monkeypatch):
 
 
 @pytest.fixture()
+def fake_retrieval(monkeypatch):
+    """Stand-in for pgvector retrieval, which SQLite cannot run.
+
+    Profile readiness keeps its real rules, except that a profile with approved
+    skills but no vector counts as ready. `order` (a list of job IDs) is the
+    retrieval order; by default all processed jobs in ID order. `fresh` lists the
+    job IDs with a current vector; by default every retrieved job.
+    """
+    from app.services.retrieval_service import RetrievalService
+
+    state = {"order": None, "fresh": None, "indexed_profile": True}
+    real_readiness = RetrievalService.profile_readiness
+
+    def readiness(self, user):
+        status, query = real_readiness(self, user)
+        if status == "profile_not_indexed" and state["indexed_profile"]:
+            return "ready", object()
+        return status, query
+
+    def retrieve(self, query, limit):
+        from sqlalchemy import select
+        from app.db.models import Job
+        processed = {job.id: job for job in self.db.scalars(select(Job).where(Job.status == "processed"))}
+        order = state["order"] if state["order"] is not None else sorted(processed, key=str)
+        rows = [{"rank": index, "job_id": job_id, "retrieval_similarity": 1.0 - index / 100}
+                for index, job_id in enumerate((j for j in order if j in processed), start=1)]
+        return rows[:limit]
+
+    def fresh_job_ids(self):
+        if state["fresh"] is not None:
+            return set(state["fresh"])
+        return {row["job_id"] for row in retrieve(self, None, 10_000)}
+
+    monkeypatch.setattr(RetrievalService, "profile_readiness", readiness)
+    monkeypatch.setattr(RetrievalService, "retrieve", retrieve)
+    monkeypatch.setattr(RetrievalService, "fresh_job_ids", fresh_job_ids)
+    return state
+
+
+@pytest.fixture()
 def db_session() -> Generator[Session, None, None]:
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",

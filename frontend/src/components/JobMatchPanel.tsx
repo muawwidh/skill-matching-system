@@ -1,13 +1,10 @@
-import { AlertTriangle, CheckCircle2, ListChecks, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ListChecks } from "lucide-react";
 
-import type { CandidateJobMatch, MatchedSkill, MissingSkill } from "../types/documents";
+import type { MatchedSkill, MissingSkill, RecommendationItem } from "../types/documents";
 
 type JobMatchPanelProps = {
-  match?: CandidateJobMatch;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  /** 1-based position in the backend ranking; undefined when the job has no coverage row. */
-  rank?: number;
+  match: RecommendationItem;
+  /** Number of retrieved jobs: "#rank of rankTotal". */
   rankTotal: number;
 };
 
@@ -69,68 +66,40 @@ function CoverageCount({ label, matched, missing }: { label: string; matched: nu
   );
 }
 
-export function JobMatchPanel({ match, isRefreshing, onRefresh, rank, rankTotal }: JobMatchPanelProps) {
+export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
   return (
     <section className="mt-4 rounded-md border border-slate-200 bg-white p-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <ListChecks size={20} className="text-ocean" aria-hidden="true" />
-          <h3 className="text-sm font-semibold text-ink">Skill coverage</h3>
-          {rank !== undefined ? (
-            <span
-              className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
-              title="Order: semantic similarity between your profile and the job (jobs not yet indexed last). Skill coverage below explains the job; it does not change the order."
-            >
-              #{rank} of {rankTotal}
-            </span>
-          ) : null}
-        </div>
-        <button
-          className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700"
-          disabled={isRefreshing}
-          onClick={onRefresh}
-          type="button"
+      <div className="flex flex-wrap items-center gap-2">
+        <ListChecks size={20} className="text-ocean" aria-hidden="true" />
+        <h3 className="text-sm font-semibold text-ink">Skill coverage</h3>
+        <span
+          className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
+          title="Position among the jobs retrieved for your profile by semantic similarity. Skill coverage below explains the job; it does not change the order."
         >
-          <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} aria-hidden="true" />
-          Refresh
-        </button>
+          #{match.rank} of {rankTotal}
+        </span>
       </div>
-
-      {match ? (
-        <>
-          <div className="mt-3 space-y-1">
-            <CoverageCount
-              label="Required skills"
-              matched={match.matched_required.length}
-              missing={match.missing_required.length}
-            />
-            <CoverageCount
-              label="Preferred skills"
-              matched={match.matched_preferred.length}
-              missing={match.missing_preferred.length}
-            />
+      <div className="mt-3 space-y-1">
+        <CoverageCount label="Required skills" matched={match.matched_required.length} missing={match.missing_required.length} />
+        <CoverageCount label="Preferred skills" matched={match.matched_preferred.length} missing={match.missing_preferred.length} />
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-800">
+            <CheckCircle2 size={16} aria-hidden="true" />
+            Covered skills
           </div>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-emerald-800">
-                <CheckCircle2 size={16} aria-hidden="true" />
-                Covered skills
-              </div>
-              <MatchedChips items={[...match.matched_required, ...match.matched_preferred]} />
-            </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-red-800">
-                <AlertTriangle size={16} aria-hidden="true" />
-                Missing skills
-              </div>
-              <MissingChips items={[...match.missing_required, ...match.missing_preferred]} />
-            </div>
+          <MatchedChips items={[...match.matched_required, ...match.matched_preferred]} />
+        </div>
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-red-800">
+            <AlertTriangle size={16} aria-hidden="true" />
+            Missing skills
           </div>
-          <p className="mt-3 whitespace-pre-line text-xs text-slate-600">{match.explanation}</p>
-        </>
-      ) : (
-        <p className="mt-2 text-xs text-slate-500">Approve CV and job skills, then refresh to see skill coverage.</p>
-      )}
+          <MissingChips items={[...match.missing_required, ...match.missing_preferred]} />
+        </div>
+      </div>
+      <p className="mt-3 whitespace-pre-line text-xs text-slate-600">{match.explanation}</p>
     </section>
   );
 }

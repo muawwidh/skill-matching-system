@@ -2,12 +2,12 @@ import { apiRequest } from "./client";
 import type {
   CandidateSkill,
   CandidateSkillGroup,
-  CandidateJobMatch,
   CvDocument,
   Job,
   JobPayload,
   JobSkill,
   ProcessingLog,
+  RecommendationList,
   SystemOverview,
 } from "../types/documents";
 
@@ -91,11 +91,11 @@ export function listJobSkills(accessToken: string, jobId: string) {
 }
 
 export function listRecommendations(accessToken: string) {
-  return apiRequest<CandidateJobMatch[]>("/matches/recommendations", { accessToken });
+  return apiRequest<RecommendationList>("/matches/recommendations", { accessToken });
 }
 
 export function refreshRecommendations(accessToken: string) {
-  return apiRequest<CandidateJobMatch[]>("/matches/recommendations/refresh", {
+  return apiRequest<RecommendationList>("/matches/recommendations/refresh", {
     method: "POST",
     accessToken,
   });

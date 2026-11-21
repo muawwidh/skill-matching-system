@@ -1,8 +1,9 @@
-"""Transitional skill-coverage matching (Phase 6 prototype; see DECISIONS.md D036, D044).
+"""Job recommendations: top-N retrieval, explained by skill coverage (DECISIONS.md D045).
 
-Retrieval ranks, coverage explains (D044): jobs are ordered by Phase 5
-retrieval similarity, and skill coverage is reported per job as counts, never
-as a weighted score. The former lexicographic coverage order is kept as
+Phase 5 retrieval returns the top-N jobs by similarity; that order is the
+ranking. Skill coverage is reported per retrieved job as counts and labels,
+never as a weighted score, and never changes the order (D036, D040, D044,
+D045). The former lexicographic coverage order is kept as
 `coverage_ranking_key` for the offline comparison (D043).
 """
 from dataclasses import dataclass, field
@@ -171,13 +172,17 @@ def build_explanation(result: CoverageResult) -> str:
     return "\n".join(lines)
 
 
-def ranking_key(match: CandidateJobMatch, similarity: float | None) -> tuple:
-    """App order (D044): retrieval similarity, highest first, then job ID.
-
-    Jobs without a fresh similarity (job or profile not indexed, or stale) go
-    last. Coverage does not affect the order; it explains each job.
-    """
-    return (similarity is None, -(similarity or 0.0), str(match.job_id))
+PROFILE_MESSAGES = {
+    "ready": "",
+    "profile_not_ready": "Add a CV with consent to processing to build your matching profile.",
+    "no_approved_skills": "Approve at least one skill on the CVs page. Your matching profile is built "
+                          "from approved skills only.",
+    "profile_not_indexed": "Your matching profile has no up-to-date embedding, so jobs cannot be retrieved "
+                           "yet. It is rebuilt automatically after your skills change; if this message stays, "
+                           "the embedding model is unavailable on the server.",
+    "retrieval_unavailable": "Job retrieval is unavailable on the server (the pinned embedding model "
+                             "or tokenizer is missing). Please contact the administrator.",
+}
 
 
 def coverage_ranking_key(match: CandidateJobMatch, similarity: float | None) -> tuple:
@@ -209,24 +214,75 @@ class MatchingService:
         self.db = db
         self.repository = DocumentRepository(db)
 
-    def refresh_my_recommendations(self, user: User) -> list[CandidateJobMatch]:
-        matches = self._recompute(user)
+    def refresh_my_recommendations(self, user: User) -> dict:
+        recommendations = self.list_my_recommendations(user)
         self.repository.add_processing_log(
             "candidate_profile",
             self.repository.get_or_create_candidate_profile(user.id).id,
             "job_matching",
             "success",
-            f"Refreshed skill coverage for {len(matches)} jobs.",
-            {"job_count": len(matches)},
+            f"Refreshed skill coverage for {len(recommendations['results'])} retrieved jobs.",
+            {"job_count": len(recommendations["results"]), "status": recommendations["status"]},
         )
         self.db.commit()
-        return matches
+        return recommendations
 
-    def list_my_recommendations(self, user: User) -> list[CandidateJobMatch]:
-        # Always recomputed so stored rows never reflect an older rule or stale reviews.
-        matches = self._recompute(user)
+    def list_my_recommendations(self, user: User) -> dict:
+        """Top-N retrieval, then skill coverage per retrieved job (D045).
+
+        "#N of M" is the retrieval rank within the M retrieved jobs. Coverage
+        never changes the order. Always recomputed, so stored rows never reflect
+        an older rule or stale reviews.
+        """
+        from app.core.config import settings
+        from app.services.retrieval_service import RetrievalService
+
+        top_n = settings.RECOMMENDATION_TOP_N
+        profile = self.repository.get_or_create_candidate_profile(user.id)
+        retrieval = RetrievalService(self.db)
+        active_jobs = self.repository.list_jobs(include_archived=False)
+        state, query = retrieval.profile_readiness(user)
+        rows: list[dict] = []
+        if state == "ready":
+            try:
+                rows = self._retrieve(retrieval, query, top_n)
+            except (RuntimeError, ValueError):
+                # e.g. the pinned tokenizer needed for job freshness is missing on this server.
+                state = "retrieval_unavailable"
+        jobs = {job.id: job for job in active_jobs}
+        candidate_items = self._candidate_items(profile.id)
+        results = []
+        for row in rows:
+            job = jobs.get(row["job_id"])
+            if job is None:
+                continue
+            match = self._score_job(profile.id, job, candidate_items)
+            results.append({"rank": len(results) + 1, "job_id": job.id, "job": job,
+                            "matched_required": match.matched_required,
+                            "matched_preferred": match.matched_preferred,
+                            "missing_required": match.missing_required,
+                            "missing_preferred": match.missing_preferred,
+                            "candidate_skill_count": match.candidate_skill_count,
+                            "job_skill_count": match.job_skill_count,
+                            "explanation": match.explanation})
         self.db.commit()
-        return matches
+        return {"status": state, "message": PROFILE_MESSAGES[state], "top_n": top_n,
+                "active_jobs": len(active_jobs),
+                "unindexed_jobs": self._unindexed_job_count(retrieval, active_jobs),
+                "results": results}
+
+    @staticmethod
+    def _retrieve(retrieval, query, top_n: int) -> list[dict]:
+        return retrieval.retrieve(query, top_n)
+
+    @staticmethod
+    def _unindexed_job_count(retrieval, active_jobs: list[Job]) -> int:
+        try:
+            fresh = retrieval.fresh_job_ids()
+        except RuntimeError:
+            # Job freshness under template v2 needs the pinned tokenizer; report every job as unknown.
+            return len(active_jobs)
+        return sum(1 for job in active_jobs if job.id not in fresh)
 
     def match_my_job(self, user: User, job_id: UUID) -> CandidateJobMatch:
         profile = self.repository.get_or_create_candidate_profile(user.id)
@@ -246,24 +302,6 @@ class MatchingService:
         self.db.commit()
         self.db.refresh(match)
         return match
-
-    def _recompute(self, user: User) -> list[CandidateJobMatch]:
-        profile = self.repository.get_or_create_candidate_profile(user.id)
-        jobs = self.repository.list_jobs(include_archived=False)
-        candidate_items = self._candidate_items(profile.id)
-        matches = [self._score_job(profile.id, job, candidate_items) for job in jobs]
-        similarities = self._retrieval_similarities(user, len(jobs)) if matches else {}
-        return sorted(matches, key=lambda match: ranking_key(match, similarities.get(match.job_id)))
-
-    def _retrieval_similarities(self, user: User, job_count: int) -> dict[UUID, float]:
-        """Similarity orders the jobs (D044); unavailable or stale indexes simply omit it."""
-        from app.services.retrieval_service import RetrievalService
-
-        try:
-            rows = RetrievalService(self.db).jobs_for_user(user, job_count)
-        except (HTTPException, RuntimeError, ValueError):
-            return {}
-        return {row["job_id"]: row["retrieval_similarity"] for row in rows}
 
     def _candidate_items(self, candidate_profile_id: UUID) -> list[SkillItem]:
         skills = self.repository.list_matchable_candidate_skills(candidate_profile_id)

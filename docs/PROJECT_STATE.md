@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-18
+Last updated: 2026-11-21
 
 ## Repository
 
@@ -32,11 +32,16 @@ is a separate operational checkpoint, not implied by completion.
 
 Current status:
 
-PHASE 5 COMPLETE; DOCUMENTATION CHECKPOINT UNCOMMITTED FOR REVIEW
+PHASE 5 COMPLETE. Final matching design decided 2026-11-21 (D045): top-N
+retrieval ranks, skill coverage explains. Stage 1 of its implementation is in
+progress on branch `simple-matching`; see "Matching (D045) — Stage 1" below.
 
-Next planned phase:
+The MASTER_PLAN weighted Phase 6 formula and the `phase6-explainable-matching`
+branch design (D034/D035, migrations 0009–0011) are retired and not merged.
 
-Phase 6 — Matching and Skill-Gap Analysis (NOT STARTED)
+Developer database: read-only check on 2026-11-21 found Alembic
+`0008_dense_retrieval`, no Phase 6 tables, 31 non-archived jobs and 12
+candidate profiles.
 
 Phase 4 closure combines repository test/package evidence with user-reported
 deployed browser/runtime acceptance. The Phase 5 work below is limited to
@@ -246,6 +251,22 @@ score far below retrieval there. For 4 of the 8 candidates no approved skill
 matches any benchmark job, so their coverage ranking is decided by ties. With
 n = 7 there are no significance claims.
 
+## Matching (D045) — Stage 1
+
+Item 1 (2026-11-21): Jobs page uses top-N retrieval.
+- `GET /matches/recommendations` now returns `{status, message, top_n,
+  active_jobs, unindexed_jobs, results}`. `results` are the top-N retrieved
+  jobs (`RECOMMENDATION_TOP_N`, default 50), each with `rank` and its skill
+  coverage. Coverage does not change the order; similarity is not returned.
+- `status` is `ready` or the reason retrieval was impossible
+  (`profile_not_ready`, `no_approved_skills`, `profile_not_indexed`,
+  `retrieval_unavailable`); the Jobs page shows the message as a notice.
+- Jobs page: candidates see "Jobs for your profile" ("#N of M" within the
+  retrieved jobs); administrators/researchers see job management with all
+  jobs. Accounts with both roles see both.
+- Tests: `tests/test_recommendations.py` (order, top-N cut, unindexed count,
+  notices); retrieval is faked in SQLite tests (`fake_retrieval` fixture).
+
 ## Early Matching Prototype
 
 Migration:
@@ -274,8 +295,9 @@ Implemented:
     other wording); the former "could not be compared" category is removed
   - qualification, experience, certification and occupation terms are listed
     as "not assessed", never scored
-- ranking (D044, 2026-11-18): Phase 5 retrieval similarity, highest first,
-  then job ID. Jobs without a fresh embedding, or every job when the profile
+- ranking: since D045 (2026-11-21) the top-N retrieved jobs in retrieval
+  order (see above). Before that, D044 (2026-11-18): Phase 5 retrieval
+  similarity, highest first, then job ID. Jobs without a fresh embedding, or every job when the profile
   index is missing or stale, go last. Coverage explains each job but does not
   change the order. The former lexicographic coverage order (D036/D040) is
   kept only for the offline comparison (D043). Similarity is not displayed
@@ -307,9 +329,8 @@ This DOES NOT replace final Phase 6.
 
 It currently lacks the complete planned:
 
-- dense retrieval flow (top-N retrieval selecting the jobs to score;
-  similarity is currently only a tie-breaker over all active jobs)
-- multi-component configurable, versioned scoring
+- (top-N retrieval selecting the jobs is implemented since D045; the
+  weighted multi-component scoring is retired by D045)
 - taxonomy-aware partial coverage
 - occupation alignment
 - qualification/experience alignment

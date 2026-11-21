@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, BriefcaseBusiness, Plus } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { Archive, BriefcaseBusiness, Info, Plus, RefreshCw } from "lucide-react";
+import { FormEvent, ReactNode, useState } from "react";
 
 import { archiveJob, createJob, listJobs, listRecommendations, refreshRecommendations } from "../api/documents";
 import { JobMatchPanel } from "../components/JobMatchPanel";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { useAuth } from "../features/auth/AuthProvider";
-import type { JobPayload } from "../types/documents";
+import type { Job, JobPayload, RecommendationList } from "../types/documents";
 
 const emptyJob: JobPayload = {
   title: "",
@@ -17,22 +17,63 @@ const emptyJob: JobPayload = {
   description: "",
 };
 
+function JobCard({ job, actions, children }: { job: Job; actions?: ReactNode; children?: ReactNode }) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">{job.title}</h2>
+          <p className="text-sm text-slate-600">{job.company || "Unknown company"} · {job.status}</p>
+        </div>
+        {actions}
+      </div>
+      <div className="mt-4">
+        <SectionList sections={job.sections} />
+      </div>
+      {children}
+    </article>
+  );
+}
+
+function RecommendationSummary({ data }: { data: RecommendationList }) {
+  if (data.status !== "ready") {
+    return (
+      <div role="status" className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        <Info size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+        <p>{data.message}</p>
+      </div>
+    );
+  }
+  return (
+    <p className="text-sm text-slate-600">
+      {data.results.length === 0
+        ? "No jobs could be retrieved for your profile."
+        : `Showing the ${data.results.length} jobs most similar to your matching profile (top ${data.top_n}), out of ${data.active_jobs} active jobs.`}
+      {data.unindexed_jobs > 0
+        ? ` ${data.unindexed_jobs} active job${data.unindexed_jobs === 1 ? " is" : "s are"} not yet indexed and cannot be retrieved.`
+        : ""}
+    </p>
+  );
+}
+
 export function JobsPage() {
   const { accessToken, user } = useAuth();
-  const canManageJobs = user?.roles.some((role) => role.name === "admin" || role.name === "researcher") ?? false;
+  const roles = user?.roles.map((role) => role.name) ?? [];
+  const canManageJobs = roles.includes("admin") || roles.includes("researcher");
+  const isCandidate = roles.includes("candidate");
   const queryClient = useQueryClient();
   const [job, setJob] = useState<JobPayload>(emptyJob);
 
   const jobsQuery = useQuery({
     queryKey: ["jobs"],
     queryFn: () => listJobs(accessToken as string),
-    enabled: Boolean(accessToken),
+    enabled: Boolean(accessToken) && canManageJobs,
   });
 
   const recommendationsQuery = useQuery({
     queryKey: ["recommendations"],
     queryFn: () => listRecommendations(accessToken as string),
-    enabled: Boolean(accessToken),
+    enabled: Boolean(accessToken) && isCandidate,
   });
 
   const createMutation = useMutation({
@@ -52,19 +93,10 @@ export function JobsPage() {
     },
   });
 
-  const refreshMatchesMutation = useMutation({
+  const refreshMutation = useMutation({
     mutationFn: () => refreshRecommendations(accessToken as string),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
-    },
+    onSuccess: (data) => queryClient.setQueryData(["recommendations"], data),
   });
-
-  // The backend returns rows ranked by retrieval similarity (D044); keep that order and put jobs without a row last.
-  const coverageRank = new Map(recommendationsQuery.data?.map((match, index) => [match.job_id, index]) ?? []);
-  const unranked = coverageRank.size;
-  const orderedJobs = [...(jobsQuery.data ?? [])].sort(
-    (left, right) => (coverageRank.get(left.id) ?? unranked) - (coverageRank.get(right.id) ?? unranked),
-  );
 
   function submitJob(event: FormEvent) {
     event.preventDefault();
@@ -75,66 +107,96 @@ export function JobsPage() {
     setJob((current) => ({ ...current, [field]: value }));
   }
 
+  const recommendations = recommendationsQuery.data;
+
   return (
     <div className="space-y-6">
-      {canManageJobs ? <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitJob}>
-        <div className="flex items-center gap-2">
-          <BriefcaseBusiness size={22} className="text-ocean" aria-hidden="true" />
-          <h1 className="text-xl font-semibold text-ink">Create Job Description</h1>
-        </div>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("title", event.target.value)} placeholder="Job title" value={job.title} />
-          <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("company", event.target.value)} placeholder="Company" value={job.company} />
-          <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("location", event.target.value)} placeholder="Location" value={job.location} />
-          <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("employment_type", event.target.value)} placeholder="Employment type" value={job.employment_type} />
-        </div>
-        <textarea
-          className="mt-4 min-h-44 w-full rounded-md border border-slate-300 px-3 py-2"
-          onChange={(event) => updateJobField("description", event.target.value)}
-          placeholder="Paste the job description with responsibilities, requirements, and preferred skills"
-          value={job.description}
-        />
-        {createMutation.error ? <p className="mt-3 text-sm text-red-700">{createMutation.error.message}</p> : null}
-        <button className="mt-4 flex items-center gap-2 rounded-md bg-ocean px-4 py-2 font-medium text-white" type="submit">
-          <Plus size={18} aria-hidden="true" />
-          Create and process
-        </button>
-      </form> : null}
+      {isCandidate ? (
+        <section className="space-y-4" aria-labelledby="recommendations-heading">
+          <div className="rounded-lg border border-slate-200 bg-white p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h1 id="recommendations-heading" className="text-xl font-semibold text-ink">Jobs for your profile</h1>
+              <button
+                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700"
+                disabled={refreshMutation.isPending}
+                onClick={() => refreshMutation.mutate()}
+                type="button"
+              >
+                <RefreshCw size={16} className={refreshMutation.isPending ? "animate-spin" : ""} aria-hidden="true" />
+                Refresh
+              </button>
+            </div>
+            <div className="mt-3">
+              {recommendationsQuery.isLoading ? <p className="text-sm text-slate-500">Loading jobs...</p> : null}
+              {recommendationsQuery.error ? (
+                <p role="alert" className="text-sm text-red-700">{recommendationsQuery.error.message}</p>
+              ) : null}
+              {recommendations ? <RecommendationSummary data={recommendations} /> : null}
+            </div>
+          </div>
+          {recommendations?.results.map((item) => (
+            <JobCard key={item.job_id} job={item.job}>
+              <JobMatchPanel match={item} rankTotal={recommendations.results.length} />
+              {accessToken ? (
+                <SkillReviewPanel accessToken={accessToken} canReview={false} ownerId={item.job_id} ownerType="job" />
+              ) : null}
+            </JobCard>
+          ))}
+        </section>
+      ) : null}
 
-      <section className="space-y-4">
-          {orderedJobs.map((item) => (
-            <article key={item.id} className="rounded-lg border border-slate-200 bg-white p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-ink">{item.title}</h2>
-                  <p className="text-sm text-slate-600">{item.company || "Unknown company"} · {item.status}</p>
-                </div>
-                {canManageJobs ? <button
+      {canManageJobs ? (
+        <section className="space-y-4" aria-labelledby="manage-jobs-heading">
+          <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitJob}>
+            <div className="flex items-center gap-2">
+              <BriefcaseBusiness size={22} className="text-ocean" aria-hidden="true" />
+              <h2 id="manage-jobs-heading" className="text-xl font-semibold text-ink">Create Job Description</h2>
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("title", event.target.value)} placeholder="Job title" value={job.title} />
+              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("company", event.target.value)} placeholder="Company" value={job.company} />
+              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("location", event.target.value)} placeholder="Location" value={job.location} />
+              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("employment_type", event.target.value)} placeholder="Employment type" value={job.employment_type} />
+            </div>
+            <textarea
+              className="mt-4 min-h-44 w-full rounded-md border border-slate-300 px-3 py-2"
+              onChange={(event) => updateJobField("description", event.target.value)}
+              placeholder="Paste the job description with responsibilities, requirements, and preferred skills"
+              value={job.description}
+            />
+            {createMutation.error ? <p className="mt-3 text-sm text-red-700">{createMutation.error.message}</p> : null}
+            <button className="mt-4 flex items-center gap-2 rounded-md bg-ocean px-4 py-2 font-medium text-white" type="submit">
+              <Plus size={18} aria-hidden="true" />
+              Create and process
+            </button>
+          </form>
+
+          <h2 className="text-lg font-semibold text-ink">All jobs</h2>
+          {jobsQuery.data?.map((item) => (
+            <JobCard
+              key={item.id}
+              job={item}
+              actions={
+                <button
                   aria-label="Archive job"
                   className="grid h-10 w-10 place-items-center rounded-md border border-slate-300 text-slate-700"
                   onClick={() => archiveMutation.mutate(item.id)}
                   type="button"
                 >
                   <Archive size={18} aria-hidden="true" />
-                </button> : null}
-              </div>
-              <div className="mt-4">
-                <SectionList sections={item.sections} />
-              </div>
-              <JobMatchPanel
-                isRefreshing={refreshMatchesMutation.isPending}
-                match={recommendationsQuery.data?.find((match) => match.job_id === item.id)}
-                onRefresh={() => refreshMatchesMutation.mutate()}
-                rank={coverageRank.has(item.id) ? (coverageRank.get(item.id) as number) + 1 : undefined}
-                rankTotal={coverageRank.size}
-              />
+                </button>
+              }
+            >
               {accessToken ? (
-                <SkillReviewPanel accessToken={accessToken} canReview={canManageJobs} ownerId={item.id} ownerType="job" />
+                <SkillReviewPanel accessToken={accessToken} canReview ownerId={item.id} ownerType="job" />
               ) : null}
-            </article>
+            </JobCard>
           ))}
-          {jobsQuery.data?.length === 0 ? <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500">No jobs created yet.</p> : null}
-      </section>
+          {jobsQuery.data?.length === 0 ? (
+            <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500">No jobs created yet.</p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

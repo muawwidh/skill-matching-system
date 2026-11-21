@@ -272,7 +272,8 @@ def test_job_processing_extracts_requirement_skills(client: TestClient, db_sessi
     assert updated.json()["requirement_type"] == target["requirement_type"]
 
 
-def test_matching_reports_coverage_counts_from_approved_skills(client: TestClient, db_session: Session) -> None:
+def test_matching_reports_coverage_counts_from_approved_skills(
+        client: TestClient, db_session: Session, fake_retrieval) -> None:
     headers = auth_headers(client)
     manager = job_manager_headers(client, db_session)
     cv_response = client.post(
@@ -301,10 +302,10 @@ def test_matching_reports_coverage_counts_from_approved_skills(client: TestClien
     assert job_response.status_code == 201
     job_id = job_response.json()["id"]
 
-    # Pending skills on either side are never compared.
-    pending = client.get("/matches/recommendations", headers=headers).json()[0]
-    assert pending["matched_required"] == [] and pending["matched_preferred"] == []
-    assert pending["missing_required"] == [] and pending["missing_preferred"] == []
+    # Pending CV skills are never used: there is no matching profile to retrieve with yet.
+    pending = client.get("/matches/recommendations", headers=headers).json()
+    assert pending["status"] == "no_approved_skills" and pending["results"] == []
+    assert "Approve at least one skill" in pending["message"]
 
     cv_skills = client.get(f"/cvs/{cv_id}/extracted-skills", headers=headers).json()
     for skill in cv_skills:
@@ -316,14 +317,18 @@ def test_matching_reports_coverage_counts_from_approved_skills(client: TestClien
 
     # GET recomputes, so approvals are reflected without an explicit refresh.
     recommendations = client.get("/matches/recommendations", headers=headers).json()
-    assert len(recommendations) == 1
-    recommendation = recommendations[0]
+    assert recommendations["status"] == "ready" and recommendations["message"] == ""
+    assert recommendations["top_n"] == settings.RECOMMENDATION_TOP_N
+    assert recommendations["active_jobs"] == 1 and recommendations["unindexed_jobs"] == 0
+    assert len(recommendations["results"]) == 1
+    recommendation = recommendations["results"][0]
+    assert recommendation["rank"] == 1 and recommendation["job_id"] == job_id
     assert recommendation["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
     assert recommendation["matched_preferred"] == [{"label": "fastapi", "matched_via": "skill_name"}]
     # Docker has no approved taxonomy link and no same-name CV skill: missing, checked by name only.
     assert recommendation["missing_required"] == [{"label": "docker", "checked_via": "skill_name"}]
     assert recommendation["missing_preferred"] == []
-    assert recommendation["score"] == 50.0
+    assert "score" not in recommendation and "retrieval_similarity" not in recommendation
     assert recommendation["job_skill_count"] == 3
     explanation = recommendation["explanation"].splitlines()
     assert explanation[0] == "Required skills: 1 of 2 matched (python); missing: docker."
@@ -336,7 +341,7 @@ def test_matching_reports_coverage_counts_from_approved_skills(client: TestClien
 
     refreshed = client.post("/matches/recommendations/refresh", headers=headers)
     assert refreshed.status_code == 200
-    assert refreshed.json()[0]["matched_required"] == recommendation["matched_required"]
+    assert refreshed.json()["results"][0]["matched_required"] == recommendation["matched_required"]
 
 
 def _item(name, concept=None, requirement="", skill_type="skill"):
@@ -404,31 +409,6 @@ def test_coverage_deduplicates_and_lists_non_skill_terms_without_scoring() -> No
     assert result.not_assessed_required == ["bachelor's degree"]
     assert result.not_assessed_preferred == ["3 years experience", "aws certified"]
     assert result.candidate_skill_count == 0
-
-
-def test_app_ranking_follows_retrieval_similarity_and_puts_unindexed_jobs_last() -> None:
-    from types import SimpleNamespace
-    from uuid import UUID
-
-    from app.services.matching_service import ranking_key
-
-    def match(job, matched_req, total_req):
-        return SimpleNamespace(job_id=UUID(int=job), matched_required=[{}] * matched_req,
-                               missing_required=[{}] * (total_req - matched_req),
-                               matched_preferred=[], missing_preferred=[])
-
-    jobs = {
-        "full_coverage_low_sim": (match(1, 3, 3), 0.20),
-        "no_coverage_high_sim": (match(2, 0, 3), 0.90),
-        "unindexed_full_coverage": (match(3, 3, 3), None),
-        "unindexed_first_id": (match(0, 0, 0), None),
-        "same_sim_higher_id": (match(9, 0, 1), 0.50),
-        "same_sim_lower_id": (match(8, 1, 1), 0.50),
-    }
-    order = sorted(jobs, key=lambda name: ranking_key(*jobs[name]))
-    # Coverage never changes the order; equal similarity falls to job ID; no similarity goes last.
-    assert order == ["no_coverage_high_sim", "same_sim_lower_id", "same_sim_higher_id",
-                     "full_coverage_low_sim", "unindexed_first_id", "unindexed_full_coverage"]
 
 
 def test_ranking_is_lexicographic_without_weights() -> None:

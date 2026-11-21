@@ -6,25 +6,25 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import get_current_user
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.documents import CandidateJobMatchRead
+from app.schemas.documents import CandidateJobMatchRead, RecommendationList
 from app.services.matching_service import MatchingService
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@router.get("/recommendations", response_model=list[CandidateJobMatchRead])
+@router.get("/recommendations", response_model=RecommendationList)
 def list_recommendations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[CandidateJobMatchRead]:
+) -> RecommendationList:
     return MatchingService(db).list_my_recommendations(current_user)
 
 
-@router.post("/recommendations/refresh", response_model=list[CandidateJobMatchRead])
+@router.post("/recommendations/refresh", response_model=RecommendationList)
 def refresh_recommendations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[CandidateJobMatchRead]:
+) -> RecommendationList:
     return MatchingService(db).refresh_my_recommendations(current_user)
 
 
