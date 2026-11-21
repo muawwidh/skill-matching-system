@@ -105,12 +105,12 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
 
     Two skills match by taxonomy concept when both carry an approved link;
     otherwise they match by identical normalized name. Every compared job skill
-    is matched, partially covered or missing. A missing skill records whether it
+    is matched, related (shown as "Related skill in your profile") or missing. A missing skill records whether it
     was looked for by concept or by name only; a name-only miss may still be in
     the CV under different wording.
 
     With `broader` (D050), a concept-linked job skill that is not matched is
-    partially covered when it shares a direct ESCO broader skill/knowledge
+    related when it shares a direct ESCO broader skill/knowledge
     concept with a concept-linked candidate skill. Without it (offline
     comparison, D043) there is no partial class.
     """
@@ -176,9 +176,7 @@ def _coverage_line(kind: str, matched: list[dict], missing: list[dict], partial:
     if matched:
         line += " (" + ", ".join(entry["label"] for entry in matched) + ")"
     if partial:
-        line += "; partially covered: " + ", ".join(
-            f"{entry['label']} (your skill {entry['candidate_skill']} shares the broader ESCO concept "
-            f"{entry['broader_concept']})" for entry in partial)
+        line += "; related skill in your profile: " + ", ".join(entry["label"] for entry in partial)
     if missing:
         line += "; missing: " + ", ".join(entry["label"] for entry in missing)
     return line + "."
@@ -190,6 +188,9 @@ def build_explanation(result: CoverageResult) -> str:
         _coverage_line("required", result.matched_required, result.missing_required, result.partial_required),
         _coverage_line("preferred", result.matched_preferred, result.missing_preferred, result.partial_preferred),
     ]
+    for entry in result.partial_required + result.partial_preferred:
+        lines.append(f"{entry['label']}: not in your CV, but related: you have {entry['candidate_skill']} "
+                     f"(same ESCO area: {entry['broader_concept']}).")
     by_name = [entry["label"] for entry in result.missing_required + result.missing_preferred
                if entry["checked_via"] == CHECKED_VIA_NAME]
     if by_name:

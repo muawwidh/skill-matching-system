@@ -288,15 +288,7 @@ Item 3 (2026-11-21): CV management on the CVs page (no migration).
   CV's extracted skills with their reviews, their taxonomy links) and what
   stays (manually added skills). Uses the existing `DELETE /cvs/{id}`.
 - Tests: `tests/test_cv_management.py`.
-- **Proposed, not built:** a per-CV "use for matching" switch. It needs
-  migration `0009` adding `cv_documents.use_for_matching BOOLEAN NOT NULL
-  DEFAULT true`, a filter in `RetrievalRepository.profile_input` and
-  `DocumentRepository.list_matchable_candidate_skills` (manual skills always
-  included), `PATCH /cvs/{id}` that invalidates the profile, the field in
-  `CvDocumentRead`/matching-profile response, and a toggle in the box. Rows
-  from switched-off CVs must be left out of the profile source hash only when
-  a CV is off, so profiles with every CV on (including the 8 evaluation
-  profiles) keep their current hash. Needs a decision amending D041.
+- A per-CV "use for matching" switch was proposed and rejected (D051).
 
 Item 4 (2026-11-21): candidate account deletion (D047, no migration).
 - `POST /auth/delete-account` with `{password}`; 204 on success, 403 for a
@@ -337,7 +329,7 @@ no migration, no table dropped).
   PostgreSQL lifecycle tests updated and run against a disposable pgvector
   database (17 passed).
 
-Item 7 (2026-11-21): "Partially covered" coverage class (D050, no migration).
+Item 7 (2026-11-21): "Related skill in your profile" coverage class (D050, no migration).
 - Measured first, read-only on the development DB (11 profiles with approved
   skills x 31 jobs = 341 pairs): any shared direct ESCO broader concept would
   change 185 missing entries in 96 pairs; restricted to skill/knowledge
@@ -345,7 +337,7 @@ Item 7 (2026-11-21): "Partially covered" coverage class (D050, no migration).
   the restricted rule; the implementation reproduces 22/18/36 on that data.
 - `DocumentRepository.specific_esco_broader_concepts`, `compute_coverage(...,
   broader)`, `partial_required`/`partial_preferred` on recommendations and
-  `GET /matches/jobs/{id}`, explanation line, amber "Partially covered skills"
+  `GET /matches/jobs/{id}`, explanation line, amber "Related skill in your profile"
   on the Jobs page. Evaluation profiles and jobs are unchanged.
 - Tests: `tests/test_partial_coverage.py`.
 

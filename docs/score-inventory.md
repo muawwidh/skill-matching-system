@@ -34,7 +34,7 @@ Shown to users in `JobsPage` → `frontend/src/components/JobMatchPanel.tsx`
 ("Skill coverage"). Computed on read for `GET /matches/recommendations` and
 `GET /matches/jobs/{id}`; nothing is stored (D049). The legacy
 `candidate_job_matches` table and its `score` column are no longer written.
-Partially covered (D050): an unmatched concept-linked job skill sharing a
+Related skill in your profile (D050): an unmatched concept-linked job skill sharing a
 direct ESCO broader `skill`/`knowledge` concept with a candidate skill; not
 counted as matched, never ranked on.
 

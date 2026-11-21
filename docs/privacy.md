@@ -10,6 +10,7 @@ The application is decision support only and must not be used as an automatic hi
   approved skills only; age, gender, religion, nationality, marital status and photographs are not inputs.
 - Explicit consent is required before a pasted or uploaded CV is processed.
 - Uploaded files are parsed into text and are not written to persistent file storage.
+- Candidates can delete their own account and all data derived from it, confirmed with their password (D047).
 - Job rankings and skill coverage are visible only to the candidate they belong to; administrators and
   researchers see aggregate counts only, with no per-candidate ranking view (D037).
 
@@ -45,4 +46,3 @@ them and they are removed by an administrator.
 
 - Retention periods and automatic expiry of inactive accounts.
 - An export of a candidate's own data.
-- A per-CV "use for matching" switch (proposed in `PROJECT_STATE.md`).

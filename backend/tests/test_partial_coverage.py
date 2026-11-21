@@ -1,4 +1,4 @@
-"""Partially covered job skills via a shared ESCO broader skill/knowledge concept (D050)."""
+"""Related job skills ("Related skill in your profile") via a shared ESCO broader skill/knowledge concept (D050)."""
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -30,8 +30,8 @@ def test_shared_broader_concept_is_partial_not_matched():
     assert result.missing_preferred == [{"label": "Docker", "checked_via": "taxonomy_concept"}]
     assert result.required_total == 3 and result.preferred_total == 1
     text = build_explanation(result)
-    assert "Required skills: 1 of 3 matched (Python); partially covered: SQL (your skill Python shares " \
-           "the broader ESCO concept computer programming); missing: kotlin." in text
+    assert "Required skills: 1 of 3 matched (Python); related skill in your profile: SQL; missing: kotlin." in text
+    assert "SQL: not in your CV, but related: you have Python (same ESCO area: computer programming)." in text
 
     # Without the broader map (offline comparison, D043) nothing is partial.
     plain = compute_coverage(candidate, job)
@@ -131,6 +131,7 @@ def test_recommendations_show_partial_coverage(client, db_session, fake_retrieva
                                            "candidate_skill": "Python (computer programming)"}]
     # Docker shares only a broad skill group with Python: still missing.
     assert result["missing_required"] == [{"label": "containerisation software", "checked_via": "taxonomy_concept"}]
-    assert "partially covered: SQL" in result["explanation"]
+    assert ("SQL: not in your CV, but related: you have Python (computer programming) "
+            "(same ESCO area: computer programming).") in result["explanation"]
     assert client.get(f"/matches/jobs/{job['id']}", headers=headers).json()["partial_required"] == \
         result["partial_required"]

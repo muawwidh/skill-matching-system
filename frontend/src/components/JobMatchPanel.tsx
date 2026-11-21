@@ -63,7 +63,7 @@ function PartialChips({ items }: { items: PartialSkill[] }) {
         <span
           className="cursor-help rounded bg-amber-50 px-2 py-1 text-xs text-amber-900"
           key={item.label}
-          title={`Not in your CV, but your skill "${item.candidate_skill}" shares the broader ESCO concept "${item.broader_concept}"`}
+          title={`Not in your CV, but related: you have ${item.candidate_skill} (same ESCO area: ${item.broader_concept})`}
         >
           {item.label}
         </span>
@@ -78,7 +78,7 @@ function CoverageCount({ label, matched, partial, missing }: { label: string; ma
     <p className="text-sm text-ink">
       <span className="font-medium">{label}:</span>{" "}
       {total === 0 ? "none listed" : `${matched} of ${total} matched`}
-      {partial > 0 ? `, ${partial} partially covered` : ""}
+      {partial > 0 ? ` (${partial} related skill${partial === 1 ? "" : "s"} in your profile, not counted as matched)` : ""}
     </p>
   );
 }
@@ -113,7 +113,7 @@ export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
           <div className="rounded-md border border-slate-200 bg-slate-50 p-3 md:col-span-2">
             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-900">
               <CircleDashed size={16} aria-hidden="true" />
-              Partially covered skills
+              Related skill in your profile
             </div>
             <PartialChips items={partial} />
           </div>
