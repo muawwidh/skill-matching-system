@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { listJobSkills, reviewJobSkill } from "../api/documents";
 import type { JobSkill } from "../types/documents";
+import { AUTOMATIC_TOOLTIP, reviewStatusLabel } from "../utils/reviewStatus";
 import { CandidateSkillGroups, skillSourceLabel } from "./CandidateSkillGroups";
 
 type SkillReviewPanelProps = {
@@ -12,12 +13,14 @@ type SkillReviewPanelProps = {
   ownerType: "cv" | "job";
   /** Job skills only: show per-occurrence approve/reject (admin and researcher). */
   canReview?: boolean;
+  /** Job skills only: a live job, whose pending skills read "automatic". */
+  liveJob?: boolean;
 };
 
-export function SkillReviewPanel({ accessToken, ownerId, ownerType, canReview = false }: SkillReviewPanelProps) {
+export function SkillReviewPanel({ accessToken, ownerId, ownerType, canReview = false, liveJob = false }: SkillReviewPanelProps) {
   return ownerType === "cv"
     ? <CandidateSkillGroups key={ownerId} accessToken={accessToken} cvId={ownerId} />
-    : <JobSkillGroups accessToken={accessToken} jobId={ownerId} canReview={canReview} />;
+    : <JobSkillGroups accessToken={accessToken} jobId={ownerId} canReview={canReview} liveJob={liveJob} />;
 }
 
 const REQUIREMENT_STRENGTH: Record<string, number> = { required: 3, preferred: 2, unknown: 1 };
@@ -46,16 +49,17 @@ function sectionList(occurrences: JobSkill[]): string {
   return [...new Set(occurrences.map((item) => item.source_section).filter(Boolean) as string[])].map(sectionLabel).join(", ");
 }
 
-function reviewSummary(occurrences: JobSkill[]): string {
+function reviewSummary(occurrences: JobSkill[], liveJob: boolean): string {
   const counts = occurrences.reduce<Record<string, number>>((result, item) => {
-    result[item.review_status] = (result[item.review_status] ?? 0) + 1;
+    const label = reviewStatusLabel(item.review_status, liveJob);
+    result[label] = (result[label] ?? 0) + 1;
     return result;
   }, {});
   const entries = Object.entries(counts);
   return entries.length === 1 ? entries[0][0] : entries.map(([status, count]) => `${count} ${status}`).join(" · ");
 }
 
-function JobSkillGroups({ accessToken, jobId, canReview }: { accessToken: string; jobId: string; canReview: boolean }) {
+function JobSkillGroups({ accessToken, jobId, canReview, liveJob }: { accessToken: string; jobId: string; canReview: boolean; liveJob: boolean }) {
   const queryClient = useQueryClient();
   const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});
   const skillQuery = useQuery({
@@ -99,8 +103,11 @@ function JobSkillGroups({ accessToken, jobId, canReview }: { accessToken: string
                   {group.occurrences.length} occurrence{group.occurrences.length === 1 ? "" : "s"}
                   {sectionList(group.occurrences) ? ` · from ${sectionList(group.occurrences)}` : ""}
                 </span>
-                <span className="rounded bg-white px-2 py-1 text-xs text-slate-600">
-                  {statuses.size > 1 ? `Mixed: ${reviewSummary(group.occurrences)}` : reviewSummary(group.occurrences)}
+                <span
+                  className="rounded bg-white px-2 py-1 text-xs text-slate-600"
+                  title={liveJob && statuses.has("pending") ? AUTOMATIC_TOOLTIP : undefined}
+                >
+                  {statuses.size > 1 ? `Mixed: ${reviewSummary(group.occurrences, liveJob)}` : reviewSummary(group.occurrences, liveJob)}
                 </span>
               </div>
               {withEvidence.length || canReview ? (
@@ -118,7 +125,7 @@ function JobSkillGroups({ accessToken, jobId, canReview }: { accessToken: string
                       {group.occurrences.map((item) => (
                         <li key={item.id} className="rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-600">
                           <p className="mb-1 text-xs text-slate-500">
-                            {item.raw_text} · {item.requirement_type}{item.source_section ? ` · ${sectionLabel(item.source_section)}` : ""} · {skillSourceLabel(item.source)} · {item.review_status}
+                            {item.raw_text} · {item.requirement_type}{item.source_section ? ` · ${sectionLabel(item.source_section)}` : ""} · {skillSourceLabel(item.source)} · {reviewStatusLabel(item.review_status, liveJob)}
                           </p>
                           {item.evidence_sentence || "No evidence text"}
                           {canReview ? (

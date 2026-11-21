@@ -1098,7 +1098,10 @@ skills. Manual and evaluation jobs keep approved-only coverage, and the
 offline comparison (D043) is unchanged. Candidate skills stay approved-only.
 Administrators can still review live job skills; an approved occurrence makes
 the skill reviewed. Job embeddings already included pending skills (only
-rejected ones are left out), so retrieval is unchanged.
+rejected ones are left out), so retrieval is unchanged. In the job skill
+panels (candidate and staff) and the staff taxonomy review queue, pending
+skills and link suggestions of live jobs are labelled "automatic" instead of
+"pending" (wording only; the stored status stays `pending`).
 
 ## D056 - Candidate Job Scope And Evaluation-Set Isolation
 

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 
 import { listTaxonomyReviewHistory, listTaxonomyReviews, reviewTaxonomyLink, type TaxonomyReviewScope } from "../api/taxonomy";
 import type { TaxonomyLinkCandidate, TaxonomyReviewGroup } from "../types/taxonomy";
+import { AUTOMATIC_LINK_TOOLTIP, reviewStatusLabel } from "../utils/reviewStatus";
 
 type Action = { group: TaxonomyReviewGroup; candidate: TaxonomyLinkCandidate; status: "approved" | "rejected" };
 const button = "inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-2 text-sm disabled:opacity-50";
@@ -122,7 +123,7 @@ export function TaxonomyReviewPanel({ accessToken }: { accessToken: string }) {
     {reviews.data?.items.length === 0 ? <p className="py-4 text-sm text-slate-500">No reviews in this view.</p> : null}
     <div className="mt-4 space-y-4">{reviews.data?.items.map((group) => <article className="min-w-0 rounded-md border border-slate-200 bg-white p-4" key={`${group.term_source}:${group.extracted_term_id}`}>
       <h3 className="break-words font-semibold">{group.raw_text}</h3>
-      <p className="mt-1 break-all text-xs text-slate-500">{group.term_source} · {group.extracted_term_id}</p>
+      <p className="mt-1 break-all text-xs text-slate-500">{group.term_source}{group.live_job ? " (live job)" : ""} · {group.extracted_term_id}</p>
       <p className="my-3 break-words text-sm"><span className="font-medium">Current selection: </span>{group.selection?.concept.preferred_label ?? "None"}</p>
       {group.inconsistent ? <p role="alert" className="mb-3 text-sm text-amber-800">Stored review statuses conflict with the current link. Selection confirmation or replacement will reconcile this term.</p> : null}
       <ul className="divide-y divide-slate-200 border-y border-slate-200">{group.candidates.map((item) => {
@@ -131,8 +132,8 @@ export function TaxonomyReviewPanel({ accessToken }: { accessToken: string }) {
           <div className="min-w-0 flex-1 basis-56 break-words">
             <p className="text-sm font-medium">{item.rank}. {item.concept.preferred_label}</p>
             <p className="mt-1 text-xs text-slate-500">{item.concept.source_code} {item.concept.taxonomy_version} · {matchMethodLabel(item.match_method)}</p>
-            <p className={`mt-1 text-xs ${selected ? "font-semibold text-ocean" : "text-slate-600"}`} title={item.review_status === "superseded" ? "Previously selected; not marked incorrect" : undefined}>
-              {selected ? "Selected" : item.review_status === "approved" ? "Inconsistent: not selected" : item.review_status === "superseded" ? "Superseded (previous selection)" : item.review_status}
+            <p className={`mt-1 text-xs ${selected ? "font-semibold text-ocean" : "text-slate-600"}`} title={item.review_status === "superseded" ? "Previously selected; not marked incorrect" : group.live_job && item.review_status === "pending" ? AUTOMATIC_LINK_TOOLTIP : undefined}>
+              {selected ? "Selected" : item.review_status === "approved" ? "Inconsistent: not selected" : item.review_status === "superseded" ? "Superseded (previous selection)" : reviewStatusLabel(item.review_status, group.live_job)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

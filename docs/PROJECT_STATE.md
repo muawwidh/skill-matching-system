@@ -454,6 +454,16 @@ Jobs page paging (2026-11-21, D059):
 - Tests: `tests/test_recommendations.py` (paging, overall ranks, coverage
   per page, clamping, invalid sizes, top-N cap), `tests/test_representation_cache.py`.
 
+"Automatic" wording for live jobs (2026-11-21, D054):
+- Job skill panels (candidate Jobs page and staff job list) and the staff
+  taxonomy review queue label pending skills and link suggestions of live jobs
+  "automatic" (tooltip: not reviewed by staff). Stored statuses unchanged.
+- `TaxonomyReviewGroup.live_job` flags live-job terms; the frontend helper is
+  `src/utils/reviewStatus.ts`.
+- The admin overview counts (Dashboard) are aggregates and still say
+  "Pending" for all job skills.
+- Tests: `tests/test_review_queue_scope.py`, `frontend/tests/reviewStatus.test.ts`.
+
 ## Early Matching Prototype
 
 Migration:

@@ -62,6 +62,8 @@ export type TaxonomyReviewGroup = {
   extracted_term_id: string;
   raw_text: string;
   inconsistent: boolean;
+  /** Term of a live job: its pending suggestions read "automatic" (wording only). */
+  live_job?: boolean;
   selection: { candidate_id: string | null; concept: TaxonomyConcept; token: string } | null;
   candidates: TaxonomyLinkCandidate[];
 };

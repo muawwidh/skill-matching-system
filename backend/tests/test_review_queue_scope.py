@@ -51,5 +51,10 @@ def test_review_queue_defaults_to_cv_manual_and_evaluation_terms(client, db_sess
     # A lookup by term ID finds a live-job term from the default view.
     live_id = terms["live"][1]
     assert listed(f"/taxonomy/reviews?state=all&q={live_id}") == {"Live skill"}
+    # Only live-job terms are flagged; the UI shows their pending suggestions as "automatic".
+    body = client.get("/taxonomy/reviews?state=pending&scope=all", headers=headers).json()
+    assert {item["raw_text"]: item["live_job"] for item in body["items"]} == {
+        "Cv skill": False, "Manual skill": False, "Evaluation skill": False, "Live skill": True}
+    assert {c["review_status"] for item in body["items"] for c in item["candidates"]} == {"pending"}  # data unchanged
     # Nothing was deleted.
     assert db_session.scalar(select(func.count()).select_from(TaxonomyLinkCandidate)) == 4

@@ -417,6 +417,16 @@ class TaxonomyRepository:
                 item.reviewed_by = actor_id
                 item.reviewed_at = datetime.now(timezone.utc)
 
+    def is_live_job_term(self, term_source: str, term_id: UUID) -> bool:
+        from app.db.models import ExtractedJobTerm, Job
+        from app.job_sources import NON_LIVE_SOURCES
+
+        if term_source != "job":
+            return False
+        source = self.db.scalar(select(Job.source).join(ExtractedJobTerm, ExtractedJobTerm.job_id == Job.id)
+                                .where(ExtractedJobTerm.id == term_id))
+        return source is not None and source not in NON_LIVE_SOURCES
+
     @staticmethod
     def review_scope_filter(scope: str):
         """Which link suggestions a staff review queue shows (D057).

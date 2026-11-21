@@ -16,6 +16,7 @@ import { LiveJobImportPanel } from "../components/LiveJobImportPanel";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { useAuth } from "../features/auth/AuthProvider";
 import type { Job, JobPayload, RecommendationList } from "../types/documents";
+import { isLiveJobSource } from "../utils/reviewStatus";
 
 const emptyJob: JobPayload = {
   title: "",
@@ -244,7 +245,13 @@ export function JobsPage() {
             <JobCard key={item.job_id} job={item.job}>
               <JobMatchPanel match={item} rankTotal={recommendations.total} />
               {accessToken ? (
-                <SkillReviewPanel accessToken={accessToken} canReview={false} ownerId={item.job_id} ownerType="job" />
+                <SkillReviewPanel
+                  accessToken={accessToken}
+                  canReview={false}
+                  liveJob={isLiveJobSource(item.job.source)}
+                  ownerId={item.job_id}
+                  ownerType="job"
+                />
               ) : null}
             </JobCard>
           ))}
@@ -296,7 +303,7 @@ export function JobsPage() {
               }
             >
               {accessToken ? (
-                <SkillReviewPanel accessToken={accessToken} canReview ownerId={item.id} ownerType="job" />
+                <SkillReviewPanel accessToken={accessToken} canReview liveJob={isLiveJobSource(item.source)} ownerId={item.id} ownerType="job" />
               ) : null}
             </JobCard>
           ))}

@@ -442,6 +442,7 @@ class TaxonomyService:
         expected_ids = {selected.link_candidate_id} if selected else set()
         return TaxonomyReviewGroup(term_source=term_source, extracted_term_id=term_id,
             raw_text=candidates[0].raw_text, inconsistent=approved_ids != expected_ids,
+            live_job=self.repository.is_live_job_term(term_source, term_id),
             selection=TaxonomySelectionRead(candidate_id=selected.link_candidate_id,
                 concept=self._concept_read(selected.concept), token=self._selection_token(selected)) if selected else None,
             candidates=[self._candidate_read(item) for item in candidates])
