@@ -320,6 +320,23 @@ CV skills (D048, no migration).
 - Tests: `tests/test_candidate_link_review.py` (approve/switch/reject, audit
   attribution, owner-only, job suggestions refused, staff review unchanged).
 
+Item 6 (2026-11-21): `/matches` is candidate-only and computed on read (D049,
+no migration, no table dropped).
+- New dependency `candidate_only`: candidate role required; admin/researcher
+  accounts get 403. Jobs page shows "Jobs for your profile" to
+  candidate-only accounts.
+- `GET /matches/recommendations` and `GET /matches/jobs/{id}` (replaces the
+  former `POST /matches/jobs/{id}`, returns `JobCoverageRead` without
+  `score`) store nothing; `POST /matches/recommendations/refresh` only adds a
+  processing log. Removed `upsert_candidate_job_match`,
+  `list_candidate_job_matches` and `CandidateJobMatchRead` (unused).
+- `candidate_job_matches` is kept: legacy rows are still deleted with a CV or
+  account. Dropping it needs a migration and the owner's approval.
+- Tests: `tests/test_recommendations.py` (no rows written across GET,
+  refresh and per-job coverage; staff, role-less and anonymous refused);
+  PostgreSQL lifecycle tests updated and run against a disposable pgvector
+  database (17 passed).
+
 ## Early Matching Prototype
 
 Migration:
@@ -333,7 +350,7 @@ TRANSITIONAL PROTOTYPE
 Implemented:
 
 - candidate-job match persistence (existing `candidate_job_matches` table, no
-  new migration)
+  new migration); no longer written since D049 (2026-11-21)
 - skill coverage per D036 (2026-11-18), replacing the former 2:1 weighted
   match percentage and 80/50 explanation cut-offs:
   - approved skills only on both sides

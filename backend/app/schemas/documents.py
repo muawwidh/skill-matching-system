@@ -216,11 +216,9 @@ class MissingSkillRead(BaseModel):
         return value
 
 
-class CandidateJobMatchRead(BaseModel):
-    id: UUID
-    candidate_profile_id: UUID
+class JobCoverageRead(BaseModel):
+    """Skill coverage of one job for the signed-in candidate, computed on read (D049)."""
     job_id: UUID
-    score: float
     matched_required: list[MatchedSkillRead]
     matched_preferred: list[MatchedSkillRead]
     missing_required: list[MissingSkillRead]
@@ -229,8 +227,6 @@ class CandidateJobMatchRead(BaseModel):
     job_skill_count: int
     explanation: str
     job: JobRead
-
-    model_config = {"from_attributes": True}
 
 
 class RecommendationItem(BaseModel):

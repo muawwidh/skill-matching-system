@@ -111,3 +111,57 @@ def test_missing_model_artifacts_report_retrieval_unavailable(client, db_session
     monkeypatch.setattr(RetrievalService, "retrieve", unavailable)
     body = client.get("/matches/recommendations", headers=headers).json()
     assert body["status"] == "retrieval_unavailable" and body["results"] == []
+
+
+# --- D049: candidate accounts only, computed on read -------------------------------
+
+
+def match_rows(db_session: Session) -> int:
+    from sqlalchemy import func
+
+    from app.db.models import CandidateJobMatch
+    db_session.expire_all()
+    return db_session.scalar(select(func.count()).select_from(CandidateJobMatch))
+
+
+def test_matches_are_computed_on_read_without_storing_rows(client, db_session, fake_retrieval):
+    staff = manager(client, db_session)
+    job_id = create_job(client, staff, "Python role", "Python")
+    archived = create_job(client, staff, "Old role", "Python")
+    assert client.post(f"/jobs/{archived}/archive", headers=staff).status_code in {200, 204}
+    headers = candidate_with_skills(client)
+    fake_retrieval["indexed_profile"] = True
+
+    for _ in range(2):
+        body = client.get("/matches/recommendations", headers=headers).json()
+        assert [item["job_id"] for item in body["results"]] == [job_id]
+    assert client.post("/matches/recommendations/refresh", headers=headers).status_code == 200
+    coverage = client.get(f"/matches/jobs/{job_id}", headers=headers)
+    assert coverage.status_code == 200
+    assert coverage.json()["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
+    assert "score" not in coverage.json() and "rank" not in coverage.json()
+    assert client.get(f"/matches/jobs/{archived}", headers=headers).status_code == 404
+    assert match_rows(db_session) == 0
+    # The former write endpoint is gone.
+    assert client.post(f"/matches/jobs/{job_id}", headers=headers).status_code == 405
+
+
+def test_matches_are_candidate_only(client, db_session, fake_retrieval):
+    staff = manager(client, db_session)
+    job_id = create_job(client, staff, "Python role", "Python")
+    researcher = register(client, "researcher@example.com")
+    user = db_session.scalar(select(User).where(User.email == "researcher@example.com"))
+    user.roles.append(db_session.scalar(select(Role).where(Role.name == "researcher"))
+                      or Role(name="researcher", description=""))
+    db_session.commit()
+    for headers in (staff, researcher):
+        assert client.get("/matches/recommendations", headers=headers).status_code == 403
+        assert client.post("/matches/recommendations/refresh", headers=headers).status_code == 403
+        assert client.get(f"/matches/jobs/{job_id}", headers=headers).status_code == 403
+    assert client.get("/matches/recommendations").status_code == 401
+    # A user without the candidate role is refused too.
+    plain = register(client, "plain@example.com")
+    user = db_session.scalar(select(User).where(User.email == "plain@example.com"))
+    user.roles.clear()
+    db_session.commit()
+    assert client.get("/matches/recommendations", headers=plain).status_code == 403

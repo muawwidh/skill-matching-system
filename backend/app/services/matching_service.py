@@ -231,8 +231,8 @@ class MatchingService:
         """Top-N retrieval, then skill coverage per retrieved job (D045).
 
         "#N of M" is the retrieval rank within the M retrieved jobs. Coverage
-        never changes the order. Always recomputed, so stored rows never reflect
-        an older rule or stale reviews.
+        never changes the order. Computed on read (D049): nothing is stored per
+        request, so results never reflect an older rule or stale reviews.
         """
         from app.core.config import settings
         from app.services.retrieval_service import RetrievalService
@@ -256,15 +256,8 @@ class MatchingService:
             job = jobs.get(row["job_id"])
             if job is None:
                 continue
-            match = self._score_job(profile.id, job, candidate_items)
-            results.append({"rank": len(results) + 1, "job_id": job.id, "job": job,
-                            "matched_required": match.matched_required,
-                            "matched_preferred": match.matched_preferred,
-                            "missing_required": match.missing_required,
-                            "missing_preferred": match.missing_preferred,
-                            "candidate_skill_count": match.candidate_skill_count,
-                            "job_skill_count": match.job_skill_count,
-                            "explanation": match.explanation})
+            results.append({"rank": len(results) + 1, **self._coverage(job, candidate_items)})
+        # Only a newly created empty profile is written here; no match rows (D049).
         self.db.commit()
         return {"status": state, "message": PROFILE_MESSAGES[state], "top_n": top_n,
                 "active_jobs": len(active_jobs),
@@ -284,24 +277,15 @@ class MatchingService:
             return len(active_jobs)
         return sum(1 for job in active_jobs if job.id not in fresh)
 
-    def match_my_job(self, user: User, job_id: UUID) -> CandidateJobMatch:
+    def match_my_job(self, user: User, job_id: UUID) -> dict:
+        """Coverage of one active job for the candidate, computed on read (D049)."""
         profile = self.repository.get_or_create_candidate_profile(user.id)
         job = self.repository.get_job(job_id)
         if not job or job.status == "archived":
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
-        match = self._score_job(profile.id, job, self._candidate_items(profile.id))
-        self.repository.add_processing_log(
-            "job",
-            job.id,
-            "job_matching",
-            "success",
-            f"Calculated skill coverage for {job.title}.",
-            {"required_matched": len(match.matched_required),
-             "required_total": len(match.matched_required) + len(match.missing_required)},
-        )
+        coverage = self._coverage(job, self._candidate_items(profile.id))
         self.db.commit()
-        self.db.refresh(match)
-        return match
+        return coverage
 
     def _candidate_items(self, candidate_profile_id: UUID) -> list[SkillItem]:
         skills = self.repository.list_matchable_candidate_skills(candidate_profile_id)
@@ -323,19 +307,16 @@ class MatchingService:
             requirement=requirement,
         )
 
-    def _score_job(self, candidate_profile_id: UUID, job: Job, candidate_items: list[SkillItem]) -> CandidateJobMatch:
+    def _coverage(self, job: Job, candidate_items: list[SkillItem]) -> dict:
         result = compute_coverage(candidate_items, self._job_items(job.id))
-        # `score` is a legacy column: required coverage x 100, stored but never displayed or ranked on.
-        score = round(100 * len(result.matched_required) / result.required_total, 2) if result.required_total else 0.0
-        return self.repository.upsert_candidate_job_match(
-            candidate_profile_id=candidate_profile_id,
-            job_id=job.id,
-            score=score,
-            matched_required=result.matched_required,
-            matched_preferred=result.matched_preferred,
-            missing_required=result.missing_required,
-            missing_preferred=result.missing_preferred,
-            candidate_skill_count=result.candidate_skill_count,
-            job_skill_count=result.required_total + result.preferred_total,
-            explanation=build_explanation(result),
-        )
+        return {
+            "job_id": job.id,
+            "job": job,
+            "matched_required": result.matched_required,
+            "matched_preferred": result.matched_preferred,
+            "missing_required": result.missing_required,
+            "missing_preferred": result.missing_preferred,
+            "candidate_skill_count": result.candidate_skill_count,
+            "job_skill_count": result.required_total + result.preferred_total,
+            "explanation": build_explanation(result),
+        }

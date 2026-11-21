@@ -277,8 +277,12 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         job_id = job.id
         matched = MatchingService(db).match_my_job(db.get(User, user_id), job_id)
         # CV Python is concept-linked, the manual job skill is not: name fallback applies.
-        assert matched.matched_required == [{"label": "python", "matched_via": "skill_name"}]
-        assert matched.score == 100.0
+        assert matched["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
+        # A legacy stored match row (written before D049) is removed with the CV.
+        db.add(CandidateJobMatch(candidate_profile_id=profile_id, job_id=job_id, score=100.0,
+            matched_required=matched["matched_required"], matched_preferred=[], missing_required=[],
+            missing_preferred=[], candidate_skill_count=1, job_skill_count=1, explanation=""))
+        db.commit()
         CvService(db).delete_my_cv(db.get(User, user_id), cv1_id)
     with Session(engine) as fresh:
         assert fresh.get(CvDocument, cv1_id) is None
@@ -308,13 +312,14 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
             CandidateJobMatch.candidate_profile_id == profile_id, CandidateJobMatch.job_id == job_id
         )) is None
         assert "python" not in {item.name for item in MatchingService(fresh)._candidate_items(profile_id)}
-        recomputed = next(item for item in MatchingService(fresh).list_my_recommendations(fresh.get(User, user_id))
-                          if item.job_id == job_id)
+        recomputed = MatchingService(fresh).match_my_job(fresh.get(User, user_id), job_id)
         # The unlinked job skill no longer has a same-name CV skill: missing, checked by name only.
-        assert recomputed.matched_required == []
-        assert recomputed.missing_required == [{"label": "python", "checked_via": "skill_name"}]
-        assert recomputed.score == 0.0
-        assert "could not be compared" not in recomputed.explanation
+        assert recomputed["matched_required"] == []
+        assert recomputed["missing_required"] == [{"label": "python", "checked_via": "skill_name"}]
+        # Computed on read: no new match row is stored (D049).
+        assert fresh.scalar(select(CandidateJobMatch).where(
+            CandidateJobMatch.candidate_profile_id == profile_id)) is None
+        assert "could not be compared" not in recomputed["explanation"]
         source = RetrievalRepository(fresh).profile_input(profile_id)
         assert source is not None and "Python" not in source.text and "Docker" in source.text
         refreshed = RetrievalService(fresh).index_profile(profile_id, FakeEmbedder())
@@ -409,7 +414,12 @@ def test_cv_deletion_rolls_back_all_derived_rows(pg_database, monkeypatch):
             requirement_type="required", evidence_sentence="Python", review_status="approved"))
         db.commit()
         job_id = job.id
-        assert MatchingService(db).match_my_job(user, job_id).score == 100.0
+        assert MatchingService(db).match_my_job(user, job_id)["matched_required"]
+        # A legacy stored match row (written before D049), to check it survives a failed deletion.
+        db.add(CandidateJobMatch(candidate_profile_id=profile_id, job_id=job_id, score=100.0,
+            matched_required=[], matched_preferred=[], missing_required=[], missing_preferred=[],
+            candidate_skill_count=1, job_skill_count=1, explanation=""))
+        db.commit()
         assert RetrievalService(db).index_profile(profile_id, FakeEmbedder()).outcome == "indexed"
         db.commit()
         before_cv = persisted_row(cv)

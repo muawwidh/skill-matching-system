@@ -629,49 +629,6 @@ class DocumentRepository:
             result[skill.id] = (link.concept_id, link.concept.preferred_label)
         return result
 
-    def upsert_candidate_job_match(
-        self,
-        candidate_profile_id: UUID,
-        job_id: UUID,
-        score: float,
-        matched_required: list[dict],
-        matched_preferred: list[dict],
-        missing_required: list[dict],
-        missing_preferred: list[dict],
-        candidate_skill_count: int,
-        job_skill_count: int,
-        explanation: str,
-    ) -> CandidateJobMatch:
-        match = self.db.scalar(
-            select(CandidateJobMatch).where(
-                CandidateJobMatch.candidate_profile_id == candidate_profile_id,
-                CandidateJobMatch.job_id == job_id,
-            )
-        )
-        if match is None:
-            match = CandidateJobMatch(candidate_profile_id=candidate_profile_id, job_id=job_id)
-            self.db.add(match)
-        match.score = score
-        match.matched_required = matched_required
-        match.matched_preferred = matched_preferred
-        match.missing_required = missing_required
-        match.missing_preferred = missing_preferred
-        match.candidate_skill_count = candidate_skill_count
-        match.job_skill_count = job_skill_count
-        match.explanation = explanation
-        self.db.flush()
-        return match
-
-    def list_candidate_job_matches(self, candidate_profile_id: UUID) -> list[CandidateJobMatch]:
-        return list(
-            self.db.scalars(
-                select(CandidateJobMatch)
-                .options(selectinload(CandidateJobMatch.job))
-                .where(CandidateJobMatch.candidate_profile_id == candidate_profile_id)
-                .order_by(CandidateJobMatch.job_id)
-            )
-        )
-
     def get_job_skill(self, skill_id: UUID, job_id: UUID) -> JobSkill | None:
         return self.db.scalar(
             select(JobSkill).where(

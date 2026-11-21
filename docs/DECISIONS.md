@@ -975,3 +975,15 @@ events appended). Candidate approvals are stored with approval source
 `candidate_review` and the candidate as approver, so they can be told apart
 from staff `human_review` decisions in evaluation. Staff review is unchanged
 and can still override a candidate's choice.
+
+## D049 - Job Matching Is Candidate-Only And Computed On Read
+
+Decided by the project owner on 2026-11-21. All `/matches` routes require the
+candidate role and refuse administrator and researcher accounts, so
+per-candidate rankings stay with their candidate (consistent with D037).
+Retrieval and skill coverage are computed when read and are not stored:
+`GET /matches/recommendations` and `GET /matches/jobs/{id}` write no rows.
+The `candidate_job_matches` table is no longer written; it is kept until the
+owner approves dropping it, and its legacy rows are still deleted with a CV
+(D041) or an account (D047). Explanations therefore always derive from the
+current approved skills and links.

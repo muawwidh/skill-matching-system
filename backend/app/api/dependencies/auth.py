@@ -1,3 +1,4 @@
+from app.core.config import settings
 from collections.abc import Callable
 
 from fastapi import Depends, HTTPException, status
@@ -35,3 +36,17 @@ def require_roles(*allowed_roles: str) -> Callable[[User], User]:
         return current_user
 
     return dependency
+
+
+def candidate_only(current_user: User = Depends(get_current_user)) -> User:
+    """Candidate accounts only: staff (administrator/researcher) accounts are refused.
+
+    Per-candidate job rankings are never shown to staff (D037, D049).
+    """
+    roles = {role.name for role in current_user.roles}
+    if settings.DEFAULT_CANDIDATE_ROLE not in roles or roles & {settings.ADMIN_ROLE, settings.RESEARCHER_ROLE}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Job matching is available to candidate accounts only.",
+        )
+    return current_user

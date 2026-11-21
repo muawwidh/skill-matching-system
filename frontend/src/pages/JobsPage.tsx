@@ -60,7 +60,8 @@ export function JobsPage() {
   const { accessToken, user } = useAuth();
   const roles = user?.roles.map((role) => role.name) ?? [];
   const canManageJobs = roles.includes("admin") || roles.includes("researcher");
-  const isCandidate = roles.includes("candidate");
+  // Job matching is for candidate accounts only; staff accounts get 403 from /matches (D049).
+  const isCandidate = roles.includes("candidate") && !canManageJobs;
   const queryClient = useQueryClient();
   const [job, setJob] = useState<JobPayload>(emptyJob);
 

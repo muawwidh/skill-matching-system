@@ -31,8 +31,9 @@ Replaced on 2026-11-18 by D036. The former 2:1 weighted percentage, the
 They are listed under "Removed" below.
 
 Shown to users in `JobsPage` → `frontend/src/components/JobMatchPanel.tsx`
-("Skill coverage"). Persisted in `candidate_job_matches`. Rows are recomputed
-on every `GET /matches/recommendations`.
+("Skill coverage"). Computed on read for `GET /matches/recommendations` and
+`GET /matches/jobs/{id}`; nothing is stored (D049). The legacy
+`candidate_job_matches` table and its `score` column are no longer written.
 
 | Value | Where computed | Exact rule | Constants | Origin |
 |---|---|---|---|---|
