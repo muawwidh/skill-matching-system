@@ -76,3 +76,26 @@ export function listTaxonomyReviews(accessToken: string, state: string, query: s
 export function listTaxonomyReviewHistory(accessToken: string, source: string, termId: string, offset: number) {
   return apiRequest<TaxonomyReviewEvent[]>(`/taxonomy/reviews/${source}/${termId}/history?offset=${offset}&limit=20`, { accessToken });
 }
+
+/** A candidate's own CV skills: taxonomy suggestions and current selection (D048). */
+export function listMyCvTaxonomyLinks(accessToken: string, cvId: string) {
+  return apiRequest<TaxonomyReviewGroup[]>(`/cvs/${cvId}/taxonomy-links`, { accessToken });
+}
+
+export function reviewMyCvTaxonomyLink(
+  accessToken: string,
+  cvId: string,
+  candidateId: string,
+  status: "approved" | "rejected",
+  selectionToken?: string,
+) {
+  return apiRequest<TaxonomyLinkCandidate>(`/cvs/${cvId}/taxonomy-links/${candidateId}`, {
+    method: "PUT",
+    accessToken,
+    body: JSON.stringify({
+      status,
+      replace_selection: Boolean(selectionToken),
+      expected_selection_token: selectionToken ?? null,
+    }),
+  });
+}

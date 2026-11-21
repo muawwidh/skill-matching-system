@@ -349,6 +349,7 @@ class TaxonomyService:
         user: User,
         replace_selection: bool = False,
         expected_selection_token: str | None = None,
+        approval_source: str = "human_review",
     ) -> TaxonomyLinkCandidateRead:
         try:
             candidate = self.repository.get_link_candidate(candidate_id)
@@ -383,7 +384,7 @@ class TaxonomyService:
                 candidate.match_method = "human_correction"
                 candidate.confidence_score = 1.0
             if review_status == "approved":
-                self.repository.approve_candidate(candidate, "human_review", user.id)
+                self.repository.approve_candidate(candidate, approval_source, user.id)
             else:
                 self.repository.reject_candidate(candidate, user.id)
             after = self._review_snapshot(candidate.term_source, candidate.extracted_term_id)
@@ -424,18 +425,56 @@ class TaxonomyService:
 
     def review_groups(self, state: str, query: str, limit: int, offset: int) -> TaxonomyReviewPage:
         terms = self.repository.review_terms(state, query.strip(), limit + 1, offset)
-        groups = []
-        for term_source, term_id in terms[:limit]:
-            candidates = self.repository.term_candidates(term_source, term_id)
-            selected = self.repository.selected_link(term_source, term_id)
-            approved_ids = {item.id for item in candidates if item.review_status == "approved"}
-            expected_ids = {selected.link_candidate_id} if selected else set()
-            groups.append(TaxonomyReviewGroup(term_source=term_source, extracted_term_id=term_id,
-                raw_text=candidates[0].raw_text, inconsistent=approved_ids != expected_ids,
-                selection=TaxonomySelectionRead(candidate_id=selected.link_candidate_id,
-                    concept=self._concept_read(selected.concept), token=self._selection_token(selected)) if selected else None,
-                candidates=[self._candidate_read(item) for item in candidates]))
-        return TaxonomyReviewPage(items=groups, has_more=len(terms) > limit)
+        groups = [self._review_group(term_source, term_id) for term_source, term_id in terms[:limit]]
+        return TaxonomyReviewPage(items=[group for group in groups if group], has_more=len(terms) > limit)
+
+    def _review_group(self, term_source: str, term_id: UUID) -> TaxonomyReviewGroup | None:
+        candidates = self.repository.term_candidates(term_source, term_id)
+        if not candidates:
+            return None
+        selected = self.repository.selected_link(term_source, term_id)
+        approved_ids = {item.id for item in candidates if item.review_status == "approved"}
+        expected_ids = {selected.link_candidate_id} if selected else set()
+        return TaxonomyReviewGroup(term_source=term_source, extracted_term_id=term_id,
+            raw_text=candidates[0].raw_text, inconsistent=approved_ids != expected_ids,
+            selection=TaxonomySelectionRead(candidate_id=selected.link_candidate_id,
+                concept=self._concept_read(selected.concept), token=self._selection_token(selected)) if selected else None,
+            candidates=[self._candidate_read(item) for item in candidates])
+
+    # --- Candidate review of link suggestions on their own CV skills (D048) ------------
+
+    def _my_cv_term_ids(self, user: User, document_id: UUID) -> list[UUID]:
+        from app.db.models import CandidateProfile, CvDocument, ExtractedCandidateTerm
+        from sqlalchemy import select
+
+        profile = self.db.scalar(select(CandidateProfile).where(CandidateProfile.user_id == user.id))
+        document = self.db.scalar(select(CvDocument).where(
+            CvDocument.id == document_id, CvDocument.candidate_profile_id == (profile.id if profile else None)))
+        if not profile or not document:
+            raise HTTPException(status_code=404, detail="CV not found.")
+        return list(self.db.scalars(select(ExtractedCandidateTerm.id).where(
+            ExtractedCandidateTerm.cv_document_id == document.id).order_by(ExtractedCandidateTerm.start_char)))
+
+    def my_cv_link_groups(self, user: User, document_id: UUID) -> list[TaxonomyReviewGroup]:
+        """Taxonomy suggestions and current selection for each extracted term of the user's own CV."""
+        groups = [self._review_group("candidate", term_id) for term_id in self._my_cv_term_ids(user, document_id)]
+        return [group for group in groups if group]
+
+    def review_my_cv_link(
+        self, user: User, document_id: UUID, candidate_id: UUID, review_status: str,
+        replace_selection: bool = False, expected_selection_token: str | None = None,
+    ) -> TaxonomyLinkCandidateRead:
+        """Approve or reject a suggestion on the user's own CV term; same rules and audit as staff review.
+
+        Candidates choose among the suggestions only (no free concept correction).
+        The approval is attributed to the candidate with approval source `candidate_review`.
+        """
+        candidate = self.repository.get_link_candidate(candidate_id)
+        if (candidate is None or candidate.term_source != "candidate"
+                or candidate.extracted_term_id not in set(self._my_cv_term_ids(user, document_id))):
+            raise HTTPException(status_code=404, detail="Taxonomy suggestion not found.")
+        return self.review_link(candidate_id, review_status, None, user, replace_selection,
+                                expected_selection_token, approval_source="candidate_review")
 
     def review_history(self, term_source: str, term_id: UUID, limit: int, offset: int) -> list[TaxonomyReviewEventRead]:
         return [TaxonomyReviewEventRead.model_validate(item)

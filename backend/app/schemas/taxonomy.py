@@ -119,6 +119,13 @@ class TaxonomyLinkReview(BaseModel):
     expected_selection_token: str | None = Field(default=None, max_length=64)
 
 
+class CandidateLinkReview(BaseModel):
+    """A candidate's decision on a suggestion for their own CV skill (no concept correction)."""
+    status: str = Field(pattern="^(approved|rejected)$")
+    replace_selection: bool = False
+    expected_selection_token: str | None = Field(default=None, max_length=64)
+
+
 class TaxonomySelectionRead(BaseModel):
     candidate_id: UUID | None
     concept: TaxonomyConceptRead

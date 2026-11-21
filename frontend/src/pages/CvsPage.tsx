@@ -3,6 +3,7 @@ import { FileUp, Send, Trash2 } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 import { deleteCv, listCvs, pasteCv, uploadCv } from "../api/documents";
+import { CandidateTaxonomyLinks } from "../components/CandidateTaxonomyLinks";
 import { MatchingProfileBox } from "../components/MatchingProfileBox";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
@@ -162,7 +163,10 @@ export function CvsPage() {
                 <TextPreview title="Cleaned text used for detection" text={cv.cleaned_text} />
               </div>
               {accessToken ? (
-                <SkillReviewPanel accessToken={accessToken} ownerId={cv.id} ownerType="cv" />
+                <>
+                  <SkillReviewPanel accessToken={accessToken} ownerId={cv.id} ownerType="cv" />
+                  <CandidateTaxonomyLinks accessToken={accessToken} cvId={cv.id} />
+                </>
               ) : null}
             </article>
           ))}

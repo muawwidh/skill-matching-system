@@ -14,7 +14,9 @@ from app.schemas.documents import (
     CvPasteRequest,
     SectionRead,
 )
+from app.schemas.taxonomy import CandidateLinkReview, TaxonomyLinkCandidateRead, TaxonomyReviewGroup
 from app.services.cv_service import CvService
+from app.services.taxonomy_service import TaxonomyService
 from app.services.skill_service import SkillService
 
 router = APIRouter()
@@ -110,3 +112,27 @@ def get_cv_skill_groups(
     db: Session = Depends(get_db),
 ) -> list[CandidateSkillGroup]:
     return SkillService(db).grouped_cv_skills(current_user, document_id)
+
+
+@router.get("/{document_id}/taxonomy-links", response_model=list[TaxonomyReviewGroup])
+def list_my_taxonomy_links(
+    document_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[TaxonomyReviewGroup]:
+    """Taxonomy suggestions and selections for the skills of the user's own CV (D048)."""
+    return TaxonomyService(db).my_cv_link_groups(current_user, document_id)
+
+
+@router.put("/{document_id}/taxonomy-links/{candidate_id}", response_model=TaxonomyLinkCandidateRead)
+def review_my_taxonomy_link(
+    document_id: UUID,
+    candidate_id: UUID,
+    payload: CandidateLinkReview,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TaxonomyLinkCandidateRead:
+    return TaxonomyService(db).review_my_cv_link(
+        current_user, document_id, candidate_id, payload.status,
+        payload.replace_selection, payload.expected_selection_token,
+    )

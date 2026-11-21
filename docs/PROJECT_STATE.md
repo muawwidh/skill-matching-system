@@ -309,6 +309,17 @@ Item 4 (2026-11-21): candidate account deletion (D047, no migration).
 - Tests: `tests/test_account_deletion.py` (every table checked, another
   candidate untouched, old token rejected, wrong password, staff refused).
 
+Item 5 (2026-11-21): candidates review taxonomy link suggestions on their own
+CV skills (D048, no migration).
+- `GET /cvs/{id}/taxonomy-links` and `PUT /cvs/{id}/taxonomy-links/{candidate_id}`
+  (owner only; approve/reject among suggestions, no concept correction).
+  `TaxonomyService.my_cv_link_groups` / `review_my_cv_link` reuse `review_link`
+  with approval source `candidate_review`. Staff routes are unchanged.
+- CVs page: "Taxonomy links for your skills" under each CV's skill review.
+  Link changes invalidate the profile, so auto re-embedding (D046) applies.
+- Tests: `tests/test_candidate_link_review.py` (approve/switch/reject, audit
+  attribution, owner-only, job suggestions refused, staff review unchanged).
+
 ## Early Matching Prototype
 
 Migration:

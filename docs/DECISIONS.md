@@ -961,3 +961,17 @@ still keeps them (D024, D041).
 Accounts with an administrator or researcher role cannot use this route.
 Their review decisions on other people's records are attributed to them;
 removing them is an administrative action.
+
+## D048 - Candidates Review Taxonomy Links On Their Own Skills
+
+Decided by the project owner on 2026-11-21. A candidate can approve or reject
+the taxonomy link suggestions for the extracted terms of their own CVs
+(`GET/PUT /cvs/{cv_id}/taxonomy-links[/{candidate_id}]`). Ownership is checked
+through the term's CV and the candidate profile; anything else returns 404.
+Candidates choose among the existing suggestions only; free concept correction
+stays a staff action. The same review rules apply as for staff (one selected
+link per term, explicit confirmation with a selection token to switch, review
+events appended). Candidate approvals are stored with approval source
+`candidate_review` and the candidate as approver, so they can be told apart
+from staff `human_review` decisions in evaluation. Staff review is unchanged
+and can still override a candidate's choice.

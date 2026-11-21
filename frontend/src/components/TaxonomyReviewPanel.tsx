@@ -7,14 +7,14 @@ import type { TaxonomyLinkCandidate, TaxonomyReviewGroup } from "../types/taxono
 
 type Action = { group: TaxonomyReviewGroup; candidate: TaxonomyLinkCandidate; status: "approved" | "rejected" };
 const button = "inline-flex items-center gap-1 rounded border border-slate-300 px-3 py-2 text-sm disabled:opacity-50";
-const MATCH_METHOD_LABELS: Record<string, string> = {
+export const MATCH_METHOD_LABELS: Record<string, string> = {
   exact_preferred: "exact preferred label",
   exact_alternative: "exact alternative label",
   fuzzy: "fuzzy (similar spelling)",
   human_correction: "human correction",
 };
 // The match type is shown instead of a fixed per-method confidence number.
-const matchMethodLabel = (method: string) => MATCH_METHOD_LABELS[method] ?? method.replace(/_/g, " ");
+export const matchMethodLabel = (method: string) => MATCH_METHOD_LABELS[method] ?? method.replace(/_/g, " ");
 
 function ReviewHistory({ accessToken, group }: { accessToken: string; group: TaxonomyReviewGroup }) {
   const [open, setOpen] = useState(false);
