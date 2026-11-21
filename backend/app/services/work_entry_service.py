@@ -81,6 +81,12 @@ class WorkEntryService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Work entry not found.")
         return entry
 
+    def occupation_suggestions(self, title: str, limit: int = 5) -> list[dict]:
+        """Top ESCO occupations for a title (occupation-only linking with title clean-up)."""
+        catalog = occupation_catalog(self.db)
+        return [{**catalog.describe(match.concept_id), "confidence": match.confidence}
+                for match in catalog.suggest(title[:255], limit)]
+
     def detected(self, user: User) -> list[dict]:
         """Dated entries found in the candidate's processed CVs that are not entered yet."""
         profile_id = self._profile_id(user)

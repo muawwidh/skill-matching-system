@@ -527,6 +527,15 @@ Item 2 (2026-11-21): work entries.
   cached per active taxonomy.
 - Tests: `tests/test_work_entries.py` (fixture `tests/esco_occupations.py`).
 
+Item 3 (2026-11-21): occupation choice.
+- `GET /candidates/me/work-entries/occupation-suggestions?title=`: top 5
+  active ESCO occupations (existing linker restricted to occupations;
+  cleaned title first, then the title as written) with ISCO unit group.
+- Title clean-up (`clean_title`): bracketed text, text after " - ", "|",
+  "/ " or a comma, seniority/work-mode words removed.
+- Work entry form: radio list of the suggestions plus "None of these".
+- Tests: `tests/test_occupation_suggestions.py`.
+
 ## Early Matching Prototype
 
 Migration:
