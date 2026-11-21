@@ -69,3 +69,32 @@ def test_assessment_needs_a_minimum_an_occupation_and_entries(client, db_session
     unrelated = service.assess(_job("Sales Manager", "- 1+ year of experience in sales"),
                                service.job_occupation(_job("Sales Manager")), periods)
     assert unrelated["relevant_months"] == 0 and unrelated["meets_requirement"] is False
+
+
+def test_job_card_line_explains_and_never_reorders(client, db_session, fake_retrieval):
+    from uuid import UUID
+
+    from tests.test_recommendations import candidate_with_skills, manager
+
+    add_esco_occupations(db_session)
+    staff = manager(client, db_session)
+    ids = []
+    for title, text in (("Office Wizard", "- 5+ years of experience"), ("Software Engineer", "- 2+ years of experience in Python"),
+                        ("Sales Manager", "Sell things."), ("Software Developer", "- 6+ years of experience")):
+        response = client.post("/jobs", headers=staff, json={"title": title, "company": "", "location": "",
+                                                             "employment_type": "", "description": text})
+        ids.append(response.json()["id"])
+    headers = candidate_with_skills(client)
+    order = [UUID(i) for i in reversed(ids)]
+    fake_retrieval["order"] = order
+    before = [item["job_id"] for item in client.get("/matches/recommendations", headers=headers).json()["results"]]
+    suggestion = client.get("/candidates/me/work-entries/occupation-suggestions", params={"title": "Programmer"},
+                            headers=headers).json()[0]
+    client.post("/candidates/me/work-entries", headers=headers, json={
+        "title": "Programmer", "start_month": "2021-01", "end_month": "2023-12", "occupation_concept_id": suggestion["concept_id"]})
+    body = client.get("/matches/recommendations", headers=headers).json()
+    assert [item["job_id"] for item in body["results"]] == before == [str(i) for i in order]  # order unchanged
+    lines = {item["job"]["title"]: item["related_experience"] for item in body["results"]}
+    assert lines["Software Engineer"]["meets_requirement"] is True and lines["Software Engineer"]["relevant_years"] == 3.0
+    assert lines["Software Developer"]["meets_requirement"] is False and lines["Software Developer"]["min_required_years"] == 6
+    assert lines["Office Wizard"] is None and lines["Sales Manager"] is None  # no occupation / no minimum

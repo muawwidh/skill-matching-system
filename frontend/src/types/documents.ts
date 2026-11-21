@@ -126,8 +126,19 @@ export type JobOccupation = {
   isco_unit_group: string;
 };
 
+/** Related experience for one job (D060): explanation only, never part of the order. */
+export type RelatedExperience = {
+  relevant_months: number;
+  relevant_years: number;
+  isco_group: string;
+  isco_group_label: string;
+  min_required_years: number;
+  meets_requirement: boolean;
+};
+
 export type RecommendationItem = {
   job_occupation?: JobOccupation | null;
+  related_experience?: RelatedExperience | null;
   rank: number;
   job_id: string;
   matched_required: MatchedSkill[];

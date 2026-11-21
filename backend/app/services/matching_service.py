@@ -315,9 +315,13 @@ class MatchingService:
 
             candidate_items = self._candidate_items(profile.id)
             experience = ExperienceService(self.db)
-            results = [{"rank": start + offset, **self._coverage(job, candidate_items),
-                        "job_occupation": experience.job_occupation(job)}
-                       for offset, job in enumerate(ranked[start:start + page_size], start=1)]
+            periods = experience.candidate_periods(profile.id)
+            for offset, job in enumerate(ranked[start:start + page_size], start=1):
+                occupation = experience.job_occupation(job)
+                # Related experience explains the job; it never changes the order (D060).
+                results.append({"rank": start + offset, **self._coverage(job, candidate_items),
+                                "job_occupation": occupation,
+                                "related_experience": experience.assess(job, occupation, periods)})
         # Before the commit, which would expire and reload every active job one by one.
         unindexed = self._unindexed_job_count(retrieval, active_jobs, excluded)
         # Only a newly created empty profile is written here; no match rows (D049).

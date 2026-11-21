@@ -556,6 +556,14 @@ Item 5 (2026-11-21): relevance.
   occupation and at least one entry with an occupation.
 - Tests: `tests/test_relevant_experience.py`, `tests/test_experience.py`.
 
+Item 6 (2026-11-21): job card line.
+- Recommendations carry `related_experience` (relevant months/years, ISCO
+  group and label, job minimum, meets/below) for the jobs on the page; the
+  card shows "About N years in related roles (ISCO xxx ...) · job asks M+
+  years → meets / below requirement" only when the job has a minimum and an
+  occupation and the candidate has entries with an occupation. The order is
+  unchanged (tested).
+
 ## Early Matching Prototype
 
 Migration:

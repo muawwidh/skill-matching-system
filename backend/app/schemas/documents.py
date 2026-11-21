@@ -266,6 +266,16 @@ class JobOccupationRead(BaseModel):
     isco_unit_group: str = ""
 
 
+class RelatedExperienceRead(BaseModel):
+    """Related experience for one job (D060): explanation only, never part of the order."""
+    relevant_months: int
+    relevant_years: float
+    isco_group: str
+    isco_group_label: str
+    min_required_years: int
+    meets_requirement: bool
+
+
 class RecommendationItem(BaseModel):
     """One retrieved job (D045): its position in the top-N, explained by skill coverage."""
     rank: int
@@ -281,6 +291,7 @@ class RecommendationItem(BaseModel):
     explanation: str
     job: JobRead
     job_occupation: JobOccupationRead | None = None
+    related_experience: RelatedExperienceRead | None = None
 
 
 class RecommendationList(BaseModel):
