@@ -312,7 +312,16 @@ class RecommendationList(BaseModel):
     page_size: int
     active_jobs: int
     unindexed_jobs: int
+    # Related-experience filter (D060): the remembered switch and how many jobs it hid
+    # among the jobs considered for the top N.
+    hide_below_experience: bool = False
+    hidden_by_experience: int = 0
+    has_work_entries_with_occupation: bool = False
     results: list[RecommendationItem]
+
+
+class MatchPreferences(BaseModel):
+    hide_below_experience: bool
 
 
 # --- Administrator system overview (read-only counts; ratios are shown as "X of Y") ---

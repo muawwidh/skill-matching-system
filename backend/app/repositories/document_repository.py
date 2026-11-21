@@ -114,7 +114,7 @@ class DocumentRepository:
     def delete_candidate_profile_data(self, profile: CandidateProfile) -> dict[str, int]:
         """Erase everything derived from one candidate profile (account deletion).
 
-        Deletes embeddings, work entries (D060), skills (extracted and manual), taxonomy
+        Deletes embeddings, work entries and preferences (D060), skills (extracted and manual), taxonomy
         link suggestions, selected links and their review events, processing
         logs, extracted terms, CV sections and CVs, then the profile. Deletes are
         explicit, so the result does not depend on database cascade settings.
@@ -132,8 +132,9 @@ class DocumentRepository:
             counts[name] = self.db.query(model).filter(*where).delete(synchronize_session=False)
 
         delete("embeddings", CandidateProfileEmbedding, CandidateProfileEmbedding.candidate_profile_id == profile.id)
-        from app.db.models import CandidateWorkEntry
+        from app.db.models import CandidatePreference, CandidateWorkEntry
         delete("work_entries", CandidateWorkEntry, CandidateWorkEntry.candidate_profile_id == profile.id)
+        delete("preferences", CandidatePreference, CandidatePreference.candidate_profile_id == profile.id)
         delete("skills", CandidateSkill, CandidateSkill.candidate_profile_id == profile.id)
         if term_ids:
             delete("selected_links", ApprovedTaxonomyLink, ApprovedTaxonomyLink.term_source == "candidate",

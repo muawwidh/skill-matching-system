@@ -170,6 +170,10 @@ export type RecommendationList = {
   page_size: number;
   active_jobs: number;
   unindexed_jobs: number;
+  /** Related-experience filter (D060). */
+  hide_below_experience?: boolean;
+  hidden_by_experience?: number;
+  has_work_entries_with_occupation?: boolean;
   results: RecommendationItem[];
 };
 

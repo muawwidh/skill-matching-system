@@ -97,11 +97,13 @@ class RetrievalService:
             raise HTTPException(status_code=409, detail=PROFILE_STATUS_DETAIL[state])
         return self.retrieve(query, limit, sources, exclude_sources)
 
-    def retrieve(self, query, limit: int, sources=None, exclude_sources=None) -> list[dict]:
+    def retrieve(self, query, limit: int, sources=None, exclude_sources=None, keep=None) -> list[dict]:
         """Top-`limit` processed jobs by exact cosine similarity; jobs with stale vectors are skipped.
 
         `sources` restricts the search to those job sources (offline evaluation: only
         "evaluation"); `exclude_sources` leaves sources out (candidate view, D056).
+        `keep(job)` (candidate filter, D060) skips jobs before the top-`limit` cut; the
+        offline evaluation never passes it.
         """
         from app.retrieval.representation import MODEL_ID, MODEL_REVISION
 
@@ -115,6 +117,8 @@ class RetrievalService:
             offset += len(rows)
             for indexed, job, distance in rows:
                 if indexed.source_hash != self.repository.job_input(job).source_hash:
+                    continue
+                if keep is not None and not keep(job):
                     continue
                 results.append({"rank": len(results) + 1, "job_id": job.id, "title": job.title,
                     "company": job.company, "location": job.location, "employment_type": job.employment_type,

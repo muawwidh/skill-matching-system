@@ -2,7 +2,7 @@
 from datetime import date
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, String
+from sqlalchemy import Boolean, CheckConstraint, Date, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -29,3 +29,13 @@ class CandidateWorkEntry(TimestampMixin, Base):
     source: Mapped[str] = mapped_column(String(40), default="manual", nullable=False)
 
     occupation = relationship("TaxonomyConcept", lazy="joined")
+
+
+class CandidatePreference(TimestampMixin, Base):
+    """Per-candidate Jobs page settings (D060). A separate table, so profile rows stay unchanged."""
+    __tablename__ = "candidate_preferences"
+
+    candidate_profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("candidate_profiles.id", ondelete="CASCADE"), primary_key=True)
+    # "Hide jobs where my related experience is below the requirement"; off by default.
+    hide_below_experience: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

@@ -564,6 +564,20 @@ Item 6 (2026-11-21): job card line.
   occupation and the candidate has entries with an occupation. The order is
   unchanged (tested).
 
+Item 7 (2026-11-21): related-experience filter.
+- Migration `0011_candidate_preferences`: `candidate_preferences`
+  (`hide_below_experience`, default off; separate table so profile rows are
+  unchanged). `PUT /matches/preferences`; included in account deletion.
+- When on, `RetrievalService.retrieve(keep=...)` skips jobs whose related
+  experience is below their minimum before the top-N cut; jobs without a
+  minimum or a determined occupation, and all jobs when the candidate has no
+  entry with an occupation, are never hidden. Ranks are over the shown jobs.
+  The offline evaluation never passes `keep`.
+- Response adds `hide_below_experience`, `hidden_by_experience`,
+  `has_work_entries_with_occupation`; Jobs page switch with the hidden count.
+- Tests: `tests/test_relevant_experience.py` (filter before the cut, never
+  hidden cases, remembered switch, staff refused, account deletion).
+
 ## Early Matching Prototype
 
 Migration:

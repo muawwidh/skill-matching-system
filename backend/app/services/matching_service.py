@@ -297,10 +297,28 @@ class MatchingService:
         # Candidate scope (D056): manual and live jobs; evaluation jobs only when enabled.
         active_jobs = [job for job in self.repository.list_jobs(include_archived=False) if job.source not in excluded]
         state, query = retrieval.profile_readiness(user)
+        from app.repositories.work_entry_repository import WorkEntryRepository
+        from app.services.experience_service import ExperienceService
+
+        experience = ExperienceService(self.db)
+        periods = experience.candidate_periods(profile.id)
+        preference = WorkEntryRepository(self.db).preference(profile.id)
+        hide_below = bool(preference and preference.hide_below_experience)
+        hidden: list[UUID] = []
+
+        def keep(job: Job) -> bool:
+            """D060 filter: hide only jobs with an assessment that is below the requirement."""
+            assessment = experience.assess(job, experience.job_occupation(job), periods)
+            if assessment is not None and not assessment["meets_requirement"]:
+                hidden.append(job.id)
+                return False
+            return True
+
         rows: list[dict] = []
         if state == "ready":
             try:
-                rows = self._retrieve(retrieval, query, top_n, excluded)
+                # Applied inside retrieval, before the top-N cut.
+                rows = self._retrieve(retrieval, query, top_n, excluded, keep if hide_below and periods else None)
             except (RuntimeError, ValueError):
                 # e.g. the pinned tokenizer needed for job freshness is missing on this server.
                 state = "retrieval_unavailable"
@@ -311,11 +329,7 @@ class MatchingService:
         start = (page - 1) * page_size
         results = []
         if ranked[start:start + page_size]:
-            from app.services.experience_service import ExperienceService
-
             candidate_items = self._candidate_items(profile.id)
-            experience = ExperienceService(self.db)
-            periods = experience.candidate_periods(profile.id)
             for offset, job in enumerate(ranked[start:start + page_size], start=1):
                 occupation = experience.job_occupation(job)
                 # Related experience explains the job; it never changes the order (D060).
@@ -328,11 +342,15 @@ class MatchingService:
         self.db.commit()
         return {"status": state, "message": PROFILE_MESSAGES[state], "top_n": top_n,
                 "total": len(ranked), "page": page, "page_size": page_size,
-                "active_jobs": len(active_jobs), "unindexed_jobs": unindexed, "results": results}
+                "active_jobs": len(active_jobs), "unindexed_jobs": unindexed,
+                "hide_below_experience": hide_below, "hidden_by_experience": len(hidden),
+                "has_work_entries_with_occupation": bool(periods), "results": results}
 
     @staticmethod
-    def _retrieve(retrieval, query, top_n: int, exclude_sources=frozenset()) -> list[dict]:
-        return retrieval.retrieve(query, top_n, exclude_sources=exclude_sources)
+    def _retrieve(retrieval, query, top_n: int, exclude_sources=frozenset(), keep=None) -> list[dict]:
+        if keep is None:
+            return retrieval.retrieve(query, top_n, exclude_sources=exclude_sources)
+        return retrieval.retrieve(query, top_n, exclude_sources=exclude_sources, keep=keep)
 
     @staticmethod
     def _unindexed_job_count(retrieval, active_jobs: list[Job], exclude_sources=frozenset()) -> int:
@@ -340,6 +358,15 @@ class MatchingService:
         # about 29 s per request with 978 jobs (2026-11-21).
         ready = retrieval.ready_job_ids(exclude_sources)
         return sum(1 for job in active_jobs if job.id not in ready)
+
+    def set_hide_below_experience(self, user: User, value: bool) -> dict:
+        """Remember the candidate's related-experience filter switch (D060)."""
+        from app.repositories.work_entry_repository import WorkEntryRepository
+
+        profile = self.repository.get_or_create_candidate_profile(user.id)
+        WorkEntryRepository(self.db).set_hide_below_experience(profile.id, value)
+        self.db.commit()
+        return {"hide_below_experience": value}
 
     def match_my_job(self, user: User, job_id: UUID) -> dict:
         """Coverage of one active job for the candidate, computed on read (D049)."""

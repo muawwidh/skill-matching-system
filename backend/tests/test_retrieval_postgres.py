@@ -77,7 +77,7 @@ def pg_retrieval(monkeypatch):
 def test_populated_upgrade_extension_dimension_downgrade_reupgrade(pg_retrieval):
     engine, config, profile_id, job_id, user_id = pg_retrieval
     with engine.connect() as connection:
-        assert connection.scalar(text("select version_num from alembic_version")) == "0010_candidate_work_entries"
+        assert connection.scalar(text("select version_num from alembic_version")) == "0011_candidate_preferences"
         assert connection.scalar(text("select extversion from pg_extension where extname='vector'"))
         assert connection.scalar(text("select format_type(a.atttypid,a.atttypmod) from pg_attribute a "
             "where a.attrelid='job_embeddings'::regclass and a.attname='embedding'")) == "vector(384)"

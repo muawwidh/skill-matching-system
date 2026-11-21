@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import CandidateWorkEntry, CvDocument, CvSection
+from app.db.models import CandidatePreference, CandidateWorkEntry, CvDocument, CvSection
 
 
 class WorkEntryRepository:
@@ -37,3 +37,15 @@ class WorkEntryRepository:
                                            CvDocument.status == "processed",
                                            CvSection.section_type.in_(sorted(section_types)))
                                     .order_by(CvDocument.created_at.desc(), CvSection.start_char)))
+
+    def preference(self, profile_id: UUID) -> CandidatePreference | None:
+        return self.db.get(CandidatePreference, profile_id)
+
+    def set_hide_below_experience(self, profile_id: UUID, value: bool) -> CandidatePreference:
+        preference = self.preference(profile_id)
+        if preference is None:
+            preference = CandidatePreference(candidate_profile_id=profile_id)
+            self.db.add(preference)
+        preference.hide_below_experience = value
+        self.db.flush()
+        return preference

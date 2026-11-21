@@ -40,7 +40,7 @@ password (`POST /auth/delete-account`, D047). This deletes:
 - the account, its role assignments and refresh tokens;
 - the candidate profile and all CVs, CV sections and extracted terms;
 - all candidate skills, extracted and manual, with their review decisions;
-- all work entries (D060);
+- all work entries and Jobs page preferences (D060);
 - taxonomy link suggestions, selected links and taxonomy review events for the candidate's skills;
 - the profile embedding;
 - processing logs that refer to the profile or its CVs.

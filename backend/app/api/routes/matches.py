@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import candidate_only
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.documents import JobCoverageRead, RecommendationList
+from app.schemas.documents import JobCoverageRead, MatchPreferences, RecommendationList
 from app.services.matching_service import DEFAULT_PAGE_SIZE, PAGE_SIZES, MatchingService
 
 router = APIRouter(dependencies=[Depends(candidate_only)])
@@ -38,6 +38,16 @@ def refresh_recommendations(
     db: Session = Depends(get_db),
 ) -> RecommendationList:
     return MatchingService(db).refresh_my_recommendations(current_user, page, page_size)
+
+
+@router.put("/preferences", response_model=MatchPreferences)
+def update_match_preferences(
+    payload: MatchPreferences,
+    current_user: User = Depends(candidate_only),
+    db: Session = Depends(get_db),
+) -> MatchPreferences:
+    """Remember the "hide jobs where my related experience is below the requirement" switch (D060)."""
+    return MatchingService(db).set_hide_below_experience(current_user, payload.hide_below_experience)
 
 
 @router.get("/jobs/{job_id}", response_model=JobCoverageRead)

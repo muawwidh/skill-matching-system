@@ -98,3 +98,79 @@ def test_job_card_line_explains_and_never_reorders(client, db_session, fake_retr
     assert lines["Software Engineer"]["meets_requirement"] is True and lines["Software Engineer"]["relevant_years"] == 3.0
     assert lines["Software Developer"]["meets_requirement"] is False and lines["Software Developer"]["min_required_years"] == 6
     assert lines["Office Wizard"] is None and lines["Sales Manager"] is None  # no occupation / no minimum
+
+
+def test_filter_hides_only_below_requirement_jobs_before_the_top_n_cut(client, db_session, fake_retrieval, monkeypatch):
+    from uuid import UUID
+
+    from app.core.config import settings
+    from app.db.models import CandidatePreference
+    from tests.test_recommendations import candidate_with_skills, manager
+
+    add_esco_occupations(db_session)
+    staff = manager(client, db_session)
+    jobs = {}
+    for title, text in (("Software Developer", "- 8+ years of experience"),   # below: hidden when on
+                        ("Office Wizard", "- 9+ years of experience"),        # no occupation: never hidden
+                        ("Sales Manager", "We sell."),                        # no minimum: never hidden
+                        ("Software Engineer", "- 1+ year of experience"),     # meets
+                        ("Programmer", "- 2+ years of experience")):          # meets
+        jobs[title] = client.post("/jobs", headers=staff, json={"title": title, "company": "", "location": "",
+                                                                "employment_type": "", "description": text}).json()["id"]
+    headers = candidate_with_skills(client)
+    fake_retrieval["order"] = [UUID(jobs[t]) for t in jobs]
+    monkeypatch.setattr(settings, "RECOMMENDATION_TOP_N", 4)
+    suggestion = client.get("/candidates/me/work-entries/occupation-suggestions", params={"title": "Programmer"},
+                            headers=headers).json()[0]
+    client.post("/candidates/me/work-entries", headers=headers, json={
+        "title": "Programmer", "start_month": "2022-01", "end_month": "2023-12", "occupation_concept_id": suggestion["concept_id"]})
+
+    off = client.get("/matches/recommendations", headers=headers).json()
+    assert off["hide_below_experience"] is False and off["hidden_by_experience"] == 0
+    assert [i["job"]["title"] for i in off["results"]] == ["Software Developer", "Office Wizard", "Sales Manager",
+                                                          "Software Engineer"]  # top 4 cut
+
+    assert client.put("/matches/preferences", headers=headers, json={"hide_below_experience": True}).json() == {
+        "hide_below_experience": True}
+    on = client.get("/matches/recommendations", headers=headers).json()
+    assert on["hide_below_experience"] is True and on["hidden_by_experience"] == 1
+    # The filter runs before the cut: the 5th job moves into the top 4; ranks are 1..4; order otherwise kept.
+    assert [i["job"]["title"] for i in on["results"]] == ["Office Wizard", "Sales Manager", "Software Engineer",
+                                                         "Programmer"]
+    assert [i["rank"] for i in on["results"]] == [1, 2, 3, 4]
+    from sqlalchemy import select
+    assert db_session.scalar(select(CandidatePreference.hide_below_experience)) is True  # remembered
+
+    client.put("/matches/preferences", headers=headers, json={"hide_below_experience": False})
+    assert client.get("/matches/recommendations", headers=headers).json()["hidden_by_experience"] == 0
+
+
+def test_filter_without_entries_hides_nothing_and_preferences_are_deleted_with_the_account(client, db_session, fake_retrieval):
+    from sqlalchemy import func, select
+
+    from app.db.models import CandidatePreference
+    from tests.test_recommendations import candidate_with_skills, manager
+
+    add_esco_occupations(db_session)
+    staff = manager(client, db_session)
+    client.post("/jobs", headers=staff, json={"title": "Software Developer", "company": "", "location": "",
+                                              "employment_type": "", "description": "- 8+ years of experience"})
+    headers = candidate_with_skills(client)
+    client.put("/matches/preferences", headers=headers, json={"hide_below_experience": True})
+    body = client.get("/matches/recommendations", headers=headers).json()
+    assert body["hidden_by_experience"] == 0 and len(body["results"]) == 1
+    assert client.put("/matches/preferences", headers=manager_headers(client, db_session),
+                      json={"hide_below_experience": True}).status_code == 403
+    client.post("/auth/delete-account", headers=headers, json={"password": "correct-horse-password"})
+    assert db_session.scalar(select(func.count()).select_from(CandidatePreference)) == 0
+
+
+def manager_headers(client, db_session):
+    from tests.test_recommendations import register
+    from app.db.models import Role, User
+    from sqlalchemy import select
+    headers = register(client, "staff2@example.com")
+    user = db_session.scalar(select(User).where(User.email == "staff2@example.com"))
+    user.roles.append(db_session.scalar(select(Role).where(Role.name == "admin")))
+    db_session.commit()
+    return headers

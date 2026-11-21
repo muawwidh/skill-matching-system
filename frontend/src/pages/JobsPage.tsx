@@ -9,6 +9,7 @@ import {
   listRecommendations,
   RECOMMENDATION_PAGE_SIZES,
   refreshRecommendations,
+  setHideBelowExperience,
 } from "../api/documents";
 import { JobExperienceLine } from "../components/JobExperienceLine";
 import { JobMatchPanel } from "../components/JobMatchPanel";
@@ -100,6 +101,32 @@ function RecommendationSummary({ data }: { data: RecommendationList }) {
   );
 }
 
+/** Optional related-experience filter (D060): off by default, remembered per candidate. */
+function ExperienceFilter({ data, onChange, pending }: { data: RecommendationList; onChange: (value: boolean) => void; pending: boolean }) {
+  const enabled = Boolean(data.has_work_entries_with_occupation);
+  return (
+    <div className="mt-3 text-sm text-slate-700">
+      <label className="flex items-center gap-2">
+        <input
+          checked={Boolean(data.hide_below_experience)}
+          disabled={pending}
+          onChange={(event) => onChange(event.target.checked)}
+          type="checkbox"
+        />
+        Hide jobs where my related experience is below the requirement
+      </label>
+      <p className="ml-6 text-xs text-slate-500">
+        {!enabled
+          ? "Add work entries with an ESCO occupation on the CVs page to use this. "
+          : data.hide_below_experience && data.hidden_by_experience
+            ? `${data.hidden_by_experience} job${data.hidden_by_experience === 1 ? "" : "s"} hidden. `
+            : ""}
+        Jobs without a stated minimum or without a determined occupation are never hidden.
+      </p>
+    </div>
+  );
+}
+
 function Pager({
   data,
   onPage,
@@ -181,6 +208,14 @@ export function JobsPage() {
     },
   });
 
+  const filterMutation = useMutation({
+    mutationFn: (value: boolean) => setHideBelowExperience(accessToken as string, value),
+    onSuccess: () => {
+      setPage(1);
+      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+    },
+  });
+
   const refreshMutation = useMutation({
     mutationFn: () => refreshRecommendations(accessToken as string, page, pageSize),
     onSuccess: (data) => {
@@ -239,6 +274,9 @@ export function JobsPage() {
                 <p role="alert" className="text-sm text-red-700">{recommendationsQuery.error.message}</p>
               ) : null}
               {recommendations ? <RecommendationSummary data={recommendations} /> : null}
+              {recommendations && recommendations.status === "ready" ? (
+                <ExperienceFilter data={recommendations} onChange={(value) => filterMutation.mutate(value)} pending={filterMutation.isPending} />
+              ) : null}
             </div>
           </div>
           {pager}

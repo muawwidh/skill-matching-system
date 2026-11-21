@@ -64,11 +64,13 @@ def fake_retrieval(monkeypatch):
             return "ready", object()
         return status, query
 
-    def retrieve(self, query, limit, sources=None, exclude_sources=None):
+    def retrieve(self, query, limit, sources=None, exclude_sources=None, keep=None):
         from sqlalchemy import select
         from app.db.models import Job
         processed = {job.id: job for job in self.db.scalars(select(Job).where(Job.status == "processed"))
                      if (sources is None or job.source in sources) and job.source not in (exclude_sources or ())}
+        if keep is not None:
+            processed = {job_id: job for job_id, job in processed.items() if keep(job)}
         order = state["order"] if state["order"] is not None else sorted(processed, key=str)
         rows = [{"rank": index, "job_id": job_id, "retrieval_similarity": 1.0 - index / 100}
                 for index, job_id in enumerate((j for j in order if j in processed), start=1)]

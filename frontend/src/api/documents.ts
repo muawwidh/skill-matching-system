@@ -113,6 +113,14 @@ export function refreshRecommendations(accessToken: string, page = 1, pageSize =
   });
 }
 
+export function setHideBelowExperience(accessToken: string, value: boolean) {
+  return apiRequest<{ hide_below_experience: boolean }>("/matches/preferences", {
+    method: "PUT",
+    accessToken,
+    body: JSON.stringify({ hide_below_experience: value }),
+  });
+}
+
 export function getSystemOverview(accessToken: string) {
   return apiRequest<SystemOverview>("/admin/overview", { accessToken });
 }
