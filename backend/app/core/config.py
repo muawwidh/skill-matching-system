@@ -36,11 +36,43 @@ class Settings(BaseSettings):
     # Re-embed a profile/job automatically after a committed change (D046). The CLI stays for bulk runs.
     AUTO_REINDEX: bool = True
 
+    # Live job import (D052-D055). Lists accept "a,b" or a JSON array.
+    LIVE_JOB_SOURCES: str = "arbeitnow,greenhouse"
+    # Greenhouse job-board tokens, verified 2026-11-21 to return EU/remote English postings.
+    GREENHOUSE_BOARDS: str = (
+        "gitlab,elastic,grafanalabs,canonical,datadog,mongodb,twilio,celonis,contentful,commercetools,"
+        "stripe,adyen,sumup,n26,monzo,tide,raisin,hellofresh,wolt,intercom"
+    )
+    ARBEITNOW_MAX_PAGES: int = Field(default=10, ge=1, le=100)
+    # Keep only postings located in the EU/EEA, UK, Switzerland or remote without another region.
+    LIVE_JOBS_EUROPE_OR_REMOTE_ONLY: bool = True
+    LIVE_JOBS_ENGLISH_ONLY: bool = True
+    LIVE_JOBS_MAX_ACTIVE: int = Field(default=1500, ge=1)
+    LIVE_JOBS_ARCHIVE_AFTER_DAYS: int = Field(default=14, ge=1)
+    JOB_SOURCE_MIN_INTERVAL_SECONDS: float = Field(default=1.5, ge=0)
+    JOB_SOURCE_USER_AGENT: str = "skillgap-job-import/0.1"
+    # Jobs page scope (D054): evaluation jobs are not shown to candidates unless enabled.
+    CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
     )
+
+    @staticmethod
+    def _as_list(value: str) -> list[str]:
+        if value.strip().startswith("["):
+            return [str(item).strip() for item in json.loads(value) if str(item).strip()]
+        return [item.strip() for item in value.split(",") if item.strip()]
+
+    @property
+    def live_job_sources(self) -> list[str]:
+        return self._as_list(self.LIVE_JOB_SOURCES)
+
+    @property
+    def greenhouse_boards(self) -> list[str]:
+        return self._as_list(self.GREENHOUSE_BOARDS)
 
     @property
     def cors_origins(self) -> list[str]:

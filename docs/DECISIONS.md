@@ -1031,3 +1031,28 @@ by the private evaluation mapping, so they are tagged by a separate command
 changes nothing but `source` and refuses unless exactly 30 existing manual or
 evaluation jobs are listed. Job text, skills, reviews and embeddings of the
 evaluation set are not modified by tagging.
+
+## D053 - Live Job Sources: Public APIs Only, English, Europe Or Remote
+
+Decided by the project owner on 2026-11-21. Live jobs come only from public
+job APIs through one adapter interface (`app/job_sources`): the Arbeitnow job
+board API (no key) and the Greenhouse job board API (`content=true`, one public
+board per company). Sites without an API are not scraped. Requests use a
+generic user agent, at least 1.5 s between requests to one host, and bounded
+retries that honour `Retry-After`. Each job keeps its original posting URL,
+and the job page shows the source (Arbeitnow's terms ask for a link back).
+
+Only English postings are imported, by a stopword-count check on title plus
+description; other languages are skipped and counted per language (a board's
+own `language` field is not trusted: on 2026-11-21 two N26 postings marked
+`en` were German). By owner choice of EU-hiring or remote companies, postings
+must also be located in the EU/EEA, UK or Switzerland, or remote without a
+non-European region named; Arbeitnow, a Europe-focused board, is exempt
+because its locations are mostly small towns. At most `LIVE_JOBS_MAX_ACTIVE`
+(default 1,500) live jobs are active, newest posting date first.
+
+The starter Greenhouse list (`GREENHOUSE_BOARDS`, 20 boards, each verified on
+2026-11-21 to return jobs) covers engineering, data, finance/operations and
+support roles: gitlab, elastic, grafanalabs, canonical, datadog, mongodb,
+twilio, celonis, contentful, commercetools, stripe, adyen, sumup, n26, monzo,
+tide, raisin, hellofresh, wolt, intercom.

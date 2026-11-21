@@ -1,0 +1,49 @@
+{
+ "data": [
+  {
+   "slug": "backend-engineer-berlin-1001",
+   "company_name": "Example Payments GmbH",
+   "title": "Backend Engineer (m/f/d)",
+   "description": "<p><strong>About the role</strong></p><p>We are looking for a backend engineer who will work with our team on the payments platform. You will build and operate services for our customers.</p><p><strong>Requirements</strong></p><ul><li>Python</li><li>PostgreSQL</li><li>Docker</li></ul><p>Questions? Contact Jane Example at jane.example@example.com or +49 30 1234 5678.</p>",
+   "remote": false,
+   "url": "https://www.arbeitnow.com/jobs/companies/example/backend-engineer-berlin-1001",
+   "tags": [
+    "Software Development"
+   ],
+   "job_types": [
+    "Full time"
+   ],
+   "location": "Berlin",
+   "created_at": 1795260657
+  },
+  {
+   "slug": "buchhalter-kleinstadt-1002",
+   "company_name": "Beispiel AG",
+   "title": "Buchhalter (m/w/d)",
+   "description": "<p><strong>Deine Aufgaben</strong></p><p>Wir suchen eine Fachkraft für die Buchhaltung, die mit unserem Team die Monatsabschlüsse erstellt und die Zahlungen prüft. Du arbeitest eng mit der Steuerberatung zusammen und bist für die Kommunikation mit den Banken zuständig.</p><ul><li>Erfahrung in der Buchhaltung</li></ul>",
+   "remote": false,
+   "url": "https://www.arbeitnow.com/jobs/companies/beispiel/buchhalter-kleinstadt-1002",
+   "tags": [
+    "Finance"
+   ],
+   "job_types": [
+    "Vollzeit"
+   ],
+   "location": "Kleinstadt",
+   "created_at": 1795174257
+  }
+ ],
+ "links": {
+  "first": "https://www.arbeitnow.com/api/job-board-api?page=1",
+  "last": null,
+  "prev": null,
+  "next": "https://www.arbeitnow.com/api/job-board-api?page=2"
+ },
+ "meta": {
+  "current_page": 1,
+  "per_page": 2,
+  "from": 1,
+  "to": 2,
+  "terms": "This is a free public API for jobs, please do not abuse. I would appreciate linking back to the site."
+ }
+}

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, BriefcaseBusiness, Info, Plus, RefreshCw } from "lucide-react";
+import { Archive, BriefcaseBusiness, ExternalLink, Info, Plus, RefreshCw } from "lucide-react";
 import { FormEvent, ReactNode, useState } from "react";
 
 import { archiveJob, createJob, listJobs, listRecommendations, refreshRecommendations } from "../api/documents";
@@ -17,13 +17,45 @@ const emptyJob: JobPayload = {
   description: "",
 };
 
+/** Source attribution and the original posting for live jobs (D053). */
+function JobSourceLine({ job }: { job: Job }) {
+  if (!job.attribution && !job.external_url) return null;
+  const posted = job.posted_at ? new Date(job.posted_at).toLocaleDateString() : null;
+  return (
+    <p className="mt-1 text-xs text-slate-500">
+      {job.attribution ? (
+        <>
+          Source:{" "}
+          <a className="underline" href={job.attribution.url} rel="noopener noreferrer" target="_blank">
+            {job.attribution.name}
+          </a>
+        </>
+      ) : null}
+      {posted ? ` · posted ${posted}` : ""}
+      {job.external_url ? (
+        <>
+          {" · "}
+          <a className="inline-flex items-center gap-0.5 underline" href={job.external_url} rel="noopener noreferrer" target="_blank">
+            Original posting
+            <ExternalLink size={12} aria-hidden="true" />
+          </a>
+        </>
+      ) : null}
+    </p>
+  );
+}
+
 function JobCard({ job, actions, children }: { job: Job; actions?: ReactNode; children?: ReactNode }) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-ink">{job.title}</h2>
-          <p className="text-sm text-slate-600">{job.company || "Unknown company"} · {job.status}</p>
+          <p className="text-sm text-slate-600">
+            {job.company || "Unknown company"}
+            {job.location ? ` · ${job.location}` : ""} · {job.status}
+          </p>
+          <JobSourceLine job={job} />
         </div>
         {actions}
       </div>

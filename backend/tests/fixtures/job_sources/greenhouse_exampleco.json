@@ -1,0 +1,232 @@
+{
+ "jobs": [
+  {
+   "absolute_url": "https://example.com/careers/5001?gh_jid=5001",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false
+    }
+   ],
+   "internal_job_id": 5101,
+   "location": {
+    "name": "Amsterdam"
+   },
+   "metadata": [
+    {
+     "id": 1,
+     "name": "Time Type",
+     "value": "Full time",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 5001,
+   "updated_at": "2026-11-16T10:01:26-05:00",
+   "requisition_id": "R5001",
+   "title": "Data Analyst",
+   "company_name": "ExampleCo",
+   "first_published": "2026-11-10T07:42:40-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "departments": [
+    {
+     "id": 9,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 7,
+     "name": "Amsterdam, North Holland, Netherlands",
+     "location": "Amsterdam, North Holland, Netherlands"
+    }
+   ],
+   "content": "&lt;p&gt;You will work with our finance and operations teams to build dashboards and analyse data for the business.&lt;/p&gt;&lt;h3&gt;What you bring&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;SQL&lt;/li&gt;&lt;li&gt;Python&lt;/li&gt;&lt;li&gt;Tableau&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Recruiter: Max Mustermann, max@exampleco.com&lt;/p&gt;"
+  },
+  {
+   "absolute_url": "https://example.com/careers/5002?gh_jid=5002",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false
+    }
+   ],
+   "internal_job_id": 5102,
+   "location": {
+    "name": "New York, NY"
+   },
+   "metadata": [
+    {
+     "id": 1,
+     "name": "Time Type",
+     "value": "Full time",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 5002,
+   "updated_at": "2026-11-16T10:01:26-05:00",
+   "requisition_id": "R5002",
+   "title": "Account Executive",
+   "company_name": "ExampleCo",
+   "first_published": "2026-11-12T07:42:40-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "departments": [
+    {
+     "id": 9,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 7,
+     "name": "New York, New York, United States",
+     "location": "New York, New York, United States"
+    }
+   ],
+   "content": "&lt;p&gt;You will own the full sales cycle for our customers in the United States and work with the team on new markets.&lt;/p&gt;"
+  },
+  {
+   "absolute_url": "https://example.com/careers/5003?gh_jid=5003",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false
+    }
+   ],
+   "internal_job_id": 5103,
+   "location": {
+    "name": "Remote - US"
+   },
+   "metadata": [
+    {
+     "id": 1,
+     "name": "Time Type",
+     "value": "Full time",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 5003,
+   "updated_at": "2026-11-16T10:01:26-05:00",
+   "requisition_id": "R5003",
+   "title": "Site Reliability Engineer",
+   "company_name": "ExampleCo",
+   "first_published": "2026-11-13T07:42:40-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "departments": [
+    {
+     "id": 9,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 7,
+     "name": "Remote - US",
+     "location": "Remote - US"
+    }
+   ],
+   "content": "&lt;p&gt;You will work on our infrastructure and be on call for the services that our customers use every day.&lt;/p&gt;"
+  },
+  {
+   "absolute_url": "https://example.com/careers/5004?gh_jid=5004",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false
+    }
+   ],
+   "internal_job_id": 5104,
+   "location": {
+    "name": "Berlin"
+   },
+   "metadata": [
+    {
+     "id": 1,
+     "name": "Time Type",
+     "value": "Full time",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 5004,
+   "updated_at": "2026-11-16T10:01:26-05:00",
+   "requisition_id": "R5004",
+   "title": "Finanzbuchhalter",
+   "company_name": "ExampleCo",
+   "first_published": "2026-11-11T07:42:40-04:00",
+   "language": "en",
+   "application_deadline": null,
+   "departments": [
+    {
+     "id": 9,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 7,
+     "name": "Berlin, Berlin, Germany",
+     "location": "Berlin, Berlin, Germany"
+    }
+   ],
+   "content": "&lt;p&gt;&lt;strong&gt;Deine Aufgaben&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;Wir suchen eine Fachkraft für die Buchhaltung, die mit unserem Team die Monatsabschlüsse erstellt und die Zahlungen prüft. Du arbeitest eng mit der Steuerberatung zusammen und bist für die Kommunikation mit den Banken zuständig.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Erfahrung in der Buchhaltung&lt;/li&gt;&lt;/ul&gt;"
+  },
+  {
+   "absolute_url": "https://example.com/careers/5005?gh_jid=5005",
+   "data_compliance": [
+    {
+     "type": "gdpr",
+     "requires_consent": false
+    }
+   ],
+   "internal_job_id": 5105,
+   "location": {
+    "name": "Remote - EMEA"
+   },
+   "metadata": [
+    {
+     "id": 1,
+     "name": "Time Type",
+     "value": "Full time",
+     "value_type": "single_select"
+    }
+   ],
+   "id": 5005,
+   "updated_at": "2026-11-16T10:01:26-05:00",
+   "requisition_id": "R5005",
+   "title": "Payroll Specialist",
+   "company_name": "ExampleCo",
+   "first_published": null,
+   "language": "en",
+   "application_deadline": null,
+   "departments": [
+    {
+     "id": 9,
+     "name": "Engineering",
+     "child_ids": [],
+     "parent_id": null
+    }
+   ],
+   "offices": [
+    {
+     "id": 7,
+     "name": "Remote - EMEA",
+     "location": "Remote - EMEA"
+    }
+   ],
+   "content": "&lt;p&gt;You will run payroll for our teams across Europe and work with the finance team on the monthly close.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Payroll&lt;/li&gt;&lt;li&gt;Excel&lt;/li&gt;&lt;/ul&gt;"
+  }
+ ],
+ "meta": {
+  "total": 5
+ }
+}

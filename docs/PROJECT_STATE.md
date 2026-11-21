@@ -356,6 +356,21 @@ Item 1 (2026-11-21): migration `0009_live_jobs` (D052).
 - Tests: `tests/test_evaluation_job_tagging.py`; PostgreSQL migration tests
   updated to head 0009 (upgrade, downgrade to 0008/0007, re-upgrade).
 
+Item 2 (2026-11-21): live job source adapters (D053, no migration).
+- `app/job_sources/`: `http.py` (polite JSON client), `base.py` (adapter
+  interface), `arbeitnow.py`, `greenhouse.py`, `text.py` (HTML to text,
+  language check, Europe/remote location check, content hash),
+  `selection.py` (English, location, newest-first cap), `registry.py`.
+- Settings: `LIVE_JOB_SOURCES`, `GREENHOUSE_BOARDS` (20 verified tokens),
+  `ARBEITNOW_MAX_PAGES`, `LIVE_JOBS_*`, `JOB_SOURCE_*`.
+- `python -m app.job_sources.cli verify-sources` checks every board token
+  (2026-11-21: all 20 return jobs).
+- Jobs API returns `external_url`, `posted_at`, `last_seen_at` and an
+  `attribution`; job cards show source, posting date and the original link.
+- Tests: `tests/test_job_source_adapters.py` with recorded-shape fixtures in
+  `tests/fixtures/job_sources/` (synthetic text, no network).
+- Not yet wired to an import; see item 3.
+
 ## Early Matching Prototype
 
 Migration:

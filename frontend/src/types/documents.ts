@@ -35,6 +35,11 @@ export type Job = {
   source: string;
   error_message: string;
   processed_at: string | null;
+  /** Original posting for live jobs (D053). */
+  external_url: string;
+  posted_at: string | null;
+  last_seen_at: string | null;
+  attribution: { name: string; url: string } | null;
   sections: Section[];
 };
 

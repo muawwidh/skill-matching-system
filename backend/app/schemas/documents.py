@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 
 class CandidateProfileRead(BaseModel):
@@ -113,9 +113,23 @@ class JobRead(BaseModel):
     source: str
     error_message: str
     processed_at: datetime | None
+    external_url: str = ""
+    posted_at: datetime | None = None
+    last_seen_at: datetime | None = None
     sections: list[SectionRead] = []
 
     model_config = {"from_attributes": True}
+
+    @computed_field
+    @property
+    def attribution(self) -> dict[str, str] | None:
+        """Where a live job comes from (D053); None for manual and evaluation jobs."""
+        from app.job_sources.registry import ATTRIBUTION
+
+        if self.source not in ATTRIBUTION:
+            return None
+        name, url = ATTRIBUTION[self.source]
+        return {"name": name, "url": url}
 
 
 class ProcessingLogRead(BaseModel):
