@@ -82,23 +82,36 @@ class WorkEntryService:
         return entry
 
     def occupation_suggestions(self, title: str, limit: int = 5) -> list[dict]:
-        """Top ESCO occupations for a title: string-based first (occupation-only linking with title
-        clean-up), then embedding nearest neighbours up to `limit`, without duplicates (D060)."""
+        """Top ESCO occupations for a work-entry title, at most `limit`, without duplicates (D060):
+
+        1. string matches with confidence >= 0.95 (the automatic-approval threshold),
+        2. embedding nearest neighbours ("similar meaning"),
+        3. the remaining, weaker string matches.
+        """
         from app.taxonomy.occupation_embeddings import nearest_occupations
+        from app.taxonomy.occupations import AUTO_APPROVE_CONFIDENCE
 
         catalog = occupation_catalog(self.db)
         title = title[:255]
-        results = [{**catalog.describe(match.concept_id), "confidence": match.confidence, "method": "label"}
-                   for match in catalog.suggest(title, limit)]
+        matches = catalog.suggest(title, limit)
+        strong = [m for m in matches if m.confidence >= AUTO_APPROVE_CONFIDENCE]
+        weak = [m for m in matches if m.confidence < AUTO_APPROVE_CONFIDENCE]
+        results = [{**catalog.describe(m.concept_id), "confidence": m.confidence, "method": "label"} for m in strong]
+        seen = {m.concept_id for m in strong}
         if len(results) < limit:
-            seen = {item["concept_id"] for item in results}
             for concept_id, similarity in nearest_occupations(self.db, title, limit + len(seen)):
+                if len(results) == limit:
+                    break
                 if concept_id not in seen and catalog.is_occupation(concept_id):
                     results.append({**catalog.describe(concept_id), "confidence": round(similarity, 4),
                                     "method": "embedding"})
                     seen.add(concept_id)
-                    if len(results) == limit:
-                        break
+        for m in weak:
+            if len(results) == limit:
+                break
+            if m.concept_id not in seen:
+                results.append({**catalog.describe(m.concept_id), "confidence": m.confidence, "method": "label"})
+                seen.add(m.concept_id)
         return results
 
     def detected(self, user: User) -> list[dict]:

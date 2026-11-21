@@ -596,9 +596,11 @@ Occupation suggestions by meaning (2026-11-21):
   `python -m app.retrieval.cli embed-occupation-labels` (idempotent; dev DB:
   33,195 labels, about 51 s on CPU). Loaded into memory on first use and by
   the startup warm-up; lookups embed the cleaned title ("query:").
-- Work-entry suggestions: string-based first, then embedding nearest
-  neighbours up to 5 in total, without duplicates; marked "similar meaning"
-  in the form. Without stored vectors or the model, string-based only.
+- Work-entry suggestions, at most 5 without duplicates: string matches with
+  confidence >= 0.95 first, then embedding nearest neighbours (marked
+  "similar meaning"), then the remaining weaker string matches (weak fuzzy
+  matches had crowded out meaning-based ones, e.g. "Backend Developer" ->
+  land planner). Without stored vectors or the model, string-based only.
 - Never used for job occupations (rejected in D060).
 - Tests: `tests/test_occupation_embeddings.py`.
 

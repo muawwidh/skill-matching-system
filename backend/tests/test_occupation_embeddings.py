@@ -67,11 +67,11 @@ def test_embedding_neighbours_follow_string_suggestions_deduplicated_max_five(cl
     headers = register(client, "candidate@example.com")
 
     body = client.get(URL, params={"title": "DevOps Engineer"}, headers=headers).json()
-    methods = [item["method"] for item in body]
     assert len(body) == 5 and len({item["concept_id"] for item in body}) == 5
-    assert methods == sorted(methods, key=lambda m: m != "label")  # string-based first
-    assert methods[0] == "label" and body[0]["label"] == "cloud devops engineer"
-    assert "embedding" in methods
+    assert body[0]["method"] == "label" and body[0]["label"] == "cloud devops engineer"
+    assert body[0]["confidence"] >= 0.95
+    assert "embedding" in [item["method"] for item in body]
+    assert_tiers(body)
     assert embedder.calls[-1] == "query: DevOps Engineer"
 
     only_meaning = client.get(URL, params={"title": "Senior code writer"}, headers=headers).json()
@@ -96,3 +96,32 @@ def test_missing_model_falls_back_to_string_suggestions(client, db_session, monk
     headers = register(client, "candidate@example.com")
     body = client.get(URL, params={"title": "Software Engineer"}, headers=headers).json()
     assert body and {item["method"] for item in body} == {"label"}
+
+
+def assert_tiers(body):
+    """Strong string matches (>= 0.95), then meaning-based, then weaker string matches."""
+    tier = [0 if i["method"] == "label" and i["confidence"] >= 0.95 else 1 if i["method"] == "embedding" else 2
+            for i in body]
+    assert tier == sorted(tier), tier
+
+
+def test_weak_string_matches_come_after_meaning_based(db_session, embedder, monkeypatch):
+    from app.services.work_entry_service import WorkEntryService
+    from app.taxonomy.occupations import occupation_catalog
+
+    add_esco_occupations(db_session)
+    embed_occupation_labels(db_session, BagOfWordsEmbedder())
+    title = "Software Developr"  # fuzzy string matches only (< 0.95)
+    weak = occupation_catalog(db_session).suggest(title, 5)
+    assert weak and all(m.confidence < 0.95 for m in weak)
+    body = WorkEntryService(db_session).occupation_suggestions(title)
+    assert body[0]["method"] == "embedding" and len(body) == 5
+    assert len({item["concept_id"] for item in body}) == 5
+    assert_tiers(body)
+    # Without the model the weak string matches are still offered, in their own order.
+    def unavailable():
+        raise RuntimeError("no model")
+
+    monkeypatch.setattr(occupation_embeddings, "query_embedder", unavailable)
+    fallback = WorkEntryService(db_session).occupation_suggestions(title)
+    assert [item["concept_id"] for item in fallback] == [m.concept_id for m in weak]
