@@ -911,3 +911,34 @@ Relation to D009/D022: retrieval still only selects and orders jobs. There is
 no match score, weighted or otherwise. Coverage is an explanation, not a
 score component. Still no weights, so nothing is fitted to the Phase 5
 benchmark (D043). The frozen Phase 5 baseline is unchanged (D032).
+
+## D046 - Profiles And Jobs Are Re-embedded Automatically After A Change
+
+Decided by the project owner on 2026-11-21. Before this, any change made a
+vector stale until an operator ran `python -m app.retrieval.cli index`, and the
+Jobs page silently lost its ranking in the meantime.
+
+- Every per-profile or per-job invalidation (`invalidate_profile`,
+  `invalidate_job`, `invalidate_term`) records the owner on its database
+  session. When the session commits, those profiles and jobs are re-embedded
+  synchronously, in a separate session, with the same pinned local E5 model
+  and the configured template (`app/retrieval/auto_reindex.py`). A rollback
+  discards the record.
+- That covers CV and job processing, extraction review, taxonomy link review
+  and auto-linking, job edits and archiving, and CV deletion, because each of
+  them already invalidates.
+- Release-wide invalidation (`invalidate_all`, after a taxonomy import or
+  release replacement) is not re-embedded automatically. Bulk runs stay with
+  the `index` CLI, whose sessions never trigger automatic re-embedding.
+- If the model is not provisioned, nothing is embedded and the request still
+  succeeds. The vector stays stale, and the Jobs page says so. An encoding
+  error marks that vector `failed`, as the CLI does.
+- `AUTO_REINDEX=false` restores CLI-only behaviour.
+
+The model is loaded once per backend process, on first use, so the first
+change after a restart takes a few seconds longer. Re-embedding is serialized
+by a process lock. Vectors are computed exactly as the CLI computes them
+(same input text, hash, model revision and template), so the CLI's
+idempotence check treats them as current. The frozen Phase 5 evaluation
+artifacts are files and are not affected; live vectors of the evaluation
+profiles and jobs change only if those records are edited.

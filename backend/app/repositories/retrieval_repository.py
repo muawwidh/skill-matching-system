@@ -9,6 +9,7 @@ from app.db.models import (ApprovedTaxonomyLink, CandidateProfileEmbedding, Cand
 from app.retrieval.representation import (MODEL_ID, MODEL_REVISION, TEMPLATE_V1, resolve_template,
     build_candidate_representation, build_job_representation)
 from app.retrieval.embedder import load_local_tokenizer
+from app.retrieval import auto_reindex
 
 
 class RetrievalRepository:
@@ -82,9 +83,11 @@ class RetrievalRepository:
         self.db.execute(update(CandidateProfileEmbedding).where(
             CandidateProfileEmbedding.candidate_profile_id == profile_id,
         ).values(status="stale"))
+        auto_reindex.record(self.db, "profile", profile_id)  # re-embedded after commit (D046)
 
     def invalidate_job(self, job_id: UUID) -> None:
         self.db.execute(update(JobEmbedding).where(JobEmbedding.job_id == job_id).values(status="stale"))
+        auto_reindex.record(self.db, "job", job_id)  # re-embedded after commit (D046)
 
     def invalidate_term(self, term_source: str, term_id: UUID) -> None:
         if term_source == "candidate":

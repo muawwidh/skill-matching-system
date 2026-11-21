@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     JOB_EXTRACTION_ESCO_VOCABULARY: bool = True
     # Jobs page (D045): retrieval returns the top-N jobs by similarity; coverage explains each one.
     RECOMMENDATION_TOP_N: int = Field(default=50, ge=1, le=500)
+    # Re-embed a profile/job automatically after a committed change (D046). The CLI stays for bulk runs.
+    AUTO_REINDEX: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",

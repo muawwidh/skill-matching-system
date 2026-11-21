@@ -9,6 +9,8 @@ from sqlalchemy.pool import StaticPool
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key-with-enough-length"
+# Tests that cover automatic re-embedding enable it explicitly with a fake embedder.
+os.environ["AUTO_REINDEX"] = "false"
 
 from app.db import models  # noqa: F401, E402
 from app.db.base import Base  # noqa: E402

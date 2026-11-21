@@ -267,6 +267,18 @@ Item 1 (2026-11-21): Jobs page uses top-N retrieval.
 - Tests: `tests/test_recommendations.py` (order, top-N cut, unindexed count,
   notices); retrieval is faked in SQLite tests (`fake_retrieval` fixture).
 
+Item 2 (2026-11-21): automatic re-embedding (D046).
+- `app/retrieval/auto_reindex.py`: per-profile/per-job invalidations are
+  recorded on the session and re-embedded synchronously after commit with the
+  pinned local model; rollback discards them. Release-wide invalidation is
+  left to the CLI. `AUTO_REINDEX` (default true) switches it off.
+- The `index` CLI stays for bulk runs; its sessions never auto-reindex.
+- Missing model: the request succeeds, the vector stays stale and the Jobs
+  page shows the `profile_not_indexed` notice.
+- Tests: `tests/test_auto_reindex.py` (review, CV deletion, job create/review/
+  archive, link invalidation, rollback, release-wide, missing model, switch off)
+  with a fake embedder.
+
 ## Early Matching Prototype
 
 Migration:

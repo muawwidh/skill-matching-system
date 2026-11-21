@@ -9,6 +9,7 @@ from sqlalchemy import select
 from app.db.models import CandidateProfile, Job
 from app.db.session import SessionLocal
 from app.retrieval.embedder import default_embedder
+from app.retrieval.auto_reindex import DISABLED_KEY
 from app.retrieval.benchmark import (cohens_kappa, evaluate_pack, export_rankings,
                                      load_corpus, validate_benchmark, write_blind_export)
 from app.retrieval.representation import MODEL_ID, MODEL_REVISION, TEMPLATES, resolve_template
@@ -36,7 +37,7 @@ def index(kind: str, limit: int, after: str | None, template_version: str | None
     counts = {"indexed": 0, "unchanged": 0, "not_ready": 0, "failed": 0}
     failures = []
     started = perf_counter()
-    with SessionLocal() as db:
+    with SessionLocal(info={DISABLED_KEY: True}) as db:
         statement = select(cls.id).order_by(cls.id).limit(limit)
         if cursor:
             statement = statement.where(cls.id > cursor)
@@ -44,7 +45,7 @@ def index(kind: str, limit: int, after: str | None, template_version: str | None
     resume_after = cursor
     for item_id in ids:
         try:
-            with SessionLocal() as db:
+            with SessionLocal(info={DISABLED_KEY: True}) as db:
                 service = RetrievalService(db, template_version, embedder.tokenizer)
                 outcome = service.index_job(item_id, embedder) if kind == "jobs" else service.index_profile(item_id, embedder)
                 db.commit()
@@ -53,7 +54,7 @@ def index(kind: str, limit: int, after: str | None, template_version: str | None
             counts["failed"] += 1
             failures.append(str(item_id))
             from app.repositories.retrieval_repository import RetrievalRepository
-            with SessionLocal() as db:
+            with SessionLocal(info={DISABLED_KEY: True}) as db:
                 RetrievalRepository(db, template_version).mark_failed(item_id, "job" if kind == "jobs" else "profile")
                 db.commit()
             print(json.dumps({"id": str(item_id), "error": str(exc)}))
