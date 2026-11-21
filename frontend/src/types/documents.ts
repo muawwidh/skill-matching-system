@@ -143,6 +143,10 @@ export type RecommendationList = {
   status: RecommendationStatus;
   message: string;
   top_n: number;
+  /** Retrieved jobs (at most top_n); `results` is one page of them. */
+  total: number;
+  page: number;
+  page_size: number;
   active_jobs: number;
   unindexed_jobs: number;
   results: RecommendationItem[];

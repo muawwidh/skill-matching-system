@@ -99,12 +99,15 @@ export function listJobSkills(accessToken: string, jobId: string) {
   return apiRequest<JobSkill[]>(`/jobs/${jobId}/extracted-skills`, { accessToken });
 }
 
-export function listRecommendations(accessToken: string) {
-  return apiRequest<RecommendationList>("/matches/recommendations", { accessToken });
+/** Page sizes offered on the Jobs page (D059). */
+export const RECOMMENDATION_PAGE_SIZES = [10, 25, 50] as const;
+
+export function listRecommendations(accessToken: string, page = 1, pageSize = 10) {
+  return apiRequest<RecommendationList>(`/matches/recommendations?page=${page}&page_size=${pageSize}`, { accessToken });
 }
 
-export function refreshRecommendations(accessToken: string) {
-  return apiRequest<RecommendationList>("/matches/recommendations/refresh", {
+export function refreshRecommendations(accessToken: string, page = 1, pageSize = 10) {
+  return apiRequest<RecommendationList>(`/matches/recommendations/refresh?page=${page}&page_size=${pageSize}`, {
     method: "POST",
     accessToken,
   });

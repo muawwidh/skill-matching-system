@@ -1,8 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, BriefcaseBusiness, ExternalLink, Info, Plus, RefreshCw } from "lucide-react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Archive, BriefcaseBusiness, ChevronLeft, ChevronRight, ExternalLink, Info, Plus, RefreshCw } from "lucide-react";
 import { FormEvent, ReactNode, useState } from "react";
 
-import { archiveJob, createJob, listJobs, listRecommendations, refreshRecommendations } from "../api/documents";
+import {
+  archiveJob,
+  createJob,
+  listJobs,
+  listRecommendations,
+  RECOMMENDATION_PAGE_SIZES,
+  refreshRecommendations,
+} from "../api/documents";
 import { JobMatchPanel } from "../components/JobMatchPanel";
 import { SectionList } from "../components/SectionList";
 import { LiveJobImportPanel } from "../components/LiveJobImportPanel";
@@ -77,15 +84,57 @@ function RecommendationSummary({ data }: { data: RecommendationList }) {
       </div>
     );
   }
+  const first = (data.page - 1) * data.page_size + 1;
+  const last = first + data.results.length - 1;
   return (
     <p className="text-sm text-slate-600">
       {data.results.length === 0
         ? "No jobs could be retrieved for your profile."
-        : `Showing the ${data.results.length} jobs most similar to your matching profile (top ${data.top_n}), out of ${data.active_jobs} active jobs.`}
+        : `Showing ${first}–${last} of ${data.total} best-matching jobs (most similar to your matching profile, top ${data.top_n} of ${data.active_jobs} active jobs).`}
       {data.unindexed_jobs > 0
         ? ` ${data.unindexed_jobs} active job${data.unindexed_jobs === 1 ? " is" : "s are"} not yet indexed and cannot be retrieved.`
         : ""}
     </p>
+  );
+}
+
+function Pager({
+  data,
+  onPage,
+  onPageSize,
+}: {
+  data: RecommendationList;
+  onPage: (page: number) => void;
+  onPageSize: (size: number) => void;
+}) {
+  const pages = Math.max(1, Math.ceil(data.total / data.page_size));
+  const button = "inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 disabled:opacity-40";
+  return (
+    <nav aria-label="Job result pages" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm text-slate-600">
+      <label className="flex items-center gap-2">
+        Jobs per page
+        <select
+          className="rounded-md border border-slate-300 px-2 py-1"
+          onChange={(event) => onPageSize(Number(event.target.value))}
+          value={data.page_size}
+        >
+          {RECOMMENDATION_PAGE_SIZES.map((size) => (
+            <option key={size} value={size}>{size}</option>
+          ))}
+        </select>
+      </label>
+      <div className="flex items-center gap-2">
+        <button className={button} disabled={data.page <= 1} onClick={() => onPage(data.page - 1)} type="button">
+          <ChevronLeft size={16} aria-hidden="true" />
+          Previous
+        </button>
+        <span aria-current="page">Page {data.page} of {pages}</span>
+        <button className={button} disabled={data.page >= pages} onClick={() => onPage(data.page + 1)} type="button">
+          Next
+          <ChevronRight size={16} aria-hidden="true" />
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -97,6 +146,8 @@ export function JobsPage() {
   const isCandidate = roles.includes("candidate") && !canManageJobs;
   const queryClient = useQueryClient();
   const [job, setJob] = useState<JobPayload>(emptyJob);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(RECOMMENDATION_PAGE_SIZES[0]);
 
   const jobsQuery = useQuery({
     queryKey: ["jobs"],
@@ -105,9 +156,10 @@ export function JobsPage() {
   });
 
   const recommendationsQuery = useQuery({
-    queryKey: ["recommendations"],
-    queryFn: () => listRecommendations(accessToken as string),
+    queryKey: ["recommendations", page, pageSize],
+    queryFn: () => listRecommendations(accessToken as string, page, pageSize),
     enabled: Boolean(accessToken) && isCandidate,
+    placeholderData: keepPreviousData,
   });
 
   const createMutation = useMutation({
@@ -128,8 +180,12 @@ export function JobsPage() {
   });
 
   const refreshMutation = useMutation({
-    mutationFn: () => refreshRecommendations(accessToken as string),
-    onSuccess: (data) => queryClient.setQueryData(["recommendations"], data),
+    mutationFn: () => refreshRecommendations(accessToken as string, page, pageSize),
+    onSuccess: (data) => {
+      // The server clamps the page when fewer jobs are retrieved now.
+      queryClient.setQueryData(["recommendations", data.page, data.page_size], data);
+      setPage(data.page);
+    },
   });
 
   function submitJob(event: FormEvent) {
@@ -142,6 +198,21 @@ export function JobsPage() {
   }
 
   const recommendations = recommendationsQuery.data;
+
+  function changePage(next: number) {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function changePageSize(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
+
+  const pager =
+    recommendations && recommendations.total > 0 ? (
+      <Pager data={recommendations} onPage={changePage} onPageSize={changePageSize} />
+    ) : null;
 
   return (
     <div className="space-y-6">
@@ -168,14 +239,16 @@ export function JobsPage() {
               {recommendations ? <RecommendationSummary data={recommendations} /> : null}
             </div>
           </div>
+          {pager}
           {recommendations?.results.map((item) => (
             <JobCard key={item.job_id} job={item.job}>
-              <JobMatchPanel match={item} rankTotal={recommendations.results.length} />
+              <JobMatchPanel match={item} rankTotal={recommendations.total} />
               {accessToken ? (
                 <SkillReviewPanel accessToken={accessToken} canReview={false} ownerId={item.job_id} ownerType="job" />
               ) : null}
             </JobCard>
           ))}
+          {recommendations && recommendations.results.length > 0 ? pager : null}
         </section>
       ) : null}
 

@@ -1,3 +1,5 @@
+import threading
+from collections import OrderedDict
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -7,9 +9,41 @@ from sqlalchemy.orm import Session
 from app.db.models import (ApprovedTaxonomyLink, CandidateProfileEmbedding, CandidateSkill,
                            ExtractedCandidateTerm, ExtractedJobTerm, Job, JobEmbedding, JobSkill)
 from app.retrieval.representation import (MODEL_ID, MODEL_REVISION, TEMPLATE_V1, resolve_template,
-    build_candidate_representation, build_job_representation)
+    build_candidate_representation, build_job_representation, digest)
 from app.retrieval.embedder import load_local_tokenizer
 from app.retrieval import auto_reindex
+
+
+# Job representations by a digest of their exact inputs (D059). Building one runs the
+# pinned tokenizer about 300 times; the Jobs page checks the freshness of every retrieved
+# job on each request. The build is a pure function of these inputs and the tokenizer,
+# so a cached result is identical to a rebuilt one.
+_REPRESENTATION_CACHE_SIZE = 20_000
+_representation_cache: OrderedDict[tuple, tuple[object, object]] = OrderedDict()
+_representation_lock = threading.Lock()
+
+
+def _cached_job_representation(source: dict, rows: list[dict], sections: list[dict], template_version: str,
+                               tokenizer):
+    key = (id(tokenizer), digest({"template": template_version, "job": source, "rows": rows,
+                                  "sections": sections}))
+    with _representation_lock:
+        hit = _representation_cache.get(key)
+        if hit is not None:
+            _representation_cache.move_to_end(key)
+            return hit[1]
+    value = build_job_representation(source, rows, sections, template_version, tokenizer)
+    with _representation_lock:
+        # The tokenizer is kept with the entry so its id cannot be reused while cached.
+        _representation_cache[key] = (tokenizer, value)
+        if len(_representation_cache) > _REPRESENTATION_CACHE_SIZE:
+            _representation_cache.popitem(last=False)
+    return value
+
+
+def clear_job_representation_cache() -> None:
+    with _representation_lock:
+        _representation_cache.clear()
 
 
 class RetrievalRepository:
@@ -77,7 +111,7 @@ class RetrievalRepository:
                     for s in job.sections]
         if self.tokenizer is None:
             self.tokenizer = load_local_tokenizer()
-        return build_job_representation(source, rows, sections, self.template_version, self.tokenizer)
+        return _cached_job_representation(source, rows, sections, self.template_version, self.tokenizer)
 
     def invalidate_profile(self, profile_id: UUID) -> None:
         self.db.execute(update(CandidateProfileEmbedding).where(

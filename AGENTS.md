@@ -155,7 +155,8 @@ Do not silently lower thresholds just to increase automatic matching.
 
 Dense retrieval belongs to Phase 5.
 
-Embeddings retrieve top-N relevant jobs (N configurable, default 50).
+Embeddings retrieve top-N relevant jobs (N configurable, default 100; shown
+in pages, DECISIONS.md D059).
 
 The retrieval order is the job ranking shown to candidates (DECISIONS.md D045).
 Vector similarity is not displayed and is not combined into any match score.

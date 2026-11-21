@@ -279,11 +279,16 @@ class RecommendationList(BaseModel):
     `status` is "ready" or the reason no retrieval was possible
     ("profile_not_ready", "no_approved_skills", "profile_not_indexed"); `results`
     is then empty. `unindexed_jobs` counts active jobs that cannot be retrieved
-    because they have no current embedding.
+    because they have no current embedding. `total` is the number of retrieved
+    jobs (at most `top_n`); `results` holds one page of them (D059), each with
+    its overall `rank`.
     """
     status: str
     message: str
     top_n: int
+    total: int
+    page: int
+    page_size: int
     active_jobs: int
     unindexed_jobs: int
     results: list[RecommendationItem]

@@ -28,6 +28,9 @@ CHECKED_VIA_NAME = "skill_name"
 # Partial coverage (D050): a missing concept-linked job skill whose direct ESCO broader
 # skill/knowledge concept is also a direct broader concept of one of the candidate's skills.
 BroaderMap = dict[UUID, dict[UUID, str]]
+# Jobs page paging (D059): coverage is computed only for the jobs on the current page.
+PAGE_SIZES = (10, 25, 50)
+DEFAULT_PAGE_SIZE = 10
 
 
 @dataclass(frozen=True)
@@ -259,25 +262,28 @@ class MatchingService:
         self.db = db
         self.repository = DocumentRepository(db)
 
-    def refresh_my_recommendations(self, user: User) -> dict:
-        recommendations = self.list_my_recommendations(user)
+    def refresh_my_recommendations(self, user: User, page: int = 1, page_size: int = DEFAULT_PAGE_SIZE) -> dict:
+        recommendations = self.list_my_recommendations(user, page, page_size)
         self.repository.add_processing_log(
             "candidate_profile",
             self.repository.get_or_create_candidate_profile(user.id).id,
             "job_matching",
             "success",
             f"Refreshed skill coverage for {len(recommendations['results'])} retrieved jobs.",
-            {"job_count": len(recommendations["results"]), "status": recommendations["status"]},
+            {"job_count": len(recommendations["results"]), "total": recommendations["total"],
+             "page": recommendations["page"], "status": recommendations["status"]},
         )
         self.db.commit()
         return recommendations
 
-    def list_my_recommendations(self, user: User) -> dict:
-        """Top-N retrieval, then skill coverage per retrieved job (D045).
+    def list_my_recommendations(self, user: User, page: int = 1, page_size: int = DEFAULT_PAGE_SIZE) -> dict:
+        """Top-N retrieval, then skill coverage for the jobs on one page (D045, D059).
 
-        "#N of M" is the retrieval rank within the M retrieved jobs. Coverage
-        never changes the order. Computed on read (D049): nothing is stored per
-        request, so results never reflect an older rule or stale reviews.
+        "#N of M" is the overall retrieval rank within the M retrieved jobs, on
+        every page. Coverage never changes the order and is computed only for the
+        jobs on the requested page. Computed on read (D049): nothing is stored per
+        request, so results never reflect an older rule or stale reviews. A page
+        past the end is clamped to the last page.
         """
         from app.core.config import settings
         from app.services.retrieval_service import RetrievalService
@@ -299,19 +305,22 @@ class MatchingService:
                 # e.g. the pinned tokenizer needed for job freshness is missing on this server.
                 state = "retrieval_unavailable"
         jobs = {job.id: job for job in active_jobs}
-        candidate_items = self._candidate_items(profile.id)
+        ranked = [jobs[row["job_id"]] for row in rows if row["job_id"] in jobs]
+        last_page = max(1, -(-len(ranked) // page_size))
+        page = min(max(1, page), last_page)
+        start = (page - 1) * page_size
         results = []
-        for row in rows:
-            job = jobs.get(row["job_id"])
-            if job is None:
-                continue
-            results.append({"rank": len(results) + 1, **self._coverage(job, candidate_items)})
+        if ranked[start:start + page_size]:
+            candidate_items = self._candidate_items(profile.id)
+            results = [{"rank": start + offset, **self._coverage(job, candidate_items)}
+                       for offset, job in enumerate(ranked[start:start + page_size], start=1)]
+        # Before the commit, which would expire and reload every active job one by one.
+        unindexed = self._unindexed_job_count(retrieval, active_jobs, excluded)
         # Only a newly created empty profile is written here; no match rows (D049).
         self.db.commit()
         return {"status": state, "message": PROFILE_MESSAGES[state], "top_n": top_n,
-                "active_jobs": len(active_jobs),
-                "unindexed_jobs": self._unindexed_job_count(retrieval, active_jobs, excluded),
-                "results": results}
+                "total": len(ranked), "page": page, "page_size": page_size,
+                "active_jobs": len(active_jobs), "unindexed_jobs": unindexed, "results": results}
 
     @staticmethod
     def _retrieve(retrieval, query, top_n: int, exclude_sources=frozenset()) -> list[dict]:

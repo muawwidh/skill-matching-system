@@ -256,7 +256,7 @@ n = 7 there are no significance claims.
 Item 1 (2026-11-21): Jobs page uses top-N retrieval.
 - `GET /matches/recommendations` now returns `{status, message, top_n,
   active_jobs, unindexed_jobs, results}`. `results` are the top-N retrieved
-  jobs (`RECOMMENDATION_TOP_N`, default 50), each with `rank` and its skill
+  jobs (`RECOMMENDATION_TOP_N`, default 50; 100 and paged since D059), each with `rank` and its skill
   coverage. Coverage does not change the order; similarity is not returned.
 - `status` is `ready` or the reason retrieval was impossible
   (`profile_not_ready`, `no_approved_skills`, `profile_not_indexed`,
@@ -439,6 +439,20 @@ Follow-ups (2026-11-21), details in `docs/verification/live-jobs-2026-11-21.md`:
 4. Per-source share of the live-job cap, `LIVE_JOBS_MAX_SOURCE_SHARE` 0.7
    (D058); applies from the next import.
 5. nDCG@10 for variant A corrected to 0.703 (0.70349).
+
+Jobs page paging (2026-11-21, D059):
+- `GET /matches/recommendations?page=&page_size=` (and `/refresh`): top 100
+  retrieved jobs (`RECOMMENDATION_TOP_N` default 100), 10/25/50 per page,
+  response adds `total`, `page`, `page_size`; a page past the end is clamped.
+  `rank` stays the overall rank; coverage only for the jobs on the page.
+- Jobs page: "Showing X–Y of N best-matching jobs", page-size selector and
+  Previous/Next navigation above and below the list.
+- Job representations memoized by input digest
+  (`retrieval_repository._cached_job_representation`); identical results.
+- Latency: page 1 of 10, median 0.46 s, max 0.60 s (was 3.23 s with top
+  100 before the memo).
+- Tests: `tests/test_recommendations.py` (paging, overall ranks, coverage
+  per page, clamping, invalid sizes, top-N cap), `tests/test_representation_cache.py`.
 
 ## Early Matching Prototype
 

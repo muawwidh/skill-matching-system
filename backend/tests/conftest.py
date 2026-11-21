@@ -36,6 +36,10 @@ def synthetic_retrieval_tokenizer(monkeypatch):
     # Ordinary service/FK tests must never load/download a model or tokenizer.
     monkeypatch.setattr("app.repositories.retrieval_repository.load_local_tokenizer",
                         lambda: DeterministicTestTokenizer())
+    from app.repositories.retrieval_repository import clear_job_representation_cache
+    clear_job_representation_cache()
+    yield
+    clear_job_representation_cache()
 
 
 @pytest.fixture()

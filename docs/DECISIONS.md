@@ -894,7 +894,8 @@ It supersedes the ranking rule of D044 and retires two earlier designs:
 
 Rules:
 - Phase 5 retrieval returns the top-N active jobs for the candidate's profile
-  by exact cosine similarity. N is `RECOMMENDATION_TOP_N` (default 50).
+  by exact cosine similarity. N is `RECOMMENDATION_TOP_N` (default 50; 100
+  since D059).
 - That order is the ranking. "#N of M" is the position among the M retrieved
   jobs (M ≤ N).
 - Each retrieved job is explained by skill coverage under the existing rules
@@ -1136,3 +1137,18 @@ and the cap can still be reached. The same rule decides which active live
 jobs the import archives (oldest of a source beyond its share). It applies
 from the next import; with the current data that import archives the oldest
 Arbeitnow jobs above 70 % of the cap. 1.0 switches the limit off.
+
+## D059 - Jobs Page: Top 100, Shown In Pages
+
+Decided by the project owner on 2026-11-21. With live jobs the candidate Jobs
+page retrieves the top 100 jobs by similarity (`RECOMMENDATION_TOP_N` default
+100, was 50) and shows them in pages: 10 per page by default, 10, 25 or 50
+selectable (`page`, `page_size` on `GET /matches/recommendations`). The header
+reads "Showing X-Y of N best-matching jobs". "#N of M" stays the overall
+retrieval rank among the M retrieved jobs on every page. Skill coverage is
+computed only for the jobs on the requested page. Order and coverage rules
+are unchanged (D045). Job representations used for the freshness check of
+retrieved jobs are memoized in process by a digest of their exact inputs; the
+build is a pure function of those inputs and the pinned tokenizer, so results
+are identical and any change to a job, its skills, links or sections is a new
+key.

@@ -31,8 +31,9 @@ class Settings(BaseSettings):
     # Job extraction v3: add ESCO skill/knowledge labels (filter O7) as a second dictionary.
     # Off = curated dictionary only, for old-vs-new comparison (DECISIONS.md D038).
     JOB_EXTRACTION_ESCO_VOCABULARY: bool = True
-    # Jobs page (D045): retrieval returns the top-N jobs by similarity; coverage explains each one.
-    RECOMMENDATION_TOP_N: int = Field(default=50, ge=1, le=500)
+    # Jobs page (D045, D059): retrieval returns the top-N jobs by similarity, shown in pages;
+    # coverage explains each job on the current page.
+    RECOMMENDATION_TOP_N: int = Field(default=100, ge=1, le=500)
     # Re-embed a profile/job automatically after a committed change (D046). The CLI stays for bulk runs.
     AUTO_REINDEX: bool = True
 

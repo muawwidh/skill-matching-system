@@ -169,3 +169,43 @@ def test_matches_are_candidate_only(client, db_session, fake_retrieval):
     user.roles.clear()
     db_session.commit()
     assert client.get("/matches/recommendations", headers=plain).status_code == 403
+
+
+def test_results_are_paged_with_overall_ranks_and_coverage_only_for_the_page(client, db_session, fake_retrieval,
+                                                                            monkeypatch):
+    from app.services.matching_service import MatchingService
+
+    staff = manager(client, db_session)
+    ids = [UUID(create_job(client, staff, f"Job {n}", "Python")) for n in range(12)]
+    headers = candidate_with_skills(client)
+    fake_retrieval["order"] = list(reversed(ids))
+    covered = []
+    real_coverage = MatchingService._coverage
+    monkeypatch.setattr(MatchingService, "_coverage",
+                        lambda self, job, items: covered.append(job.id) or real_coverage(self, job, items))
+
+    body = client.get("/matches/recommendations", headers=headers).json()
+    assert (body["total"], body["page"], body["page_size"], body["top_n"]) == (12, 1, 10, 100)
+    assert [item["rank"] for item in body["results"]] == list(range(1, 11))
+    assert covered == list(reversed(ids))[:10]
+
+    covered.clear()
+    body = client.get("/matches/recommendations?page=2&page_size=10", headers=headers).json()
+    assert body["page"] == 2 and [item["rank"] for item in body["results"]] == [11, 12]
+    assert [item["job_id"] for item in body["results"]] == [str(ids[1]), str(ids[0])]
+    assert covered == [ids[1], ids[0]]  # coverage computed only for this page
+
+    body = client.post("/matches/recommendations/refresh?page=9&page_size=25", headers=headers).json()
+    assert body["page"] == 1 and body["page_size"] == 25 and len(body["results"]) == 12  # clamped to the last page
+    assert client.get("/matches/recommendations?page_size=20", headers=headers).status_code == 422
+    assert client.get("/matches/recommendations?page=0", headers=headers).status_code == 422
+
+
+def test_results_are_capped_at_top_n_across_pages(client, db_session, fake_retrieval, monkeypatch):
+    staff = manager(client, db_session)
+    ids = [UUID(create_job(client, staff, f"Job {n}", "Python")) for n in range(4)]
+    headers = candidate_with_skills(client)
+    monkeypatch.setattr(settings, "RECOMMENDATION_TOP_N", 3)
+    fake_retrieval["order"] = ids
+    body = client.get("/matches/recommendations?page=1&page_size=10", headers=headers).json()
+    assert body["total"] == 3 and [item["rank"] for item in body["results"]] == [1, 2, 3]
