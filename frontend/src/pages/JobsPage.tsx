@@ -119,7 +119,7 @@ function ExperienceFilter({ data, onChange, pending }: { data: RecommendationLis
         {!enabled
           ? "Add work entries with an ESCO occupation on the CVs page to use this. "
           : data.hide_below_experience && data.hidden_by_experience
-            ? `${data.hidden_by_experience} job${data.hidden_by_experience === 1 ? "" : "s"} hidden. `
+            ? `${data.hidden_by_experience} job${data.hidden_by_experience === 1 ? "" : "s"} hidden; positions (#N of ${data.total}) count only the jobs shown. `
             : ""}
         Jobs without a stated minimum or without a determined occupation are never hidden.
       </p>

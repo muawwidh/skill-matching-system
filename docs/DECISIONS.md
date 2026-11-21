@@ -1188,6 +1188,8 @@ CVs for matching.
   requirement" is off by default, remembered per candidate, and applied before
   the top-N cut. Jobs without a minimum or a determined occupation are never
   hidden. Only the candidate turns it on; it is never applied for them.
+  With the filter on, "#N of M" counts only the jobs shown; the relative
+  order of the remaining jobs is the retrieval order.
 - **Fairness.** Years of experience correlate with age, which must not affect
   matching (AGENTS.md). Experience therefore never ranks or scores jobs; it is
   shown against the job's own stated requirement and filters only at the

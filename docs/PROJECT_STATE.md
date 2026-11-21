@@ -571,7 +571,9 @@ Item 7 (2026-11-21): related-experience filter.
 - When on, `RetrievalService.retrieve(keep=...)` skips jobs whose related
   experience is below their minimum before the top-N cut; jobs without a
   minimum or a determined occupation, and all jobs when the candidate has no
-  entry with an occupation, are never hidden. Ranks are over the shown jobs.
+  entry with an occupation, are never hidden. With the filter on, the card's
+  "#N of M" counts only the jobs shown: hidden jobs take no position, and
+  the next retrieved jobs move up into the top N.
   The offline evaluation never passes `keep`.
 - Response adds `hide_below_experience`, `hidden_by_experience`,
   `has_work_entries_with_occupation`; Jobs page switch with the hidden count.
