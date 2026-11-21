@@ -1210,3 +1210,18 @@ CVs for matching.
   Engineer", "Full Stack Engineer" -> 214 Engineering professionals). Most
   suggestions were weak fuzzy matches (18 of 20 below 0.80), and no
   confidence threshold separated right from wrong.
+- **Rejected: automatic embedding-based job occupations.** Linking cleaned
+  job titles ("query:") to the nearest ESCO 1.2.1 occupation label
+  ("passage:", 3,039 preferred + 30,156 alternative labels) with the pinned
+  E5 model was checked read-only (2026-11-21) and rejected for jobs. On the
+  230 auto-linked live jobs it agreed at 3 digits 230/230 and at 4 digits
+  156/230 (67.8%), but that key is easy (exact label matches). It gave every
+  one of the 747 unlinked titles a group (minimum and group 10.1% -> 43.8%),
+  yet only 9 of 20 random examples were plausible ("Senior Quantitative
+  Researcher" -> quantity surveyor; "AI R&D Engineer" -> animal artificial
+  insemination technician at similarity 0.930). Similarities are compressed
+  (80% of unlinked titles between 0.869 and 0.931) and wrong matches score as
+  high as right ones, so no threshold helps. Cost: 51 s one-off label
+  embedding, about 118 ms per title. Embedding neighbours are used only as
+  extra suggestions in the candidate's work-entry form, where the candidate
+  picks an occupation or none.
