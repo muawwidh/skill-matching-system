@@ -1056,3 +1056,30 @@ The starter Greenhouse list (`GREENHOUSE_BOARDS`, 20 boards, each verified on
 support roles: gitlab, elastic, grafanalabs, canonical, datadog, mongodb,
 twilio, celonis, contentful, commercetools, stripe, adyen, sumup, n26, monzo,
 tide, raisin, hellofresh, wolt, intercom.
+
+## D055 - Live Job Import: Dedupe, Contact Removal And Archiving
+
+Decided by the project owner on 2026-11-21. The import (CLI
+`import-live-jobs`, the administrator "Run import" button, or an optional
+daily Compose service) runs one at a time and:
+
+- removes contact details from every description before anything is stored:
+  e-mail addresses, phone numbers (8-15 digits with an international or trunk
+  prefix) and a personal name directly after a contact cue ("Recruiter:",
+  "reach out to", "Ansprechpartnerin", "contact op met", ...). Whole contact
+  lines are not dropped: on 2026-11-21 that removed ordinary sentences;
+- dedupes by `(source, external_id)` and by a hash of title, company and
+  description, so the same posting under another ID is skipped;
+- runs the existing job pipeline (sections, extraction v3, taxonomy linking)
+  for new or changed postings; changed postings use additive re-extraction
+  (D039), so reviews are kept;
+- sets `last_seen_at` on every posting still listed, archives live jobs not
+  seen for `LIVE_JOBS_ARCHIVE_AFTER_DAYS` (default 14) and the oldest beyond
+  the cap. A failed fetch therefore archives nothing until the window passes.
+  A job archived by the import comes back when listed again; one archived by
+  staff stays archived;
+- embeds changed jobs once at the end (D046 is paused during the import
+  because each job commits more than once).
+
+Each run is stored as a `job_import` processing log with all counts.
+Manual and evaluation jobs are never changed by the import.

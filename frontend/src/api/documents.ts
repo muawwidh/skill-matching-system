@@ -129,3 +129,26 @@ export function reviewJobSkill(accessToken: string, jobId: string, skill: JobSki
     }),
   });
 }
+
+export type JobImportRun = {
+  status: string;
+  created_at: string;
+  finished_at?: string;
+  fetched?: number;
+  selected?: number;
+  outcomes?: Record<string, number>;
+  skipped_language?: Record<string, number>;
+  skipped_location?: number;
+  archived_not_seen?: number;
+  archived_over_cap?: number;
+  active_live_jobs?: number;
+  sources?: Record<string, { fetched: number; requests: number; errors: string[] }>;
+};
+
+export function getJobImportStatus(accessToken: string) {
+  return apiRequest<{ running: boolean; runs: JobImportRun[] }>("/admin/job-import", { accessToken });
+}
+
+export function startJobImport(accessToken: string) {
+  return apiRequest<{ started: boolean }>("/admin/job-import", { method: "POST", accessToken });
+}

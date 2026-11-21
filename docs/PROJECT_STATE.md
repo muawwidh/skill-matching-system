@@ -371,6 +371,21 @@ Item 2 (2026-11-21): live job source adapters (D053, no migration).
   `tests/fixtures/job_sources/` (synthetic text, no network).
 - Not yet wired to an import; see item 3.
 
+Item 3 (2026-11-21): live job import (D055, no migration).
+- `app/services/job_import_service.py`; `strip_contact_details` in
+  `app/job_sources/text.py`; HTML conversion now also handles escaped HTML
+  nested in HTML (seen in Arbeitnow data).
+- CLI `python -m app.job_sources.cli import-live-jobs`; admin-only
+  `POST/GET /admin/job-import` (background run, 409 while running, latest
+  runs from processing logs); "Live jobs" panel with "Run import" on the Jobs
+  page for administrators; optional Compose service `job-import` (profile
+  `scheduler`, daily).
+- Tests: `tests/test_job_import.py` (create, idempotent re-import, update,
+  content-hash duplicate, archive unseen and reactivate, staff-archived kept,
+  failed fetch within window, cap, lock, embedding batch, admin-only) and
+  `tests/test_contact_stripping.py`.
+- Not yet run against the live APIs on the development DB (item 6).
+
 ## Early Matching Prototype
 
 Migration:

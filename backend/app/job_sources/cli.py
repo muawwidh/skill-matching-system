@@ -19,7 +19,18 @@ def main(argv: list[str] | None = None) -> int:
     mark.add_argument("--dry-run", action="store_true")
     verify = commands.add_parser("verify-sources", help="Call each configured Greenhouse board and report job counts.")
     verify.add_argument("--boards", help="Comma-separated tokens to check instead of GREENHOUSE_BOARDS.")
+    commands.add_parser("import-live-jobs", help="Fetch, filter, dedupe and process live jobs; archive stale ones.")
     args = parser.parse_args(argv)
+
+    if args.command == "import-live-jobs":
+        from app.job_sources.registry import build_adapters
+        from app.services.job_import_service import JobImportService
+
+        client = HttpJsonClient(settings.JOB_SOURCE_USER_AGENT, settings.JOB_SOURCE_MIN_INTERVAL_SECONDS)
+        with SessionLocal() as db:
+            report = JobImportService(db, build_adapters(settings), client).run()
+        print(json.dumps(report, sort_keys=True, default=str))
+        return 0
 
     if args.command == "verify-sources":
         boards = [b.strip() for b in args.boards.split(",") if b.strip()] if args.boards else settings.greenhouse_boards

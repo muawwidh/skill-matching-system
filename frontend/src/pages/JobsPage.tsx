@@ -5,6 +5,7 @@ import { FormEvent, ReactNode, useState } from "react";
 import { archiveJob, createJob, listJobs, listRecommendations, refreshRecommendations } from "../api/documents";
 import { JobMatchPanel } from "../components/JobMatchPanel";
 import { SectionList } from "../components/SectionList";
+import { LiveJobImportPanel } from "../components/LiveJobImportPanel";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { useAuth } from "../features/auth/AuthProvider";
 import type { Job, JobPayload, RecommendationList } from "../types/documents";
@@ -180,6 +181,7 @@ export function JobsPage() {
 
       {canManageJobs ? (
         <section className="space-y-4" aria-labelledby="manage-jobs-heading">
+          {roles.includes("admin") && accessToken ? <LiveJobImportPanel accessToken={accessToken} /> : null}
           <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitJob}>
             <div className="flex items-center gap-2">
               <BriefcaseBusiness size={22} className="text-ocean" aria-hidden="true" />

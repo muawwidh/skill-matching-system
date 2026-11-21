@@ -143,6 +143,25 @@ value. Required files/headers, limits and replacement effects are documented in
 Flattened JSON/CSV/TSV/TXT files remain a separate development/interchange format,
 not general official-release support. Bundled samples are development/testing data.
 
+## Live Jobs
+
+Live jobs come from public job APIs only: the Arbeitnow job board API and the Greenhouse job
+board API for the companies in `GREENHOUSE_BOARDS` (docs/DECISIONS.md D053, D055).
+
+```bash
+# Check that each configured Greenhouse board token still returns jobs
+docker compose exec backend python -m app.job_sources.cli verify-sources
+# Import: fetch, keep English postings in Europe or remote, strip contact details,
+# dedupe, run extraction/linking/embedding, archive postings not seen for N days
+docker compose exec backend python -m app.job_sources.cli import-live-jobs
+# Optional: run the import daily
+docker compose --profile scheduler up -d job-import
+# Tag the fixed evaluation set (reads only job IDs from the private mapping)
+docker compose exec backend python -m app.job_sources.cli mark-evaluation-jobs --mapping <mapping.json>
+```
+
+Administrators can also start an import with "Run import" on the Jobs page.
+
 ## Environment Variables
 
 Key variables are documented in `.env.example`.

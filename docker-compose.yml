@@ -60,6 +60,18 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # Optional daily live job import (D055): docker compose --profile scheduler up -d job-import
+  job-import:
+    image: skillgap-backend:local
+    profiles: ["scheduler"]
+    command: ["sh", "-c", "while true; do python -m app.job_sources.cli import-live-jobs; sleep ${LIVE_JOB_IMPORT_INTERVAL_SECONDS:-86400}; done"]
+    environment: *backend-environment
+    volumes: *backend-volumes
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend

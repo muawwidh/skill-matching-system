@@ -4,6 +4,7 @@ import html
 import re
 from html.parser import HTMLParser
 
+_TAG = re.compile(r"</?[a-z][a-z0-9]*(?:\s[^<>]*)?/?>", re.I)
 _BLOCK_TAGS = {"p", "div", "br", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "tr", "section",
                "article", "header", "footer", "blockquote", "table", "hr"}
 
@@ -39,11 +40,17 @@ def html_to_text(markup: str) -> str:
         return ""
     if "&lt;" in markup and "<" not in markup:  # Greenhouse returns escaped HTML
         markup = html.unescape(markup)
-    parser = _TextExtractor()
-    parser.feed(markup)
-    parser.close()
+    text = markup
+    # Some postings nest escaped HTML inside HTML; parse until no tags remain (at most three passes).
+    for _ in range(3):
+        parser = _TextExtractor()
+        parser.feed(text)
+        parser.close()
+        text = "".join(parser.parts)
+        if not _TAG.search(text):
+            break
     lines = []
-    for line in "".join(parser.parts).replace("\xa0", " ").splitlines():
+    for line in text.replace("\xa0", " ").splitlines():
         line = re.sub(r"[ \t]+", " ", line).strip()
         if line in {"", "-"}:
             if lines and lines[-1] != "":
@@ -117,3 +124,58 @@ def content_hash(title: str, company: str, description: str) -> str:
     """Hash of the normalized posting text, used to drop the same posting listed twice (D055)."""
     normalized = " ".join(f"{title}\n{company}\n{description}".casefold().split())
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+# --- Contact details (D055) -------------------------------------------------------------
+
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", re.I)
+# International (+.. / 00..) or trunk-prefixed (0..) numbers with 8-15 digits; salaries and years do not match.
+_PHONE = re.compile(r"(?<![\w+.,])(?:\+|00|\(0|0)\d[\d\s().\-/]{6,}\d(?!\w)")
+_NAME_WORD = r"[A-ZÄÖÜÉÈ][a-zäöüßéèáíóúñ'’-]+"
+# A personal name right after a contact cue, e.g. "Recruiter: Jane Example", "reach out to Max Muster",
+# "Ihre Ansprechpartnerin: Frau Anna Maria Muster", "neem contact op met Sanne de Vries".
+_CONTACT_NAME = re.compile(
+    r"(?P<cue>(?i:\b(?:contact(?:\s+person)?|your\s+contact|point\s+of\s+contact|recruiter|talent\s+partner|"
+    r"hiring\s+manager|reach\s+out\s+to|get\s+in\s+touch\s+with|ansprechpartner(?:in)?|kontakt|"
+    r"wenden\s+sie\s+sich(?:\s+bitte)?\s+an|contact\s+opnemen\s+met|contact\s+op\s+met|interlocuteur)"
+    r"\s*[:\-–]?\s*(?:(?:mr|ms|mrs|dr|herr|frau|mevrouw|meneer)\.?\s+)?))"
+    rf"(?P<name>{_NAME_WORD}(?:\s+(?:(?:van|von|de|der|den|da|di|le|la)\s+)?{_NAME_WORD}){{1,2}})")
+# Words that make a capitalised phrase a role, team or process step rather than a person.
+_NOT_NAME_WORDS = set(
+    "us the our your team teams talent people recruiting recruiter recruitment interview call intro screening "
+    "hiring manager hr human resources department office support customer service legal compliance data "
+    "protection privacy officer acquisition partner lead engineering product sales finance operations "
+    "assessment chat stage round panel technical final first second process application".split())
+
+
+def _digits(value: str) -> int:
+    return sum(character.isdigit() for character in value)
+
+
+def strip_contact_details(text: str) -> tuple[str, dict[str, int]]:
+    """Replace e-mail addresses, phone numbers and named contacts in a posting (D055).
+
+    E-mails and phone numbers (8-15 digits, international or trunk prefix) are
+    replaced everywhere. A personal name is replaced only right after a contact
+    cue ("Recruiter:", "reach out to", "Ansprechpartnerin", ...), so ordinary
+    sentences that mention "contact" are kept. Returns the text and counts.
+    """
+    counts = {"emails": 0, "phones": 0, "names": 0}
+
+    def replace_name(match: re.Match) -> str:
+        name = match.group("name")
+        if any(word.casefold() in _NOT_NAME_WORDS for word in name.split()):
+            return match.group(0)
+        counts["names"] += 1
+        return f"{match.group('cue')}[name removed]"
+
+    lines = []
+    for line in text.splitlines():
+        counts["emails"] += len(_EMAIL.findall(line))
+        line = _EMAIL.sub("[e-mail removed]", line)
+        for phone in _PHONE.findall(line):
+            if 8 <= _digits(phone) <= 15:
+                counts["phones"] += 1
+                line = line.replace(phone, "[phone removed]")
+        lines.append(_CONTACT_NAME.sub(replace_name, line))
+    return "\n".join(lines), counts
