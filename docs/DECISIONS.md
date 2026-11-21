@@ -1201,3 +1201,12 @@ CVs for matching.
 - **Isolation.** The offline evaluation is unchanged: it never passes the
   filter, evaluation jobs get no occupation or minimum, and the evaluation
   profiles have no work entries.
+- **Rejected: group agreement.** Assigning a 3-digit ISCO group to job titles
+  without an automatic occupation when their top-3 occupation suggestions
+  share that group was checked read-only on 977 live jobs (2026-11-21) and
+  rejected. It covered only 20 more titles (ISCO group 23.5% -> 25.6%;
+  minimum and group 10.1% -> 11.6%), and 5 of the 20 were wrong: the three
+  suggestions shared only the generic word "engineer" ("Senior/Lead Python
+  Engineer", "Full Stack Engineer" -> 214 Engineering professionals). Most
+  suggestions were weak fuzzy matches (18 of 20 below 0.80), and no
+  confidence threshold separated right from wrong.
