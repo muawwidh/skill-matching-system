@@ -33,7 +33,7 @@ export function OccupationPicker({ accessToken, title, value, onChange }: Occupa
     staleTime: 5 * 60 * 1000,
   });
   const options = [...(suggestions.data ?? [])];
-  if (value && !options.some((item) => item.concept_id === value.concept_id)) options.unshift({ ...value, confidence: 0 });
+  if (value && !options.some((item) => item.concept_id === value.concept_id)) options.unshift({ ...value, confidence: 0, method: "label" });
 
   return (
     <fieldset className="text-sm">
@@ -50,6 +50,11 @@ export function OccupationPicker({ accessToken, title, value, onChange }: Occupa
             <span>
               {item.label}
               {item.isco_code ? <span className="text-xs text-slate-500"> · ISCO {item.isco_code} {item.isco_unit_group}</span> : null}
+              {item.method === "embedding" ? (
+                <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600" title="Suggested by similar meaning, not by matching words. Check that it fits.">
+                  similar meaning
+                </span>
+              ) : null}
             </span>
           </label>
         ))}

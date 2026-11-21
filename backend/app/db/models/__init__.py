@@ -22,7 +22,7 @@ from app.db.models.taxonomy import (
     TaxonomySource,
     TaxonomyVersion,
 )
-from app.db.models.retrieval import CandidateProfileEmbedding, JobEmbedding
+from app.db.models.retrieval import CandidateProfileEmbedding, JobEmbedding, OccupationLabelEmbedding
 from app.db.models.experience import CandidatePreference, CandidateWorkEntry
 
 __all__ = [
@@ -37,6 +37,7 @@ __all__ = [
     "ExtractedJobTerm",
     "Job",
     "JobEmbedding",
+    "OccupationLabelEmbedding",
     "JobSection",
     "JobSkill",
     "ProcessingLog",

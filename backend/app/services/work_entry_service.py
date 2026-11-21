@@ -82,10 +82,24 @@ class WorkEntryService:
         return entry
 
     def occupation_suggestions(self, title: str, limit: int = 5) -> list[dict]:
-        """Top ESCO occupations for a title (occupation-only linking with title clean-up)."""
+        """Top ESCO occupations for a title: string-based first (occupation-only linking with title
+        clean-up), then embedding nearest neighbours up to `limit`, without duplicates (D060)."""
+        from app.taxonomy.occupation_embeddings import nearest_occupations
+
         catalog = occupation_catalog(self.db)
-        return [{**catalog.describe(match.concept_id), "confidence": match.confidence}
-                for match in catalog.suggest(title[:255], limit)]
+        title = title[:255]
+        results = [{**catalog.describe(match.concept_id), "confidence": match.confidence, "method": "label"}
+                   for match in catalog.suggest(title, limit)]
+        if len(results) < limit:
+            seen = {item["concept_id"] for item in results}
+            for concept_id, similarity in nearest_occupations(self.db, title, limit + len(seen)):
+                if concept_id not in seen and catalog.is_occupation(concept_id):
+                    results.append({**catalog.describe(concept_id), "confidence": round(similarity, 4),
+                                    "method": "embedding"})
+                    seen.add(concept_id)
+                    if len(results) == limit:
+                        break
+        return results
 
     def detected(self, user: User) -> list[dict]:
         """Dated entries found in the candidate's processed CVs that are not entered yet."""

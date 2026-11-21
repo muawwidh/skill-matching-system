@@ -23,6 +23,8 @@ OCCUPATIONS = {
 def add_esco_occupations(db) -> dict[str, TaxonomyConcept]:
     clear_concept_index_cache()
     clear_occupation_catalog()
+    from app.taxonomy.occupation_embeddings import clear_label_matrix
+    clear_label_matrix()
     source = TaxonomySource(code="ESCO", name="ESCO")
     db.add(source)
     db.flush()

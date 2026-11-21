@@ -39,3 +39,22 @@ class JobEmbedding(EmbeddingColumns, Base):
     )
 
     job_id: Mapped[UUID] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), index=True)
+
+
+class OccupationLabelEmbedding(TimestampMixin, Base):
+    """E5 embedding of one ESCO occupation label ("passage:"), for work-entry suggestions only (D060).
+
+    Computed once by `python -m app.retrieval.cli embed-occupation-labels` and reused.
+    Never used to assign job occupations.
+    """
+    __tablename__ = "occupation_label_embeddings"
+    __table_args__ = (
+        UniqueConstraint("concept_id", "label", "model_id", "model_revision", name="uq_occupation_label_embedding"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    concept_id: Mapped[UUID] = mapped_column(ForeignKey("taxonomy_concepts.id", ondelete="CASCADE"), index=True)
+    label: Mapped[str] = mapped_column(String(512), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    model_revision: Mapped[str] = mapped_column(String(64), nullable=False)

@@ -73,3 +73,5 @@ class DetectedWorkEntryRead(BaseModel):
 
 class OccupationSuggestionRead(OccupationRead):
     confidence: float
+    # "label": string-based linker; "embedding": nearest neighbour by meaning (shown after).
+    method: str = "label"

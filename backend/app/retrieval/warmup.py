@@ -64,12 +64,30 @@ def warm_job_representations(session_factory=None) -> dict:
     return result
 
 
+def warm_occupation_label_matrix(session_factory=None) -> int:
+    """Load stored occupation label vectors into memory (D060); computes no embeddings."""
+    from app.taxonomy.occupation_embeddings import label_matrix
+
+    if session_factory is None:
+        from app.db.session import SessionLocal as session_factory
+    _wait_while_busy()
+    with session_factory() as db:
+        try:
+            return len(label_matrix(db).concept_ids)
+        finally:
+            db.rollback()
+
+
 def start_background_warmup() -> threading.Thread:
     def run() -> None:
         try:
             warm_job_representations()
         except Exception:  # never take the server down for a cache
             log.warning("Job representation warm-up failed", exc_info=True)
+        try:
+            warm_occupation_label_matrix()
+        except Exception:
+            log.warning("Occupation label matrix warm-up failed", exc_info=True)
 
     thread = threading.Thread(target=run, name="job-representation-warmup", daemon=True)
     thread.start()

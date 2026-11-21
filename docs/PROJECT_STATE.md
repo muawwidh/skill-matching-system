@@ -589,6 +589,19 @@ isolation: compare-matching rankings A-D, the comparison output and the
 `evaluate` output are byte-identical to the live-import isolation check.
 Private outputs: `evaluation/local/relevant-experience-isolation-check-20261121/`.
 
+Occupation suggestions by meaning (2026-11-21):
+- Migration `0012_occupation_label_embeddings`: E5 "passage:" vectors of
+  active ESCO occupation preferred + alternative labels, with model id and
+  revision. Filled once and reused:
+  `python -m app.retrieval.cli embed-occupation-labels` (idempotent; dev DB:
+  33,195 labels, about 51 s on CPU). Loaded into memory on first use and by
+  the startup warm-up; lookups embed the cleaned title ("query:").
+- Work-entry suggestions: string-based first, then embedding nearest
+  neighbours up to 5 in total, without duplicates; marked "similar meaning"
+  in the form. Without stored vectors or the model, string-based only.
+- Never used for job occupations (rejected in D060).
+- Tests: `tests/test_occupation_embeddings.py`.
+
 ## Early Matching Prototype
 
 Migration:

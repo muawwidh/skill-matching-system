@@ -120,6 +120,8 @@ def main() -> None:
     compare.add_argument("--database-url", required=True)
     compare.add_argument("--evaluation-policy", type=Path, help="Explicit file-bound zero-grade-2 coverage policy")
     compare.add_argument("--template", choices=TEMPLATES)
+    sub.add_parser("embed-occupation-labels",
+                   help="Embed ESCO occupation labels once for work-entry suggestions (D060)")
     smoke = sub.add_parser("smoke-model")
     args = parser.parse_args()
     if args.command == "provision-model":
@@ -146,6 +148,11 @@ def main() -> None:
         print(json.dumps(compare_matching(args.candidates, args.jobs, args.judgments, args.mapping,
                                           args.database_url, args.output, args.evaluation_policy,
                                           args.template), sort_keys=True))
+    elif args.command == "embed-occupation-labels":
+        from app.db.session import SessionLocal
+        from app.taxonomy.occupation_embeddings import embed_occupation_labels
+        with SessionLocal() as db:
+            print(json.dumps(embed_occupation_labels(db, default_embedder()), sort_keys=True))
     elif args.command == "kappa":
         candidates, jobs = load_corpus(args.candidates, args.jobs)
         print(json.dumps(cohens_kappa(args.first, args.second, candidates, jobs), sort_keys=True))

@@ -102,7 +102,7 @@ def pg_database(monkeypatch):
 def test_upgrade_populated_0005_preserves_data(pg_database):
     engine, config, before = pg_database
     with engine.connect() as connection:
-        assert connection.scalar(text("select version_num from alembic_version")) == "0011_candidate_preferences"
+        assert connection.scalar(text("select version_num from alembic_version")) == "0012_occupation_label_embeddings"
         assert connection.scalar(text("select count(*) from esco_onet_mappings")) == 1
         assert connection.scalar(text("select count(*) from approved_taxonomy_links")) == 2
         assert connection.scalar(text("select count(*) from taxonomy_relationships where taxonomy_version_id is not null")) == 1

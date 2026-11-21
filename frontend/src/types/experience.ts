@@ -1,6 +1,7 @@
 /** Relevant experience (D060). Months are "YYYY-MM"; a null end month means "present". */
 export type Occupation = { concept_id: string; label: string; isco_code: string | null; isco_unit_group: string };
-export type OccupationSuggestion = Occupation & { confidence: number };
+/** method "label": matched by wording; "embedding": similar meaning (shown after, D060). */
+export type OccupationSuggestion = Occupation & { confidence: number; method?: "label" | "embedding" };
 
 export type WorkEntry = {
   id: string;
