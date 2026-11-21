@@ -93,6 +93,17 @@ export type MissingSkill = {
   checked_via: "taxonomy_concept" | "skill_name";
 };
 
+export type SkillStatusCounts = { approved: number; pending: number; rejected: number };
+
+/** GET /candidates/me/matching-profile: what feeds matching (D041). */
+export type MatchingProfile = {
+  retrieval_status: RecommendationStatus;
+  retrieval_message: string;
+  cvs: { id: string; original_filename: string; source: string; processed_at: string | null; skills: SkillStatusCounts }[];
+  manual_skills: SkillStatusCounts;
+  unattributed_skills: SkillStatusCounts;
+};
+
 /** One retrieved job (D045): its retrieval rank, explained by skill coverage. */
 export type RecommendationItem = {
   rank: number;

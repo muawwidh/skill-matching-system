@@ -6,6 +6,7 @@ import type {
   Job,
   JobPayload,
   JobSkill,
+  MatchingProfile,
   ProcessingLog,
   RecommendationList,
   SystemOverview,
@@ -36,6 +37,14 @@ export function uploadCv(accessToken: string, file: File, consentToProcess: bool
 
 export function listCvs(accessToken: string) {
   return apiRequest<CvDocument[]>("/cvs", { accessToken });
+}
+
+export function deleteCv(accessToken: string, cvId: string) {
+  return apiRequest<void>(`/cvs/${cvId}`, { method: "DELETE", accessToken });
+}
+
+export function getMatchingProfile(accessToken: string) {
+  return apiRequest<MatchingProfile>("/candidates/me/matching-profile", { accessToken });
 }
 
 export function createJob(accessToken: string, payload: JobPayload) {

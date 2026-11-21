@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileUp, Send } from "lucide-react";
+import { FileUp, Send, Trash2 } from "lucide-react";
 import { FormEvent, useState } from "react";
 
-import { listCvs, pasteCv, uploadCv } from "../api/documents";
+import { deleteCv, listCvs, pasteCv, uploadCv } from "../api/documents";
+import { MatchingProfileBox } from "../components/MatchingProfileBox";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { TextPreview } from "../components/TextPreview";
@@ -15,6 +16,21 @@ export function CvsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [pasteConsent, setPasteConsent] = useState(false);
   const [uploadConsent, setUploadConsent] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  function invalidateProfile() {
+    queryClient.invalidateQueries({ queryKey: ["cvs"] });
+    queryClient.invalidateQueries({ queryKey: ["matching-profile"] });
+    queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+  }
+
+  const deleteMutation = useMutation({
+    mutationFn: (cvId: string) => deleteCv(accessToken as string, cvId),
+    onSuccess: () => {
+      setConfirmDelete(null);
+      invalidateProfile();
+    },
+  });
 
   const cvQuery = useQuery({
     queryKey: ["cvs"],
@@ -27,7 +43,7 @@ export function CvsPage() {
     onSuccess: () => {
       setCvText("");
       setPasteConsent(false);
-      queryClient.invalidateQueries({ queryKey: ["cvs"] });
+      invalidateProfile();
     },
   });
 
@@ -36,7 +52,7 @@ export function CvsPage() {
     onSuccess: () => {
       setFile(null);
       setUploadConsent(false);
-      queryClient.invalidateQueries({ queryKey: ["cvs"] });
+      invalidateProfile();
     },
   });
 
@@ -94,6 +110,8 @@ export function CvsPage() {
         </form>
       </section>
 
+      <div className="space-y-6">
+      {accessToken ? <MatchingProfileBox accessToken={accessToken} /> : null}
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="text-xl font-semibold text-ink">Processed CVs</h2>
         <div className="mt-4 space-y-4">
@@ -104,8 +122,38 @@ export function CvsPage() {
                   <h3 className="font-semibold text-ink">{cv.original_filename}</h3>
                   <p className="text-sm text-slate-600">{cv.status} · {cv.content_type}</p>
                 </div>
-                <span className="text-sm text-slate-500">{cv.sections.length} sections</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-slate-500">{cv.sections.length} sections</span>
+                  <button
+                    className="inline-flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-sm text-red-700 disabled:opacity-50"
+                    disabled={deleteMutation.isPending}
+                    onClick={() => setConfirmDelete(cv.id)}
+                    type="button"
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    Delete CV
+                  </button>
+                </div>
               </div>
+              {confirmDelete === cv.id ? (
+                <div role="alertdialog" aria-labelledby={`delete-${cv.id}-title`} className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+                  <p id={`delete-${cv.id}-title`} className="font-semibold">Delete {cv.original_filename}?</p>
+                  <p className="mt-1">
+                    This permanently removes the CV text and its sections, the skills extracted from this CV together with
+                    your reviews of them, and their taxonomy links. Skills you added by hand stay in your profile. Job matching
+                    is then rebuilt from your remaining CVs and manual skills.
+                  </p>
+                  {deleteMutation.error ? <p role="alert" className="mt-2 text-red-700">{deleteMutation.error.message}</p> : null}
+                  <div className="mt-3 flex gap-2">
+                    <button className="rounded-md bg-red-700 px-3 py-1.5 font-medium text-white disabled:opacity-50" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(cv.id)} type="button">
+                      {deleteMutation.isPending ? "Deleting..." : "Delete CV"}
+                    </button>
+                    <button className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-slate-700" onClick={() => setConfirmDelete(null)} type="button">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-4">
                 <SectionList sections={cv.sections} />
               </div>
@@ -121,6 +169,7 @@ export function CvsPage() {
           {cvQuery.data?.length === 0 ? <p className="text-sm text-slate-500">No CVs processed yet.</p> : null}
         </div>
       </section>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,33 @@ class CandidateProfileRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SkillStatusCounts(BaseModel):
+    approved: int = 0
+    pending: int = 0
+    rejected: int = 0
+
+
+class MatchingProfileCv(BaseModel):
+    id: UUID
+    original_filename: str
+    source: str
+    processed_at: datetime | None
+    skills: SkillStatusCounts
+
+
+class MatchingProfileRead(BaseModel):
+    """What feeds the candidate's matching profile (D041): all CVs plus manual skills.
+
+    Only approved skills are used. `unattributed_skills` are extracted skills whose
+    source CV term no longer exists (legacy rows); they still belong to the profile.
+    """
+    retrieval_status: str
+    retrieval_message: str
+    cvs: list[MatchingProfileCv]
+    manual_skills: SkillStatusCounts
+    unattributed_skills: SkillStatusCounts
+
+
 class CandidateProfileUpdate(BaseModel):
     headline: str = Field(default="", max_length=255)
     summary: str = ""

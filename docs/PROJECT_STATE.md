@@ -279,6 +279,25 @@ Item 2 (2026-11-21): automatic re-embedding (D046).
   archive, link invalidation, rollback, release-wide, missing model, switch off)
   with a fake embedder.
 
+Item 3 (2026-11-21): CV management on the CVs page (no migration).
+- `GET /candidates/me/matching-profile` (owner only) lists the candidate's CVs
+  with approved/pending/rejected skill counts, the manually added skills and
+  any legacy extracted skills without a CV, plus the retrieval status (D041).
+- CVs page: "Your matching profile" box, and a "Delete CV" button per CV with
+  an inline confirmation stating what is removed (CV text and sections, the
+  CV's extracted skills with their reviews, their taxonomy links) and what
+  stays (manually added skills). Uses the existing `DELETE /cvs/{id}`.
+- Tests: `tests/test_cv_management.py`.
+- **Proposed, not built:** a per-CV "use for matching" switch. It needs
+  migration `0009` adding `cv_documents.use_for_matching BOOLEAN NOT NULL
+  DEFAULT true`, a filter in `RetrievalRepository.profile_input` and
+  `DocumentRepository.list_matchable_candidate_skills` (manual skills always
+  included), `PATCH /cvs/{id}` that invalidates the profile, the field in
+  `CvDocumentRead`/matching-profile response, and a toggle in the box. Rows
+  from switched-off CVs must be left out of the profile source hash only when
+  a CV is off, so profiles with every CV on (including the 8 evaluation
+  profiles) keep their current hash. Needs a decision amending D041.
+
 ## Early Matching Prototype
 
 Migration:

@@ -260,6 +260,18 @@ class DocumentRepository:
             )
         )
 
+    def candidate_skill_status_counts(self, candidate_profile_id: UUID) -> list[tuple[UUID | None, str, str, int]]:
+        """(CV document ID or None, skill source, review status, count) for one profile."""
+        return [tuple(row) for row in self.db.execute(
+            select(ExtractedCandidateTerm.cv_document_id, CandidateSkill.source,
+                   CandidateSkill.review_status, func.count())
+            .select_from(CandidateSkill)
+            .join(ExtractedCandidateTerm, CandidateSkill.extracted_term_id == ExtractedCandidateTerm.id,
+                  isouter=True)
+            .where(CandidateSkill.candidate_profile_id == candidate_profile_id)
+            .group_by(ExtractedCandidateTerm.cv_document_id, CandidateSkill.source, CandidateSkill.review_status)
+        ).all()]
+
     def get_candidate_skill(self, skill_id: UUID, candidate_profile_id: UUID) -> CandidateSkill | None:
         return self.db.scalar(
             select(CandidateSkill).where(

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import CandidateProfile, User
 from app.repositories.document_repository import DocumentRepository
-from app.schemas.documents import CandidateProfileUpdate
+from app.schemas.documents import CandidateProfileUpdate, MatchingProfileRead
 
 
 class CandidateService:
@@ -27,3 +27,27 @@ class CandidateService:
         self.db.commit()
         self.db.refresh(profile)
         return profile
+
+    def my_matching_profile(self, user: User) -> MatchingProfileRead:
+        """Which CVs and manual skills feed matching, with their review counts (D041)."""
+        from app.services.matching_service import PROFILE_MESSAGES
+        from app.services.retrieval_service import RetrievalService
+
+        profile = self.repository.get_or_create_candidate_profile(user.id)
+        self.db.commit()
+        cvs = {doc.id: {"id": doc.id, "original_filename": doc.original_filename, "source": doc.source,
+                        "processed_at": doc.processed_at, "skills": {}}
+               for doc in self.repository.list_cv_documents(profile.id)}
+        manual: dict[str, int] = {}
+        unattributed: dict[str, int] = {}
+        for document_id, source, review_status, count in self.repository.candidate_skill_status_counts(profile.id):
+            if source == "manual_review":
+                target = manual
+            elif document_id in cvs:
+                target = cvs[document_id]["skills"]
+            else:
+                target = unattributed
+            target[review_status] = target.get(review_status, 0) + count
+        status, _ = RetrievalService(self.db).profile_readiness(user)
+        return MatchingProfileRead(retrieval_status=status, retrieval_message=PROFILE_MESSAGES[status],
+                                   cvs=list(cvs.values()), manual_skills=manual, unattributed_skills=unattributed)
