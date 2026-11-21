@@ -75,3 +75,11 @@ class AuthRepository:
     @staticmethod
     def hash_token(token: str) -> str:
         return sha256(token.encode("utf-8")).hexdigest()
+
+    def delete_user(self, user: User) -> None:
+        """Delete the account; refresh tokens and role assignments are removed with it."""
+        self.db.query(RefreshToken).filter(RefreshToken.user_id == user.id).delete(synchronize_session=False)
+        user.roles.clear()
+        self.db.flush()
+        self.db.delete(user)
+        self.db.flush()

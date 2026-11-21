@@ -3,6 +3,7 @@ import { Database, FileText, Gauge, LockKeyhole, Network, ServerCog, UserRound }
 import type { ReactNode } from "react";
 
 import { getSystemOverview } from "../api/documents";
+import { DeleteAccountPanel } from "../components/DeleteAccountPanel";
 import { useAuth } from "../features/auth/AuthProvider";
 import type { LinkCoverage, ReviewCounts, SystemOverview } from "../types/documents";
 
@@ -112,6 +113,8 @@ const phaseCards = [
 export function DashboardPage() {
   const { user, accessToken } = useAuth();
   const isAdmin = user?.roles.some((role) => role.name === "admin") ?? false;
+  const isStaff = user?.roles.some((role) => role.name === "admin" || role.name === "researcher") ?? false;
+  const isCandidate = user?.roles.some((role) => role.name === "candidate") ?? false;
 
   return (
     <div className="space-y-8">
@@ -141,6 +144,9 @@ export function DashboardPage() {
           );
         })}
       </section>
+
+      {/* Staff accounts carry attributed review decisions and are removed by an administrator. */}
+      {isCandidate && !isStaff && accessToken ? <DeleteAccountPanel accessToken={accessToken} /> : null}
     </div>
   );
 }

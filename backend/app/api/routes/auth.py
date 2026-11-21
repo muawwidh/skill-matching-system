@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import get_current_user
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.auth import RefreshTokenRequest, TokenPair, UserCreate, UserLogin, UserRead
+from app.schemas.auth import AccountDeletionRequest, RefreshTokenRequest, TokenPair, UserCreate, UserLogin, UserRead
+from app.services.account_service import AccountService
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -35,3 +36,13 @@ def logout(payload: RefreshTokenRequest, db: Session = Depends(get_db)) -> None:
 @router.get("/me", response_model=UserRead)
 def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.post("/delete-account", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(
+    payload: AccountDeletionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    """Delete the signed-in candidate's account and data (password confirmation required)."""
+    AccountService(db).delete_my_account(current_user, payload.password)

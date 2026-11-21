@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { LogIn } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { login } from "../api/auth";
@@ -21,6 +21,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { setSession } = useAuth();
   const navigate = useNavigate();
+  const accountDeleted = Boolean((useLocation().state as { accountDeleted?: boolean } | null)?.accountDeleted);
   const form = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   async function onSubmit(values: FormValues) {
@@ -41,6 +42,11 @@ export function LoginPage() {
       footerLinkText="Create an account"
       footerHref="/register"
     >
+      {accountDeleted ? (
+        <p role="status" className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
+          Your account and data have been deleted.
+        </p>
+      ) : null}
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField label="Email" error={form.formState.errors.email?.message}>
           <input className="w-full rounded-md border border-slate-300 px-3 py-2" {...form.register("email")} />

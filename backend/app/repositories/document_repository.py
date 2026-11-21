@@ -22,6 +22,7 @@ from app.db.models import (
     TaxonomyConcept,
     User,
 )
+from app.db.models.taxonomy import TaxonomyReviewEvent
 from app.nlp.skill_extractor import ExtractedTerm
 from app.services.section_detection_service import DetectedSection
 
@@ -113,6 +114,47 @@ class DocumentRepository:
         ).delete(synchronize_session=False)
         self.db.delete(document)
         self.db.flush()
+
+    def delete_candidate_profile_data(self, profile: CandidateProfile) -> dict[str, int]:
+        """Erase everything derived from one candidate profile (account deletion).
+
+        Deletes match rows, embeddings, skills (extracted and manual), taxonomy
+        link suggestions, selected links and their review events, processing
+        logs, extracted terms, CV sections and CVs, then the profile. Deletes are
+        explicit, so the result does not depend on database cascade settings.
+        Returns row counts per kind.
+        """
+        from app.db.models import CandidateProfileEmbedding
+
+        documents = list(self.db.scalars(select(CvDocument.id).where(
+            CvDocument.candidate_profile_id == profile.id)))
+        term_ids = list(self.db.scalars(select(ExtractedCandidateTerm.id).where(
+            ExtractedCandidateTerm.cv_document_id.in_(documents)))) if documents else []
+        counts: dict[str, int] = {}
+
+        def delete(name: str, model, *where) -> None:
+            counts[name] = self.db.query(model).filter(*where).delete(synchronize_session=False)
+
+        delete("matches", CandidateJobMatch, CandidateJobMatch.candidate_profile_id == profile.id)
+        delete("embeddings", CandidateProfileEmbedding, CandidateProfileEmbedding.candidate_profile_id == profile.id)
+        delete("skills", CandidateSkill, CandidateSkill.candidate_profile_id == profile.id)
+        if term_ids:
+            delete("selected_links", ApprovedTaxonomyLink, ApprovedTaxonomyLink.term_source == "candidate",
+                   ApprovedTaxonomyLink.extracted_term_id.in_(term_ids))
+            delete("link_suggestions", TaxonomyLinkCandidate, TaxonomyLinkCandidate.term_source == "candidate",
+                   TaxonomyLinkCandidate.extracted_term_id.in_(term_ids))
+            delete("link_review_events", TaxonomyReviewEvent, TaxonomyReviewEvent.term_source == "candidate",
+                   TaxonomyReviewEvent.extracted_term_id.in_(term_ids))
+            delete("extracted_terms", ExtractedCandidateTerm, ExtractedCandidateTerm.id.in_(term_ids))
+        delete("processing_logs", ProcessingLog,
+               ((ProcessingLog.entity_type == "candidate_profile") & (ProcessingLog.entity_id == profile.id))
+               | ((ProcessingLog.entity_type == "cv_document") & ProcessingLog.entity_id.in_(documents or [profile.id])))
+        if documents:
+            delete("cv_sections", CvSection, CvSection.cv_document_id.in_(documents))
+            delete("cvs", CvDocument, CvDocument.id.in_(documents))
+        self.db.delete(profile)
+        self.db.flush()
+        return counts
 
     def replace_cv_sections(self, document: CvDocument, sections: list[DetectedSection]) -> None:
         document.sections.clear()

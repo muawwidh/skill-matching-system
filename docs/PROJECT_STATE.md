@@ -298,6 +298,17 @@ Item 3 (2026-11-21): CV management on the CVs page (no migration).
   a CV is off, so profiles with every CV on (including the 8 evaluation
   profiles) keep their current hash. Needs a decision amending D041.
 
+Item 4 (2026-11-21): candidate account deletion (D047, no migration).
+- `POST /auth/delete-account` with `{password}`; 204 on success, 403 for a
+  wrong password or a staff account. `AccountService.delete_my_account`,
+  `DocumentRepository.delete_candidate_profile_data`, `AuthRepository.delete_user`.
+- Dashboard: "Delete my account and data" for candidate-only accounts
+  (password plus an "I understand" checkbox); afterwards the session ends and
+  the login page confirms the deletion.
+- `docs/privacy.md` rewritten to describe CV and account deletion.
+- Tests: `tests/test_account_deletion.py` (every table checked, another
+  candidate untouched, old token rejected, wrong password, staff refused).
+
 ## Early Matching Prototype
 
 Migration:

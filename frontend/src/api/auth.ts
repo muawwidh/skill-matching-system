@@ -18,3 +18,12 @@ export function login(payload: LoginPayload) {
 export function getCurrentUser(accessToken: string) {
   return apiRequest<User>("/auth/me", { accessToken });
 }
+
+/** Deletes the signed-in candidate's account and all of its data (password confirmation). */
+export function deleteAccount(accessToken: string, password: string) {
+  return apiRequest<void>("/auth/delete-account", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({ password }),
+  });
+}

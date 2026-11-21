@@ -942,3 +942,22 @@ by a process lock. Vectors are computed exactly as the CLI computes them
 idempotence check treats them as current. The frozen Phase 5 evaluation
 artifacts are files and are not affected; live vectors of the evaluation
 profiles and jobs change only if those records are edited.
+
+## D047 - Candidates Can Delete Their Account And Data
+
+Decided by the project owner on 2026-11-21. A candidate can delete their own
+account with password confirmation (`POST /auth/delete-account`). In one
+transaction it removes the user, role assignments, refresh tokens, candidate
+profile, CVs, sections, extracted terms, all candidate skills (extracted and
+manual), taxonomy link suggestions and selected links for those terms, the
+profile embedding, stored match rows and processing logs about the profile or
+its CVs. Deletes are explicit rather than relying on database cascades.
+
+This changes D024's retention of taxonomy review events for this case: on
+account deletion the review events of the candidate's own terms are deleted
+too, because the account they describe no longer exists. Ordinary CV deletion
+still keeps them (D024, D041).
+
+Accounts with an administrator or researcher role cannot use this route.
+Their review decisions on other people's records are attributed to them;
+removing them is an administrative action.

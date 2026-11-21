@@ -2,20 +2,47 @@
 
 The application is decision support only and must not be used as an automatic hiring decision system.
 
-Phase 1 privacy controls:
+## Controls in place
 
-- Secure password hashing.
-- Refresh tokens are stored only as hashes.
-- Role-aware dependencies are available for protected routes.
-- Candidate-facing copy states that unrelated personal attributes must not affect matching.
-- Phase 2 requires explicit candidate consent before CV paste or upload processing.
-- Uploaded files are parsed into text and are not written to persistent file storage in this baseline.
+- Secure password hashing. Refresh tokens are stored only as hashes.
+- Role-aware dependencies protect administrative routes.
+- Candidate-facing copy states that unrelated personal attributes must not affect matching. Matching uses
+  approved skills only; age, gender, religion, nationality, marital status and photographs are not inputs.
+- Explicit consent is required before a pasted or uploaded CV is processed.
+- Uploaded files are parsed into text and are not written to persistent file storage.
 - Job rankings and skill coverage are visible only to the candidate they belong to; administrators and
   researchers see aggregate counts only, with no per-candidate ranking view (D037).
-- Deleting a CV removes that CV's extracted skills, links and stored matches and marks the profile
-  embedding stale; skills the candidate added by hand belong to the profile and stay until the
-  candidate removes them in skill review (D041).
 
-Future phases must add explicit CV-processing consent, data deletion, retention controls, audit logs,
-and exclusion of age, gender, religion, nationality, marital status, photographs, and other unrelated
-personal attributes from matching.
+## Deleting a CV
+
+A candidate can delete any of their CVs on the CVs page, after a confirmation. This removes the CV text and
+its sections, the skills extracted from it with their review decisions, and their taxonomy link suggestions
+and selected links. Skills the candidate added by hand belong to the profile and stay until the candidate
+removes them in skill review. The matching profile is rebuilt from the remaining CVs and manual skills
+(D041, D046). Taxonomy review events for that CV's skills are retained; they hold concept labels and
+reviewer IDs, not CV text.
+
+## Deleting the account
+
+A candidate can delete their account on the Dashboard ("Delete my account and data"), confirmed with their
+password (`POST /auth/delete-account`, D047). This deletes:
+
+- the account, its role assignments and refresh tokens;
+- the candidate profile and all CVs, CV sections and extracted terms;
+- all candidate skills, extracted and manual, with their review decisions;
+- taxonomy link suggestions, selected links and taxonomy review events for the candidate's skills;
+- the profile embedding and any stored job-match rows;
+- processing logs that refer to the profile or its CVs.
+
+Nothing that identifies the account is kept. Data outside the candidate's own records is unchanged (jobs,
+taxonomy releases, other candidates). Database backups made before the deletion still contain the data
+until they are rotated; there is no automatic backup expiry in this project.
+
+Administrator and researcher accounts cannot be deleted this way: their review decisions are attributed to
+them and they are removed by an administrator.
+
+## Not yet in place
+
+- Retention periods and automatic expiry of inactive accounts.
+- An export of a candidate's own data.
+- A per-CV "use for matching" switch (proposed in `PROJECT_STATE.md`).
