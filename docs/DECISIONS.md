@@ -1157,3 +1157,45 @@ are identical and any change to a job, its skills, links or sections is a new
 key. At startup a background thread fills this cache for every job with a
 ready vector (`WARM_JOB_CACHE_ON_STARTUP`, default true); it pauses while any
 request is in flight and changes nothing in the database.
+
+## D060 - Relevant Experience: Self-Entered, Explained, Optionally Filtered, Never Scored
+
+Decided by the project owner on 2026-11-21, after a read-only feasibility
+check: on the development CVs, only 4 of 15 yielded dated work entries and none
+of their titles linked to an ESCO occupation, so experience is not parsed from
+CVs for matching.
+
+- **Self-entered.** Candidates enter work entries on the CVs page: job title,
+  start month, end month or "present", and an ESCO occupation they pick from
+  the top 5 suggestions for the title (or none). Dates found in a CV only
+  pre-fill the form; nothing is stored until the candidate adds the entry.
+- **Job side.** The minimum required years are parsed from the job text on
+  read (first requirement mention; number words; company-age, retention,
+  benefit and preference phrases dropped; rule in
+  `app/matching/experience.py`). The job occupation is the cleaned title linked
+  with the existing automatic-approval rule; otherwise "occupation not
+  determined". Evaluation jobs are never linked or assessed.
+- **Relevance.** An entry is related when its occupation and the job's share
+  the 3-digit ISCO group; overlapping periods are merged and the months
+  summed. The check showed 4 digits too narrow (data scientist 2511 vs software
+  developer 2512) and 2 digits too broad (chemists with civil engineers).
+- **Explanation, not a score.** The job card shows "About N years in related
+  roles (ISCO xxx ...) · job asks M+ years → meets / below requirement" only
+  when the job has a minimum and an occupation and the candidate has entries
+  with an occupation. It never changes the retrieval order (D045) and is not
+  combined with similarity or coverage.
+- **User-chosen filter.** "Hide jobs where my related experience is below the
+  requirement" is off by default, remembered per candidate, and applied before
+  the top-N cut. Jobs without a minimum or a determined occupation are never
+  hidden. Only the candidate turns it on; it is never applied for them.
+- **Fairness.** Years of experience correlate with age, which must not affect
+  matching (AGENTS.md). Experience therefore never ranks or scores jobs; it is
+  shown against the job's own stated requirement and filters only at the
+  candidate's request. Unrelated personal attributes are not collected.
+- **Data minimisation.** No employer, location, description or reference is
+  asked for or stored; only title, months and the chosen occupation. Entries
+  are visible to the candidate only, editable and deletable, and removed with
+  the account. Staff cannot read them.
+- **Isolation.** The offline evaluation is unchanged: it never passes the
+  filter, evaluation jobs get no occupation or minimum, and the evaluation
+  profiles have no work entries.

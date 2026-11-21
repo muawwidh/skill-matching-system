@@ -578,6 +578,9 @@ Item 7 (2026-11-21): related-experience filter.
 - Tests: `tests/test_relevant_experience.py` (filter before the cut, never
   hidden cases, remembered switch, staff refused, account deletion).
 
+Item 8 (2026-11-21): decision record D060 (self-entered, explanation and
+user-chosen filter, never scored; fairness and data-minimisation reasoning).
+
 ## Early Matching Prototype
 
 Migration:
