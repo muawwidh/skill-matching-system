@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_roles
 from app.core.config import settings
+from app.db.models import User
 from app.db.session import get_db
 from app.schemas.documents import JobCreate, JobRead, JobSkillRead, JobSkillUpdate, JobUpdate, SectionRead
 from app.services.job_service import JobService
@@ -12,6 +13,15 @@ from app.services.skill_service import SkillService
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 job_manager = require_roles(settings.ADMIN_ROLE, settings.RESEARCHER_ROLE)
+
+
+def _hidden_sources(user: User) -> frozenset[str]:
+    """Candidates do not see evaluation jobs (D056); staff see every job."""
+    from app.job_sources import candidate_excluded_sources
+
+    if {role.name for role in user.roles} & {settings.ADMIN_ROLE, settings.RESEARCHER_ROLE}:
+        return frozenset()
+    return candidate_excluded_sources()
 
 
 @router.post("", response_model=JobRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(job_manager)])
@@ -28,14 +38,15 @@ def import_jobs(payload: list[JobCreate], db: Session = Depends(get_db)) -> list
 @router.get("", response_model=list[JobRead])
 def list_jobs(
     include_archived: bool = Query(default=False),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[JobRead]:
-    return JobService(db).list_jobs(include_archived=include_archived)
+    return JobService(db).list_jobs(include_archived=include_archived, exclude_sources=_hidden_sources(current_user))
 
 
 @router.get("/{job_id}", response_model=JobRead)
-def get_job(job_id: UUID, db: Session = Depends(get_db)) -> JobRead:
-    return JobService(db).get_job(job_id)
+def get_job(job_id: UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> JobRead:
+    return JobService(db).get_job(job_id, exclude_sources=_hidden_sources(current_user))
 
 
 @router.put("/{job_id}", response_model=JobRead, dependencies=[Depends(job_manager)])

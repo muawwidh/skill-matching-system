@@ -91,20 +91,25 @@ class RetrievalService:
             return "profile_not_indexed", None
         return "ready", query
 
-    def jobs_for_user(self, user: User, limit: int) -> list[dict]:
+    def jobs_for_user(self, user: User, limit: int, sources=None, exclude_sources=None) -> list[dict]:
         state, query = self.profile_readiness(user)
         if state != "ready":
             raise HTTPException(status_code=409, detail=PROFILE_STATUS_DETAIL[state])
-        return self.retrieve(query, limit)
+        return self.retrieve(query, limit, sources, exclude_sources)
 
-    def retrieve(self, query, limit: int) -> list[dict]:
-        """Top-`limit` processed jobs by exact cosine similarity; jobs with stale vectors are skipped."""
+    def retrieve(self, query, limit: int, sources=None, exclude_sources=None) -> list[dict]:
+        """Top-`limit` processed jobs by exact cosine similarity; jobs with stale vectors are skipped.
+
+        `sources` restricts the search to those job sources (offline evaluation: only
+        "evaluation"); `exclude_sources` leaves sources out (candidate view, D056).
+        """
         from app.retrieval.representation import MODEL_ID, MODEL_REVISION
 
         results = []
         offset = 0
         while len(results) < limit:
-            rows = self.repository.exact_jobs(query, limit=100, offset=offset)
+            rows = self.repository.exact_jobs(query, limit=100, offset=offset, sources=sources,
+                                              exclude_sources=exclude_sources)
             if not rows:
                 break
             offset += len(rows)
@@ -121,7 +126,7 @@ class RetrievalService:
                     break
         return results
 
-    def fresh_job_ids(self) -> set[UUID]:
+    def fresh_job_ids(self, exclude_sources=None) -> set[UUID]:
         """IDs of processed jobs with a ready vector whose hash equals the current input.
 
         Raises RuntimeError when template v2 cannot be built (pinned tokenizer missing).
@@ -129,7 +134,10 @@ class RetrievalService:
         from sqlalchemy import select
 
         fresh = set()
-        for job in self.db.scalars(select(Job).where(Job.status == "processed")):
+        jobs = select(Job).where(Job.status == "processed")
+        if exclude_sources:
+            jobs = jobs.where(Job.source.not_in(sorted(exclude_sources)))
+        for job in self.db.scalars(jobs):
             existing = self.db.scalar(self._job_embedding_query(job.id))
             if existing and existing.status == "ready" and \
                     existing.source_hash == self.repository.job_input(job).source_hash:

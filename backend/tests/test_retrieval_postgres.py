@@ -218,3 +218,32 @@ def test_invalidation_stales_all_coexisting_template_versions(pg_retrieval):
             assert all(r.status == "stale" for r in rows)
             assert all(r.source_hash == "a" * 64 and r.taxonomy_fingerprint == "b" * 64 for r in rows)
             assert all(list(r.embedding) == [1.0] + [0.0] * 383 for r in rows)
+
+
+def test_source_filters_keep_evaluation_runs_and_candidate_view_apart(pg_retrieval):
+    """Exact search restricted to source=evaluation, or without it (D056)."""
+    engine, _, profile_id, job_id, user_id = pg_retrieval
+    fake = FakeEmbedder()
+    with Session(engine) as db:
+        db.get(Job, job_id).source = "evaluation"
+        live = Job(title="Live Python Engineer", company="Example", description="Build Python APIs",
+                   cleaned_description="Build Python APIs", status="processed", source="arbeitnow",
+                   external_id="live-1")
+        db.add(live)
+        db.flush()
+        db.add(JobSkill(job_id=live.id, raw_text="Python", normalized_text="python", requirement_type="required",
+                        review_status="pending", source="manual_review"))
+        db.commit()
+        service = RetrievalService(db)
+        assert service.index_profile(profile_id, fake).outcome == "indexed"
+        for owner in (job_id, live.id):
+            assert service.index_job(owner, fake).outcome == "indexed"
+        db.commit()
+        live_id = live.id
+    with Session(engine) as fresh:
+        service = RetrievalService(fresh)
+        user = fresh.get(User, user_id)
+        assert {row["job_id"] for row in service.jobs_for_user(user, 20)} == {job_id, live_id}
+        assert [row["job_id"] for row in service.jobs_for_user(user, 20, sources={"evaluation"})] == [job_id]
+        assert [row["job_id"] for row in service.jobs_for_user(user, 20, exclude_sources={"evaluation"})] == [live_id]
+        assert service.fresh_job_ids(exclude_sources={"evaluation"}) == {live_id}

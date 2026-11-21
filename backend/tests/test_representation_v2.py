@@ -188,7 +188,10 @@ def test_cli_selects_explicit_v1_and_v2_without_indexing(monkeypatch):
     for template in (TEMPLATE_V1, TEMPLATE_V2):
         monkeypatch.setattr("sys.argv", ["retrieval", "index", "jobs", "--limit", "3", "--template", template])
         cli.main()
-        assert calls[-1] == ("jobs", 3, None, template)
+        assert calls[-1] == ("jobs", 3, None, template, None)
+    monkeypatch.setattr("sys.argv", ["retrieval", "index", "jobs", "--source", "evaluation"])
+    cli.main()
+    assert calls[-1] == ("jobs", 100, None, None, "evaluation")
 
 
 def test_unheaded_candidate_conditions_and_role_statements_are_not_lost():

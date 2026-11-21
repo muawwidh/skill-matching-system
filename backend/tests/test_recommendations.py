@@ -105,7 +105,7 @@ def test_missing_model_artifacts_report_retrieval_unavailable(client, db_session
     create_job(client, staff, "Job", "Python")
     headers = candidate_with_skills(client)
 
-    def unavailable(self, query, limit):
+    def unavailable(self, query, limit, sources=None, exclude_sources=None):
         raise RuntimeError("Pinned local tokenizer unavailable")
 
     monkeypatch.setattr(RetrievalService, "retrieve", unavailable)

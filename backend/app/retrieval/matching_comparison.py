@@ -19,6 +19,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID
 
+from app.job_sources import EVALUATION_SOURCE
 from app.retrieval.benchmark import _sha256, _bound_policy, load_corpus, load_judgments
 from app.retrieval.evaluation import retrieval_metrics
 from app.retrieval.evaluation_policy import query_coverage
@@ -170,7 +171,7 @@ def compare_matching(candidates_path: Path, jobs_path: Path, judgments_path: Pat
                 if user is None or user.status != "active" or not any(r.name == "candidate" for r in user.roles):
                     raise ValueError(f"Mapped user for {alias} is not an active candidate")
                 profile = db.query(CandidateProfile).filter(CandidateProfile.user_id == user.id).one()
-                rows = retrieval.jobs_for_user(user, 1000)
+                rows = retrieval.jobs_for_user(user, 1000, sources={EVALUATION_SOURCE})  # D056
                 similarity = {alias_by_job[row["job_id"]]: row["retrieval_similarity"]
                               for row in rows if row["job_id"] in alias_by_job}
                 if set(similarity) != set(jobs):

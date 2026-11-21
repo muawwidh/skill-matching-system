@@ -29,7 +29,8 @@ def provision(path: str) -> None:
     print(json.dumps({"model": MODEL_ID, "revision": MODEL_REVISION, "path": str(location)}))
 
 
-def index(kind: str, limit: int, after: str | None, template_version: str | None = None) -> None:
+def index(kind: str, limit: int, after: str | None, template_version: str | None = None,
+          source: str | None = None) -> None:
     template_version = resolve_template(template_version)
     embedder = default_embedder()
     cls = Job if kind == "jobs" else CandidateProfile
@@ -41,6 +42,8 @@ def index(kind: str, limit: int, after: str | None, template_version: str | None
         statement = select(cls.id).order_by(cls.id).limit(limit)
         if cursor:
             statement = statement.where(cls.id > cursor)
+        if source and kind == "jobs":
+            statement = statement.where(Job.source == source)  # e.g. only the evaluation set (D056)
         ids = list(db.scalars(statement))
     resume_after = cursor
     for item_id in ids:
@@ -76,6 +79,7 @@ def main() -> None:
     indexing.add_argument("--limit", type=int, default=100)
     indexing.add_argument("--after")
     indexing.add_argument("--template", choices=TEMPLATES)
+    indexing.add_argument("--source", help="Only jobs from this source, e.g. evaluation")
     blind = sub.add_parser("blind-export", help="Create randomized, score-free labelling CSV")
     blind.add_argument("candidates", type=Path)
     blind.add_argument("jobs", type=Path)
@@ -123,7 +127,7 @@ def main() -> None:
     elif args.command == "index":
         if not 1 <= args.limit <= 1000:
             parser.error("--limit must be between 1 and 1000")
-        index(args.kind, args.limit, args.after, args.template)
+        index(args.kind, args.limit, args.after, args.template, args.source)
     elif args.command == "evaluate":
         print(json.dumps(evaluate_pack(args.candidates, args.jobs, args.judgments,
                                        args.rankings, args.grade_one_exploratory,

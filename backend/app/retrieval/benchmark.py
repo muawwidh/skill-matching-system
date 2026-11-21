@@ -10,6 +10,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from app.job_sources import EVALUATION_SOURCE
 from app.retrieval.evaluation import retrieval_metrics
 from app.retrieval.evaluation_policy import load_policy, query_coverage, reviewer_limitations
 from app.retrieval.representation import MODEL_ID, MODEL_REVISION, resolve_template
@@ -414,7 +415,8 @@ def export_rankings(candidates_path: Path, jobs_path: Path, mapping_path: Path,
                     raise ValueError(f"Missing database user for {candidate_id}")
                 if user.status != "active" or not any(role.name == "candidate" for role in user.roles):
                     raise ValueError(f"Mapped user for {candidate_id} is not an active candidate")
-                retrieved = service.jobs_for_user(user, len(jobs))
+                # Only the fixed evaluation set is searched, whatever live jobs exist (D056).
+                retrieved = service.jobs_for_user(user, len(jobs), sources={EVALUATION_SOURCE})
                 ids = [job_lookup.get(item["job_id"]) for item in retrieved]
                 if len(ids) != len(jobs) or set(ids) != set(jobs):
                     raise ValueError(f"Retrieval did not return every benchmark job for {candidate_id}; index first")

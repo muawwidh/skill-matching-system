@@ -58,19 +58,20 @@ def fake_retrieval(monkeypatch):
             return "ready", object()
         return status, query
 
-    def retrieve(self, query, limit):
+    def retrieve(self, query, limit, sources=None, exclude_sources=None):
         from sqlalchemy import select
         from app.db.models import Job
-        processed = {job.id: job for job in self.db.scalars(select(Job).where(Job.status == "processed"))}
+        processed = {job.id: job for job in self.db.scalars(select(Job).where(Job.status == "processed"))
+                     if (sources is None or job.source in sources) and job.source not in (exclude_sources or ())}
         order = state["order"] if state["order"] is not None else sorted(processed, key=str)
         rows = [{"rank": index, "job_id": job_id, "retrieval_similarity": 1.0 - index / 100}
                 for index, job_id in enumerate((j for j in order if j in processed), start=1)]
         return rows[:limit]
 
-    def fresh_job_ids(self):
+    def fresh_job_ids(self, exclude_sources=None):
         if state["fresh"] is not None:
             return set(state["fresh"])
-        return {row["job_id"] for row in retrieve(self, None, 10_000)}
+        return {row["job_id"] for row in retrieve(self, None, 10_000, exclude_sources=exclude_sources)}
 
     monkeypatch.setattr(RetrievalService, "profile_readiness", readiness)
     monkeypatch.setattr(RetrievalService, "retrieve", retrieve)

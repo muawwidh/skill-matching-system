@@ -135,7 +135,8 @@ class RetrievalRepository:
             CandidateProfileEmbedding.model_revision == MODEL_REVISION,
             CandidateProfileEmbedding.template_version == self.template_version))
 
-    def exact_jobs(self, query, limit: int, offset: int = 0):
+    def exact_jobs(self, query, limit: int, offset: int = 0, sources=None, exclude_sources=None):
+        """Exact cosine search over ready job vectors; optionally only `sources` or without `exclude_sources`."""
         if (query.template_version, query.model_id, query.model_revision) != (
                 self.template_version, MODEL_ID, MODEL_REVISION):
             raise ValueError("Query embedding model/template does not match retrieval configuration")
@@ -145,5 +146,7 @@ class RetrievalRepository:
             .where(JobEmbedding.status == "ready", JobEmbedding.model_id == MODEL_ID,
                    JobEmbedding.model_revision == MODEL_REVISION,
                    JobEmbedding.template_version == self.template_version,
-                   Job.status == "processed")
+                   Job.status == "processed",
+                   *([Job.source.in_(sorted(sources))] if sources is not None else []),
+                   *([Job.source.not_in(sorted(exclude_sources))] if exclude_sources else []))
             .order_by(distance, Job.id).offset(offset).limit(limit)).all()

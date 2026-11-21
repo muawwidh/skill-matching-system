@@ -84,12 +84,13 @@ class JobService:
         self.db.refresh(job)
         return job
 
-    def list_jobs(self, include_archived: bool = False) -> list[Job]:
-        return self.repository.list_jobs(include_archived=include_archived)
+    def list_jobs(self, include_archived: bool = False, exclude_sources=frozenset()) -> list[Job]:
+        return [job for job in self.repository.list_jobs(include_archived=include_archived)
+                if job.source not in exclude_sources]
 
-    def get_job(self, job_id: UUID) -> Job:
+    def get_job(self, job_id: UUID, exclude_sources=frozenset()) -> Job:
         job = self.repository.get_job(job_id)
-        if not job:
+        if not job or job.source in exclude_sources:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
         return job
 

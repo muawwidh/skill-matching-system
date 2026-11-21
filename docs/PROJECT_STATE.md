@@ -394,6 +394,19 @@ Item 4 (2026-11-21): unreviewed skills on live jobs (D054, no migration).
 - Tests: `tests/test_live_job_coverage.py` (flagging, live vs manual vs
   evaluation, rejected excluded, admin review still works).
 
+Item 5 (2026-11-21): retrieval scope (D056, no migration).
+- `candidate_excluded_sources()` in `app/job_sources/__init__.py`;
+  `exact_jobs`/`retrieve`/`jobs_for_user` take `sources` and
+  `exclude_sources`; `fresh_job_ids(exclude_sources)`.
+- Candidate recommendations, single-job coverage, job list/detail and
+  `/retrieval/jobs` exclude evaluation jobs by default; staff see all jobs.
+- Benchmark export and the coverage-ordering comparison search only
+  `source=evaluation`; `retrieval index jobs --source evaluation`.
+- Tests: `tests/test_evaluation_isolation.py`; PostgreSQL
+  `test_source_filters_keep_evaluation_runs_and_candidate_view_apart`.
+- On the development DB the candidate view currently holds 1 active manual
+  job until live jobs are imported (item 6).
+
 ## Early Matching Prototype
 
 Migration:

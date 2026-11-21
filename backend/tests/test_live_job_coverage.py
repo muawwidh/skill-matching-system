@@ -64,9 +64,14 @@ def test_live_jobs_use_pending_skills_while_manual_and_evaluation_jobs_stay_appr
     missing = live_coverage["missing_required"] + live_coverage["missing_preferred"]
     assert [(e["label"], e["reviewed"]) for e in missing] == [("docker", False)]  # rejected git left out
     assert "Automatically extracted, not reviewed" in live_coverage["explanation"]
-    for job in (manual, evaluation):
-        body = client.get(f"/matches/jobs/{job.id}", headers=headers).json()
-        assert body["job_skill_count"] == 0 and body["matched_required"] == body["matched_preferred"] == []
+    body = client.get(f"/matches/jobs/{manual.id}", headers=headers).json()
+    assert body["job_skill_count"] == 0 and body["matched_required"] == body["matched_preferred"] == []
+    # Evaluation jobs are not in the candidate view (D056); their coverage stays approved-only.
+    from app.services.matching_service import MatchingService
+    service = MatchingService(db_session)
+    profile = service.repository.get_or_create_candidate_profile(
+        db_session.scalar(select(User).where(User.email == "candidate@example.com")).id)
+    assert service._coverage(evaluation, service._candidate_items(profile.id))["job_skill_count"] == 0
 
     # Administrators can still review a live job; the approved skill is then reviewed.
     admin = _register(client, db_session, "admin@example.com", "admin")

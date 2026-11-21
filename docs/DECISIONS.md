@@ -1098,3 +1098,15 @@ offline comparison (D043) is unchanged. Candidate skills stay approved-only.
 Administrators can still review live job skills; an approved occurrence makes
 the skill reviewed. Job embeddings already included pending skills (only
 rejected ones are left out), so retrieval is unchanged.
+
+## D056 - Candidate Job Scope And Evaluation-Set Isolation
+
+Decided by the project owner on 2026-11-21. Candidates (Jobs page
+recommendations, single-job coverage, `GET /jobs`, `GET /jobs/{id}` and
+`GET /retrieval/jobs`) see active manual and live jobs only. Evaluation jobs
+are left out unless `CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS` is true;
+administrators and researchers see every job. The offline benchmark and the
+coverage-ordering comparison (D043) search only `source = evaluation`, so live
+jobs added later cannot change their results; `retrieval index jobs --source
+evaluation` re-indexes only that set. The filter is applied in the exact
+vector search itself, so top-N is taken within the allowed sources.

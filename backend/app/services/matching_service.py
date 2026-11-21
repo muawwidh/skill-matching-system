@@ -282,15 +282,19 @@ class MatchingService:
         from app.core.config import settings
         from app.services.retrieval_service import RetrievalService
 
+        from app.job_sources import candidate_excluded_sources
+
         top_n = settings.RECOMMENDATION_TOP_N
+        excluded = candidate_excluded_sources()
         profile = self.repository.get_or_create_candidate_profile(user.id)
         retrieval = RetrievalService(self.db)
-        active_jobs = self.repository.list_jobs(include_archived=False)
+        # Candidate scope (D056): manual and live jobs; evaluation jobs only when enabled.
+        active_jobs = [job for job in self.repository.list_jobs(include_archived=False) if job.source not in excluded]
         state, query = retrieval.profile_readiness(user)
         rows: list[dict] = []
         if state == "ready":
             try:
-                rows = self._retrieve(retrieval, query, top_n)
+                rows = self._retrieve(retrieval, query, top_n, excluded)
             except (RuntimeError, ValueError):
                 # e.g. the pinned tokenizer needed for job freshness is missing on this server.
                 state = "retrieval_unavailable"
@@ -306,17 +310,17 @@ class MatchingService:
         self.db.commit()
         return {"status": state, "message": PROFILE_MESSAGES[state], "top_n": top_n,
                 "active_jobs": len(active_jobs),
-                "unindexed_jobs": self._unindexed_job_count(retrieval, active_jobs),
+                "unindexed_jobs": self._unindexed_job_count(retrieval, active_jobs, excluded),
                 "results": results}
 
     @staticmethod
-    def _retrieve(retrieval, query, top_n: int) -> list[dict]:
-        return retrieval.retrieve(query, top_n)
+    def _retrieve(retrieval, query, top_n: int, exclude_sources=frozenset()) -> list[dict]:
+        return retrieval.retrieve(query, top_n, exclude_sources=exclude_sources)
 
     @staticmethod
-    def _unindexed_job_count(retrieval, active_jobs: list[Job]) -> int:
+    def _unindexed_job_count(retrieval, active_jobs: list[Job], exclude_sources=frozenset()) -> int:
         try:
-            fresh = retrieval.fresh_job_ids()
+            fresh = retrieval.fresh_job_ids(exclude_sources)
         except RuntimeError:
             # Job freshness under template v2 needs the pinned tokenizer; report every job as unknown.
             return len(active_jobs)
@@ -325,8 +329,10 @@ class MatchingService:
     def match_my_job(self, user: User, job_id: UUID) -> dict:
         """Coverage of one active job for the candidate, computed on read (D049)."""
         profile = self.repository.get_or_create_candidate_profile(user.id)
+        from app.job_sources import candidate_excluded_sources
+
         job = self.repository.get_job(job_id)
-        if not job or job.status == "archived":
+        if not job or job.status == "archived" or job.source in candidate_excluded_sources():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
         coverage = self._coverage(job, self._candidate_items(profile.id))
         self.db.commit()

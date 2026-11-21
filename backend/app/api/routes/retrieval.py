@@ -17,4 +17,7 @@ def retrieve_jobs(limit: int = Query(20, ge=1, le=100),
                   template_version: Literal["e5-job-profile-v1", "e5-job-profile-v2"] | None = None,
                   current_user: User = Depends(require_roles(settings.DEFAULT_CANDIDATE_ROLE)),
                   db: Session = Depends(get_db)) -> list[RetrievedJob]:
-    return RetrievalService(db, template_version).jobs_for_user(current_user, limit)
+    from app.job_sources import candidate_excluded_sources
+
+    return RetrievalService(db, template_version).jobs_for_user(
+        current_user, limit, exclude_sources=candidate_excluded_sources())
