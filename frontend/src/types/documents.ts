@@ -175,7 +175,13 @@ export type SystemOverview = {
   };
   candidates: { accounts: number; cvs: { uploaded: number; processed: number; failed: number; failed_note: string } };
   jobs: { total: number; active: number; archived: number };
-  skills: { cv_extracted: ReviewCounts; cv_added_manually: ReviewCounts; job_extracted: ReviewCounts };
+  skills: {
+    cv_extracted: ReviewCounts;
+    cv_added_manually: ReviewCounts;
+    job_extracted: ReviewCounts;
+    /** job_extracted split by job group: manual, evaluation, live. */
+    job_by_source?: Partial<Record<"manual" | "evaluation" | "live", ReviewCounts>>;
+  };
   taxonomy_links: { cv: LinkCoverage; job: LinkCoverage };
   retrieval_index: {
     model_id: string;

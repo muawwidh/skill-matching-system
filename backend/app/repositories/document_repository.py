@@ -742,6 +742,19 @@ class DocumentRepository:
             select(column, func.count()).where(*where).group_by(column)
         ).all()}
 
+    def job_skill_counts_by_job_group(self) -> dict[str, dict[str, int]]:
+        """Job skill review statuses per job group: manual, evaluation or live (any other source)."""
+        from app.job_sources import EVALUATION_SOURCE, MANUAL_SOURCE
+
+        result: dict[str, dict[str, int]] = {"manual": {}, "evaluation": {}, "live": {}}
+        for source, status, count in self.db.execute(
+            select(Job.source, JobSkill.review_status, func.count()).join(Job, Job.id == JobSkill.job_id)
+            .group_by(Job.source, JobSkill.review_status)
+        ).all():
+            group = source if source in {MANUAL_SOURCE, EVALUATION_SOURCE} else "live"
+            result[group][status] = result[group].get(status, 0) + count
+        return result
+
     def taxonomy_link_coverage(self, term_source: str) -> dict[str, int]:
         """Approved skills split by taxonomy-link state: approved, pending suggestion, or none.
 

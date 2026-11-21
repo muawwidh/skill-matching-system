@@ -115,6 +115,11 @@ def test_admin_overview_returns_counts(client: TestClient, db_session: Session) 
     assert cv_skills["total"] >= 2 and cv_skills["pending"] == cv_skills["total"]
     assert body["skills"]["cv_added_manually"]["total"] == 0
     assert body["skills"]["job_extracted"]["pending"] == body["skills"]["job_extracted"]["total"] >= 4
+    # Split by job group; jobs created through the API are manual.
+    by_source = body["skills"]["job_by_source"]
+    assert set(by_source) == {"manual", "evaluation", "live"}
+    assert by_source["manual"] == body["skills"]["job_extracted"]
+    assert by_source["evaluation"]["total"] == by_source["live"]["total"] == 0
     # No approved skills yet, so nothing can carry a link and no profile is eligible for indexing.
     assert body["taxonomy_links"]["cv"] == {"approved_skills": 0, "approved_link": 0, "pending_link": 0, "no_link": 0}
     index = body["retrieval_index"]
@@ -158,3 +163,26 @@ def test_admin_overview_does_not_write(client: TestClient, db_session: Session) 
     after = [db_session.scalar(select(func.count()).select_from(model))
              for model in (CandidateProfile, ProcessingLog)]
     assert before == after
+
+
+def test_overview_splits_job_skills_into_manual_evaluation_and_live(db_session):
+    from app.db.models import Job, JobSkill
+    from app.services.processing_log_service import SystemOverviewService
+
+    plan = {"manual": ["approved", "pending"], "evaluation": ["approved", "rejected"],
+            "arbeitnow": ["pending", "pending"], "greenhouse": ["pending", "approved"]}
+    for source, statuses in plan.items():
+        job = Job(title=source, description="x", cleaned_description="x", status="processed", source=source,
+                  external_id=None if source in {"manual", "evaluation"} else f"{source}-1")
+        db_session.add(job)
+        db_session.flush()
+        for n, status in enumerate(statuses):
+            db_session.add(JobSkill(job_id=job.id, raw_text=f"s{n}", normalized_text=f"s{n}", review_status=status))
+    db_session.commit()
+    skills = SystemOverviewService(db_session).overview()["skills"]
+    assert skills["job_by_source"] == {
+        "manual": {"approved": 1, "pending": 1, "rejected": 0, "total": 2},
+        "evaluation": {"approved": 1, "pending": 0, "rejected": 1, "total": 2},
+        "live": {"approved": 1, "pending": 3, "rejected": 0, "total": 4},
+    }
+    assert skills["job_extracted"]["total"] == 8

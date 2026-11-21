@@ -6,6 +6,7 @@ import { getSystemOverview } from "../api/documents";
 import { DeleteAccountPanel } from "../components/DeleteAccountPanel";
 import { useAuth } from "../features/auth/AuthProvider";
 import type { LinkCoverage, ReviewCounts, SystemOverview } from "../types/documents";
+import { AUTOMATIC_TOOLTIP } from "../utils/reviewStatus";
 
 const of = (count: number, total: number) => `${count} of ${total}`;
 
@@ -29,9 +30,23 @@ function OverviewTable({ title, head, rows }: { title: string; head: string[]; r
   );
 }
 
-const reviewRow = (label: string, counts: ReviewCounts) => [
-  label, of(counts.approved, counts.total), of(counts.pending, counts.total), of(counts.rejected, counts.total),
+const reviewRow = (label: string, counts: ReviewCounts, liveJobs = false) => [
+  label,
+  of(counts.approved, counts.total),
+  // Live-job skills are rarely reviewed: their pending ones read "automatic" (D054).
+  liveJobs ? <span title={AUTOMATIC_TOOLTIP}>{of(counts.pending, counts.total)} automatic</span> : of(counts.pending, counts.total),
+  of(counts.rejected, counts.total),
 ];
+
+function jobReviewRows(skills: SystemOverview["skills"]) {
+  const groups = skills.job_by_source;
+  if (!groups?.manual || !groups.evaluation || !groups.live) return [reviewRow("Job, extracted", skills.job_extracted)];
+  return [
+    reviewRow("Job, manual", groups.manual),
+    reviewRow("Job, evaluation", groups.evaluation),
+    reviewRow("Job, live", groups.live, true),
+  ];
+}
 const linkRow = (label: string, links: LinkCoverage) => [
   label,
   of(links.approved_link, links.approved_skills),
@@ -73,7 +88,7 @@ function OverviewTables({ data }: { data: SystemOverview }) {
         rows={[
           reviewRow("CV, extracted", skills.cv_extracted),
           reviewRow("CV, added manually", skills.cv_added_manually),
-          reviewRow("Job, extracted", skills.job_extracted),
+          ...jobReviewRows(skills),
         ]}
       />
       <OverviewTable

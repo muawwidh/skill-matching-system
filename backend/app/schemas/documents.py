@@ -348,6 +348,8 @@ class SkillOverview(BaseModel):
     cv_extracted: ReviewCounts
     cv_added_manually: ReviewCounts
     job_extracted: ReviewCounts
+    # Keys "manual", "evaluation", "live" (every non-manual, non-evaluation source).
+    job_by_source: dict[str, ReviewCounts] = {}
 
 
 class LinkCoverage(BaseModel):

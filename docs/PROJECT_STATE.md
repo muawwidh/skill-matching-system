@@ -460,8 +460,9 @@ Jobs page paging (2026-11-21, D059):
   "automatic" (tooltip: not reviewed by staff). Stored statuses unchanged.
 - `TaxonomyReviewGroup.live_job` flags live-job terms; the frontend helper is
   `src/utils/reviewStatus.ts`.
-- The admin overview counts (Dashboard) are aggregates and still say
-  "Pending" for all job skills.
+- Admin overview: `skills.job_by_source` splits job skill counts into
+  manual / evaluation / live (`job_extracted` stays the total); the Dashboard
+  shows three rows and the live row's pending count reads "automatic".
 - Tests: `tests/test_review_queue_scope.py`, `frontend/tests/reviewStatus.test.ts`.
 
 Live-job extraction labelling sample (2026-11-21):
