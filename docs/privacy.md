@@ -1,61 +1,76 @@
-# Privacy Decisions
+# Privacy and data protection
 
-The application is decision support only and must not be used as an automatic hiring decision system.
+SkillGap processes CVs, which contain personal data. This document lists the
+measures taken with the General Data Protection Regulation (GDPR) in mind. It
+describes the software; an organisation running it remains the controller and
+is responsible for its own privacy notice, records and legal review.
 
-## Controls in place
+## Purpose and legal basis
 
-- Secure password hashing. Refresh tokens are stored only as hashes.
-- Role-aware dependencies protect administrative routes.
-- Candidate-facing copy states that unrelated personal attributes must not affect matching. Matching uses
-  approved skills only; age, gender, religion, nationality, marital status and photographs are not inputs.
-- Explicit consent is required before a pasted or uploaded CV is processed.
-- Uploaded files are parsed into text and are not written to persistent file storage.
-- Candidates can delete their own account and all data derived from it, confirmed with their password (D047).
-- Job rankings and skill coverage are visible only to the candidate they belong to; administrators and
-  researchers see aggregate counts only, with no per-candidate ranking view (D037).
+- **Purpose.** Career guidance for the candidate: which jobs fit their skills
+  and which skills they lack. Results are not shared with employers and are
+  not used to select or reject anyone (no automated decision with legal or
+  similar effect, Art. 22).
+- **Consent.** A CV is processed only after the candidate ticks the consent
+  box at upload or paste. Consent can be withdrawn at any time by deleting the
+  CV or the account.
 
-## Work entries (relevant experience, D060)
+## Data minimisation
 
-Candidates can enter their work history on the CVs page: a job title, a start month, an end month or
-"present", and optionally an ESCO occupation they choose. No employer, location or other detail is asked
-for or stored. Dates found in a CV are only offered to pre-fill the form; nothing is saved until the
-candidate adds the entry. An entry added from a CV remembers which CV it came from, so it can be
-removed with that CV. Entries are visible to the candidate only and can be edited or deleted at any
-time. Staff accounts cannot read or use them.
+| Data | Stored | Not stored |
+| --- | --- | --- |
+| Account | Name, e-mail address, password as a bcrypt hash | — |
+| CV | Extracted text, sections, found skills with the sentence they came from | The uploaded file itself (read in memory only) |
+| Skills | Found and hand-added skills, the candidate's review decisions, ESCO links | — |
+| Work experience (optional) | Job title, start and end month, chosen ESCO occupation | Employer, location, description, references |
+| Settings | The Jobs page experience filter | — |
+| Matching | One embedding vector of the confirmed skills | Rankings and explanations (computed when viewed, never stored) |
 
-## Deleting a CV
+**Not used for matching:** age, gender, religion, nationality, marital status,
+photographs or any other personal characteristic. Only confirmed skills feed
+the ranking. Years of experience never affect the ranking, because they
+correlate with age; they are only shown next to a job and, if the candidate
+chooses, used to hide jobs above their experience.
 
-A candidate can delete any of their CVs on the CVs page, after a confirmation. This removes the CV text and
-its sections, the skills extracted from it with their review decisions, and their taxonomy link suggestions
-and selected links. Skills the candidate added by hand belong to the profile and stay until the candidate
-removes them in skill review. Work entries the candidate added from this CV's dates are removed too,
-unless the candidate unticks "Also remove N work entries taken from this CV" (ticked by default); kept
-entries lose the link to the deleted CV. Work entries typed in by hand always stay until the candidate
-deletes them. The matching profile is rebuilt from the remaining CVs and manual skills
-(D041, D046). Taxonomy review events for that CV's skills are retained; they hold concept labels and
-reviewer IDs, not CV text.
+## Access and confidentiality
 
-## Deleting the account
+- Each candidate sees only their own CVs, skills, work entries and results.
+- Rankings and explanations can only be requested by the candidate they
+  belong to; administrator and researcher accounts cannot request them.
+- The administrator overview shows totals only, never one person's data.
+- Staff who review taxonomy links may see single skill terms found in CVs,
+  without the candidate's name or the CV text.
+- Passwords are hashed with bcrypt; refresh tokens are stored only as hashes,
+  expire after 7 days and are revoked on sign-out; access tokens expire after
+  30 minutes.
+- The embedding model runs locally; CV content is never sent to an external
+  service. Taxonomies are local copies; no external lookups happen during
+  matching.
 
-A candidate can delete their account on the Dashboard ("Delete my account and data"), confirmed with their
-password (`POST /auth/delete-account`, D047). This deletes:
+## Rights of the candidate
 
-- the account, its role assignments and refresh tokens;
-- the candidate profile and all CVs, CV sections and extracted terms;
-- all candidate skills, extracted and manual, with their review decisions;
-- all work entries and Jobs page preferences (D060);
-- taxonomy link suggestions, selected links and taxonomy review events for the candidate's skills;
-- the profile embedding;
-- processing logs that refer to the profile or its CVs.
+| Right | How it is supported |
+| --- | --- |
+| Access (Art. 15) | All stored CV text, sections, skills, work entries and links are visible on My profile |
+| Rectification (Art. 16) | Skills, ESCO links and work entries can be corrected or removed at any time |
+| Erasure (Art. 17) | Deleting a CV removes its text, sections, found skills, review decisions and links, and by default the work entries taken from it. Deleting the account (password confirmation) removes the account, all CVs, skills, work entries, settings, the embedding, review events for the candidate's skills and processing logs about them, in one transaction |
+| Withdraw consent (Art. 7) | Delete the CV or the account |
+| Data portability (Art. 20) | **Not implemented**: there is no export of a candidate's data |
 
-Nothing that identifies the account is kept. Data outside the candidate's own records is unchanged (jobs,
-taxonomy releases, other candidates). Database backups made before the deletion still contain the data
-until they are rotated; there is no automatic backup expiry in this project.
+Backups made before a deletion still contain the data until they are
+replaced; backup rotation is the operator's responsibility.
 
-Administrator and researcher accounts cannot be deleted this way: their review decisions are attributed to
-them and they are removed by an administrator.
+## Job postings
 
-## Not yet in place
+Live jobs are taken only from public job APIs. Before a posting is stored,
+e-mail addresses, phone numbers and contact names after a contact cue
+("Recruiter:", "reach out to", ...) are removed. Each job keeps a link to the
+original posting.
 
-- Retention periods and automatic expiry of inactive accounts.
-- An export of a candidate's own data.
+## Not in place
+
+- Data export for candidates.
+- Retention periods and automatic deletion of inactive accounts.
+- Automatic backup expiry.
+- A data protection impact assessment, which an operator should carry out
+  before using the system with real candidates.

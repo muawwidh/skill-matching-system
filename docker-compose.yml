@@ -60,7 +60,7 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # Optional daily live job import (D055): docker compose --profile scheduler up -d job-import
+  # Optional scheduled live job import: docker compose --profile scheduler up -d job-import
   job-import:
     image: skillgap-backend:local
     profiles: ["scheduler"]

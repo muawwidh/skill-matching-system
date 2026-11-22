@@ -1,252 +1,255 @@
-# Skill Gap Job Matching System
+# SkillGap – Skill Gap Job Matching
 
-A modular full-stack research application for explainable skill gap analysis and job recommendations.
-The system is designed for career guidance and decision support, not automated hiring decisions.
+SkillGap is a career guidance tool. A candidate adds a CV, confirms the skills
+found in it, and sees the jobs that fit their skills best, with the skills they
+already have and the skills they would still need for each job.
 
-This repository implements Phases 1 through 4 and an in-progress Phase 5 retrieval
-system, together with an early exact-skill matching baseline that will be expanded during Phase 6.
+Skills and occupations follow the European ESCO classification (with O*NET as
+a second, optional taxonomy). Jobs are ranked by dense retrieval with a local
+embedding model; each job is then explained by its skill coverage. There is no
+match percentage, and nothing in the system selects or rejects candidates.
 
-Phase 1 includes foundation, Docker setup, PostgreSQL setup, backend app shell, frontend app shell,
-configuration management, authentication, role-based access, database connection, Alembic migration,
-and setup documentation.
+> Career guidance only — not a hiring decision. A candidate's results are
+> visible only to that candidate.
 
-Phase 2 adds CV upload, CV paste input, job creation, PDF/DOCX/TXT parsing, MIME and size validation,
-text cleaning, section extraction, and processing logs.
+![Dashboard](docs/images/dashboard.png)
+<!-- Screenshot placeholder: dashboard -->
 
-Phase 3 adds dictionary and regex-based extraction for skills, tools, technologies, qualifications,
-occupations, and experience indicators. The extractor includes an optional spaCy PhraseMatcher path
-when spaCy is installed, while the default Docker build stays lightweight and reproducible.
+## Features
 
-The early matching baseline compares reviewed candidate and job skills, stores match results, and
-shows required and preferred skill gaps. Taxonomy-aware, semantic, weighted matching remains part of
-the later taxonomy, dense retrieval, and matching phases.
+**For candidates**
 
-Phase 4 adds versioned local ESCO and O*NET storage, pinned native ZIP import endpoints, O*NET-SOC
-occupations, ESCO-O*NET mappings, taxonomy search, exact and fuzzy term linking, confidence-based
-automatic approval, and an administrator mapping-review interface.
-Native contracts are ESCO 1.2.1 English CSV, O*NET 29.0 TXT and O*NET 31.0 CSV packages.
-See docs/onet-31-contract.md for the exact 31.0 scope and verification procedure.
-Phase 4 is complete based on automated/package evidence and user-reported deployed
-workflow acceptance (2026-10-02); see `docs/PROJECT_STATE.md`. Phase 5 is in progress.
+- Add CVs by upload (readable PDF, DOCX, TXT) or by pasting text, after giving consent.
+- Review the skills found in each CV: confirm, reject, correct, or add skills by hand.
+  Only confirmed skills are used.
+- Check which ESCO concept a skill is linked to, and correct the link.
+- Jobs page: the best-matching jobs (top 100 by similarity, shown in pages of
+  10, 25 or 50). For each job: required and preferred skills you have, related
+  skills in your profile, skills to develop, and requirements the system does
+  not assess (qualifications, certificates).
+- Optional work experience (job title, months, ESCO occupation) to see years of
+  related experience next to each job, and an optional filter that hides jobs
+  above your experience.
+- Dashboard with profile setup steps, top matches and the skills that are
+  missing most often in your top 10 jobs.
+- Delete a CV, or the whole account and all its data.
 
-## Architecture
+**For administrators and researchers**
 
-Frontend -> API routes -> Services -> Repositories -> Database / NLP / Matching / Taxonomy modules.
+- Import versioned ESCO and O*NET releases; search concepts; review uncertain
+  skill-to-concept links.
+- Add jobs by hand and review the skills extracted from them.
+- Import live jobs from public job APIs (administrators).
+- System overview with totals only, never one person's results (administrators).
 
-See:
+![Jobs page](docs/images/jobs.png)
+<!-- Screenshot placeholder: Jobs page with the detail panel -->
 
-- `docs/architecture.md`
-- `docs/database-erd.md`
-- `docs/processing-flow.md`
-- `docs/privacy.md`
+![My profile](docs/images/profile.png)
+<!-- Screenshot placeholder: My profile -->
 
-## Technology Stack
+## Technology
 
-- Backend: Python, FastAPI, Pydantic, SQLAlchemy, Alembic, Uvicorn
-- Database: PostgreSQL with pgvector image support
-- Frontend: React, TypeScript, Vite, Tailwind CSS, React Query, React Hook Form
-- Document parsing: pypdf, python-docx, TXT decoding
-- NLP baseline: local dictionaries, spaCy PhraseMatcher where available, regex patterns
-- Deployment: Docker Compose and Nginx
-- Tests: pytest and FastAPI TestClient
+- Backend: Python 3.12, FastAPI, Pydantic, SQLAlchemy, Alembic
+- Database: PostgreSQL 16 with pgvector
+- Embeddings: `intfloat/multilingual-e5-small` (pinned revision), sentence-transformers, CPU only
+- Frontend: React, TypeScript, Vite, Tailwind CSS, React Query
+- Deployment: Docker Compose, Nginx
 
-## Setup
+See [docs/architecture.md](docs/architecture.md) for components and data flow.
 
-Create an environment file:
+## Setup with Docker
+
+Requirements: Docker with Compose and a few GB of free disk space (the backend
+image with PyTorch for CPU is about 1.8 GB, the model about 0.5 GB).
 
 ```bash
-cp .env.example .env
-```
-
-For a fresh installation, explicitly migrate before starting the application:
-
-```bash
+cp .env.example .env          # then set SECRET_KEY to a long random value
 docker compose up -d db
 docker compose build backend
-docker compose --profile maintenance run --rm migrate
-docker compose up -d --build backend frontend nginx
+docker compose --profile maintenance run --rm migrate    # create the database schema
 ```
 
-For an existing database, create and verify a backup before the explicit migration.
-Inspect the release notes and current revision first; do not run the upgrade against
-an existing database merely to start the backend. The `migrate` service is excluded
-from ordinary `docker compose up` and is never a backend dependency.
+### 1. Provision the embedding model
 
-Open:
-
-- Frontend: `http://localhost:5173`
-- Nginx proxy: `http://localhost:8080`
-- FastAPI docs: `http://localhost:8000/docs`
-
-## Database Migrations
-
-The backend checks Alembic revision sets before Uvicorn starts. A database that is
-uninitialized, behind, ahead, divergent or unreachable prevents startup; the check
-does not change schema or data. To apply migrations deliberately with the same
-backend image and configuration:
-
-```bash
-docker compose up -d db
-docker compose build backend
-docker compose --profile maintenance run --rm migrate
-docker compose up -d backend frontend nginx
-docker compose exec backend python -m app.utils.check_migrations
-curl http://localhost:8000/health
-```
-
-The `migrate` service uses the backend image. Build it first so the explicit
-upgrade runs the migrations from the current repository, not an absent or older image.
-
-For backend development outside Compose, run `python -m app.utils.check_migrations`
-before Uvicorn. If an upgrade is intended, use `cd backend && alembic upgrade head`
-as a separate operator action after backing up existing data.
-
-## Local Backend Development
+The model is downloaded once into `models/` (not part of the repository) and
+is mounted read-only into the containers. Nothing is downloaded at runtime.
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements/dev.txt
-python -m app.utils.check_migrations
-uvicorn app.main:app --reload
+python3.12 -m venv .venv && .venv/bin/pip install -r requirements/base.txt
+.venv/bin/python -m app.retrieval.cli provision-model --path ../models/multilingual-e5-small-fd1525a
+cd ..
 ```
 
-## Local Frontend Development
+### 2. Start the application
+
+```bash
+docker compose up -d --build backend frontend nginx
+docker compose exec backend python -m app.retrieval.cli smoke-model   # optional model check
+```
+
+- Application: http://localhost:5173
+- Through Nginx: http://localhost:8080
+- API documentation: http://localhost:8000/docs
+
+The backend checks at startup that the database schema matches the code and
+refuses to start otherwise. Migrations are never run automatically: after
+updating the code, back up the database and run the `migrate` command above
+again.
+
+### 3. Create a staff account
+
+Register in the application, then give the account a role and sign in again:
+
+```bash
+docker compose exec backend python -m app.utils.manage_role you@example.com admin        # or researcher
+```
+
+### 4. Import the taxonomies
+
+On the **Taxonomy** page (staff), upload the official release ZIP files with
+their exact version:
+
+- ESCO 1.2.1, classification, English, CSV (required)
+- O*NET 29.0 TXT or O*NET 31.0 CSV (optional)
+- ESCO–O*NET occupation mappings (optional)
+
+The same imports are available as API endpoints (`POST /taxonomy/import/esco`,
+`/onet`, `/mappings`). "Load development sample" loads a tiny sample release
+for local testing only; it is not an official release.
+
+### 5. Embed the ESCO occupation labels
+
+Needed once per ESCO release, for the occupation suggestions in the work
+experience form (about one minute on a laptop):
+
+```bash
+docker compose exec backend python -m app.retrieval.cli embed-occupation-labels
+```
+
+### 6. Import live jobs
+
+Live jobs come from the public Arbeitnow API and the public Greenhouse job
+boards listed in `GREENHOUSE_BOARDS`. Only English postings located in Europe
+or remote are kept; contact details are removed before storage.
+
+```bash
+docker compose exec backend python -m app.job_sources.cli verify-sources     # check the Greenhouse boards
+docker compose exec backend python -m app.job_sources.cli import-live-jobs   # fetch, process and embed
+docker compose --profile scheduler up -d job-import                          # optional: repeat every 24 h
+```
+
+Administrators can also start an import with **Run import** on the Jobs page.
+A first import of about 1,000 jobs takes a while (extraction, taxonomy linking
+and embedding run for every job).
+
+After each change, profiles and jobs are re-embedded automatically. For bulk
+re-indexing (up to 1,000 per run; unchanged items are skipped):
+
+```bash
+docker compose exec backend python -m app.retrieval.cli index jobs --limit 1000
+docker compose exec backend python -m app.retrieval.cli index profiles --limit 1000
+```
+
+To continue after 1,000 items, run the command again with `--after <next_after>`,
+using the `next_after` value it printed.
+
+## Demo account
+
+The development database used for the screenshots has a synthetic candidate,
+`demo.candidate@example.com` ("Alex Demo"), with a made-up CV and three work
+entries. It contains no real personal data. The password is not published.
+A fresh installation has no demo account: register a candidate account instead.
+
+## Running the tests
+
+Supported Python version: **3.12** (the version in the backend image). The
+pinned PyTorch build is not available for newer Python versions; without it,
+the tests that need the real model are skipped.
+
+Backend tests (SQLite, no model needed):
+
+```bash
+cd backend
+python3.12 -m venv .venv && .venv/bin/pip install -r requirements/dev.txt
+.venv/bin/python -m pytest -q
+```
+
+PostgreSQL tests use a separate, throw-away database that must be named
+`skillgap_verify`:
+
+```bash
+docker run -d --rm --name skillgap-test-pg -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test \
+  -e POSTGRES_DB=skillgap_verify -p 55432:5432 pgvector/pgvector:pg16
+TEST_DATABASE_URL=postgresql+psycopg://test:test@localhost:55432/skillgap_verify \
+  .venv/bin/python -m pytest -q tests/test_retrieval_postgres.py tests/test_cv_lifecycle_postgres.py \
+  tests/test_migration_check.py tests/test_taxonomy_postgres.py
+docker stop skillgap-test-pg
+```
+
+Tests with the real embedding model run in Docker, with the provisioned model:
+
+```bash
+docker compose run --rm --no-deps \
+  -v "$PWD/backend/tests:/app/tests:ro" -v "$PWD/backend/pytest.ini:/app/pytest.ini:ro" \
+  -v "$PWD/backend/requirements:/app/requirements:ro" \
+  -e REAL_MODEL_PATH=/models/multilingual-e5-small-fd1525a \
+  backend sh -c "pip install -q -r requirements/dev.txt && python -m pytest -q tests/test_retrieval_real_model.py tests/test_representation_v2.py"
+```
+
+One of these also needs `TEST_DATABASE_URL` and is skipped without it.
+
+Frontend tests and production build:
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npm test
+npm run build
 ```
 
-## Tests
+## Environment variables
 
-```bash
-cd backend
-pip install -r requirements/dev.txt
-pytest
-```
+Set in `.env` (see `.env.example`); defaults are in `backend/app/core/config.py`.
 
-## Taxonomy Administration
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `SECRET_KEY` | — | Signing key for login tokens. Set a long random value. |
+| `DATABASE_URL` | `postgresql+psycopg://skillgap:skillgap@db:5432/skillgap` | Database connection |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | `skillgap` | Database container credentials |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | 30 | Access token lifetime |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | 7 | Refresh token lifetime |
+| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:8080` | Allowed frontend origins |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | API address used by the frontend |
+| `RECOMMENDATION_TOP_N` | 100 | Jobs retrieved for the Jobs page |
+| `AUTO_REINDEX` | true | Re-embed profiles and jobs after each change |
+| `WARM_JOB_CACHE_ON_STARTUP` | true | Prepare job data in the background at startup |
+| `LIVE_JOB_SOURCES` | `arbeitnow,greenhouse` | Live job sources |
+| `GREENHOUSE_BOARDS` | 20 company boards | Greenhouse board names |
+| `ARBEITNOW_MAX_PAGES` | 10 | Pages fetched from Arbeitnow per import |
+| `LIVE_JOBS_MAX_ACTIVE` | 1500 | Maximum active live jobs |
+| `LIVE_JOBS_MAX_SOURCE_SHARE` | 0.7 | Maximum share of that limit per source (1.0 = no limit) |
+| `LIVE_JOBS_ARCHIVE_AFTER_DAYS` | 14 | Archive live jobs not seen for this many days |
+| `LIVE_JOBS_ENGLISH_ONLY` | true | Keep English postings only |
+| `LIVE_JOBS_EUROPE_OR_REMOTE_ONLY` | true | Keep postings in Europe or remote only |
+| `LIVE_JOB_IMPORT_INTERVAL_SECONDS` | 86400 | Interval of the optional scheduled import |
+| `CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS` | false | Show the fixed evaluation jobs to candidates |
+| `JOB_EXTRACTION_ESCO_VOCABULARY` | true | Use ESCO skill labels when extracting job skills |
 
-Grant an existing account the researcher or administrator role:
+## Documentation
 
-```bash
-docker compose exec backend python -m app.utils.manage_role you@example.com researcher
-```
+- [Architecture](docs/architecture.md)
+- [Design decisions](docs/design-decisions.md)
+- [Evaluation](docs/evaluation.md)
+- [Privacy](docs/privacy.md)
+- [User guide](docs/user-guide.md)
 
-Sign in again after changing the role, then open `http://localhost:5173/taxonomy`.
-Upload an ESCO 1.2.1 English CSV ZIP, O*NET 29.0 TXT ZIP or O*NET 31.0 CSV ZIP with the exact version
-value. Required files/headers, limits and replacement effects are documented in
-`docs/taxonomy-integration.md`; full-package evidence is in `docs/phase4-verification.md`.
-Flattened JSON/CSV/TSV/TXT files remain a separate development/interchange format,
-not general official-release support. Bundled samples are development/testing data.
+## Limitations
 
-## Live Jobs
-
-Live jobs come from public job APIs only: the Arbeitnow job board API and the Greenhouse job
-board API for the companies in `GREENHOUSE_BOARDS` (docs/DECISIONS.md D053, D055).
-
-```bash
-# Check that each configured Greenhouse board token still returns jobs
-docker compose exec backend python -m app.job_sources.cli verify-sources
-# Import: fetch, keep English postings in Europe or remote, strip contact details,
-# dedupe, run extraction/linking/embedding, archive postings not seen for N days
-docker compose exec backend python -m app.job_sources.cli import-live-jobs
-# Optional: run the import daily
-docker compose --profile scheduler up -d job-import
-# Tag the fixed evaluation set (reads only job IDs from the private mapping)
-docker compose exec backend python -m app.job_sources.cli mark-evaluation-jobs --mapping <mapping.json>
-```
-
-Administrators can also start an import with "Run import" on the Jobs page.
-
-Labelling the extraction on live jobs (read-only on the database; run from
-`backend/` with `DATABASE_URL` pointing at the database, output under the
-git-ignored `evaluation/local/`):
-
-```bash
-# Seeded random sample of 20 active live jobs -> labels.csv, postings.md, manifest.json
-python -m app.job_sources.cli sample-extraction --out ../evaluation/local/live-extraction-sample-<date> --size 20 --seed 20261121
-# After filling `label` (correct/incorrect) and `missed_required_skills` (';'-separated, or 'none')
-python -m app.job_sources.cli score-extraction --labels ../evaluation/local/live-extraction-sample-<date>/labels.csv
-```
-
-## Environment Variables
-
-Key variables are documented in `.env.example`.
-
-- `DATABASE_URL`: SQLAlchemy connection string.
-- `SECRET_KEY`: JWT signing secret. Replace before production.
-- `CORS_ORIGINS`: comma-separated allowed frontend origins.
-- `ACCESS_TOKEN_EXPIRE_MINUTES`: access-token lifetime.
-- `REFRESH_TOKEN_EXPIRE_DAYS`: refresh-token lifetime.
-
-## API Documentation
-
-FastAPI exposes OpenAPI documentation at `/docs`.
-
-Implemented Phase 1 endpoints:
-
-- `GET /health`
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `POST /auth/logout`
-- `GET /auth/me`
-
-Implemented Phase 2 endpoints:
-
-- `GET /candidates/me`
-- `PUT /candidates/me`
-- `POST /cvs/upload`
-- `POST /cvs/paste`
-- `GET /cvs`
-- `GET /cvs/{document_id}`
-- `DELETE /cvs/{document_id}`
-- `POST /cvs/{document_id}/process`
-- `GET /cvs/{document_id}/sections`
-- `GET /cvs/{document_id}/extracted-skills`
-- `PUT /cvs/{document_id}/extracted-skills`
-- `POST /jobs`
-- `POST /jobs/import`
-- `GET /jobs`
-- `GET /jobs/{job_id}`
-- `PUT /jobs/{job_id}`
-- `DELETE /jobs/{job_id}`
-- `POST /jobs/{job_id}/process`
-- `POST /jobs/{job_id}/archive`
-- `GET /jobs/{job_id}/sections`
-- `GET /jobs/{job_id}/extracted-skills`
-- `PUT /jobs/{job_id}/extracted-skills/{skill_id}`
-- `GET /admin/logs`
-- `GET /admin/mappings/review`
-- `GET /taxonomy/search`
-- `GET /taxonomy/concepts/{concept_id}`
-- `GET /taxonomy/occupations/{occupation_id}`
-- `GET /taxonomy/versions`
-- `GET /taxonomy/mappings`
-- `POST /taxonomy/import/esco`
-- `POST /taxonomy/import/onet`
-- `POST /taxonomy/import/mappings`
-- `POST /taxonomy/import/sample`
-- `POST /taxonomy/link`
-- `PUT /taxonomy/link/{candidate_id}/approve`
-- `GET /matches/recommendations`
-- `POST /matches/recommendations/refresh`
-- `POST /matches/jobs/{job_id}`
-
-## Known Limitations
-
-Phases 1 through 4 are implemented. An early exact-skill matching baseline is also available. Dense
-retrieval, complete weighted matching, evaluation, and candidate data deletion are prepared as clean
-module boundaries and should be implemented in later phases.
-
-## Future Improvements
-
-1. Phase 5: embeddings and vector retrieval.
-2. Phase 6: weighted matching and skill gap explanations.
-3. Phase 7: recommendation experience.
-4. Phase 8: evaluation metrics and export.
-5. Phase 9: privacy controls, retention, audit logs, and production deployment hardening.
+- Scanned PDFs are not supported (no OCR).
+- CV skill extraction uses a small curated dictionary; job extraction also uses
+  ESCO skill labels. Candidates may need to add skills by hand.
+- The retrieval evaluation is small (8 candidate profiles, 30 jobs, one rater).
+- There is no export of a candidate's own data, and no automatic expiry of
+  inactive accounts.
