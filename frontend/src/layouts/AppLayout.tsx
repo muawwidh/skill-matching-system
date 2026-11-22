@@ -1,67 +1,138 @@
-import { ClipboardList, Database, FileUp, LogOut, ScrollText, ShieldCheck } from "lucide-react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { ChevronDown, Info, LogOut, Shield } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../features/auth/AuthProvider";
+import { initials } from "../utils/coverage";
 
-export function AppLayout() {
+/** Logo mark: three rising bars (skills growing), drawn inline. */
+export function LogoMark() {
+  return (
+    <span className="grid h-9 w-9 place-items-center rounded-xl bg-teal" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="11" width="4" height="7" rx="1" fill="#FFFFFF" opacity="0.6" />
+        <rect x="8" y="7" width="4" height="11" rx="1" fill="#FFFFFF" opacity="0.8" />
+        <rect x="14" y="2" width="4" height="16" rx="1" fill="#FFFFFF" />
+      </svg>
+    </span>
+  );
+}
+
+export function Wordmark() {
+  return (
+    <span className="flex items-center gap-2.5">
+      <LogoMark />
+      <span className="font-display text-xl font-bold tracking-tight text-ink">SkillGap</span>
+    </span>
+  );
+}
+
+const navClass = ({ isActive }: { isActive: boolean }) =>
+  `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive ? "bg-teal-soft text-teal-text" : "text-muted hover:bg-mist hover:text-ink"}`;
+
+function AccountMenu() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
-  const isTaxonomyAdmin = user?.roles.some((role) => role.name === "admin" || role.name === "researcher");
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (event: MouseEvent) => {
+      if (root.current && !root.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        button.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   function handleSignOut() {
     signOut();
     navigate("/login");
   }
 
+  const item = "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-ink hover:bg-mist";
+  return (
+    <div className="relative" ref={root}>
+      <button
+        ref={button}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-label="Account menu"
+        className="flex items-center gap-1 rounded-full p-0.5 pr-2 hover:bg-mist"
+        onClick={() => setOpen((value) => !value)}
+        type="button"
+      >
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-night font-display text-sm font-semibold text-white">
+          {initials(user?.full_name, user?.email)}
+        </span>
+        <ChevronDown size={16} className="text-muted" aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="absolute right-0 z-20 mt-2 w-64 rounded-xl border border-line bg-white p-2 shadow-lg">
+          <div className="border-b border-line px-3 pb-2 pt-1">
+            <p className="truncate text-sm font-semibold text-ink">{user?.full_name}</p>
+            <p className="truncate text-xs text-muted">{user?.email}</p>
+          </div>
+          <div className="pt-2">
+            <Link className={item} onClick={() => setOpen(false)} to="/about">
+              <Info size={16} aria-hidden="true" /> About SkillGap
+            </Link>
+            <Link className={item} onClick={() => setOpen(false)} to="/privacy">
+              <Shield size={16} aria-hidden="true" /> Privacy and your data
+            </Link>
+            <button className={item} onClick={handleSignOut} type="button">
+              <LogOut size={16} aria-hidden="true" /> Sign out
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function AppLayout() {
+  const { user } = useAuth();
+  const isStaff = user?.roles.some((role) => role.name === "admin" || role.name === "researcher");
+
   return (
     <div className="min-h-screen bg-mist">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link className="flex items-center gap-3 font-semibold text-ink" to="/dashboard">
-            <span className="grid h-10 w-10 place-items-center rounded-md bg-ocean text-white">
-              <ClipboardList size={20} aria-hidden="true" />
-            </span>
-            Skill Gap Job Matching
+      <a className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2" href="#main">
+        Skip to content
+      </a>
+      <header className="border-b border-line bg-white">
+        <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-8">
+          <Link to="/dashboard" aria-label="SkillGap dashboard">
+            <Wordmark />
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link className="flex items-center gap-1 text-slate-600 hover:text-ink" to="/cvs">
-              <FileUp size={16} aria-hidden="true" />
-              CVs
-            </Link>
-            <Link className="flex items-center gap-1 text-slate-600 hover:text-ink" to="/jobs">
-              <ScrollText size={16} aria-hidden="true" />
-              Jobs
-            </Link>
-            {isTaxonomyAdmin ? (
-              <Link className="flex items-center gap-1 text-slate-600 hover:text-ink" to="/taxonomy">
-                <Database size={16} aria-hidden="true" />
-                Taxonomy
-              </Link>
-            ) : null}
-            <Link className="text-slate-600 hover:text-ink" to="/about">
-              About
-            </Link>
-            <Link className="text-slate-600 hover:text-ink" to="/privacy">
-              Privacy
-            </Link>
-            <button
-              aria-label="Sign out"
-              className="grid h-10 w-10 place-items-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-100"
-              onClick={handleSignOut}
-              type="button"
-            >
-              <LogOut size={18} aria-hidden="true" />
-            </button>
+          <nav aria-label="Main" className="order-3 flex w-full flex-wrap gap-1 md:order-none md:w-auto">
+            <NavLink className={navClass} to="/dashboard">Dashboard</NavLink>
+            <NavLink className={navClass} to="/jobs">Jobs</NavLink>
+            <NavLink className={navClass} to="/profile">My profile</NavLink>
+            <NavLink className={navClass} to="/privacy">Privacy</NavLink>
+            {isStaff ? <NavLink className={navClass} to="/taxonomy">Taxonomy</NavLink> : null}
           </nav>
+          <AccountMenu />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6 flex items-center gap-2 text-sm text-slate-600">
-          <ShieldCheck size={18} className="text-ocean" aria-hidden="true" />
-          Decision support only. Matching excludes unrelated personal attributes.
-        </div>
+      <main id="main" className="mx-auto max-w-content px-4 py-8 sm:px-8">
         <Outlet context={{ user }} />
       </main>
+      <footer className="mx-auto max-w-content px-4 pb-10 sm:px-8">
+        <p className="border-t border-line pt-5 text-sm text-muted">
+          Career guidance only — not a hiring decision. Your results are visible only to you.
+        </p>
+      </footer>
     </div>
   );
 }
