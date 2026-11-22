@@ -124,6 +124,19 @@ export function setHideBelowExperience(accessToken: string, value: boolean) {
   });
 }
 
+/**
+ * Add a skill by hand. Uses the CV skill review endpoint, which also lists the skills added by hand and removes
+ * any that are not sent, so the existing ones are sent along unchanged.
+ */
+export function addManualSkill(accessToken: string, cvId: string, existing: CandidateSkill[], label: string) {
+  const text = label.trim();
+  return reviewCvSkills(accessToken, cvId, [
+    ...existing,
+    { id: undefined as unknown as string, raw_text: text, normalized_text: text.toLowerCase(), skill_type: "skill",
+      evidence_sentence: "", review_status: "approved", confidence_score: 1, source: "manual_review" },
+  ]);
+}
+
 export function getSkillGaps(accessToken: string) {
   return apiRequest<SkillGaps>("/matches/skill-gaps", { accessToken });
 }

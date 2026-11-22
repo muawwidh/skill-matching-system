@@ -30,40 +30,40 @@ export function DeleteAccountPanel({ accessToken }: { accessToken: string }) {
   }
 
   return (
-    <section className="rounded-lg border border-red-200 bg-white p-5" aria-labelledby="delete-account-heading">
-      <h2 id="delete-account-heading" className="text-lg font-semibold text-ink">Delete my account and data</h2>
-      <p className="mt-2 text-sm text-slate-600">
+    <section className="rounded-xl border border-miss-text/25 p-4" aria-labelledby="delete-account-heading">
+      <h3 id="delete-account-heading" className="font-semibold text-ink">Delete my account and data</h3>
+      <p className="mt-1 text-sm text-muted">
         This permanently deletes your account, all of your CVs, the skills found in them and the skills you added, your
         decisions on those skills, your work entries, your Jobs page settings and the profile used to find jobs for you.
         It cannot be undone.
       </p>
       {!open ? (
-        <button className="mt-3 inline-flex items-center gap-2 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700" onClick={() => setOpen(true)} type="button">
+        <button className="btn-danger mt-3" onClick={() => setOpen(true)} type="button">
           <Trash2 size={16} aria-hidden="true" />
           Delete my account and data
         </button>
       ) : (
         <form className="mt-3 space-y-3" onSubmit={submit}>
-          <label className="block text-sm text-slate-700">
+          <label className="block text-sm text-ink">
             Confirm with your password
             <input
               autoComplete="current-password"
-              className="mt-1 block w-full max-w-sm rounded-md border border-slate-300 px-3 py-2"
+              className="field mt-1 block w-full max-w-sm"
               onChange={(event) => setPassword(event.target.value)}
               type="password"
               value={password}
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-ink">
             <input checked={understood} onChange={(event) => setUnderstood(event.target.checked)} type="checkbox" />
             I understand that my account and data are deleted permanently.
           </label>
-          {mutation.error ? <p role="alert" className="text-sm text-red-700">{mutation.error.message}</p> : null}
+          {mutation.error ? <p role="alert" className="text-sm text-miss-text">{mutation.error.message}</p> : null}
           <div className="flex gap-2">
-            <button className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50" disabled={!password || !understood || mutation.isPending} type="submit">
+            <button className="btn bg-miss-text text-white hover:opacity-90" disabled={!password || !understood || mutation.isPending} type="submit">
               {mutation.isPending ? "Deleting..." : "Delete permanently"}
             </button>
-            <button className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700" onClick={() => { setOpen(false); setPassword(""); setUnderstood(false); }} type="button">
+            <button className="btn-secondary" onClick={() => { setOpen(false); setPassword(""); setUnderstood(false); }} type="button">
               Cancel
             </button>
           </div>

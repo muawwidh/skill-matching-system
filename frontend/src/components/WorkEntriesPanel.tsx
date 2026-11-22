@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BriefcaseBusiness, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 import { createWorkEntry, deleteWorkEntry, listDetectedWorkEntries, listWorkEntries, updateWorkEntry } from "../api/experience";
 import type { DetectedWorkEntry, WorkEntry, WorkEntryPayload } from "../types/experience";
+import { Chip } from "../ui/Chip";
+import { LoadingBlock } from "../ui/Feedback";
 import { OccupationPicker, type OccupationChoice } from "./OccupationPicker";
 
 type Draft = WorkEntryPayload & {
@@ -40,7 +42,7 @@ const durationLabel = (months: number) => {
  * Self-entered work history for "relevant experience" (D060). Candidate accounts only.
  * No employer is asked for or stored. Entries detected in a CV only pre-fill the form.
  */
-export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
+export function WorkEntriesPanel({ accessToken, cvNames = {} }: { accessToken: string; cvNames?: Record<string, string> }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [missingOccupation, setMissingOccupation] = useState(false);
@@ -103,35 +105,34 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
     save.mutate(draft);
   }
 
-  const field = "rounded-md border border-slate-300 px-3 py-2 text-sm";
+  const field = "field";
+  const sorted = [...(entries.data ?? [])].sort((a, b) => b.start_month.localeCompare(a.start_month));
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5" aria-labelledby="work-entries-heading">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <BriefcaseBusiness size={20} className="text-ocean" aria-hidden="true" />
-          <h2 id="work-entries-heading" className="text-xl font-semibold text-ink">Work experience</h2>
-        </div>
+    <section className="card scroll-mt-4" id="experience" aria-labelledby="work-entries-heading">
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="work-entries-heading" className="text-lg font-semibold text-ink">Work experience</h2>
         {!draft ? (
-          <button className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm" onClick={() => { setMissingOccupation(false); setDraft(emptyDraft); }} type="button">
-            <Plus size={16} aria-hidden="true" /> Add entry
+          <button className="btn-secondary" onClick={() => { setMissingOccupation(false); setDraft(emptyDraft); }} type="button">
+            <Plus size={16} aria-hidden="true" /> Add experience
           </button>
         ) : null}
       </div>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="text-sm text-muted">
         Job title and dates only (no employer). Used to show your years of related experience for each job. It never changes
         the ranking; you can optionally hide jobs above your experience.
       </p>
 
       {draft ? (
-        <form className="mt-4 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3" onSubmit={submit}>
+        <form className="mt-4 space-y-3 rounded-xl border border-line bg-mist p-4" onSubmit={submit}>
           {draft.titleChoices && draft.titleChoices.length > 0 ? (
             <fieldset className="text-sm">
-              <legend className="text-slate-700">Which of these is your job title?</legend>
+              <legend className="text-ink">Which of these is your job title?</legend>
               <div className="mt-1 flex flex-wrap gap-2">
                 {draft.titleChoices.map((choice) => (
                   <button
                     key={choice}
-                    className={`rounded-md border px-2 py-1 ${draft.title === choice ? "border-ocean bg-ocean/10" : "border-slate-300"}`}
+                    aria-pressed={draft.title === choice}
+                    className={`rounded-full border px-3 py-1 ${draft.title === choice ? "border-teal bg-teal-soft text-teal-text" : "border-line bg-white"}`}
                     onClick={() => setDraft({ ...draft, title: choice })}
                     type="button"
                   >
@@ -139,28 +140,28 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
                   </button>
                 ))}
               </div>
-              <p className="mt-1 text-xs text-slate-500">Or type it below if none of these is right.</p>
+              <p className="mt-1 text-xs text-muted">Or type it below if none of these is right.</p>
             </fieldset>
           ) : null}
           <label className="block text-sm">
-            <span className="text-slate-700">Job title</span>
+            <span className="text-ink">Job title</span>
             <input className={`mt-1 w-full ${field}`} maxLength={255} required value={draft.title}
               onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
           </label>
           <div className="flex flex-wrap items-end gap-3">
             <label className="text-sm">
-              <span className="block text-slate-700">Start month</span>
+              <span className="block text-ink">Start month</span>
               <input className={`mt-1 ${field}`} required type="month" value={draft.start_month}
                 onChange={(event) => setDraft({ ...draft, start_month: event.target.value })} />
             </label>
             <label className="text-sm">
-              <span className="block text-slate-700">End month</span>
+              <span className="block text-ink">End month</span>
               <input className={`mt-1 ${field}`} disabled={draft.present} required={!draft.present} type="month"
                 value={draft.present ? "" : draft.end_month ?? ""}
                 onChange={(event) => setDraft({ ...draft, end_month: event.target.value || null })} />
             </label>
-            <label className="flex items-center gap-2 pb-2 text-sm text-slate-700">
-              <input checked={draft.present} type="checkbox" onChange={(event) => setDraft({ ...draft, present: event.target.checked })} />
+            <label className="flex items-center gap-2 pb-2 text-sm text-ink">
+              <input checked={draft.present} className="accent-teal" type="checkbox" onChange={(event) => setDraft({ ...draft, present: event.target.checked })} />
               Present
             </label>
           </div>
@@ -174,58 +175,75 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
               setDraft((current) => current && { ...current, occupation, occupationPreselected: preselected,
                 occupation_concept_id: occupation?.concept_id ?? null })}
           />
-          {save.error ? <p role="alert" className="text-sm text-red-700">{save.error.message}</p> : null}
+          {save.error ? <p role="alert" className="text-sm text-miss-text">{save.error.message}</p> : null}
           <div className="flex gap-2">
-            <button className="rounded-md bg-ocean px-3 py-1.5 text-sm font-medium text-white" disabled={save.isPending} type="submit">
+            <button className="btn-primary" disabled={save.isPending} type="submit">
               {draft.id ? "Save changes" : "Add entry"}
             </button>
-            <button className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm" onClick={() => setDraft(null)} type="button">
+            <button className="btn-secondary" onClick={() => setDraft(null)} type="button">
               <X size={14} aria-hidden="true" /> Cancel
             </button>
           </div>
         </form>
       ) : null}
 
-      <ul className="mt-4 divide-y divide-slate-100">
-        {entries.data?.map((entry) => (
-          <li key={entry.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
-            <div>
-              <p className="font-medium text-ink">{entry.title}</p>
-              <p className="text-sm text-slate-600">
-                {monthLabel(entry.start_month)} – {monthLabel(entry.end_month)} · {durationLabel(entry.months)}
-              </p>
-              <p className="text-xs text-slate-500">
-                {entry.occupation
-                  ? `ESCO occupation: ${entry.occupation.label}${entry.occupation.isco_code ? ` (ISCO ${entry.occupation.isco_code})` : ""}`
-                  : "No occupation chosen: not used for related experience"}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button aria-label={`Edit ${entry.title}`} className="grid h-8 w-8 place-items-center rounded-md border border-slate-300" onClick={() => edit(entry)} type="button">
-                <Pencil size={14} aria-hidden="true" />
-              </button>
-              <button aria-label={`Delete ${entry.title}`} className="grid h-8 w-8 place-items-center rounded-md border border-slate-300 text-red-700"
-                disabled={remove.isPending} onClick={() => remove.mutate(entry.id)} type="button">
-                <Trash2 size={14} aria-hidden="true" />
-              </button>
-            </div>
-          </li>
-        ))}
-        {entries.data?.length === 0 ? <li className="py-3 text-sm text-slate-500">No work entries yet.</li> : null}
-      </ul>
+      {entries.isLoading ? <div className="mt-4"><LoadingBlock label="Loading work experience" /></div> : null}
+      {sorted.length ? (
+        <ol className="mt-5">
+          {sorted.map((entry, index) => {
+            const fromCv = entry.source_cv_id ? cvNames[entry.source_cv_id] : undefined;
+            return (
+              <li key={entry.id} className="relative flex gap-4 pb-5 last:pb-0">
+                {index < sorted.length - 1 ? <span aria-hidden="true" className="absolute left-[7px] top-5 h-full w-0.5 bg-line" /> : null}
+                <span aria-hidden="true" className={`relative mt-1.5 h-4 w-4 shrink-0 rounded-full border-2 ${entry.end_month === null ? "border-teal bg-teal" : "border-teal bg-white"}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-ink">{entry.title}</p>
+                      <p className="text-sm text-muted">
+                        {monthLabel(entry.start_month)} – {monthLabel(entry.end_month)} · {durationLabel(entry.months)}
+                        {fromCv ? ` · from ${fromCv}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <button aria-label={`Edit ${entry.title}`} className="btn-secondary h-8 w-8 p-0" onClick={() => edit(entry)} type="button">
+                        <Pencil size={14} aria-hidden="true" />
+                      </button>
+                      <button aria-label={`Delete ${entry.title}`} className="btn-danger h-8 w-8 p-0"
+                        disabled={remove.isPending} onClick={() => remove.mutate(entry.id)} type="button">
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    {entry.occupation ? (
+                      <Chip kind="teal" title={entry.occupation.isco_unit_group || undefined}>{entry.occupation.label}</Chip>
+                    ) : (
+                      <Chip kind="neutral">No occupation: not used for related experience</Chip>
+                    )}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      ) : null}
+      {entries.data?.length === 0 && !draft ? (
+        <p className="mt-4 text-sm text-muted">No work entries yet. Add one, or use the dates found in your CV below.</p>
+      ) : null}
 
       {detected.data && detected.data.length > 0 ? (
-        <div className="mt-4 rounded-md border border-dashed border-slate-300 p-3">
-          <h3 className="text-sm font-semibold text-ink">Detected in your CV</h3>
-          <p className="text-xs text-slate-500">Dates found in your CV. Check the title and months, then add them; nothing is saved until you do.</p>
-          <ul className="mt-2 space-y-1">
+        <div className="mt-5 rounded-xl border border-dashed border-caution-line bg-caution-bg p-4">
+          <h3 className="text-sm font-semibold text-caution-text">Found in your CV</h3>
+          <p className="text-xs text-caution-text">Check the title and months, then add them; nothing is saved until you do.</p>
+          <ul className="mt-2 space-y-1.5">
             {detected.data.map((item) => (
-              <li key={`${item.start_month}-${item.end_month}`} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <li key={`${item.start_month}-${item.end_month}`} className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink">
                 <span>
                   {item.title || (item.title_choices?.length ? "Job title to choose" : "Untitled")} · {monthLabel(item.start_month)} – {monthLabel(item.end_month)}
                   {item.month_precision ? "" : " (year only: check the months)"}
                 </span>
-                <button className="rounded-md border border-slate-300 px-2 py-1 text-xs" onClick={() => useDetected(item)} type="button">
+                <button className="btn-secondary px-3 py-1 text-xs" onClick={() => useDetected(item)} type="button">
                   Use
                 </button>
               </li>
