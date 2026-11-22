@@ -14,6 +14,7 @@ from app.schemas.experience import WorkEntryWrite, date_to_month, month_to_date
 from app.taxonomy.occupations import occupation_catalog
 
 MAX_ENTRIES = 50
+SUGGESTIONS = 3  # occupation suggestions shown in the work-entry form
 
 
 def current_month(today: date | None = None) -> date:
@@ -92,7 +93,7 @@ class WorkEntryService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Work entry not found.")
         return entry
 
-    def occupation_suggestions(self, title: str, limit: int = 5) -> list[dict]:
+    def occupation_suggestions(self, title: str, limit: int = SUGGESTIONS) -> list[dict]:
         """Top ESCO occupations for a work-entry title, at most `limit`, without duplicates (D060):
 
         1. string matches with confidence >= 0.95 (the automatic-approval threshold),

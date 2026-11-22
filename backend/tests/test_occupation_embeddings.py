@@ -67,7 +67,7 @@ def test_embedding_neighbours_follow_string_suggestions_deduplicated_max_five(cl
     headers = register(client, "candidate@example.com")
 
     body = client.get(URL, params={"title": "DevOps Engineer"}, headers=headers).json()
-    assert len(body) == 5 and len({item["concept_id"] for item in body}) == 5
+    assert len(body) == 3 and len({item["concept_id"] for item in body}) == 3
     assert body[0]["method"] == "label" and body[0]["label"] == "cloud devops engineer"
     assert body[0]["confidence"] >= 0.95
     assert "embedding" in [item["method"] for item in body]
@@ -78,7 +78,7 @@ def test_embedding_neighbours_follow_string_suggestions_deduplicated_max_five(cl
     assert only_meaning[0]["method"] == "embedding"
     assert only_meaning[0]["concept_id"] == str(occupations["software developer"].id)
     assert embedder.calls[-1] == "query: code writer"  # cleaned title
-    assert len(only_meaning) == 5
+    assert len(only_meaning) == 3
 
     calls = len(embedder.calls)
     assert client.get(URL, params={"title": "   "}, headers=headers).json() == []
@@ -112,11 +112,11 @@ def test_weak_string_matches_come_after_meaning_based(db_session, embedder, monk
     add_esco_occupations(db_session)
     embed_occupation_labels(db_session, BagOfWordsEmbedder())
     title = "Software Developr"  # fuzzy string matches only (< 0.95)
-    weak = occupation_catalog(db_session).suggest(title, 5)
+    weak = occupation_catalog(db_session).suggest(title, 3)
     assert weak and all(m.confidence < 0.95 for m in weak)
     body = WorkEntryService(db_session).occupation_suggestions(title)
-    assert body[0]["method"] == "embedding" and len(body) == 5
-    assert len({item["concept_id"] for item in body}) == 5
+    assert body[0]["method"] == "embedding" and len(body) == 3  # three suggestions in the form
+    assert len({item["concept_id"] for item in body}) == 3
     assert_tiers(body)
     # Without the model the weak string matches are still offered, in their own order.
     def unavailable():

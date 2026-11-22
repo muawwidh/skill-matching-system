@@ -1,4 +1,4 @@
-"""Occupation choice (D060): top-5 ESCO occupation suggestions with title clean-up; job-title linking."""
+"""Occupation choice (D060): top-3 ESCO occupation suggestions with title clean-up; job-title linking."""
 from app.taxonomy.occupations import clean_title, occupation_catalog
 from tests.esco_occupations import add_esco_occupations
 from tests.test_recommendations import register
@@ -18,7 +18,7 @@ def test_suggestions_rank_cleaned_titles_and_return_isco(client, db_session):
     body = client.get(url, params={"title": "Senior Software Engineer (m/w/d)"}, headers=headers).json()
     assert body[0]["label"] == "software developer" and body[0]["isco_code"] == "2512"
     assert body[0]["concept_id"] == str(occupations["software developer"].id) and body[0]["confidence"] == 0.98
-    assert len(body) <= 5
+    assert len(body) <= 3
     devops = client.get(url, params={"title": "DevOps Engineer"}, headers=headers).json()[0]
     assert devops["label"] == "cloud devops engineer" and devops["isco_code"] == "2512"  # via parent occupation
     assert client.get(url, params={"title": "   "}, headers=headers).json() == []
@@ -42,3 +42,19 @@ def test_job_title_link_uses_the_auto_approval_rule(db_session):
     assert link.automatic and link.match.label == "software developer"
     assert catalog.link_job_title("Software Developr").match is None  # fuzzy only: not determined
     assert catalog.link_job_title("Office Coordinator").match is None
+
+
+def test_candidate_can_search_other_occupations_and_save_one(client, db_session):
+    """"Search other occupation…": the existing taxonomy search, ESCO occupations of the active release only."""
+    occupations = add_esco_occupations(db_session)
+    headers = register(client, "candidate@example.com")
+    found = client.get("/taxonomy/search", headers=headers,
+                       params={"q": "database", "source": "ESCO", "concept_type": "occupation", "limit": 50})
+    assert found.status_code == 200
+    body = found.json()
+    assert body and all(item["concept_type"] == "occupation" and item["source_code"] == "ESCO" for item in body)
+    assert str(occupations["database administrator"].id) in {item["id"] for item in body}
+    entry = client.post("/candidates/me/work-entries", headers=headers, json={
+        "title": "Data person", "start_month": "2020-01",
+        "occupation_concept_id": str(occupations["database administrator"].id)}).json()
+    assert entry["occupation"]["label"] == "database administrator"

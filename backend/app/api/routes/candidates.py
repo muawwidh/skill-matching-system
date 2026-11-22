@@ -55,7 +55,7 @@ def detected_work_entries(current_user: User = Depends(candidate_only), db: Sess
 @router.get("/me/work-entries/occupation-suggestions", response_model=list[OccupationSuggestionRead])
 def occupation_suggestions(title: str = Query("", max_length=255), current_user: User = Depends(candidate_only),
                            db: Session = Depends(get_db)):
-    """Top 5 ESCO occupations for a job title; the candidate picks one or none (D060)."""
+    """Top 3 ESCO occupations for a job title; the candidate picks one or none (D060)."""
     return WorkEntryService(db).occupation_suggestions(title)
 
 

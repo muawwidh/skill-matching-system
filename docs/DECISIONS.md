@@ -1167,7 +1167,10 @@ CVs for matching.
 
 - **Self-entered.** Candidates enter work entries on the CVs page: job title,
   start month, end month or "present", and an ESCO occupation they pick from
-  the top 5 suggestions for the title (or none). Dates found in a CV only
+  the top 3 suggestions for the title, from a search of the active ESCO
+  occupations, or none. The first suggestion is preselected only when it is a
+  strong string match (>= 0.95); otherwise the candidate must choose before
+  adding the entry. Dates found in a CV only
   pre-fill the form; nothing is stored until the candidate adds the entry.
 - **Job side.** The minimum required years are parsed from the job text on
   read (first requirement mention; number words; company-age, retention,

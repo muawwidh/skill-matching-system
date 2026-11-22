@@ -3,10 +3,17 @@ import { BriefcaseBusiness, Pencil, Plus, Trash2, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 import { createWorkEntry, deleteWorkEntry, listDetectedWorkEntries, listWorkEntries, updateWorkEntry } from "../api/experience";
-import type { DetectedWorkEntry, Occupation, WorkEntry, WorkEntryPayload } from "../types/experience";
-import { OccupationPicker } from "./OccupationPicker";
+import type { DetectedWorkEntry, WorkEntry, WorkEntryPayload } from "../types/experience";
+import { OccupationPicker, type OccupationChoice } from "./OccupationPicker";
 
-type Draft = WorkEntryPayload & { id: string | null; present: boolean; occupation: Occupation | null; titleChoices?: string[] };
+type Draft = WorkEntryPayload & {
+  id: string | null;
+  present: boolean;
+  /** undefined until the candidate chooses (or a strong match is preselected); null: "None of these". */
+  occupation: OccupationChoice;
+  occupationPreselected: boolean;
+  titleChoices?: string[];
+};
 
 const emptyDraft: Draft = {
   id: null,
@@ -15,7 +22,8 @@ const emptyDraft: Draft = {
   end_month: null,
   present: false,
   occupation_concept_id: null,
-  occupation: null,
+  occupation: undefined,
+  occupationPreselected: false,
   source: "manual",
 };
 
@@ -35,6 +43,7 @@ const durationLabel = (months: number) => {
 export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [missingOccupation, setMissingOccupation] = useState(false);
   const entries = useQuery({ queryKey: ["work-entries"], queryFn: () => listWorkEntries(accessToken) });
   const detected = useQuery({ queryKey: ["work-entries", "detected"], queryFn: () => listDetectedWorkEntries(accessToken) });
 
@@ -57,6 +66,7 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
     },
     onSuccess: () => {
       setDraft(null);
+      setMissingOccupation(false);
       refresh();
     },
   });
@@ -71,19 +81,26 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
       present: entry.end_month === null,
       occupation_concept_id: entry.occupation?.concept_id ?? null,
       occupation: entry.occupation,
+      occupationPreselected: false,
       source: entry.source,
       source_cv_id: entry.source_cv_id,
     });
   }
 
   function useDetected(item: DetectedWorkEntry) {
+    setMissingOccupation(false);
     setDraft({ ...emptyDraft, title: item.title, start_month: item.start_month, end_month: item.end_month,
       present: item.end_month === null, source: "cv_detected", source_cv_id: item.cv_id, titleChoices: item.title ? [] : item.title_choices ?? [] });
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (draft) save.mutate(draft);
+    if (!draft) return;
+    if (draft.occupation === undefined) {
+      setMissingOccupation(true);
+      return;
+    }
+    save.mutate(draft);
   }
 
   const field = "rounded-md border border-slate-300 px-3 py-2 text-sm";
@@ -95,14 +112,14 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
           <h2 id="work-entries-heading" className="text-xl font-semibold text-ink">Work experience</h2>
         </div>
         {!draft ? (
-          <button className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm" onClick={() => setDraft(emptyDraft)} type="button">
+          <button className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm" onClick={() => { setMissingOccupation(false); setDraft(emptyDraft); }} type="button">
             <Plus size={16} aria-hidden="true" /> Add entry
           </button>
         ) : null}
       </div>
       <p className="mt-1 text-sm text-slate-600">
-        Job title and dates only (no employer). Used to show how many years of related experience you have for a job; it never
-        changes the order of jobs.
+        Job title and dates only (no employer). Used to show your years of related experience for each job. It never changes
+        the ranking; you can optionally hide jobs above your experience.
       </p>
 
       {draft ? (
@@ -151,7 +168,11 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
             accessToken={accessToken}
             title={draft.title}
             value={draft.occupation}
-            onChange={(occupation) => setDraft({ ...draft, occupation, occupation_concept_id: occupation?.concept_id ?? null })}
+            preselected={draft.occupationPreselected}
+            missing={missingOccupation}
+            onChange={(occupation, preselected) =>
+              setDraft((current) => current && { ...current, occupation, occupationPreselected: preselected,
+                occupation_concept_id: occupation?.concept_id ?? null })}
           />
           {save.error ? <p role="alert" className="text-sm text-red-700">{save.error.message}</p> : null}
           <div className="flex gap-2">

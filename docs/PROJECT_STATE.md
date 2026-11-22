@@ -528,7 +528,8 @@ Item 2 (2026-11-21): work entries.
 - Tests: `tests/test_work_entries.py` (fixture `tests/esco_occupations.py`).
 
 Item 3 (2026-11-21): occupation choice.
-- `GET /candidates/me/work-entries/occupation-suggestions?title=`: top 5
+- `GET /candidates/me/work-entries/occupation-suggestions?title=`: top 3
+  (5 until 2026-11-22)
   active ESCO occupations (existing linker restricted to occupations;
   cleaned title first, then the title as written) with ISCO unit group.
 - Title clean-up (`clean_title`): bracketed text, text after " - ", "|",
@@ -626,6 +627,17 @@ taken from that CV or keeps them without the link; manual entries always
 stay. The delete dialog shows "Also remove N work entries taken from this
 CV", checked by default. Account deletion removes all entries as before.
 Tests: `tests/test_work_entries.py`.
+
+Work-entry form polish (2026-11-22): 3 occupation suggestions (same tier
+order); the first is preselected only when it is a strong string match
+(>= 0.95), otherwise nothing is selected and "Add entry" without a choice
+shows "Pick an occupation so this experience can be compared with jobs, or
+choose None of these" instead of saving. Items show the occupation name with
+the ISCO group name small and grey; no ISCO code and no per-item "similar
+meaning" tag (one legend line when any suggestion is meaning-based).
+"Search other occupation…" uses `GET /taxonomy/search?source=ESCO&
+concept_type=occupation` (active release only). Helpers and tests:
+`frontend/src/utils/occupations.ts`, `frontend/tests/occupations.test.ts`.
 
 UI wording (2026-11-22): development-history wording removed from the app
 (dashboard phase text and cards, internal terms such as "embedding" and

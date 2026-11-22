@@ -13,10 +13,16 @@ export function listTaxonomyVersions(accessToken: string) {
   return apiRequest<TaxonomyVersion[]>("/taxonomy/versions", { accessToken });
 }
 
-export function searchTaxonomy(accessToken: string, query: string) {
-  return apiRequest<TaxonomyConcept[]>(`/taxonomy/search?q=${encodeURIComponent(query)}`, {
-    accessToken,
-  });
+export function searchTaxonomy(
+  accessToken: string,
+  query: string,
+  filters: { source?: string; conceptType?: string; limit?: number } = {},
+) {
+  const params = new URLSearchParams({ q: query });
+  if (filters.source) params.set("source", filters.source);
+  if (filters.conceptType) params.set("concept_type", filters.conceptType);
+  if (filters.limit) params.set("limit", String(filters.limit));
+  return apiRequest<TaxonomyConcept[]>(`/taxonomy/search?${params}`, { accessToken });
 }
 
 export function listTaxonomyMappings(accessToken: string) {
