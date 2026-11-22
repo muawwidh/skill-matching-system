@@ -41,7 +41,7 @@ def require_roles(*allowed_roles: str) -> Callable[[User], User]:
 def candidate_only(current_user: User = Depends(get_current_user)) -> User:
     """Candidate accounts only: staff (administrator/researcher) accounts are refused.
 
-    Per-candidate job rankings are never shown to staff (D037, D049).
+    Per-candidate job rankings are never shown to staff.
     """
     roles = {role.name for role in current_user.roles}
     if settings.DEFAULT_CANDIDATE_ROLE not in roles or roles & {settings.ADMIN_ROLE, settings.RESEARCHER_ROLE}:

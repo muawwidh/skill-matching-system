@@ -1,4 +1,4 @@
-"""CV work-entry pre-fill picks the job title, never the company; asks when uncertain (D060)."""
+"""CV work-entry pre-fill picks the job title, never the company; asks when uncertain."""
 from datetime import date
 
 import pytest

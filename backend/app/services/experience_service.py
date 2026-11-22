@@ -1,4 +1,4 @@
-"""Relevant experience on the Jobs page (DECISIONS.md D060). Computed on read, never scored.
+"""Relevant experience on the Jobs page. Computed on read, never scored.
 
 - Job occupation: the job title (cleaned) linked to an ESCO occupation with the
   existing automatic-approval rule; otherwise "occupation not determined".

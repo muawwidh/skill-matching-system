@@ -1,4 +1,4 @@
-"""Related job skills ("Related skill in your profile") via a shared ESCO broader skill/knowledge concept (D050)."""
+"""Related job skills ("Related skill in your profile") via a shared ESCO broader skill/knowledge concept."""
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -33,7 +33,7 @@ def test_shared_broader_concept_is_partial_not_matched():
     assert "Required skills: 1 of 3 matched (Python); related skill in your profile: SQL; missing: kotlin." in text
     assert "SQL: not in your CV, but related: you have Python (same ESCO area: computer programming)." in text
 
-    # Without the broader map (offline comparison, D043) nothing is partial.
+    # Without the broader map (offline comparison) nothing is partial.
     plain = compute_coverage(candidate, job)
     assert plain.partial_required == [] and {e["label"] for e in plain.missing_required} == {"SQL", "kotlin"}
 

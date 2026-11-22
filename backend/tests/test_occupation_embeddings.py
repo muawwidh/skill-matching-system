@@ -1,4 +1,4 @@
-"""Embedding neighbours in work-entry occupation suggestions (D060): string-based first, max 5, no duplicates."""
+"""Embedding neighbours in work-entry occupation suggestions: string-based first, max 5, no duplicates."""
 import hashlib
 import math
 

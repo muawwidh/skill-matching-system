@@ -39,7 +39,7 @@ const durationLabel = (months: number) => {
 };
 
 /**
- * Self-entered work history for "relevant experience" (D060). Candidate accounts only.
+ * Self-entered work history for "relevant experience". Candidate accounts only.
  * No employer is asked for or stored. Entries detected in a CV only pre-fill the form.
  */
 export function WorkEntriesPanel({ accessToken, cvNames = {} }: { accessToken: string; cvNames?: Record<string, string> }) {

@@ -1,4 +1,4 @@
-"""Candidates review taxonomy link suggestions on their own CV skills (D048)."""
+"""Candidates review taxonomy link suggestions on their own CV skills."""
 from uuid import UUID
 
 from fastapi.testclient import TestClient

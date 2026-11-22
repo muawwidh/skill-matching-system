@@ -1,4 +1,4 @@
-"""CV management: what feeds the matching profile, and CV deletion (D041)."""
+"""CV management: what feeds the matching profile, and CV deletion."""
 from fastapi.testclient import TestClient
 
 

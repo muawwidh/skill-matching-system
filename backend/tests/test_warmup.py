@@ -1,4 +1,4 @@
-"""Startup warm-up of the job representation cache (D059)."""
+"""Startup warm-up of the job representation cache."""
 from contextlib import nullcontext
 
 from fastapi.testclient import TestClient

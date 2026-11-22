@@ -1,4 +1,4 @@
-"""Live-job link suggestions are kept but not listed in the staff review queue by default (D057)."""
+"""Live-job link suggestions are kept but not listed in the staff review queue by default."""
 from uuid import uuid4
 
 from sqlalchemy import func, select

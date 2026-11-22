@@ -1,4 +1,4 @@
-"""Choose the job title for a CV-detected work entry (D060); never the company.
+"""Choose the job title for a CV-detected work entry; never the company.
 
 Candidates are the text parts next to a date range: the other parts of the date
 line (split at " | ", " - ", " at ", "@", ", ", tabs), then up to two lines

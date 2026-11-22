@@ -144,7 +144,7 @@ class SectionDetectionService:
         return remaining_line == ""
 
 
-# ---- Job requirement segmentation (extraction contract v3; DECISIONS.md D038) -------------
+# ---- Job requirement segmentation (extraction contract v3) -------------
 # Reuses the predeclared heading table of the frozen retrieval v2 template, plus the
 # headings below. Text under excluded headings (benefits, EEO, application details) is
 # not passed to extraction at all.

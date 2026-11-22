@@ -31,10 +31,10 @@ class MatchingProfileCv(BaseModel):
 
 
 class MatchingProfileRead(BaseModel):
-    """What feeds the candidate's matching profile (D041): all CVs plus manual skills.
+    """What feeds the candidate's matching profile: all CVs plus manual skills.
 
     Only approved skills are used. `unattributed_skills` are extracted skills whose
-    source CV term no longer exists (legacy rows); they still belong to the profile.
+    source CV term no longer exists (older rows); they still belong to the profile.
     """
     retrieval_status: str
     retrieval_message: str
@@ -123,7 +123,7 @@ class JobRead(BaseModel):
     @computed_field
     @property
     def attribution(self) -> dict[str, str] | None:
-        """Where a live job comes from (D053); None for manual and evaluation jobs."""
+        """Where a live job comes from; None for manual and evaluation jobs."""
         from app.job_sources.registry import ATTRIBUTION
 
         if self.source not in ATTRIBUTION:
@@ -226,7 +226,7 @@ class JobSkillUpdate(BaseModel):
 class MatchedSkillRead(BaseModel):
     label: str
     matched_via: Literal["taxonomy_concept", "skill_name"]
-    # False: an automatically extracted job skill nobody reviewed (live jobs, D054).
+    # False: an automatically extracted job skill nobody reviewed (live jobs).
     reviewed: bool = True
 
 
@@ -239,7 +239,7 @@ class MissingSkillRead(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _legacy_label(cls, value):
-        # Rows written before D040 stored bare labels; those were all concept-checked.
+        # Older rows store a bare label; only concept-checked skills were stored that way.
         if isinstance(value, str):
             return {"label": value, "checked_via": "taxonomy_concept"}
         return value
@@ -247,7 +247,7 @@ class MissingSkillRead(BaseModel):
 
 class PartialSkillRead(BaseModel):
     """A job skill not matched, but sharing a direct ESCO broader skill/knowledge concept
-    with one of the candidate's skills (D050)."""
+    with one of the candidate's skills."""
     label: str
     broader_concept: str
     candidate_skill: str
@@ -255,7 +255,7 @@ class PartialSkillRead(BaseModel):
 
 
 class JobCoverageRead(BaseModel):
-    """Skill coverage of one job for the signed-in candidate, computed on read (D049)."""
+    """Skill coverage of one job for the signed-in candidate, computed on read."""
     job_id: UUID
     matched_required: list[MatchedSkillRead]
     matched_preferred: list[MatchedSkillRead]
@@ -291,7 +291,7 @@ class JobPoolRead(BaseModel):
 
 
 class JobOccupationRead(BaseModel):
-    """The job title's ESCO occupation (D060), or `determined: false` ("occupation not determined")."""
+    """The job title's ESCO occupation, or `determined: false` ("occupation not determined")."""
     determined: bool
     concept_id: UUID | None = None
     label: str | None = None
@@ -300,7 +300,7 @@ class JobOccupationRead(BaseModel):
 
 
 class RelatedExperienceRead(BaseModel):
-    """Related experience for one job (D060): explanation only, never part of the order."""
+    """Related experience for one job: explanation only, never part of the order."""
     relevant_months: int
     relevant_years: float
     isco_group: str
@@ -310,7 +310,7 @@ class RelatedExperienceRead(BaseModel):
 
 
 class RecommendationItem(BaseModel):
-    """One retrieved job (D045): its position in the top-N, explained by skill coverage."""
+    """One retrieved job: its position in the top-N, explained by skill coverage."""
     rank: int
     job_id: UUID
     matched_required: list[MatchedSkillRead]
@@ -339,7 +339,7 @@ class RecommendationList(BaseModel):
     ("profile_not_ready", "no_approved_skills", "profile_not_indexed"); `results`
     is then empty. `unindexed_jobs` counts active jobs that cannot be retrieved
     because they have no current embedding. `total` is the number of retrieved
-    jobs (at most `top_n`); `results` holds one page of them (D059), each with
+    jobs (at most `top_n`); `results` holds one page of them, each with
     its overall `rank`.
     """
     status: str
@@ -350,7 +350,7 @@ class RecommendationList(BaseModel):
     page_size: int
     active_jobs: int
     unindexed_jobs: int
-    # Related-experience filter (D060): the remembered switch and how many jobs it hid
+    # Related-experience filter: the remembered switch and how many jobs it hid
     # among the jobs considered for the top N.
     hide_below_experience: bool = False
     hidden_by_experience: int = 0

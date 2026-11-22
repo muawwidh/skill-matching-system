@@ -1,1 +1,1 @@
-"""Phase 5 job retrieval; independent from match scoring and taxonomy review."""
+"""Dense job retrieval; independent from skill coverage and taxonomy review."""

@@ -121,7 +121,7 @@ class Job(TimestampMixin, Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     cleaned_description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="draft", nullable=False)
-    # evaluation | manual | a live source adapter name such as arbeitnow or greenhouse (D052).
+    # evaluation | manual | a live source adapter name such as arbeitnow or greenhouse.
     source: Mapped[str] = mapped_column(String(80), default="manual", nullable=False)
     error_message: Mapped[str] = mapped_column(Text, default="", nullable=False)
     processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)

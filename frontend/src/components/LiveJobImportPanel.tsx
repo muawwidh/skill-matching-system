@@ -31,7 +31,7 @@ function RunSummary({ run }: { run: JobImportRun }) {
   );
 }
 
-/** Administrator: start a live job import and see the latest result (D055). */
+/** Administrator: start a live job import and see the latest result. */
 export function LiveJobImportPanel({ accessToken }: { accessToken: string }) {
   const cache = useQueryClient();
   const status = useQuery({

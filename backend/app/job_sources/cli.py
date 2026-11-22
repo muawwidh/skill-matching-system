@@ -1,4 +1,4 @@
-"""Job source commands: `python -m app.job_sources.cli <command>` (D052)."""
+"""Job source commands: `python -m app.job_sources.cli <command>`."""
 import argparse
 import json
 from pathlib import Path

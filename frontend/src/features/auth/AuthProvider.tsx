@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { getCurrentUser } from "../../api/auth";
+import { getCurrentUser, logout } from "../../api/auth";
 import { setSessionListener } from "../../api/client";
 import type { TokenPair, User } from "../../types/auth";
-import { clearTokens, getAccessToken, saveTokens } from "./tokenStorage";
+import { endSession } from "./endSession";
+import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from "./tokenStorage";
 
 type AuthContextValue = {
   accessToken: string | null;
@@ -42,8 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAccessToken(tokens.access_token);
       },
       signOut() {
-        clearTokens();
-        setAccessToken(null);
+        void endSession(getRefreshToken(), () => { clearTokens(); setAccessToken(null); }, logout);
       },
     }),
     [accessToken, userQuery.data],

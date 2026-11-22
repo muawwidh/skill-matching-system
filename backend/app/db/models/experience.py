@@ -1,4 +1,4 @@
-"""Candidate work entries for relevant experience (DECISIONS.md D060). No employer is stored."""
+"""Candidate work entries for relevant experience. No employer is stored."""
 from datetime import date
 from uuid import UUID, uuid4
 
@@ -37,7 +37,7 @@ class CandidateWorkEntry(TimestampMixin, Base):
 
 
 class CandidatePreference(TimestampMixin, Base):
-    """Per-candidate Jobs page settings (D060). A separate table, so profile rows stay unchanged."""
+    """Per-candidate Jobs page settings. A separate table, so profile rows stay unchanged."""
     __tablename__ = "candidate_preferences"
 
     candidate_profile_id: Mapped[UUID] = mapped_column(

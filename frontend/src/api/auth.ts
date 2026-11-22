@@ -15,6 +15,14 @@ export function login(payload: LoginPayload) {
   });
 }
 
+/** Revokes the refresh token on the server (sign-out). */
+export function logout(refreshToken: string) {
+  return apiRequest<void>("/auth/logout", {
+    method: "POST",
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+}
+
 export function getCurrentUser(accessToken: string) {
   return apiRequest<User>("/auth/me", { accessToken });
 }

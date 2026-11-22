@@ -37,7 +37,7 @@ def review_groups(
     scope: str = Query("default", pattern="^(default|live|all)$"),
     current_user: User = Depends(taxonomy_admin), db: Session = Depends(get_db),
 ) -> TaxonomyReviewPage:
-    # default: CV, manual and evaluation job terms; live: live-job terms only (D057).
+    # default: CV, manual and evaluation job terms; live: live-job terms only.
     return TaxonomyService(db).review_groups(state, q, limit, offset, scope)
 
 

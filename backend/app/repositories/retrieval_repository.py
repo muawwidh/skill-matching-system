@@ -14,7 +14,7 @@ from app.retrieval.embedder import load_local_tokenizer
 from app.retrieval import auto_reindex
 
 
-# Job representations by a digest of their exact inputs (D059). Building one runs the
+# Job representations by a digest of their exact inputs. Building one runs the
 # pinned tokenizer about 300 times; the Jobs page checks the freshness of every retrieved
 # job on each request. The build is a pure function of these inputs and the tokenizer,
 # so a cached result is identical to a rebuilt one.
@@ -117,11 +117,11 @@ class RetrievalRepository:
         self.db.execute(update(CandidateProfileEmbedding).where(
             CandidateProfileEmbedding.candidate_profile_id == profile_id,
         ).values(status="stale"))
-        auto_reindex.record(self.db, "profile", profile_id)  # re-embedded after commit (D046)
+        auto_reindex.record(self.db, "profile", profile_id)  # re-embedded after commit
 
     def invalidate_job(self, job_id: UUID) -> None:
         self.db.execute(update(JobEmbedding).where(JobEmbedding.job_id == job_id).values(status="stale"))
-        auto_reindex.record(self.db, "job", job_id)  # re-embedded after commit (D046)
+        auto_reindex.record(self.db, "job", job_id)  # re-embedded after commit
 
     def invalidate_term(self, term_source: str, term_id: UUID) -> None:
         if term_source == "candidate":

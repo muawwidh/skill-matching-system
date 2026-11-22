@@ -1,4 +1,4 @@
-"""Job occupation (D060): title linked with clean-up and the automatic-approval rule, else not determined."""
+"""Job occupation: title linked with clean-up and the automatic-approval rule, else not determined."""
 from app.db.models import Job
 from app.services.experience_service import ExperienceService
 from tests.esco_occupations import add_esco_occupations

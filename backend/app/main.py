@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     if settings.WARM_JOB_CACHE_ON_STARTUP:
         from app.retrieval.warmup import start_background_warmup
 
-        # In the background: the server accepts requests at once (D059).
+        # In the background: the server accepts requests at once.
         app.state.warmup_thread = start_background_warmup()
     yield
 
@@ -30,7 +30,7 @@ def create_app() -> FastAPI:
 
         @app.middleware("http")
         async def pause_warmup_during_requests(request, call_next):
-            # The startup warm-up yields to requests (D059).
+            # The startup warm-up yields to requests.
             warmup.request_started()
             try:
                 return await call_next(request)

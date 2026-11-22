@@ -68,6 +68,14 @@ def test_refresh_rotates_tokens_and_rejects_reuse(client: TestClient) -> None:
     assert reused.status_code == 401
 
 
+def test_logout_revokes_the_refresh_token(client: TestClient) -> None:
+    # Sign-out in the frontend calls /auth/logout, so the stored refresh token cannot be used afterwards.
+    payload = {"email": "logout@example.com", "full_name": "Logout Example", "password": "correct-horse-password"}
+    tokens = client.post("/auth/register", json=payload).json()
+    assert client.post("/auth/logout", json={"refresh_token": tokens["refresh_token"]}).status_code == 204
+    assert client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]}).status_code == 401
+
+
 def test_expired_access_token_is_rejected_with_401(client: TestClient, monkeypatch) -> None:
     from app.core.config import settings
     from app.core.security import create_access_token

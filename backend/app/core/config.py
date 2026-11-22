@@ -28,19 +28,19 @@ class Settings(BaseSettings):
     ADMIN_ROLE: str = "admin"
     RESEARCHER_ROLE: str = "researcher"
     DENSE_TEMPLATE_VERSION: Literal["e5-job-profile-v1", "e5-job-profile-v2"] = "e5-job-profile-v2"
-    # Job extraction v3: add ESCO skill/knowledge labels (filter O7) as a second dictionary.
-    # Off = curated dictionary only, for old-vs-new comparison (DECISIONS.md D038).
+    # Job extraction v3: add filtered ESCO skill/knowledge labels as a second dictionary.
+    # Off = curated dictionary only, for old-vs-new comparison.
     JOB_EXTRACTION_ESCO_VOCABULARY: bool = True
-    # Jobs page (D045, D059): retrieval returns the top-N jobs by similarity, shown in pages;
+    # Jobs page: retrieval returns the top-N jobs by similarity, shown in pages;
     # coverage explains each job on the current page.
     RECOMMENDATION_TOP_N: int = Field(default=100, ge=1, le=500)
-    # Re-embed a profile/job automatically after a committed change (D046). The CLI stays for bulk runs.
+    # Re-embed a profile/job automatically after a committed change. The CLI stays for bulk runs.
     AUTO_REINDEX: bool = True
     # Build job representations for the retrieval freshness check in a background thread
-    # at startup, so the first Jobs page after a restart is not slow (D059).
+    # at startup, so the first Jobs page after a restart is not slow.
     WARM_JOB_CACHE_ON_STARTUP: bool = True
 
-    # Live job import (D052-D056). Lists accept "a,b" or a JSON array.
+    # Live job import. Lists accept "a,b" or a JSON array.
     LIVE_JOB_SOURCES: str = "arbeitnow,greenhouse"
     # Greenhouse job-board tokens, verified 2026-11-21 to return EU/remote English postings.
     GREENHOUSE_BOARDS: str = (
@@ -52,12 +52,12 @@ class Settings(BaseSettings):
     LIVE_JOBS_EUROPE_OR_REMOTE_ONLY: bool = True
     LIVE_JOBS_ENGLISH_ONLY: bool = True
     LIVE_JOBS_MAX_ACTIVE: int = Field(default=1500, ge=1)
-    # No source above this share of LIVE_JOBS_MAX_ACTIVE (D058); 1.0 switches the limit off.
+    # No source above this share of LIVE_JOBS_MAX_ACTIVE; 1.0 switches the limit off.
     LIVE_JOBS_MAX_SOURCE_SHARE: float = Field(default=0.7, gt=0, le=1)
     LIVE_JOBS_ARCHIVE_AFTER_DAYS: int = Field(default=14, ge=1)
     JOB_SOURCE_MIN_INTERVAL_SECONDS: float = Field(default=1.5, ge=0)
     JOB_SOURCE_USER_AGENT: str = "skillgap-job-import/0.1"
-    # Jobs page scope (D056): evaluation jobs are not shown to candidates unless enabled.
+    # Jobs page scope: evaluation jobs are not shown to candidates unless enabled.
     CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS: bool = False
 
     model_config = SettingsConfigDict(

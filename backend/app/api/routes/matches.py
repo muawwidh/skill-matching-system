@@ -1,4 +1,4 @@
-"""Candidate job matching (D045, D049): computed on read, nothing stored per request."""
+"""Candidate job matching: computed on read, nothing stored per request."""
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -58,7 +58,7 @@ def update_match_preferences(
     current_user: User = Depends(candidate_only),
     db: Session = Depends(get_db),
 ) -> MatchPreferences:
-    """Remember the "hide jobs where my related experience is below the requirement" switch (D060)."""
+    """Remember the "hide jobs where my related experience is below the requirement" switch."""
     return MatchingService(db).set_hide_below_experience(current_user, payload.hide_below_experience)
 
 

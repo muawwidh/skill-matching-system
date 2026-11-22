@@ -1,4 +1,4 @@
-"""Contact details are removed from imported postings (D055)."""
+"""Contact details are removed from imported postings."""
 from app.job_sources.text import html_to_text, strip_contact_details
 
 

@@ -48,7 +48,7 @@ def package_bytes(path: Path) -> bytes:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Full-package checks in an isolated phase4_verify PostgreSQL database.")
+    parser = argparse.ArgumentParser(description="Full-package checks in an isolated skillgap_verify PostgreSQL database.")
     parser.add_argument("source", choices=["ESCO", "ONET"])
     parser.add_argument("version")
     parser.add_argument("package", type=Path)
@@ -56,8 +56,8 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     url = make_url(settings.DATABASE_URL)
-    if url.database != "phase4_verify" or url.get_backend_name() != "postgresql":
-        parser.error("Use an isolated PostgreSQL database named phase4_verify; development databases are refused.")
+    if url.database != "skillgap_verify" or url.get_backend_name() != "postgresql":
+        parser.error("Use an isolated PostgreSQL database named skillgap_verify; development databases are refused.")
     command.upgrade(Config("alembic.ini"), "head")
     engine = create_engine(url)
     started = perf_counter()

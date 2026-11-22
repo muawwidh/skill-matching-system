@@ -1,4 +1,4 @@
-"""Live job import: dedupe, contact stripping, archiving, cap and isolation (D053, D055). No network."""
+"""Live job import: dedupe, contact stripping, archiving, cap and isolation. No network."""
 import copy
 from datetime import datetime, timedelta, timezone
 

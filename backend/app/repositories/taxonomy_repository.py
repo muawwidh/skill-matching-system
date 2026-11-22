@@ -429,7 +429,7 @@ class TaxonomyRepository:
 
     @staticmethod
     def review_scope_filter(scope: str):
-        """Which link suggestions a staff review queue shows (D057).
+        """Which link suggestions a staff review queue shows.
 
         "default": CV terms and terms of manual/evaluation jobs; "live": terms of live
         jobs only; "all": everything. Live-job suggestions are kept, just not listed by default.

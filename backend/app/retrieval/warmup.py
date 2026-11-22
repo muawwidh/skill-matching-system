@@ -1,4 +1,4 @@
-"""Warm the job representation cache in the background at startup (D059).
+"""Warm the job representation cache in the background at startup.
 
 The Jobs page checks the freshness of every retrieved job by building its
 representation; the first request after a restart would build up to 100 of
@@ -65,7 +65,7 @@ def warm_job_representations(session_factory=None) -> dict:
 
 
 def warm_occupation_label_matrix(session_factory=None) -> int:
-    """Load stored occupation label vectors into memory (D060); computes no embeddings."""
+    """Load stored occupation label vectors into memory; computes no embeddings."""
     from app.taxonomy.occupation_embeddings import label_matrix
 
     if session_factory is None:

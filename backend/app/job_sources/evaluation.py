@@ -1,4 +1,4 @@
-"""Tag the fixed evaluation job set as source=evaluation (D052)."""
+"""Tag the fixed evaluation job set as source=evaluation."""
 import json
 from pathlib import Path
 from uuid import UUID

@@ -7,7 +7,7 @@ import re
 from app.taxonomy.normalization import normalize_taxonomy_text
 
 
-# CV extraction stays on v2. Job extraction v3 (DECISIONS.md D038) adds heading-based
+# CV extraction stays on v2. Job extraction v3 adds heading-based
 # requirement types, experience ranges and the optional ESCO label vocabulary.
 EXTRACTION_CONTRACT_VERSION = "v2"
 JOB_EXTRACTION_CONTRACT_VERSION = "v3"
@@ -81,7 +81,7 @@ class _VocabularyEntry:
 
 
 class EscoVocabulary:
-    """ESCO skill/knowledge labels filtered by rule O7 (DECISIONS.md D038).
+    """ESCO skill/knowledge labels the job extractor may match.
 
     A label is usable if its concept is in the ESCO Digital collection, or the
     label has at least two words and the concept is not transversal. Single-word

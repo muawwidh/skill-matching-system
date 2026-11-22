@@ -315,7 +315,7 @@ def evaluate_pack(candidates_path: Path, jobs_path: Path, judgments_path: Path,
     policy = _bound_policy(policy_path, candidates_path, jobs_path, judgments_path, candidates, jobs, judgments)
     coverage = query_coverage(candidates, judgments, policy)
     if not allow_synthetic and (len(candidates), len(jobs), len(judgments)) != (8, 30, 240):
-        raise ValueError("Phase 5 evaluation requires 8 candidates, 30 jobs and 240 judgments")
+        raise ValueError("The retrieval evaluation requires 8 candidates, 30 jobs and 240 judgments")
     ranked = {}
     for row in _jsonl(rankings_path):
         candidate_id = row.get("candidate_id")
@@ -390,8 +390,8 @@ def export_rankings(candidates_path: Path, jobs_path: Path, mapping_path: Path,
     from app.services.retrieval_service import RetrievalService
     template_version = resolve_template(template_version)
 
-    if make_url(database_url).database != "phase5_verify":
-        raise ValueError("Ranking export requires isolated phase5_verify database")
+    if make_url(database_url).database != "skillgap_verify":
+        raise ValueError("Ranking export requires isolated skillgap_verify database")
     if destination.exists():
         raise FileExistsError(f"Refusing to overwrite {destination}")
     candidates, jobs = load_corpus(candidates_path, jobs_path)
@@ -415,7 +415,7 @@ def export_rankings(candidates_path: Path, jobs_path: Path, mapping_path: Path,
                     raise ValueError(f"Missing database user for {candidate_id}")
                 if user.status != "active" or not any(role.name == "candidate" for role in user.roles):
                     raise ValueError(f"Mapped user for {candidate_id} is not an active candidate")
-                # Only the fixed evaluation set is searched, whatever live jobs exist (D056).
+                # Only the fixed evaluation set is searched, whatever live jobs exist.
                 retrieved = service.jobs_for_user(user, len(jobs), sources={EVALUATION_SOURCE})
                 ids = [job_lookup.get(item["job_id"]) for item in retrieved]
                 if len(ids) != len(jobs) or set(ids) != set(jobs):

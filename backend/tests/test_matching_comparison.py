@@ -43,7 +43,7 @@ def test_ties_fall_to_job_id_without_similarity_and_to_similarity_with_it() -> N
     assert coverage_order(candidate, jobs, ids, similarity={"first": 0.9, "second": 0.1}) == ["first", "second"]
 
 
-def test_scores_use_phase5_definitions_with_exact_fractions() -> None:
+def test_scores_use_evaluation_definitions_with_exact_fractions() -> None:
     judgments = {("c1", "j1"): {"relevance_grade": "2"}, ("c1", "j2"): {"relevance_grade": "1"},
                  ("c1", "j3"): {"relevance_grade": "2"}, ("c1", "j4"): {"relevance_grade": "0"}}
     rankings = {"A": {"c1": ["j2", "j1", "j4", "j3"]}}

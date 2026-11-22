@@ -1,11 +1,11 @@
-"""Job sources: evaluation, manual and live adapters (DECISIONS.md D052)."""
+"""Job sources: evaluation, manual and live adapters."""
 EVALUATION_SOURCE = "evaluation"
 MANUAL_SOURCE = "manual"
 NON_LIVE_SOURCES = frozenset({EVALUATION_SOURCE, MANUAL_SOURCE})
 
 
 def candidate_excluded_sources(config=None) -> frozenset[str]:
-    """Sources left out of the candidate Jobs page (D056): evaluation jobs unless enabled."""
+    """Sources left out of the candidate Jobs page: evaluation jobs unless enabled."""
     from app.core.config import settings
 
     config = config or settings

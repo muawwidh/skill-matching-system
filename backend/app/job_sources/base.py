@@ -1,4 +1,4 @@
-"""One interface for live job sources (D053)."""
+"""One interface for live job sources."""
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Iterator, Protocol

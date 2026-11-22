@@ -29,10 +29,6 @@ export function listTaxonomyMappings(accessToken: string) {
   return apiRequest<EscoOnetMapping[]>("/taxonomy/mappings", { accessToken });
 }
 
-export function listPendingTaxonomyLinks(accessToken: string) {
-  return apiRequest<TaxonomyLinkCandidate[]>("/admin/mappings/review?scope=default", { accessToken });
-}
-
 export function importBundledTaxonomySample(accessToken: string) {
   return apiRequest<TaxonomyImportResult[]>("/taxonomy/import/sample", {
     method: "POST",
@@ -86,7 +82,7 @@ export function listTaxonomyReviewHistory(accessToken: string, source: string, t
   return apiRequest<TaxonomyReviewEvent[]>(`/taxonomy/reviews/${source}/${termId}/history?offset=${offset}&limit=20`, { accessToken });
 }
 
-/** A candidate's own CV skills: taxonomy suggestions and current selection (D048). */
+/** A candidate's own CV skills: taxonomy suggestions and current selection. */
 export function listMyCvTaxonomyLinks(accessToken: string, cvId: string) {
   return apiRequest<TaxonomyReviewGroup[]>(`/cvs/${cvId}/taxonomy-links`, { accessToken });
 }

@@ -1,15 +1,15 @@
-"""Offline comparison of ranking variants on the frozen Phase 5 benchmark (D043).
+"""Offline comparison of ranking variants on the frozen retrieval benchmark.
 
 Read-only: rankings are computed from the live database inside a read-only
 transaction, and nothing is persisted. Every variant ranks the same 30 jobs
 for the same candidates and is scored against the same frozen human
-judgments, with the Phase 5 metric definitions plus nDCG@10.
+judgments, with the retrieval evaluation's metric definitions plus nDCG@10.
 
 Variants (no weights; each is a lexicographic order or a single score):
-  A  retrieval only: cosine similarity (Phase 5), ties by job ID
+  A  retrieval only: cosine similarity, ties by job ID
   B  skill coverage, name matching only (taxonomy links ignored), ties by job ID
   C  skill coverage, taxonomy concept first then name (current rule), ties by job ID
-  D  C with retrieval similarity as tie-break, then job ID (the app order until D044)
+  D  C with retrieval similarity as tie-break, then job ID (an earlier app order)
 """
 import json
 import math
@@ -89,7 +89,7 @@ def score_rankings(rankings: dict[str, dict[str, list[str]]], judgments: dict, e
             metrics["first_grade2_rank"] = next(rank for rank, job in enumerate(ranked, 1) if job in relevant)
             per_query[candidate] = metrics
         macro = {key: sum(per_query[c][key] for c in eligible) / len(eligible) for key in METRICS}
-        # Exact fractions for the Phase 5 metrics (nDCG is irrational in general).
+        # Exact fractions for the retrieval metrics (nDCG is irrational in general).
         exact = {}
         for key in METRICS[:4]:
             total = Fraction(0)
@@ -129,7 +129,7 @@ def compare_matching(candidates_path: Path, jobs_path: Path, judgments_path: Pat
                      template_version: str | None = None) -> dict:
     """Rank the benchmark jobs with variants A-D from the live database (read-only) and score them.
 
-    Writes `<destination>/rankings-<variant>.jsonl` (the Phase 5 ranking format, so variant A
+    Writes `<destination>/rankings-<variant>.jsonl` (the retrieval ranking format, so variant A
     can be passed to `evaluate`) and `<destination>/matching-comparison.json`. Refuses to
     overwrite existing files.
     """
@@ -171,7 +171,7 @@ def compare_matching(candidates_path: Path, jobs_path: Path, judgments_path: Pat
                 if user is None or user.status != "active" or not any(r.name == "candidate" for r in user.roles):
                     raise ValueError(f"Mapped user for {alias} is not an active candidate")
                 profile = db.query(CandidateProfile).filter(CandidateProfile.user_id == user.id).one()
-                rows = retrieval.jobs_for_user(user, 1000, sources={EVALUATION_SOURCE})  # D056
+                rows = retrieval.jobs_for_user(user, 1000, sources={EVALUATION_SOURCE})
                 similarity = {alias_by_job[row["job_id"]]: row["retrieval_similarity"]
                               for row in rows if row["job_id"] in alias_by_job}
                 if set(similarity) != set(jobs):

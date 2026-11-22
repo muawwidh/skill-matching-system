@@ -1,4 +1,4 @@
-"""Polite JSON HTTP client for public job APIs (no scraping, D053)."""
+"""Polite JSON HTTP client for public job APIs (no scraping)."""
 import json
 import time
 import urllib.error

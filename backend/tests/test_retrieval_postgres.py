@@ -19,13 +19,13 @@ from test_taxonomy_postgres import seed_0005
 
 @pytest.fixture
 def pg_retrieval(monkeypatch):
-    url_text = os.environ.get("PHASE5_TEST_DATABASE_URL") or os.environ.get("PHASE4_TEST_DATABASE_URL")
+    url_text = os.environ.get("TEST_DATABASE_URL")
     if not url_text:
         pytest.skip("UNVERIFIED: isolated PostgreSQL test URL is not set")
     url = make_url(url_text)
-    if url.database not in {"phase4_verify", "phase5_verify"}:
+    if url.database != "skillgap_verify":
         pytest.fail("Only an isolated verification database may be used")
-    schema = "phase5_" + uuid4().hex
+    schema = "retrieval_" + uuid4().hex
     admin = create_engine(url)
     with admin.begin() as connection:
         connection.execute(text(f'CREATE SCHEMA "{schema}"'))
@@ -221,7 +221,7 @@ def test_invalidation_stales_all_coexisting_template_versions(pg_retrieval):
 
 
 def test_source_filters_keep_evaluation_runs_and_candidate_view_apart(pg_retrieval):
-    """Exact search restricted to source=evaluation, or without it (D056)."""
+    """Exact search restricted to source=evaluation, or without it."""
     engine, _, profile_id, job_id, user_id = pg_retrieval
     fake = FakeEmbedder()
     with Session(engine) as db:

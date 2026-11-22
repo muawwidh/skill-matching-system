@@ -1,4 +1,4 @@
-"""Work entries and relevant experience (D060)."""
+"""Work entries and relevant experience."""
 import re
 from datetime import date
 from uuid import UUID

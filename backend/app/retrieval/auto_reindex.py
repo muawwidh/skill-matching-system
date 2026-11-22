@@ -1,4 +1,4 @@
-"""Automatic re-embedding after a committed change (DECISIONS.md D046).
+"""Automatic re-embedding after a committed change.
 
 Every per-profile or per-job invalidation (`RetrievalRepository.invalidate_profile`,
 `invalidate_job`, `invalidate_term`) records the owner on its SQLAlchemy session.

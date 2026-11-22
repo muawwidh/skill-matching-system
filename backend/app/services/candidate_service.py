@@ -29,7 +29,7 @@ class CandidateService:
         return profile
 
     def my_matching_profile(self, user: User) -> MatchingProfileRead:
-        """Which CVs and manual skills feed matching, with their review counts (D041)."""
+        """Which CVs and manual skills feed matching, with their review counts."""
         from app.services.matching_service import PROFILE_MESSAGES
         from app.services.retrieval_service import RetrievalService
 

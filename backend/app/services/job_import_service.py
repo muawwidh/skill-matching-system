@@ -1,4 +1,4 @@
-"""Import live jobs from public job APIs (DECISIONS.md D053, D055).
+"""Import live jobs from public job APIs.
 
 fetch -> strip contact details -> select (English, Europe/remote, newest-first cap)
 -> dedupe by (source, external_id) and content hash -> existing job pipeline
@@ -175,7 +175,7 @@ class JobImportService:
             self.db.commit()
             return "unchanged", job.id
         self._apply(job, posting, digest, service)
-        service._process_existing_job(job)  # additive re-extraction keeps reviews (D039)
+        service._process_existing_job(job)  # additive re-extraction keeps reviews
         self.db.commit()
         return outcome, job.id
 
@@ -204,7 +204,7 @@ class JobImportService:
             (Job.last_seen_at.is_(None)) | (Job.last_seen_at < cutoff))))
 
     def _over_cap_jobs(self) -> tuple[list[Job], list[Job]]:
-        """Active live jobs beyond their source's share, and beyond the cap; oldest go first (D058)."""
+        """Active live jobs beyond their source's share, and beyond the cap; oldest go first."""
         active = list(self.db.scalars(select(Job).where(_live_filter(), Job.status != "archived")))
         oldest = datetime.min.replace(tzinfo=timezone.utc)
 

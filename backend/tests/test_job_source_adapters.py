@@ -1,4 +1,4 @@
-"""Live job source adapters with recorded responses; no network (D053)."""
+"""Live job source adapters with recorded responses; no network."""
 import io
 import json
 import urllib.error

@@ -1,4 +1,4 @@
-"""Full CSV round-trip/replacement verification in a disposable phase4_verify schema."""
+"""Full CSV round-trip/replacement verification in a disposable skillgap_verify schema."""
 import argparse
 import csv
 import io
@@ -74,8 +74,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     url = make_url(settings.DATABASE_URL)
-    if url.database != "phase4_verify" or url.get_backend_name() != "postgresql" or url.query.get("options"):
-        parser.error("Requires isolated PostgreSQL phase4_verify without a preselected schema")
+    if url.database != "skillgap_verify" or url.get_backend_name() != "postgresql" or url.query.get("options"):
+        parser.error("Requires isolated PostgreSQL skillgap_verify without a preselected schema")
     content = package_bytes(args.package)
     assert sha256(content).hexdigest() == MANIFEST["archive_sha256"], "Expected inspected official archive"
     admin = create_engine(url)

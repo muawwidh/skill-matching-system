@@ -121,7 +121,7 @@ def list_my_taxonomy_links(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[TaxonomyReviewGroup]:
-    """Taxonomy suggestions and selections for the skills of the user's own CV (D048)."""
+    """Taxonomy suggestions and selections for the skills of the user's own CV."""
     return TaxonomyService(db).my_cv_link_groups(current_user, document_id)
 
 

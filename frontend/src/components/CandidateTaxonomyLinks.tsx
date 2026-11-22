@@ -11,7 +11,7 @@ type Action = { group: TaxonomyReviewGroup; candidate: TaxonomyLinkCandidate; st
 const button = "inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-sm disabled:opacity-50";
 
 /**
- * Lets a candidate confirm or reject the taxonomy concepts suggested for the skills in their own CV (D048).
+ * Lets a candidate confirm or reject the taxonomy concepts suggested for the skills in their own CV.
  * Uncertain suggestions are never applied automatically; staff can still review them too.
  */
 export function CandidateTaxonomyLinks({ accessToken, cvId }: { accessToken: string; cvId: string }) {

@@ -1,4 +1,4 @@
-"""Unreviewed skills on live jobs count for coverage, flagged as not reviewed (D054)."""
+"""Unreviewed skills on live jobs count for coverage, flagged as not reviewed."""
 from sqlalchemy import select
 
 from app.db.models import Job, JobSkill, Role, User
@@ -66,7 +66,7 @@ def test_live_jobs_use_pending_skills_while_manual_and_evaluation_jobs_stay_appr
     assert "Automatically extracted, not reviewed" in live_coverage["explanation"]
     body = client.get(f"/matches/jobs/{manual.id}", headers=headers).json()
     assert body["job_skill_count"] == 0 and body["matched_required"] == body["matched_preferred"] == []
-    # Evaluation jobs are not in the candidate view (D056); their coverage stays approved-only.
+    # Evaluation jobs are not in the candidate view; their coverage stays approved-only.
     from app.services.matching_service import MatchingService
     service = MatchingService(db_session)
     profile = service.repository.get_or_create_candidate_profile(

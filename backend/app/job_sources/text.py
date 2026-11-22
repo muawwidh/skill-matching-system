@@ -1,4 +1,4 @@
-"""Text helpers for imported postings: HTML to text, language and location checks (D053)."""
+"""Text helpers for imported postings: HTML to text, language and location checks."""
 import hashlib
 import html
 import re
@@ -60,7 +60,7 @@ def html_to_text(markup: str) -> str:
     return "\n".join(lines).strip()
 
 
-# Frequent function words; a simple, dependency-free language check (D053).
+# Frequent function words; a simple, dependency-free language check.
 _STOPWORDS = {
     "en": set("the and of to in for with on you we our are is be as or will your this that from at an by have "
               "who what can about work team experience".split()),
@@ -121,12 +121,12 @@ def is_europe_or_remote(location: str, remote: bool = False) -> bool:
 
 
 def content_hash(title: str, company: str, description: str) -> str:
-    """Hash of the normalized posting text, used to drop the same posting listed twice (D055)."""
+    """Hash of the normalized posting text, used to drop the same posting listed twice."""
     normalized = " ".join(f"{title}\n{company}\n{description}".casefold().split())
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-# --- Contact details (D055) -------------------------------------------------------------
+# --- Contact details -------------------------------------------------------------
 
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", re.I)
 # International (+.. / 00..) or trunk-prefixed (0..) numbers with 8-15 digits; salaries and years do not match.
@@ -153,7 +153,7 @@ def _digits(value: str) -> int:
 
 
 def strip_contact_details(text: str) -> tuple[str, dict[str, int]]:
-    """Replace e-mail addresses, phone numbers and named contacts in a posting (D055).
+    """Replace e-mail addresses, phone numbers and named contacts in a posting.
 
     E-mails and phone numbers (8-15 digits, international or trunk prefix) are
     replaced everywhere. A personal name is replaced only right after a contact

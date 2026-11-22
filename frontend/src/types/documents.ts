@@ -35,7 +35,7 @@ export type Job = {
   source: string;
   error_message: string;
   processed_at: string | null;
-  /** Original posting for live jobs (D053). */
+  /** Original posting for live jobs. */
   external_url: string;
   posted_at: string | null;
   last_seen_at: string | null;
@@ -49,17 +49,6 @@ export type JobPayload = {
   location: string;
   employment_type: string;
   description: string;
-};
-
-export type ProcessingLog = {
-  id: string;
-  entity_type: string;
-  entity_id: string;
-  stage: string;
-  status: string;
-  message: string;
-  metadata_json: Record<string, unknown>;
-  created_at: string;
 };
 
 export type CandidateSkill = {
@@ -90,24 +79,24 @@ export type CandidateSkillGroup = {
 export type MatchedSkill = {
   label: string;
   matched_via: "taxonomy_concept" | "skill_name";
-  /** false: automatically extracted, not reviewed (live jobs, D054). */
+  /** false: automatically extracted, not reviewed (live jobs). */
   reviewed?: boolean;
 };
 
-/** Not matched, but shares a direct ESCO broader skill/knowledge concept with a CV skill (D050). */
+/** Not matched, but shares a direct ESCO broader skill/knowledge concept with a CV skill. */
 export type PartialSkill = { label: string; broader_concept: string; candidate_skill: string; reviewed?: boolean };
 
 export type MissingSkill = {
   label: string;
   /** "skill_name": the job skill has no approved taxonomy link, so it was looked for by name only. */
   checked_via: "taxonomy_concept" | "skill_name";
-  /** false: automatically extracted, not reviewed (live jobs, D054). */
+  /** false: automatically extracted, not reviewed (live jobs). */
   reviewed?: boolean;
 };
 
 export type SkillStatusCounts = { approved: number; pending: number; rejected: number };
 
-/** GET /candidates/me/matching-profile: what feeds matching (D041). */
+/** GET /candidates/me/matching-profile: what feeds matching. */
 export type MatchingProfile = {
   retrieval_status: RecommendationStatus;
   retrieval_message: string;
@@ -116,8 +105,8 @@ export type MatchingProfile = {
   unattributed_skills: SkillStatusCounts;
 };
 
-/** One retrieved job (D045): its retrieval rank, explained by skill coverage. */
-/** The job title's ESCO occupation (D060); determined false = "occupation not determined". */
+/** One retrieved job: its retrieval rank, explained by skill coverage. */
+/** The job title's ESCO occupation; determined false = "occupation not determined". */
 export type JobOccupation = {
   determined: boolean;
   concept_id: string | null;
@@ -126,7 +115,7 @@ export type JobOccupation = {
   isco_unit_group: string;
 };
 
-/** Related experience for one job (D060): explanation only, never part of the order. */
+/** Related experience for one job: explanation only, never part of the order. */
 export type RelatedExperience = {
   relevant_months: number;
   relevant_years: number;
@@ -181,7 +170,7 @@ export type RecommendationList = {
   page_size: number;
   active_jobs: number;
   unindexed_jobs: number;
-  /** Related-experience filter (D060). */
+  /** Related-experience filter. */
   hide_below_experience?: boolean;
   hidden_by_experience?: number;
   has_work_entries_with_occupation?: boolean;

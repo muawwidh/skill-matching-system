@@ -138,7 +138,7 @@ class TaxonomyReviewGroup(BaseModel):
     raw_text: str
     selection: TaxonomySelectionRead | None
     inconsistent: bool
-    # Term of a live job (D057): the UI shows its pending suggestions as "automatic".
+    # Term of a live job: the UI shows its pending suggestions as "automatic".
     live_job: bool = False
     candidates: list[TaxonomyLinkCandidateRead]
 

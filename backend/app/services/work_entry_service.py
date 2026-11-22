@@ -1,4 +1,4 @@
-"""Candidate work entries (D060): self-entered, optionally pre-filled from CV dates."""
+"""Candidate work entries: self-entered, optionally pre-filled from CV dates."""
 from datetime import date, datetime, timezone
 from uuid import UUID
 
@@ -94,7 +94,7 @@ class WorkEntryService:
         return entry
 
     def occupation_suggestions(self, title: str, limit: int = SUGGESTIONS) -> list[dict]:
-        """Top ESCO occupations for a work-entry title, at most `limit`, without duplicates (D060):
+        """Top ESCO occupations for a work-entry title, at most `limit`, without duplicates:
 
         1. string matches with confidence >= 0.95 (the automatic-approval threshold),
         2. embedding nearest neighbours ("similar meaning"),

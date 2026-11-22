@@ -42,7 +42,7 @@ class JobEmbedding(EmbeddingColumns, Base):
 
 
 class OccupationLabelEmbedding(TimestampMixin, Base):
-    """E5 embedding of one ESCO occupation label ("passage:"), for work-entry suggestions only (D060).
+    """E5 embedding of one ESCO occupation label ("passage:"), for work-entry suggestions only.
 
     Computed once by `python -m app.retrieval.cli embed-occupation-labels` and reused.
     Never used to assign job occupations.

@@ -1,8 +1,8 @@
-"""Embedding nearest neighbours for work-entry occupation suggestions (DECISIONS.md D060).
+"""Embedding nearest neighbours for work-entry occupation suggestions.
 
 Only the candidate's work-entry form uses these, as extra suggestions after the
 string-based ones; the candidate picks one or none. Job occupations never use
-them (rejected in D060: about half the nearest occupations were wrong).
+them (rejected: about half the nearest occupations were wrong).
 
 Occupation labels (ESCO preferred + alternative, active versions) are embedded
 once with the pinned E5 model ("passage: " prefix) by the CLI command

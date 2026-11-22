@@ -1,10 +1,10 @@
-"""Job recommendations: top-N retrieval, explained by skill coverage (DECISIONS.md D045).
+"""Job recommendations: top-N retrieval, explained by skill coverage.
 
-Phase 5 retrieval returns the top-N jobs by similarity; that order is the
+Dense retrieval returns the top-N jobs by similarity; that order is the
 ranking. Skill coverage is reported per retrieved job as counts and labels,
-never as a weighted score, and never changes the order (D036, D040, D044,
-D045). The former lexicographic coverage order is kept as
-`coverage_ranking_key` for the offline comparison (D043).
+never as a weighted score, and never changes the order. An earlier
+lexicographic coverage order is kept as `coverage_ranking_key` for the
+offline comparison.
 """
 from dataclasses import dataclass, field
 from fractions import Fraction
@@ -25,10 +25,10 @@ MATCHED_VIA_NAME = "skill_name"
 # How a missing job skill was looked for: by taxonomy concept (and name), or by name only.
 CHECKED_VIA_CONCEPT = "taxonomy_concept"
 CHECKED_VIA_NAME = "skill_name"
-# Partial coverage (D050): a missing concept-linked job skill whose direct ESCO broader
+# Partial coverage: a missing concept-linked job skill whose direct ESCO broader
 # skill/knowledge concept is also a direct broader concept of one of the candidate's skills.
 BroaderMap = dict[UUID, dict[UUID, str]]
-# Jobs page paging (D059): coverage is computed only for the jobs on the current page.
+# Jobs page paging: coverage is computed only for the jobs on the current page.
 PAGE_SIZES = (10, 25, 50)
 DEFAULT_PAGE_SIZE = 10
 
@@ -40,7 +40,7 @@ class SkillItem:
     concept_id: UUID | None = None
     concept_label: str | None = None
     requirement: str = ""
-    # False for a pending skill on a live job: automatically extracted, not reviewed (D054).
+    # False for a pending skill on a live job: automatically extracted, not reviewed.
     reviewed: bool = True
 
 
@@ -117,10 +117,9 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
     was looked for by concept or by name only; a name-only miss may still be in
     the CV under different wording.
 
-    With `broader` (D050), a concept-linked job skill that is not matched is
+    With `broader`, a concept-linked job skill that is not matched is
     related when it shares a direct ESCO broader skill/knowledge
-    concept with a concept-linked candidate skill. Without it (offline
-    comparison, D043) there is no partial class.
+    concept with a concept-linked candidate skill. Without it (offline comparison) there is no partial class.
     """
     candidate = [item for item in candidate_items if item.skill_type in SKILL_LIKE_TYPES]
     candidate_concepts = {item.concept_id for item in candidate if item.concept_id is not None}
@@ -236,9 +235,9 @@ PROFILE_MESSAGES = {
 
 
 def coverage_ranking_key(match, similarity: float | None) -> tuple:
-    """Former app order, kept for the offline comparison (D043, variants B-D).
+    """Former app order, kept for the offline comparison (variants B-D).
 
-    Lexicographic (D040): required coverage, preferred coverage,
+    Lexicographic: required coverage, preferred coverage,
     matched required count, matched preferred count, retrieval similarity, job ID.
 
     Jobs without required skills sort last; within equal required coverage,
@@ -279,11 +278,11 @@ class MatchingService:
         return recommendations
 
     def list_my_recommendations(self, user: User, page: int = 1, page_size: int = DEFAULT_PAGE_SIZE) -> dict:
-        """Top-N retrieval, then skill coverage for the jobs on one page (D045, D059).
+        """Top-N retrieval, then skill coverage for the jobs on one page.
 
         "#N of M" is the overall retrieval rank within the M retrieved jobs, on
         every page. Coverage never changes the order and is computed only for the
-        jobs on the requested page. Computed on read (D049): nothing is stored per
+        jobs on the requested page. Computed on read: nothing is stored per
         request, so results never reflect an older rule or stale reviews. A page
         past the end is clamped to the last page.
         """
@@ -296,7 +295,7 @@ class MatchingService:
         excluded = candidate_excluded_sources()
         profile = self.repository.get_or_create_candidate_profile(user.id)
         retrieval = RetrievalService(self.db)
-        # Candidate scope (D056): manual and live jobs; evaluation jobs only when enabled.
+        # Candidate scope: manual and live jobs; evaluation jobs only when enabled.
         active_jobs = [job for job in self.repository.list_jobs(include_archived=False) if job.source not in excluded]
         state, query = retrieval.profile_readiness(user)
         from app.repositories.work_entry_repository import WorkEntryRepository
@@ -309,7 +308,7 @@ class MatchingService:
         hidden: list[UUID] = []
 
         def keep(job: Job) -> bool:
-            """D060 filter: hide only jobs with an assessment that is below the requirement."""
+            """Related-experience filter: hide only jobs with an assessment that is below the requirement."""
             assessment = experience.assess(job, experience.job_occupation(job), periods)
             if assessment is not None and not assessment["meets_requirement"]:
                 hidden.append(job.id)
@@ -334,14 +333,14 @@ class MatchingService:
             candidate_items = self._candidate_items(profile.id)
             for offset, job in enumerate(ranked[start:start + page_size], start=1):
                 occupation = experience.job_occupation(job)
-                # Related experience explains the job; it never changes the order (D060).
+                # Related experience explains the job; it never changes the order.
                 results.append({"rank": start + offset, **self._coverage(job, candidate_items),
                                 "job_occupation": occupation,
                                 "related_experience": experience.assess(job, occupation, periods),
                                 "min_required_years": experience.minimum_years(job)})
         # Before the commit, which would expire and reload every active job one by one.
         unindexed = self._unindexed_job_count(retrieval, active_jobs, excluded)
-        # Only a newly created empty profile is written here; no match rows (D049).
+        # Only a newly created empty profile is written here; no match rows.
         self.db.commit()
         return {"status": state, "message": PROFILE_MESSAGES[state], "top_n": top_n,
                 "total": len(ranked), "page": page, "page_size": page_size,
@@ -392,7 +391,7 @@ class MatchingService:
         return {"live_jobs": live, "last_import_at": last}
 
     def set_hide_below_experience(self, user: User, value: bool) -> dict:
-        """Remember the candidate's related-experience filter switch (D060)."""
+        """Remember the candidate's related-experience filter switch."""
         from app.repositories.work_entry_repository import WorkEntryRepository
 
         profile = self.repository.get_or_create_candidate_profile(user.id)
@@ -401,7 +400,7 @@ class MatchingService:
         return {"hide_below_experience": value}
 
     def match_my_job(self, user: User, job_id: UUID) -> dict:
-        """Coverage of one active job for the candidate, computed on read (D049)."""
+        """Coverage of one active job for the candidate, computed on read."""
         profile = self.repository.get_or_create_candidate_profile(user.id)
         from app.job_sources import candidate_excluded_sources
 
@@ -418,7 +417,7 @@ class MatchingService:
         return [self._item(skill, concepts.get(skill.id), "") for skill in skills]
 
     def _job_items(self, job_id: UUID, include_unreviewed: bool = False) -> list[SkillItem]:
-        """Approved job skills; with `include_unreviewed` (live jobs, D054) also pending ones."""
+        """Approved job skills; with `include_unreviewed` (live jobs) also pending ones."""
         skills = self.repository.list_matchable_job_skills(job_id, include_unreviewed)
         concepts = self.repository.approved_skill_concepts("job", skills)
         return [self._item(skill, concepts.get(skill.id), skill.requirement_type) for skill in skills]
@@ -437,7 +436,7 @@ class MatchingService:
     def _coverage(self, job: Job, candidate_items: list[SkillItem]) -> dict:
         from app.job_sources import NON_LIVE_SOURCES
 
-        # Live jobs are rarely reviewed: their pending skills count, flagged as not reviewed (D054).
+        # Live jobs are rarely reviewed: their pending skills count, flagged as not reviewed.
         job_items = self._job_items(job.id, include_unreviewed=job.source not in NON_LIVE_SOURCES)
         concepts = {item.concept_id for item in candidate_items + job_items if item.concept_id is not None}
         broader = self.repository.specific_esco_broader_concepts(concepts)

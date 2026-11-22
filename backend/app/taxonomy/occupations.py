@@ -1,4 +1,4 @@
-"""ESCO occupations for relevant experience (D060): occupation-only linking and ISCO groups.
+"""ESCO occupations for relevant experience: occupation-only linking and ISCO groups.
 
 Uses the existing linker (`ConceptIndex`: exact preferred/alternative label,
 then fuzzy) restricted to active ESCO occupations, and the existing

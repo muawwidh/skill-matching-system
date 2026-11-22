@@ -71,13 +71,13 @@ def seed_0005(connection):
 
 @pytest.fixture
 def pg_database(monkeypatch):
-    url_text = os.environ.get("PHASE5_TEST_DATABASE_URL") or os.environ.get("PHASE4_TEST_DATABASE_URL")
+    url_text = os.environ.get("TEST_DATABASE_URL")
     if not url_text:
         pytest.skip("UNVERIFIED: isolated PostgreSQL test URL is not set")
     url = make_url(url_text)
-    if url.database not in {"phase4_verify", "phase5_verify"}:
+    if url.database != "skillgap_verify":
         pytest.fail("PostgreSQL tests require an isolated verification database")
-    schema = "phase4_" + uuid4().hex
+    schema = "taxonomy_" + uuid4().hex
     admin = create_engine(url)
     with admin.begin() as connection:
         connection.execute(text(f'CREATE SCHEMA "{schema}"'))

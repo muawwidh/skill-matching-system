@@ -16,7 +16,7 @@ job_manager = require_roles(settings.ADMIN_ROLE, settings.RESEARCHER_ROLE)
 
 
 def _hidden_sources(user: User) -> frozenset[str]:
-    """Candidates do not see evaluation jobs (D056); staff see every job."""
+    """Candidates do not see evaluation jobs; staff see every job."""
     from app.job_sources import candidate_excluded_sources
 
     if {role.name for role in user.roles} & {settings.ADMIN_ROLE, settings.RESEARCHER_ROLE}:

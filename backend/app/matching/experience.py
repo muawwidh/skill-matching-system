@@ -1,4 +1,4 @@
-"""Relevant experience (DECISIONS.md D060): minimum required years, period merging, ISCO grouping.
+"""Relevant experience: minimum required years, period merging, ISCO grouping.
 
 Pure functions, no database access. Computed on read; nothing about a job is stored.
 

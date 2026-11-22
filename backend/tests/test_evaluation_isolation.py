@@ -1,4 +1,4 @@
-"""Evaluation jobs stay out of the candidate Jobs page; evaluation runs search only them (D056)."""
+"""Evaluation jobs stay out of the candidate Jobs page; evaluation runs search only them."""
 from uuid import UUID
 
 from sqlalchemy import select

@@ -1,4 +1,4 @@
-"""Candidate work entries (D060): CRUD, validation, CV pre-fill, candidate-only, account deletion."""
+"""Candidate work entries: CRUD, validation, CV pre-fill, candidate-only, account deletion."""
 from datetime import date
 
 from sqlalchemy import func, select

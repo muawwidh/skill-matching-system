@@ -56,7 +56,7 @@ def _run_import_in_background() -> None:
 
 @router.get("/job-import", dependencies=[Depends(require_roles(settings.ADMIN_ROLE))])
 def job_import_status(db: Session = Depends(get_db)) -> dict:
-    """Whether a live job import is running, and the latest runs (D055)."""
+    """Whether a live job import is running, and the latest runs."""
     from app.services.job_import_service import is_import_running, latest_import_runs
 
     return {"running": is_import_running(), "runs": latest_import_runs(db)}

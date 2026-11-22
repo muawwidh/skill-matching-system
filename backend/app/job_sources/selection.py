@@ -1,5 +1,5 @@
-"""Which fetched postings become live jobs: English, located in Europe or remote, newest first (D053),
-with no source above its share of the cap (D058)."""
+"""Which fetched postings become live jobs: English, located in Europe or remote, newest first,
+with no source above its share of the cap."""
 import math
 from typing import Callable, Iterable, TypeVar
 from collections import Counter

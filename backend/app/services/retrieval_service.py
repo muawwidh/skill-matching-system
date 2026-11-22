@@ -101,8 +101,8 @@ class RetrievalService:
         """Top-`limit` processed jobs by exact cosine similarity; jobs with stale vectors are skipped.
 
         `sources` restricts the search to those job sources (offline evaluation: only
-        "evaluation"); `exclude_sources` leaves sources out (candidate view, D056).
-        `keep(job)` (candidate filter, D060) skips jobs before the top-`limit` cut; the
+        "evaluation"); `exclude_sources` leaves sources out (candidate view).
+        `keep(job)` (candidate filter) skips jobs before the top-`limit` cut; the
         offline evaluation never passes it.
         """
         from app.retrieval.representation import MODEL_ID, MODEL_REVISION
@@ -134,7 +134,7 @@ class RetrievalService:
         """Processed jobs with a stored `ready` vector for the current model, revision and template.
 
         One query on stored status, no representation is rebuilt. Status stays current
-        because every job change marks its vector stale and re-embeds it (D046).
+        because every job change marks its vector stale and re-embeds it.
         """
         from sqlalchemy import select
         from app.db.models import JobEmbedding

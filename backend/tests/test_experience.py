@@ -1,4 +1,4 @@
-"""Relevant experience (D060): minimum-years parsing, period merging, ISCO grouping."""
+"""Relevant experience: minimum-years parsing, period merging, ISCO grouping."""
 from datetime import date
 
 import pytest

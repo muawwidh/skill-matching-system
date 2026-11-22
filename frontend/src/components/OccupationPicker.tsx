@@ -77,7 +77,7 @@ function OccupationSearch({ accessToken, onPick }: { accessToken: string; onPick
 }
 
 /**
- * Top-3 ESCO occupation suggestions for the entered job title (D060). The first one is preselected only when
+ * Top-3 ESCO occupation suggestions for the entered job title. The first one is preselected only when
  * it is a strong string match; otherwise nothing is selected until the candidate picks one or "None of these".
  */
 export function OccupationPicker({ accessToken, title, value, preselected, missing, onChange }: OccupationPickerProps) {

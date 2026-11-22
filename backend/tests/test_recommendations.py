@@ -1,4 +1,4 @@
-"""Jobs page recommendations: top-N retrieval, explained by skill coverage (D045)."""
+"""Jobs page recommendations: top-N retrieval, explained by skill coverage."""
 from uuid import UUID
 
 from fastapi.testclient import TestClient
@@ -113,7 +113,7 @@ def test_missing_model_artifacts_report_retrieval_unavailable(client, db_session
     assert body["status"] == "retrieval_unavailable" and body["results"] == []
 
 
-# --- D049: candidate accounts only, computed on read -------------------------------
+# --- Candidate accounts only, computed on read -------------------------------
 
 
 def row_counts(db_session: Session) -> dict[str, int]:

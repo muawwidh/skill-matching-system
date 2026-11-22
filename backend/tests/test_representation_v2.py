@@ -111,7 +111,7 @@ def test_unicode_technical_names_and_metadata_overflow_are_valid_and_bounded():
 
 
 def test_pinned_offline_tokenizer_v2_budget_and_determinism():
-    path = os.environ.get("PHASE5_REAL_MODEL_PATH")
+    path = os.environ.get("REAL_MODEL_PATH")
     if not path:
         pytest.skip("UNVERIFIED: pinned local tokenizer path is not configured")
     tokenizer = load_local_tokenizer(path)
@@ -276,7 +276,7 @@ def test_clear_whole_line_preference_can_override_required_heading(line):
 
 
 def _pinned_tokenizer():
-    path = os.environ.get("PHASE5_REAL_MODEL_PATH")
+    path = os.environ.get("REAL_MODEL_PATH")
     if not path:
         pytest.skip("UNVERIFIED: pinned local tokenizer path is not configured")
     return load_local_tokenizer(path)

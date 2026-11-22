@@ -64,7 +64,7 @@ class SystemOverviewService:
                 "cv_added_manually": _review_counts(self.documents.count_by(
                     CandidateSkill.review_status, CandidateSkill.source != "extraction")),
                 "job_extracted": _review_counts(self.documents.count_by(JobSkill.review_status)),
-                # Split of job_extracted by job group; live "pending" is shown as "automatic" (D054).
+                # Split of job_extracted by job group; live "pending" is shown as "automatic".
                 "job_by_source": {group: _review_counts(counts)
                                   for group, counts in self.documents.job_skill_counts_by_job_group().items()},
             },

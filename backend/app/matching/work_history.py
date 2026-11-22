@@ -1,4 +1,4 @@
-"""Detect dated work entries in CV text, only to pre-fill the candidate's form (D060).
+"""Detect dated work entries in CV text, only to pre-fill the candidate's form.
 
 Nothing detected here is stored or used for matching until the candidate
 confirms it. Detection looks for a date range on one line ("Jan 2020 -

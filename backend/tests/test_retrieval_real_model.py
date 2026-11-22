@@ -12,18 +12,18 @@ from test_retrieval_postgres import pg_retrieval  # noqa: F401
 
 
 def test_real_pinned_model_load_without_encoding():
-    path = os.environ.get("PHASE5_REAL_MODEL_PATH")
+    path = os.environ.get("REAL_MODEL_PATH")
     if not path:
-        pytest.skip("UNVERIFIED: PHASE5_REAL_MODEL_PATH is not set")
+        pytest.skip("UNVERIFIED: REAL_MODEL_PATH is not set")
     model = LocalE5Embedder(path)
     assert model.model.get_sentence_embedding_dimension() == DIMENSION
     assert model.tokenizer.num_special_tokens_to_add(pair=False) == 2
 
 
 def test_real_pinned_model_postgres_retrieval(pg_retrieval):
-    path = os.environ.get("PHASE5_REAL_MODEL_PATH")
+    path = os.environ.get("REAL_MODEL_PATH")
     if not path:
-        pytest.skip("UNVERIFIED: PHASE5_REAL_MODEL_PATH is not set")
+        pytest.skip("UNVERIFIED: REAL_MODEL_PATH is not set")
     engine, _, profile_id, job_id, user_id = pg_retrieval
     model = LocalE5Embedder(path)
     assert len(model.encode("query: Python engineer")) == DIMENSION

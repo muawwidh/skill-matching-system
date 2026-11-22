@@ -60,7 +60,7 @@ def remove_manual_skill(skill_id: UUID, current_user: User = Depends(candidate_o
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-# --- Work entries for relevant experience (D060): candidate accounts only ---------------------
+# --- Work entries for relevant experience: candidate accounts only ---------------------
 
 @router.get("/me/work-entries", response_model=list[WorkEntryRead])
 def list_my_work_entries(current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
@@ -76,7 +76,7 @@ def detected_work_entries(current_user: User = Depends(candidate_only), db: Sess
 @router.get("/me/work-entries/occupation-suggestions", response_model=list[OccupationSuggestionRead])
 def occupation_suggestions(title: str = Query("", max_length=255), current_user: User = Depends(candidate_only),
                            db: Session = Depends(get_db)):
-    """Top 3 ESCO occupations for a job title; the candidate picks one or none (D060)."""
+    """Top 3 ESCO occupations for a job title; the candidate picks one or none."""
     return WorkEntryService(db).occupation_suggestions(title)
 
 

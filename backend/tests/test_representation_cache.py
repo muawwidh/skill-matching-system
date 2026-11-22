@@ -1,4 +1,4 @@
-"""Job representations are memoized by their exact inputs (D059); results equal a rebuild."""
+"""Job representations are memoized by their exact inputs; results equal a rebuild."""
 from app.db.models import Job, JobSkill
 from app.repositories import retrieval_repository
 from app.repositories.retrieval_repository import RetrievalRepository, clear_job_representation_cache

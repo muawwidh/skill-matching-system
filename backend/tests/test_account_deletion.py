@@ -1,4 +1,4 @@
-"""Candidate account deletion (D047)."""
+"""Candidate account deletion."""
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session

@@ -114,7 +114,7 @@ class DocumentRepository:
     def delete_candidate_profile_data(self, profile: CandidateProfile) -> dict[str, int]:
         """Erase everything derived from one candidate profile (account deletion).
 
-        Deletes embeddings, work entries and preferences (D060), skills (extracted and manual), taxonomy
+        Deletes embeddings, work entries and preferences, skills (extracted and manual), taxonomy
         link suggestions, selected links and their review events, processing
         logs, extracted terms, CV sections and CVs, then the profile. Deletes are
         explicit, so the result does not depend on database cascade settings.
@@ -581,7 +581,7 @@ class DocumentRepository:
         )
 
     def list_matchable_job_skills(self, job_id: UUID, include_unreviewed: bool = False) -> list[JobSkill]:
-        """Approved job skills; with `include_unreviewed` also pending ones. Rejected never (D054)."""
+        """Approved job skills; with `include_unreviewed` also pending ones. Rejected never."""
         statuses = ("approved", "pending") if include_unreviewed else ("approved",)
         return list(
             self.db.scalars(
@@ -595,7 +595,7 @@ class DocumentRepository:
         )
 
     def specific_esco_broader_concepts(self, concept_ids: set[UUID]) -> dict[UUID, dict[UUID, str]]:
-        """Direct ESCO broader concepts that are themselves skills or knowledge (D050).
+        """Direct ESCO broader concepts that are themselves skills or knowledge.
 
         Maps each given concept to {broader concept ID: preferred label}. Broader
         ESCO skill groups are left out on purpose: they are wide (median 13,

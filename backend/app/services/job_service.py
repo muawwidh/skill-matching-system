@@ -22,7 +22,7 @@ _VOCABULARY_CACHE: dict[tuple, EscoVocabulary] = {}
 
 
 def load_esco_vocabulary(db: Session) -> EscoVocabulary | None:
-    """O7-filtered labels of the active, non-sample ESCO release, cached per release import."""
+    """Filtered ESCO skill/knowledge labels of the active, non-sample ESCO release, cached per release import."""
     repository = TaxonomyRepository(db)
     release = repository.esco_vocabulary_release()
     if release is None:
@@ -143,7 +143,7 @@ class JobService:
         self.repository.replace_job_sections(job, sections)
         from app.repositories.retrieval_repository import RetrievalRepository
         RetrievalRepository(self.db).invalidate_job(job.id)
-        # Additive like `reextract` (D039): reviews, links and vanished evidence are kept;
+        # Additive like `reextract`: reviews, links and vanished evidence are kept;
         # occurrences moved by an edit keep their review with updated offsets.
         reconciler = JobReextractionService(self.db, extractor=self.skill_extractor)
         plan = reconciler.plan(job, allow_moves=True)
@@ -163,7 +163,7 @@ class JobService:
         )
 
 
-# ---- Additive re-extraction of existing jobs (DECISIONS.md D039) ----------------------------
+# ---- Additive re-extraction of existing jobs ----------------------------
 
 @dataclass
 class JobReextractionPlan:

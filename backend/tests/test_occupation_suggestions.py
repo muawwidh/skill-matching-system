@@ -1,4 +1,4 @@
-"""Occupation choice (D060): top-3 ESCO occupation suggestions with title clean-up; job-title linking."""
+"""Occupation choice: top-3 ESCO occupation suggestions with title clean-up; job-title linking."""
 from app.taxonomy.occupations import clean_title, occupation_catalog
 from tests.esco_occupations import add_esco_occupations
 from tests.test_recommendations import register

@@ -1,4 +1,4 @@
-"""Relevance (D060): same 3-digit ISCO group, merged periods, summed months; when the line is shown."""
+"""Relevance: same 3-digit ISCO group, merged periods, summed months; when the line is shown."""
 from datetime import date
 
 from app.db.models import CandidateWorkEntry, Job

@@ -8,7 +8,6 @@ import type {
   JobPool,
   JobSkill,
   MatchingProfile,
-  ProcessingLog,
   RecommendationList,
   SkillGaps,
   SystemOverview,
@@ -69,14 +68,6 @@ export function archiveJob(accessToken: string, jobId: string) {
   });
 }
 
-export function listProcessingLogs(accessToken: string) {
-  return apiRequest<ProcessingLog[]>("/admin/logs", { accessToken });
-}
-
-export function listCvSkills(accessToken: string, cvId: string) {
-  return apiRequest<CandidateSkill[]>(`/cvs/${cvId}/extracted-skills`, { accessToken });
-}
-
 export function listCvSkillGroups(accessToken: string, cvId: string) {
   return apiRequest<CandidateSkillGroup[]>(`/cvs/${cvId}/skill-groups`, { accessToken });
 }
@@ -102,7 +93,7 @@ export function listJobSkills(accessToken: string, jobId: string) {
   return apiRequest<JobSkill[]>(`/jobs/${jobId}/extracted-skills`, { accessToken });
 }
 
-/** Page sizes offered on the Jobs page (D059). */
+/** Page sizes offered on the Jobs page. */
 export const RECOMMENDATION_PAGE_SIZES = [10, 25, 50] as const;
 
 export function listRecommendations(accessToken: string, page = 1, pageSize = 10) {

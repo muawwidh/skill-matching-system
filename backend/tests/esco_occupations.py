@@ -1,4 +1,4 @@
-"""A tiny active ESCO release with occupations and ISCO groups, for relevant-experience tests (D060)."""
+"""A tiny active ESCO release with occupations and ISCO groups, for relevant-experience tests."""
 from datetime import datetime, timezone
 
 from app.db.models import TaxonomyConcept, TaxonomyLabel, TaxonomyRelationship, TaxonomySource, TaxonomyVersion

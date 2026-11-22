@@ -1,4 +1,4 @@
-"""Candidate account deletion (DECISIONS.md D047)."""
+"""Candidate account deletion."""
 import logging
 
 from fastapi import HTTPException, status

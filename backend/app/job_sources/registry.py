@@ -1,4 +1,4 @@
-"""Enabled live job sources from settings (D053)."""
+"""Enabled live job sources from settings."""
 from app.core.config import Settings
 from app.job_sources.arbeitnow import ArbeitnowAdapter
 from app.job_sources.greenhouse import GreenhouseAdapter

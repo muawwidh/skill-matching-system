@@ -198,7 +198,7 @@ def test_versioned_extraction_methods_are_persisted_for_candidate_and_job(
     assert job.status_code == 201
     candidate_methods = set(db_session.scalars(select(ExtractedCandidateTerm.extraction_method)))
     job_methods = set(db_session.scalars(select(ExtractedJobTerm.extraction_method)))
-    # CV extraction keeps contract v2; job extraction moved to v3 (D038).
+    # CV extraction keeps contract v2; job extraction moved to v3.
     assert {"dictionary@v2", "regex@v2"} <= candidate_methods
     assert not any(method.endswith("@v3") for method in candidate_methods)
     assert {"dictionary@v3", "regex@v3"} <= job_methods
@@ -469,7 +469,7 @@ def test_ranking_prefers_more_matched_skills_when_fractions_tie() -> None:
 def test_missing_skill_schema_reads_legacy_bare_labels() -> None:
     from app.schemas.documents import MissingSkillRead
 
-    # Rows written before D040 held bare labels; only concept-checked skills were stored as missing.
+    # Older rows hold a bare label; only concept-checked skills were stored that way.
     assert MissingSkillRead.model_validate("git").model_dump() == {"label": "git", "checked_via": "taxonomy_concept", "reviewed": True}
     assert MissingSkillRead.model_validate({"label": "rust", "checked_via": "skill_name"}).checked_via == "skill_name"
 
@@ -494,7 +494,7 @@ def test_explanation_is_built_from_lists_without_cutoffs() -> None:
         assert banned not in text
 
 
-# ---- Job extraction contract v3 (D038) ------------------------------------------------------
+# ---- Job extraction contract v3 ------------------------------------------------------
 
 JOB_POSTING = """Data Engineer
 About the Role
@@ -674,7 +674,7 @@ def test_sample_esco_releases_are_never_used_as_vocabulary(db_session: Session) 
     assert build_job_extractor(db_session, use_esco_vocabulary=True).esco_vocabulary is None
 
 
-# ---- Additive re-extraction (D039) ------------------------------------------------------------
+# ---- Additive re-extraction ------------------------------------------------------------
 
 def _legacy_job(client: TestClient, db_session: Session, description: str):
     """Create a job, then make its stored extraction look like contract v2."""
@@ -792,7 +792,7 @@ def test_reextraction_does_not_re_add_text_a_reviewer_corrected(client: TestClie
         "nabcep certification", "approved", "certification")
 
 
-# ---- Job create/edit uses the same additive reconciliation (D039) -----------------------------
+# ---- Job create/edit uses the same additive reconciliation -----------------------------
 
 def _create_job(client: TestClient, headers: dict, description: str) -> dict:
     response = client.post("/jobs", headers=headers, json={

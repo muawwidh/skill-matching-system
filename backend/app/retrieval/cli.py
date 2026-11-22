@@ -43,7 +43,7 @@ def index(kind: str, limit: int, after: str | None, template_version: str | None
         if cursor:
             statement = statement.where(cls.id > cursor)
         if source and kind == "jobs":
-            statement = statement.where(Job.source == source)  # e.g. only the evaluation set (D056)
+            statement = statement.where(Job.source == source)  # e.g. only the evaluation set
         ids = list(db.scalars(statement))
     resume_after = cursor
     for item_id in ids:
@@ -70,7 +70,7 @@ def index(kind: str, limit: int, after: str | None, template_version: str | None
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Local Phase 5 retrieval operations")
+    parser = argparse.ArgumentParser(description="Local retrieval operations")
     sub = parser.add_subparsers(dest="command", required=True)
     download = sub.add_parser("provision-model")
     download.add_argument("--path", default="../models/multilingual-e5-small-fd1525a")
@@ -90,7 +90,7 @@ def main() -> None:
     validate.add_argument("jobs", type=Path)
     validate.add_argument("--judgments", type=Path)
     validate.add_argument("--evaluation-policy", type=Path, help="Explicit file-bound zero-grade-2 coverage policy")
-    rankings = sub.add_parser("export-rankings", help="Only from isolated phase5_verify")
+    rankings = sub.add_parser("export-rankings", help="Only from isolated skillgap_verify")
     rankings.add_argument("candidates", type=Path)
     rankings.add_argument("jobs", type=Path)
     rankings.add_argument("mapping", type=Path)
@@ -111,7 +111,7 @@ def main() -> None:
     kappa.add_argument("first", type=Path)
     kappa.add_argument("second", type=Path)
     compare = sub.add_parser("compare-matching",
-                             help="Read-only: rank benchmark jobs with variants A-D and score them (D043)")
+                             help="Read-only: rank benchmark jobs with variants A-D and score them")
     compare.add_argument("candidates", type=Path)
     compare.add_argument("jobs", type=Path)
     compare.add_argument("judgments", type=Path)
@@ -121,7 +121,7 @@ def main() -> None:
     compare.add_argument("--evaluation-policy", type=Path, help="Explicit file-bound zero-grade-2 coverage policy")
     compare.add_argument("--template", choices=TEMPLATES)
     sub.add_parser("embed-occupation-labels",
-                   help="Embed ESCO occupation labels once for work-entry suggestions (D060)")
+                   help="Embed ESCO occupation labels once for work-entry suggestions")
     smoke = sub.add_parser("smoke-model")
     args = parser.parse_args()
     if args.command == "provision-model":

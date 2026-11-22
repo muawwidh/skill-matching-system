@@ -447,7 +447,7 @@ class TaxonomyService:
                 concept=self._concept_read(selected.concept), token=self._selection_token(selected)) if selected else None,
             candidates=[self._candidate_read(item) for item in candidates])
 
-    # --- Candidate review of link suggestions on their own CV skills (D048) ------------
+    # --- Candidate review of link suggestions on their own CV skills ------------
 
     def _my_cv_term_ids(self, user: User, document_id: UUID) -> list[UUID]:
         from app.db.models import CandidateProfile, CvDocument, ExtractedCandidateTerm

@@ -1,4 +1,4 @@
-"""Automatic re-embedding after committed changes (D046)."""
+"""Automatic re-embedding after committed changes."""
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select

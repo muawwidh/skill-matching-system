@@ -1,4 +1,4 @@
-"""Tagging the fixed evaluation job set (D052)."""
+"""Tagging the fixed evaluation job set."""
 import json
 
 import pytest

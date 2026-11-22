@@ -197,7 +197,7 @@ def test_optional_kappa_on_identical_synthetic_reviewers(tmp_path):
 
 def test_export_rankings_rejects_nonisolated_database_before_connecting(tmp_path):
     candidates, jobs, _, _ = _files(tmp_path)
-    with pytest.raises(ValueError, match="isolated phase5_verify"):
+    with pytest.raises(ValueError, match="isolated skillgap_verify"):
         export_rankings(candidates, jobs, tmp_path / "absent.json", "postgresql://localhost/developer",
                         tmp_path / "rankings.jsonl")
 
@@ -371,7 +371,7 @@ def test_modern_job_placeholders_duplicates_and_mislabelled_verbatim_rejected(tm
 
 
 def test_private_local_job_corpus_and_frozen_candidates_read_only():
-    location = os.environ.get("PHASE5_LOCAL_CORPUS_DIR")
+    location = os.environ.get("LOCAL_CORPUS_DIR")
     if not location:
         pytest.skip("Private local evaluation corpus not configured")
     directory = Path(location)
