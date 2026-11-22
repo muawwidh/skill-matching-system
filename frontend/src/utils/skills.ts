@@ -1,7 +1,8 @@
 import type { CandidateSkill, CandidateSkillGroup } from "../types/documents";
 
 export type SkillKind = "confirmed" | "review" | "added";
-export type ProfileSkill = { key: string; label: string; kind: SkillKind; linked: boolean; cvIds: string[] };
+/** `manualIds`: the hand-added skills behind this entry (removable). */
+export type ProfileSkill = { key: string; label: string; kind: SkillKind; linked: boolean; cvIds: string[]; manualIds: string[] };
 export type SkillSummary = { skills: ProfileSkill[]; confirmed: number; linked: number; review: number };
 
 const isManual = (item: CandidateSkill) => item.source === "manual_review";
@@ -38,7 +39,8 @@ export function summarizeSkills(groupsByCv: { cvId: string; groups: CandidateSki
     if (approved.some((item) => !isManual(item))) kind = "confirmed";
     else if (approved.length > 0) kind = "added";
     else if (entry.occurrences.some((item) => item.review_status === "pending")) kind = "review";
-    if (kind) skills.push({ key, label: entry.label, kind, linked: entry.linked, cvIds: [...entry.cvIds] });
+    const manualIds = entry.occurrences.filter(isManual).map((item) => item.id);
+    if (kind) skills.push({ key, label: entry.label, kind, linked: entry.linked, cvIds: [...entry.cvIds], manualIds });
   }
   skills.sort((a, b) => a.label.localeCompare(b.label));
   const counted = skills.filter((skill) => skill.kind !== "review");

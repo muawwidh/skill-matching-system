@@ -6,10 +6,11 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import candidate_only, get_current_user
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.documents import CandidateProfileRead, CandidateProfileUpdate, CandidateSkillRead, MatchingProfileRead
+from app.schemas.documents import (CandidateProfileRead, CandidateProfileUpdate, CandidateSkillRead, ManualSkillCreate,
+                                   MatchingProfileRead)
 from app.schemas.experience import DetectedWorkEntryRead, OccupationSuggestionRead, WorkEntryRead, WorkEntryWrite
 from app.services.candidate_service import CandidateService
-from app.services.skill_service import SkillService
+from app.services.skill_service import MANUAL_SOURCE, SkillService
 from app.services.work_entry_service import WorkEntryService
 
 router = APIRouter()
@@ -43,7 +44,20 @@ def get_my_matching_profile(
 @router.get("/me/manual-skills", response_model=list[CandidateSkillRead])
 def my_manual_skills(current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
     """Skills the candidate added by hand (not from a CV). Read-only."""
-    return [skill for skill in SkillService(db).list_my_candidate_skills(current_user) if skill.source == "manual_review"]
+    return [skill for skill in SkillService(db).list_my_candidate_skills(current_user) if skill.source == MANUAL_SOURCE]
+
+
+@router.post("/me/manual-skills", response_model=CandidateSkillRead, status_code=status.HTTP_201_CREATED)
+def add_manual_skill(payload: ManualSkillCreate, current_user: User = Depends(candidate_only),
+                     db: Session = Depends(get_db)):
+    """Add a skill by hand. It stays until removed with DELETE; CV skill reviews never remove it."""
+    return SkillService(db).add_my_manual_skill(current_user, payload.label)
+
+
+@router.delete("/me/manual-skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_manual_skill(skill_id: UUID, current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
+    SkillService(db).remove_my_manual_skill(current_user, skill_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 # --- Work entries for relevant experience (D060): candidate accounts only ---------------------

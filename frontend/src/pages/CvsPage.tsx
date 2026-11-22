@@ -3,7 +3,7 @@ import { AlertTriangle, ChevronDown, FileText, FileUp, Lock, Plus, Send, Trash2,
 import { DragEvent, FormEvent, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { addManualSkill, deleteCv, getMatchingProfile, listCvs, pasteCv, uploadCv } from "../api/documents";
+import { addManualSkill, deleteCv, getMatchingProfile, listCvs, pasteCv, removeManualSkill, uploadCv } from "../api/documents";
 import { listWorkEntries } from "../api/experience";
 import { CandidateTaxonomyLinks } from "../components/CandidateTaxonomyLinks";
 import { DeleteAccountPanel } from "../components/DeleteAccountPanel";
@@ -13,7 +13,7 @@ import { TextPreview } from "../components/TextPreview";
 import { WorkEntriesPanel } from "../components/WorkEntriesPanel";
 import { useAuth } from "../features/auth/AuthProvider";
 import { useSkillSummary } from "../hooks/useSkillSummary";
-import type { CandidateSkill, CvDocument } from "../types/documents";
+import type { CvDocument } from "../types/documents";
 import type { WorkEntry } from "../types/experience";
 import { Chip } from "../ui/Chip";
 import { EmptyState, ErrorText, LoadingBlock, Notice, Skeleton } from "../ui/Feedback";
@@ -70,7 +70,9 @@ function MatchingSummary({ accessToken, summary, entries }: { accessToken: strin
 
 // --- Skills ------------------------------------------------------------------------------------------
 
-function ChipGroup({ title, skills, kind, hint }: { title: string; skills: ProfileSkill[]; kind: "matched" | "review" | "neutral"; hint?: string }) {
+function ChipGroup({ title, skills, kind, hint, onRemove }: {
+  title: string; skills: ProfileSkill[]; kind: "matched" | "review" | "neutral"; hint?: string; onRemove?: (skill: ProfileSkill) => void;
+}) {
   if (!skills.length) return null;
   return (
     <div>
@@ -79,7 +81,8 @@ function ChipGroup({ title, skills, kind, hint }: { title: string; skills: Profi
       </h3>
       <div className="flex flex-wrap gap-1.5">
         {skills.map((skill) => (
-          <Chip key={skill.key} kind={kind} title={hint ?? (skill.linked ? "Linked to an ESCO skill" : "Not linked to ESCO; matched by name")}>
+          <Chip key={skill.key} kind={kind} title={hint ?? (skill.linked ? "Linked to an ESCO skill" : "Not linked to ESCO; matched by name")}
+            onRemove={onRemove && skill.manualIds.length ? () => onRemove(skill) : undefined} removeLabel={`Remove ${skill.label}`}>
             {skill.label}
           </Chip>
         ))}
@@ -88,16 +91,18 @@ function ChipGroup({ title, skills, kind, hint }: { title: string; skills: Profi
   );
 }
 
-function AddSkill({ accessToken, cvId, manual }: { accessToken: string; cvId: string; manual: CandidateSkill[] }) {
+const SKILL_QUERIES = [["manual-skills"], ["cv"], ["matching-profile"], ["recommendations"]];
+
+function AddSkill({ accessToken }: { accessToken: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const add = useMutation({
-    mutationFn: () => addManualSkill(accessToken, cvId, manual, text),
+    mutationFn: () => addManualSkill(accessToken, text),
     onSuccess: () => {
       setText("");
       setOpen(false);
-      for (const key of [["manual-skills"], ["cv"], ["matching-profile"], ["recommendations"]]) queryClient.invalidateQueries({ queryKey: key });
+      for (const key of SKILL_QUERIES) queryClient.invalidateQueries({ queryKey: key });
     },
   });
   if (!open) {
@@ -120,9 +125,14 @@ function AddSkill({ accessToken, cvId, manual }: { accessToken: string; cvId: st
   );
 }
 
-function SkillsCard({ accessToken, cvs, summary, manual, loading }: {
-  accessToken: string; cvs: CvDocument[]; summary: SkillSummary | null; manual: CandidateSkill[]; loading: boolean;
+function SkillsCard({ accessToken, cvs, summary, loading }: {
+  accessToken: string; cvs: CvDocument[]; summary: SkillSummary | null; loading: boolean;
 }) {
+  const queryClient = useQueryClient();
+  const remove = useMutation({
+    mutationFn: (skill: ProfileSkill) => Promise.all(skill.manualIds.map((id) => removeManualSkill(accessToken, id))),
+    onSuccess: () => { for (const key of SKILL_QUERIES) queryClient.invalidateQueries({ queryKey: key }); },
+  });
   const [reviewOpen, setReviewOpen] = useState(false);
   const reviewRef = useRef<HTMLDivElement>(null);
   const skills = summary?.skills ?? [];
@@ -137,7 +147,7 @@ function SkillsCard({ accessToken, cvs, summary, manual, loading }: {
 
   return (
     <section className="card scroll-mt-4" id="skills" aria-labelledby="skills-heading">
-      <CardTitle id="skills-heading" aside={cvs.length ? <AddSkill accessToken={accessToken} cvId={cvs[0].id} manual={manual} /> : null}>
+      <CardTitle id="skills-heading" aside={<AddSkill accessToken={accessToken} />}>
         Skills
       </CardTitle>
       {review.length ? (
@@ -151,12 +161,13 @@ function SkillsCard({ accessToken, cvs, summary, manual, loading }: {
       ) : null}
       {loading ? <LoadingBlock label="Loading skills" lines={4} /> : null}
       {!loading && !skills.length ? (
-        <p className="text-sm text-muted">{cvs.length ? "No skills found yet." : "Add a CV to find your skills."}</p>
+        <p className="text-sm text-muted">{cvs.length ? "No skills found yet." : "Add a CV to find your skills, or add skills yourself."}</p>
       ) : null}
       <div className="space-y-5">
         <ChipGroup title="Confirmed" skills={confirmed} kind="matched" />
         <ChipGroup title="Needs review" skills={review} kind="review" hint="Found in your CV; confirm or reject it below" />
-        <ChipGroup title="Added by you" skills={added} kind="neutral" hint="Added by hand" />
+        <ChipGroup title="Added by you" skills={added} kind="neutral" hint="Added by hand" onRemove={(skill) => remove.mutate(skill)} />
+        <ErrorText error={remove.error} />
       </div>
       {cvs.length ? (
         <div ref={reviewRef} className="mt-6 scroll-mt-4 border-t border-line pt-4">
@@ -361,7 +372,7 @@ export function CvsPage() {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="space-y-6">
           {isCandidate ? (
-            <SkillsCard accessToken={token} cvs={cvs} summary={skillData.summary} manual={skillData.manual.data ?? []} loading={skillData.loading} />
+            <SkillsCard accessToken={token} cvs={cvs} summary={skillData.summary} loading={skillData.loading} />
           ) : (
             <section className="card" aria-labelledby="skills-heading">
               <CardTitle id="skills-heading">Skills</CardTitle>

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 
 class CandidateProfileRead(BaseModel):
@@ -181,6 +181,18 @@ class CandidateSkillUpsert(BaseModel):
     skill_type: str = Field(default="skill", max_length=80)
     evidence_sentence: str = ""
     review_status: str = Field(default="approved", max_length=50)
+
+
+class ManualSkillCreate(BaseModel):
+    label: str = Field(min_length=1, max_length=255)
+
+    @field_validator("label")
+    @classmethod
+    def _label(cls, value: str) -> str:
+        value = " ".join(value.split())
+        if not value:
+            raise ValueError("The skill is required.")
+        return value
 
 
 class CandidateSkillReviewRequest(BaseModel):

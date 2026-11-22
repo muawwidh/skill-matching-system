@@ -499,13 +499,14 @@ Startup cache warm-up (2026-11-21, D059):
 Agreed follow-ups, not started (feature freeze since 2026-11-21; each needs
 the owner's go-ahead).
 
-- **Dedicated manual-skill endpoint.** Replace the "+ Add a skill" path on
-  My profile, which saves through `PUT /cvs/{id}/extracted-skills`. That
-  endpoint deletes skills added by hand that are not in the request, so
-  the page has to send them all along. Add dedicated add/remove endpoints
-  for hand-added skills, so they can never be deleted by omission. Include
-  tests, among them one showing that a CV skill review no longer removes
-  them.
+- Done (2026-11-22): **dedicated manual-skill endpoints.**
+  `POST /candidates/me/manual-skills` (label; a second copy of the same
+  skill gets 409) and `DELETE /candidates/me/manual-skills/{id}` (only the
+  candidate's own hand-added skills; CV skills get 404). Both candidate-only.
+  `PUT /cvs/{id}/extracted-skills` no longer deletes hand-added skills that
+  are left out of the request. My profile uses the new endpoints ("+ Add a
+  skill" without needing a CV; a remove button on "Added by you" chips).
+  Tests: `backend/tests/test_manual_skills.py`.
 
 ## Relevant Experience (reduced version, D060)
 

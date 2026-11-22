@@ -10,6 +10,9 @@ from app.schemas.documents import (CandidateSkillRead, CandidateSkillGroup, Cand
                                    CandidateSkillReviewRequest, JobSkillUpdate)
 
 
+MANUAL_SOURCE = "manual_review"  # skills the candidate added by hand
+
+
 class SkillService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -41,9 +44,7 @@ class SkillService:
         if not submitted_ids <= existing_skills.keys():
             raise HTTPException(status_code=404, detail="Skill not found.")
 
-        for skill_id, skill in existing_skills.items():
-            if skill_id not in submitted_ids and skill.source == "manual_review":
-                self.repository.delete_candidate_skill(skill)
+        # Skills added by hand are only removed through remove_my_manual_skill, never by leaving them out here.
 
         for item in payload.skills:
             if item.id:
@@ -79,6 +80,34 @@ class SkillService:
         self.db.commit()
         return (self.list_my_cv_skills(user, document_id) if document_id else
                 self.repository.list_candidate_skills(profile.id))
+
+    def add_my_manual_skill(self, user: User, label: str) -> CandidateSkill:
+        """Add a skill by hand (approved, not tied to a CV). The same skill twice is refused."""
+        profile = self.repository.get_or_create_candidate_profile(user.id)
+        text = " ".join(label.split())
+        normalized = text.lower()
+        if any(skill.source == MANUAL_SOURCE and skill.normalized_text == normalized
+               for skill in self.repository.list_candidate_skills(profile.id)):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="You already added this skill.")
+        skill = self.repository.create_candidate_skill(
+            candidate_profile_id=profile.id, raw_text=text, normalized_text=normalized, skill_type="skill",
+            evidence_sentence="", review_status="approved")
+        self.repository.add_processing_log("candidate_profile", profile.id, "skill_review", "success",
+                                           "Added a skill by hand.", {"skill_count": 1})
+        self.db.commit()
+        return skill
+
+    def remove_my_manual_skill(self, user: User, skill_id: UUID) -> None:
+        """Remove one skill the candidate added by hand. CV skills cannot be removed here."""
+        profile = self.repository.get_or_create_candidate_profile(user.id)
+        skill = next((item for item in self.repository.list_candidate_skills(profile.id)
+                      if item.id == skill_id and item.source == MANUAL_SOURCE), None)
+        if skill is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found.")
+        self.repository.delete_candidate_skill(skill)
+        self.repository.add_processing_log("candidate_profile", profile.id, "skill_review", "success",
+                                           "Removed a skill added by hand.", {"skill_count": 1})
+        self.db.commit()
 
     def grouped_cv_skills(self, user: User, document_id: UUID) -> list[CandidateSkillGroup]:
         skills = self.list_my_cv_skills(user, document_id)
