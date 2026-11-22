@@ -639,6 +639,39 @@ meaning" tag (one legend line when any suggestion is meaning-based).
 concept_type=occupation` (active release only). Helpers and tests:
 `frontend/src/utils/occupations.ts`, `frontend/tests/occupations.test.ts`.
 
+Frontend redesign (2026-11-22), presentation only, from an approved mockup:
+- Tokens in `frontend/tailwind.config.js` and `src/styles.css` (Inter and
+  Space Grotesk via Google Fonts; teal/amber/missing/neutral colours; 16px
+  cards; 1240px content). Shared pieces in `frontend/src/ui/` (chips,
+  coverage bar with one segment per required skill and a text label, never
+  percentages; rank and experience badges; skeletons; empty states; pager).
+- Header "SkillGap" (tab and About: "SkillGap – Skill Gap Job Matching"):
+  Dashboard / Jobs / My profile / Privacy (+ Taxonomy for staff), initials
+  account menu. `/profile` replaces `/cvs` (redirect kept).
+- Dashboard: setup steps from real data, top 3 matches, skill gaps card,
+  stats (confirmed skills and ESCO links, related experience, live jobs and
+  last import date). Jobs: list and detail panel (`JobDetailPanel`).
+  My profile: matching-profile summary, skills chips with "Add a skill",
+  work-experience timeline, My CVs with drop zone, Your data (account
+  deletion moved here from the dashboard).
+- Read-only backend additions (no change to ranking, coverage or stored
+  data): `GET /matches/skill-gaps` (most frequent required missing skills
+  across the current top 10; candidate-only), `GET /matches/job-pool`
+  (active live jobs; last import with status success or partial),
+  `GET /candidates/me/manual-skills`; results also carry
+  `not_assessed_required/preferred` and `min_required_years`.
+  Tests: `tests/test_skill_gaps.py`, `frontend/tests/coverage.test.ts`,
+  `frontend/tests/skills.test.ts`.
+- "Add a skill" uses the existing CV skill review endpoint; because that
+  endpoint removes skills added by hand that are not sent, the existing
+  ones are sent along.
+
+Demo account (dev database only, kept for demos and screenshots):
+`demo.candidate@example.com` ("Alex Demo"), a synthetic candidate with a
+made-up CV (`alex-demo-cv.txt`), 2 skills left for review, 1 skill added
+by hand and 3 work entries from the CV. No real data. The password is not
+stored in the repository.
+
 UI wording (2026-11-22): development-history wording removed from the app
 (dashboard phase text and cards, internal terms such as "embedding" and
 "retrieved" in candidate messages). About and Privacy pages rewritten as
