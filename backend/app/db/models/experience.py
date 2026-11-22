@@ -13,6 +13,7 @@ class CandidateWorkEntry(TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint("end_month IS NULL OR end_month >= start_month", name="ck_work_entry_period"),
         Index("ix_candidate_work_entries_profile", "candidate_profile_id"),
+        Index("ix_candidate_work_entries_source_cv", "source_cv_id"),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -27,6 +28,10 @@ class CandidateWorkEntry(TimestampMixin, Base):
         ForeignKey("taxonomy_concepts.id", ondelete="SET NULL"), nullable=True)
     # "manual" (typed) or "cv_detected" (pre-filled from a CV and confirmed by the candidate).
     source: Mapped[str] = mapped_column(String(40), default="manual", nullable=False)
+    # The CV a "cv_detected" entry was pre-filled from; NULL for manual entries, for entries kept
+    # when their CV was deleted, and for entries added before this was recorded.
+    source_cv_id: Mapped[UUID] = mapped_column(
+        ForeignKey("cv_documents.id", ondelete="SET NULL"), nullable=True)
 
     occupation = relationship("TaxonomyConcept", lazy="joined")
 

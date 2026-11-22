@@ -74,8 +74,13 @@ class CvService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CV not found.")
         return document
 
-    def delete_my_cv(self, user: User, document_id: UUID) -> None:
+    def delete_my_cv(self, user: User, document_id: UUID, remove_work_entries: bool = False) -> None:
+        """Delete one CV. Work entries taken from it are removed with `remove_work_entries`, otherwise
+        kept without the link; manual work entries always stay."""
+        from app.repositories.work_entry_repository import WorkEntryRepository
+
         document = self.get_my_cv(user, document_id)
+        WorkEntryRepository(self.db).release_cv(document.candidate_profile_id, document.id, remove_work_entries)
         self.repository.delete_cv_document(document)
         self.repository.add_processing_log("cv_document", document_id, "deletion", "success", "CV deleted.")
         self.db.commit()

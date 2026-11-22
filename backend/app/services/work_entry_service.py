@@ -39,6 +39,7 @@ class WorkEntryService:
         end = entry.end_month or current_month(self.today)
         return {"id": entry.id, "title": entry.title, "start_month": date_to_month(entry.start_month),
                 "end_month": date_to_month(entry.end_month), "source": entry.source,
+                "source_cv_id": entry.source_cv_id,
                 "months": merged_months([(entry.start_month, end)]),
                 "occupation": catalog.describe(entry.occupation_concept_id)}
 
@@ -58,6 +59,8 @@ class WorkEntryService:
             raise HTTPException(status_code=422, detail="Choose an ESCO occupation from the suggestions.")
         entry.title, entry.start_month, entry.end_month = payload.title, start, end
         entry.occupation_concept_id, entry.source = payload.occupation_concept_id, payload.source
+        if payload.source == "manual":
+            entry.source_cv_id = None
 
     def create(self, user: User, payload: WorkEntryWrite) -> dict:
         profile_id = self._profile_id(user)
@@ -65,6 +68,10 @@ class WorkEntryService:
             raise HTTPException(status_code=422, detail=f"At most {MAX_ENTRIES} work entries.")
         entry = CandidateWorkEntry(candidate_profile_id=profile_id)
         self._apply(entry, payload)
+        if payload.source == "cv_detected" and payload.source_cv_id is not None:
+            if self.documents.get_cv_document(payload.source_cv_id, profile_id) is None:
+                raise HTTPException(status_code=422, detail="The CV for this entry was not found.")
+            entry.source_cv_id = payload.source_cv_id
         self.repository.add(entry)
         self.db.commit()
         return self._read(entry, occupation_catalog(self.db))
@@ -140,12 +147,12 @@ class WorkEntryService:
         stored = {(e.start_month, e.end_month) for e in self.repository.list_entries(profile_id)}
         found: dict[tuple, dict] = {}
         signal = self._title_signal()
-        for text in self.repository.work_section_texts(profile_id, WORK_SECTIONS):
+        for cv_id, text in self.repository.work_section_texts(profile_id, WORK_SECTIONS):
             for item in detect_entries(text, self.today, signal):
                 key = (item.start_month, item.end_month)
                 if key in stored or key in found:
                     continue
-                found[key] = {"title": item.title, "title_choices": list(item.title_choices),
+                found[key] = {"title": item.title, "title_choices": list(item.title_choices), "cv_id": cv_id,
                               "start_month": date_to_month(item.start_month),
                               "end_month": date_to_month(item.end_month), "month_precision": item.month_precision}
         self.db.commit()

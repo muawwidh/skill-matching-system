@@ -106,3 +106,66 @@ def test_detected_entry_asks_instead_of_offering_the_company(client, db_session)
     _paste_cv(client, headers, "Work Experience\nExample GmbH | Northwind | 2016 - 2018\n\nSkills\nPython")
     detected = client.get("/candidates/me/work-entries/detected", headers=headers).json()
     assert [(d["title"], d["title_choices"]) for d in detected] == [("", ["Northwind"])]
+
+
+def _cv_with_entry(client, headers, db_session):
+    """One CV, one entry added from its detected dates, one manual entry. Returns (cv_id, cv-entry, manual)."""
+    _paste_cv(client, headers, "Work Experience\nData Analyst | 2016 - 2018\n\nSkills\nPython")
+    cv_id = client.get("/cvs", headers=headers).json()[0]["id"]
+    detected = client.get("/candidates/me/work-entries/detected", headers=headers).json()
+    assert [d["cv_id"] for d in detected] == [cv_id]
+    from_cv = client.post("/candidates/me/work-entries", headers=headers, json={
+        "title": detected[0]["title"], "start_month": detected[0]["start_month"],
+        "end_month": detected[0]["end_month"], "source": "cv_detected", "source_cv_id": cv_id}).json()
+    manual = client.post("/candidates/me/work-entries", headers=headers, json={
+        "title": "Teacher", "start_month": "2019-01", "end_month": "2020-01"}).json()
+    assert from_cv["source_cv_id"] == cv_id and manual["source_cv_id"] is None
+    return cv_id, from_cv, manual
+
+
+def test_deleting_a_cv_can_remove_the_entries_taken_from_it(client, db_session):
+    add_esco_occupations(db_session)
+    headers = register(client, "candidate@example.com")
+    cv_id, from_cv, manual = _cv_with_entry(client, headers, db_session)
+    assert client.delete(f"/cvs/{cv_id}?remove_work_entries=true", headers=headers).status_code == 204
+    assert [e["id"] for e in client.get("/candidates/me/work-entries", headers=headers).json()] == [manual["id"]]
+
+
+def test_deleting_a_cv_can_keep_the_entries_taken_from_it(client, db_session):
+    add_esco_occupations(db_session)
+    headers = register(client, "candidate@example.com")
+    cv_id, from_cv, manual = _cv_with_entry(client, headers, db_session)
+    assert client.delete(f"/cvs/{cv_id}?remove_work_entries=false", headers=headers).status_code == 204
+    kept = {e["id"]: e for e in client.get("/candidates/me/work-entries", headers=headers).json()}
+    assert set(kept) == {from_cv["id"], manual["id"]}
+    assert kept[from_cv["id"]]["source_cv_id"] is None and kept[from_cv["id"]]["source"] == "cv_detected"
+    # Without the parameter the entries are kept too (the dialog always sends it).
+    assert client.delete(f"/cvs/{cv_id}", headers=headers).status_code == 404
+
+
+def test_source_cv_must_be_own_and_is_ignored_for_manual_entries(client, db_session):
+    add_esco_occupations(db_session)
+    headers = register(client, "candidate@example.com")
+    other = register(client, "other@example.com")
+    cv_id, from_cv, _ = _cv_with_entry(client, headers, db_session)
+    body = {"title": "x", "start_month": "2020-01", "source": "cv_detected", "source_cv_id": cv_id}
+    assert client.post("/candidates/me/work-entries", headers=other, json=body).status_code == 422
+    manual = client.post("/candidates/me/work-entries", headers=headers, json={**body, "source": "manual"}).json()
+    assert manual["source_cv_id"] is None
+    # Editing keeps the link; switching an entry to manual drops it.
+    edited = client.put(f"/candidates/me/work-entries/{from_cv['id']}", headers=headers, json={
+        "title": "Analyst", "start_month": "2016-01", "end_month": "2018-12", "source": "cv_detected"}).json()
+    assert edited["source_cv_id"] == cv_id
+    edited = client.put(f"/candidates/me/work-entries/{from_cv['id']}", headers=headers, json={
+        "title": "Analyst", "start_month": "2016-01", "end_month": "2018-12", "source": "manual"}).json()
+    assert edited["source_cv_id"] is None
+
+
+def test_account_deletion_removes_cv_and_manual_entries(client, db_session):
+    add_esco_occupations(db_session)
+    headers = register(client, "candidate@example.com")
+    _cv_with_entry(client, headers, db_session)
+    assert db_session.scalar(select(func.count()).select_from(CandidateWorkEntry)) == 2
+    assert client.post("/auth/delete-account", headers=headers,
+                       json={"password": "correct-horse-password"}).status_code == 204
+    assert db_session.scalar(select(func.count()).select_from(CandidateWorkEntry)) == 0

@@ -99,7 +99,7 @@ export function JobMatchPanel({ match, rankTotal }: JobMatchPanelProps) {
         <h3 className="text-sm font-semibold text-ink">Skill coverage</h3>
         <span
           className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
-          title="Position among the jobs retrieved for your profile by semantic similarity. Skill coverage below explains the job; it does not change the order."
+          title="Position among the jobs found for your profile, closest in meaning first. Skill coverage below explains the job; it does not change the order."
         >
           #{match.rank} of {rankTotal}
         </span>

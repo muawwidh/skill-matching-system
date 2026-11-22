@@ -9,6 +9,8 @@ export type WorkEntry = {
   start_month: string;
   end_month: string | null;
   source: "manual" | "cv_detected";
+  /** The CV a "cv_detected" entry was taken from; null for manual entries. */
+  source_cv_id: string | null;
   months: number;
   occupation: Occupation | null;
 };
@@ -19,12 +21,14 @@ export type WorkEntryPayload = {
   end_month: string | null;
   occupation_concept_id: string | null;
   source: "manual" | "cv_detected";
+  source_cv_id?: string | null;
 };
 
 export type DetectedWorkEntry = {
   title: string;
   /** Offered when the title is uncertain ("" title); never company lines. */
   title_choices?: string[];
+  cv_id: string;
   start_month: string;
   end_month: string | null;
   month_precision: boolean;

@@ -92,10 +92,10 @@ function RecommendationSummary({ data }: { data: RecommendationList }) {
   return (
     <p className="text-sm text-slate-600">
       {data.results.length === 0
-        ? "No jobs could be retrieved for your profile."
-        : `Showing ${first}–${last} of ${data.total} best-matching jobs (most similar to your matching profile, top ${data.top_n} of ${data.active_jobs} active jobs).`}
+        ? "No jobs could be found for your profile."
+        : `Showing ${first}–${last} of ${data.total} best-matching jobs (closest to your matching profile, top ${data.top_n} of ${data.active_jobs} active jobs).`}
       {data.unindexed_jobs > 0
-        ? ` ${data.unindexed_jobs} active job${data.unindexed_jobs === 1 ? " is" : "s are"} not yet indexed and cannot be retrieved.`
+        ? ` ${data.unindexed_jobs} active job${data.unindexed_jobs === 1 ? " is" : "s are"} still being prepared and cannot be shown yet.`
         : ""}
     </p>
   );

@@ -3,6 +3,7 @@ import { FileUp, Send, Trash2 } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 import { deleteCv, listCvs, pasteCv, uploadCv } from "../api/documents";
+import { listWorkEntries } from "../api/experience";
 import { CandidateTaxonomyLinks } from "../components/CandidateTaxonomyLinks";
 import { MatchingProfileBox } from "../components/MatchingProfileBox";
 import { SectionList } from "../components/SectionList";
@@ -22,15 +23,30 @@ export function CvsPage() {
   const [pasteConsent, setPasteConsent] = useState(false);
   const [uploadConsent, setUploadConsent] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [removeEntries, setRemoveEntries] = useState(true);
 
   function invalidateProfile() {
     queryClient.invalidateQueries({ queryKey: ["cvs"] });
     queryClient.invalidateQueries({ queryKey: ["matching-profile"] });
     queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+    queryClient.invalidateQueries({ queryKey: ["work-entries"] });
+  }
+
+  // Work entries taken from each CV, for the delete dialog. Manual entries have no source CV.
+  const workEntries = useQuery({
+    queryKey: ["work-entries"],
+    queryFn: () => listWorkEntries(accessToken as string),
+    enabled: Boolean(accessToken) && isCandidate,
+  });
+  const entriesFrom = (cvId: string) => (workEntries.data ?? []).filter((entry) => entry.source_cv_id === cvId).length;
+
+  function askDelete(cvId: string) {
+    setRemoveEntries(true);
+    setConfirmDelete(cvId);
   }
 
   const deleteMutation = useMutation({
-    mutationFn: (cvId: string) => deleteCv(accessToken as string, cvId),
+    mutationFn: (cvId: string) => deleteCv(accessToken as string, cvId, removeEntries),
     onSuccess: () => {
       setConfirmDelete(null);
       invalidateProfile();
@@ -133,7 +149,7 @@ export function CvsPage() {
                   <button
                     className="inline-flex items-center gap-1 rounded-md border border-red-300 px-2 py-1 text-sm text-red-700 disabled:opacity-50"
                     disabled={deleteMutation.isPending}
-                    onClick={() => setConfirmDelete(cv.id)}
+                    onClick={() => askDelete(cv.id)}
                     type="button"
                   >
                     <Trash2 size={16} aria-hidden="true" />
@@ -149,6 +165,13 @@ export function CvsPage() {
                     your reviews of them, and their taxonomy links. Skills you added by hand stay in your profile. Job matching
                     is then rebuilt from your remaining CVs and manual skills.
                   </p>
+                  {isCandidate && entriesFrom(cv.id) > 0 ? (
+                    <label className="mt-2 flex items-center gap-2">
+                      <input checked={removeEntries} onChange={(event) => setRemoveEntries(event.target.checked)} type="checkbox" />
+                      Also remove {entriesFrom(cv.id)} work {entriesFrom(cv.id) === 1 ? "entry" : "entries"} taken from this CV
+                    </label>
+                  ) : null}
+                  {isCandidate ? <p className="mt-1 text-xs">Work entries you typed in yourself always stay.</p> : null}
                   {deleteMutation.error ? <p role="alert" className="mt-2 text-red-700">{deleteMutation.error.message}</p> : null}
                   <div className="mt-3 flex gap-2">
                     <button className="rounded-md bg-red-700 px-3 py-1.5 font-medium text-white disabled:opacity-50" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(cv.id)} type="button">

@@ -39,8 +39,9 @@ export function listCvs(accessToken: string) {
   return apiRequest<CvDocument[]>("/cvs", { accessToken });
 }
 
-export function deleteCv(accessToken: string, cvId: string) {
-  return apiRequest<void>(`/cvs/${cvId}`, { method: "DELETE", accessToken });
+/** Delete a CV; `removeWorkEntries` also removes the work entries taken from it (manual ones always stay). */
+export function deleteCv(accessToken: string, cvId: string, removeWorkEntries: boolean) {
+  return apiRequest<void>(`/cvs/${cvId}?remove_work_entries=${removeWorkEntries}`, { method: "DELETE", accessToken });
 }
 
 export function getMatchingProfile(accessToken: string) {

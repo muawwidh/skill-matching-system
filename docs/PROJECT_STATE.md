@@ -617,6 +617,22 @@ adjacent lines, is the title; otherwise the form asks "Which of these is
 your job title?" (title-like parts, or up to 4 non-company parts). Company
 parts are never offered or stored. Tests: `tests/test_work_titles.py`.
 
+Work entries and CV deletion (2026-11-22, migration
+`0013_work_entry_source_cv`): an entry added from a CV suggestion stores
+`source_cv_id` (the detected list now returns `cv_id`); manual entries store
+none, and switching an entry to manual drops the link. `DELETE
+/cvs/{id}?remove_work_entries=true|false` (default false) removes the entries
+taken from that CV or keeps them without the link; manual entries always
+stay. The delete dialog shows "Also remove N work entries taken from this
+CV", checked by default. Account deletion removes all entries as before.
+Tests: `tests/test_work_entries.py`.
+
+UI wording (2026-11-22): development-history wording removed from the app
+(dashboard phase text and cards, internal terms such as "embedding" and
+"retrieved" in candidate messages). About and Privacy pages rewritten as
+short plain explanations (consent, what is stored, owner-only results,
+deletion, contact stripping on live jobs, guidance not hiring).
+
 ## Early Matching Prototype
 
 Migration:

@@ -1198,6 +1198,12 @@ CVs for matching.
   asked for or stored; only title, months and the chosen occupation. Entries
   are visible to the candidate only, editable and deletable, and removed with
   the account. Staff cannot read them.
+- **CV deletion.** An entry added from a CV suggestion records that CV
+  (`source_cv_id`, migration 0013); manual entries record none. Deleting a CV
+  offers "Also remove N work entries taken from this CV", checked by default;
+  unchecked, those entries stay and lose the link. Manual entries always stay.
+  Entries added before the link was recorded have none and stay like manual
+  ones.
 - **Isolation.** The offline evaluation is unchanged: it never passes the
   filter, evaluation jobs get no occupation or minimum, and the evaluation
   profiles have no work entries.

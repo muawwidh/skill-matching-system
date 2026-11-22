@@ -51,6 +51,7 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
         end_month: value.present ? null : value.end_month,
         occupation_concept_id: value.occupation_concept_id,
         source: value.source,
+        source_cv_id: value.source === "cv_detected" ? value.source_cv_id ?? null : null,
       };
       return value.id ? updateWorkEntry(accessToken, value.id, payload) : createWorkEntry(accessToken, payload);
     },
@@ -71,12 +72,13 @@ export function WorkEntriesPanel({ accessToken }: { accessToken: string }) {
       occupation_concept_id: entry.occupation?.concept_id ?? null,
       occupation: entry.occupation,
       source: entry.source,
+      source_cv_id: entry.source_cv_id,
     });
   }
 
   function useDetected(item: DetectedWorkEntry) {
     setDraft({ ...emptyDraft, title: item.title, start_month: item.start_month, end_month: item.end_month,
-      present: item.end_month === null, source: "cv_detected", titleChoices: item.title ? [] : item.title_choices ?? [] });
+      present: item.end_month === null, source: "cv_detected", source_cv_id: item.cv_id, titleChoices: item.title ? [] : item.title_choices ?? [] });
   }
 
   function submit(event: FormEvent) {

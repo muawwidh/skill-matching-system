@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { deleteAccount } from "../api/auth";
 import { useAuth } from "../features/auth/AuthProvider";
 
-/** "Delete my account and data" for candidate accounts (D047). */
+/** "Delete my account and data" for candidate accounts. */
 export function DeleteAccountPanel({ accessToken }: { accessToken: string }) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -33,8 +33,9 @@ export function DeleteAccountPanel({ accessToken }: { accessToken: string }) {
     <section className="rounded-lg border border-red-200 bg-white p-5" aria-labelledby="delete-account-heading">
       <h2 id="delete-account-heading" className="text-lg font-semibold text-ink">Delete my account and data</h2>
       <p className="mt-2 text-sm text-slate-600">
-        This permanently deletes your account, all of your CVs, the skills extracted from them and the skills you added,
-        your skill reviews and taxonomy links, your matching profile embedding and your job matches. It cannot be undone.
+        This permanently deletes your account, all of your CVs, the skills found in them and the skills you added, your
+        decisions on those skills, your work entries, your Jobs page settings and the profile used to find jobs for you.
+        It cannot be undone.
       </p>
       {!open ? (
         <button className="mt-3 inline-flex items-center gap-2 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700" onClick={() => setOpen(true)} type="button">

@@ -225,11 +225,11 @@ PROFILE_MESSAGES = {
     "profile_not_ready": "Add a CV with consent to processing to build your matching profile.",
     "no_approved_skills": "Approve at least one skill on the CVs page. Your matching profile is built "
                           "from approved skills only.",
-    "profile_not_indexed": "Your matching profile has no up-to-date embedding, so jobs cannot be retrieved "
-                           "yet. It is rebuilt automatically after your skills change; if this message stays, "
-                           "the embedding model is unavailable on the server.",
-    "retrieval_unavailable": "Job retrieval is unavailable on the server (the pinned embedding model "
-                             "or tokenizer is missing). Please contact the administrator.",
+    "profile_not_indexed": "Your matching profile is being updated, so jobs cannot be shown yet. This "
+                           "happens automatically after your skills change; if this message stays, job "
+                           "search is unavailable on the server.",
+    "retrieval_unavailable": "Job search is unavailable on the server right now. Please contact the "
+                             "administrator.",
 }
 
 

@@ -30,6 +30,9 @@ class WorkEntryWrite(BaseModel):
     end_month: str | None = None
     occupation_concept_id: UUID | None = None
     source: str = Field(default="manual", pattern=r"^(manual|cv_detected)$")
+    # The CV a "cv_detected" entry comes from (from the detected list); recorded on create only,
+    # ignored for manual entries.
+    source_cv_id: UUID | None = None
 
     @field_validator("title")
     @classmethod
@@ -59,6 +62,7 @@ class WorkEntryRead(BaseModel):
     start_month: str
     end_month: str | None
     source: str
+    source_cv_id: UUID | None = None
     months: int
     occupation: OccupationRead | None
 
@@ -67,6 +71,7 @@ class DetectedWorkEntryRead(BaseModel):
     """A dated entry found in the candidate's CV; shown to pre-fill the form, never stored by itself."""
     title: str  # "" when uncertain: ask with `title_choices`
     title_choices: list[str] = []  # "Which of these is your job title?"; never company-like parts
+    cv_id: UUID  # the CV the dates were found in
     start_month: str
     end_month: str | None
     month_precision: bool

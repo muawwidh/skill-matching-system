@@ -88,7 +88,7 @@ def test_profile_without_embedding_gets_a_notice_and_no_results(client, db_sessi
 
     body = client.get("/matches/recommendations", headers=headers).json()
     assert body["status"] == "profile_not_indexed" and body["results"] == []
-    assert "no up-to-date embedding" in body["message"]
+    assert "being updated" in body["message"]
 
 
 def test_candidate_without_cv_is_not_ready(client, fake_retrieval):

@@ -61,10 +61,11 @@ def get_cv(
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_cv(
     document_id: UUID,
+    remove_work_entries: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> None:
-    CvService(db).delete_my_cv(current_user, document_id)
+    CvService(db).delete_my_cv(current_user, document_id, remove_work_entries)
 
 
 @router.post("/{document_id}/process", response_model=CvDocumentRead)

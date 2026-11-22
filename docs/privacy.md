@@ -19,7 +19,8 @@ The application is decision support only and must not be used as an automatic hi
 Candidates can enter their work history on the CVs page: a job title, a start month, an end month or
 "present", and optionally an ESCO occupation they choose. No employer, location or other detail is asked
 for or stored. Dates found in a CV are only offered to pre-fill the form; nothing is saved until the
-candidate adds the entry. Entries are visible to the candidate only and can be edited or deleted at any
+candidate adds the entry. An entry added from a CV remembers which CV it came from, so it can be
+removed with that CV. Entries are visible to the candidate only and can be edited or deleted at any
 time. Staff accounts cannot read or use them.
 
 ## Deleting a CV
@@ -27,7 +28,9 @@ time. Staff accounts cannot read or use them.
 A candidate can delete any of their CVs on the CVs page, after a confirmation. This removes the CV text and
 its sections, the skills extracted from it with their review decisions, and their taxonomy link suggestions
 and selected links. Skills the candidate added by hand belong to the profile and stay until the candidate
-removes them in skill review. Work entries also belong to the profile and stay until the candidate
+removes them in skill review. Work entries the candidate added from this CV's dates are removed too,
+unless the candidate unticks "Also remove N work entries taken from this CV" (ticked by default); kept
+entries lose the link to the deleted CV. Work entries typed in by hand always stay until the candidate
 deletes them. The matching profile is rebuilt from the remaining CVs and manual skills
 (D041, D046). Taxonomy review events for that CV's skills are retained; they hold concept labels and
 reviewer IDs, not CV text.

@@ -31,8 +31,26 @@ class WorkEntryRepository:
         self.db.delete(entry)
         self.db.flush()
 
-    def work_section_texts(self, profile_id: UUID, section_types: frozenset[str]) -> list[str]:
-        return list(self.db.scalars(select(CvSection.content).join(CvDocument, CvDocument.id == CvSection.cv_document_id)
+    def entries_from_cv(self, profile_id: UUID, cv_id: UUID) -> list[CandidateWorkEntry]:
+        return list(self.db.scalars(select(CandidateWorkEntry).where(
+            CandidateWorkEntry.candidate_profile_id == profile_id, CandidateWorkEntry.source_cv_id == cv_id)))
+
+    def release_cv(self, profile_id: UUID, cv_id: UUID, remove_entries: bool) -> int:
+        """Before a CV is deleted: remove the entries taken from it, or keep them without the link.
+        Manual entries never have a source CV, so they are never touched. Returns rows affected."""
+        entries = self.entries_from_cv(profile_id, cv_id)
+        if remove_entries:
+            for entry in entries:
+                self.db.delete(entry)
+        else:
+            for entry in entries:
+                entry.source_cv_id = None
+        self.db.flush()
+        return len(entries)
+
+    def work_section_texts(self, profile_id: UUID, section_types: frozenset[str]) -> list[tuple[UUID, str]]:
+        return list(self.db.execute(select(CvDocument.id, CvSection.content)
+                                    .join(CvDocument, CvDocument.id == CvSection.cv_document_id)
                                     .where(CvDocument.candidate_profile_id == profile_id,
                                            CvDocument.status == "processed",
                                            CvSection.section_type.in_(sorted(section_types)))
