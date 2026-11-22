@@ -36,24 +36,24 @@ export function RegisterPage() {
 
   return (
     <AuthCard
-      title="Create Account"
-      subtitle="Start a decision-support profile"
+      title="Create your account"
+      subtitle="Upload your CV and see which jobs fit your skills."
       footerText="Already registered?"
       footerLinkText="Sign in"
       footerHref="/login"
     >
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField label="Full name" error={form.formState.errors.full_name?.message}>
-          <input className="w-full rounded-md border border-slate-300 px-3 py-2" {...form.register("full_name")} />
+          <input className="field w-full" {...form.register("full_name")} />
         </FormField>
         <FormField label="Email" error={form.formState.errors.email?.message}>
-          <input className="w-full rounded-md border border-slate-300 px-3 py-2" {...form.register("email")} />
+          <input className="field w-full" {...form.register("email")} />
         </FormField>
         <FormField label="Password" error={form.formState.errors.password?.message}>
-          <input className="w-full rounded-md border border-slate-300 px-3 py-2" type="password" {...form.register("password")} />
+          <input className="field w-full" type="password" {...form.register("password")} />
         </FormField>
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
-        <button className="flex w-full items-center justify-center gap-2 rounded-md bg-ocean px-4 py-2.5 font-medium text-white hover:bg-teal-800" type="submit">
+        {error ? <p className="text-sm text-miss-text">{error}</p> : null}
+        <button className="btn-primary w-full py-2.5" type="submit">
           <UserPlus size={18} aria-hidden="true" />
           Register
         </button>

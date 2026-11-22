@@ -19,7 +19,7 @@ const sections = [
   },
   {
     title: "Deleting your data",
-    text: "You can delete a CV on the CVs page; the skills found in it go with it, and so do the work entries taken from it unless you choose to keep them. Work entries you typed in yourself stay until you delete them. You can delete your account and all your data on the Dashboard. Backups made before a deletion keep the data until they are replaced.",
+    text: "You can delete a CV on My profile; the skills found in it go with it, and so do the work entries taken from it unless you choose to keep them. Work entries you typed in yourself stay until you delete them. You can delete your account and all your data on My profile, under “Your data”. Backups made before a deletion keep the data until they are replaced.",
   },
   {
     title: "Job postings",
@@ -33,19 +33,21 @@ const sections = [
 
 export function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-semibold text-ink">Privacy</h1>
+    <div className="mx-auto max-w-3xl">
+      <section className="card p-8">
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">Privacy</h1>
       <dl className="mt-6 space-y-5">
         {sections.map((section) => (
           <div key={section.title}>
             <dt className="font-semibold text-ink">{section.title}</dt>
-            <dd className="mt-1 leading-7 text-slate-700">{section.text}</dd>
+            <dd className="mt-1 leading-7 text-ink">{section.text}</dd>
           </div>
         ))}
       </dl>
-      <Link className="mt-6 inline-block font-medium text-ocean hover:text-teal-900" to="/dashboard">
+      <Link className="mt-6 inline-block link" to="/dashboard">
         Back to dashboard
       </Link>
-    </main>
+      </section>
+    </div>
   );
 }

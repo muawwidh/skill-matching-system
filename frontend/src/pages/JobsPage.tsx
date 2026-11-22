@@ -175,8 +175,8 @@ function CandidateJobs({ accessToken }: { accessToken: string }) {
             pageSize={pageSize}
           />
           <button className="btn-secondary" disabled={refresh.isPending} onClick={() => refresh.mutate()} type="button">
-            <RefreshCw size={16} className={refresh.isPending ? "animate-spin" : ""} aria-hidden="true" />
-            Refresh
+            <RefreshCw size={16} aria-hidden="true" />
+            {refresh.isPending ? "Refreshing…" : "Refresh"}
           </button>
         </div>
       </div>

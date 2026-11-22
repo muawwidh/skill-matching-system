@@ -33,7 +33,7 @@ function OccupationLabel({ item }: { item: Occupation }) {
   return (
     <span>
       <span className="font-medium text-ink">{item.label}</span>
-      {item.isco_unit_group ? <span className="block text-xs text-slate-500">{item.isco_unit_group}</span> : null}
+      {item.isco_unit_group ? <span className="block text-xs text-muted">{item.isco_unit_group}</span> : null}
     </span>
   );
 }
@@ -50,23 +50,23 @@ function OccupationSearch({ accessToken, onPick }: { accessToken: string; onPick
   });
   const items = occupationSearchResults(results.data ?? [], query);
   return (
-    <div className="mt-2 rounded-md border border-slate-200 bg-white p-2">
+    <div className="mt-2 rounded-lg border border-line bg-white p-2">
       <input
         aria-label="Search other occupation"
         autoFocus
-        className="w-full rounded-md border border-slate-300 px-2 py-1"
+        className="w-full rounded-lg border border-line px-2 py-1"
         onChange={(event) => setText(event.target.value)}
         placeholder="Type an occupation, e.g. data analyst"
         value={text}
       />
-      {results.isFetching ? <p className="mt-1 text-xs text-slate-500">Searching…</p> : null}
+      {results.isFetching ? <p className="mt-1 text-xs text-muted">Searching…</p> : null}
       {query.length > 1 && !results.isFetching && items.length === 0 ? (
-        <p className="mt-1 text-xs text-slate-500">No ESCO occupation found.</p>
+        <p className="mt-1 text-xs text-muted">No ESCO occupation found.</p>
       ) : null}
       <ul className="mt-1">
         {items.map((item) => (
           <li key={item.concept_id}>
-            <button className="w-full rounded px-2 py-1 text-left hover:bg-slate-100" onClick={() => onPick(item)} type="button">
+            <button className="w-full rounded-lg px-2 py-1 text-left hover:bg-neutral-bg" onClick={() => onPick(item)} type="button">
               {item.label}
             </button>
           </li>
@@ -106,11 +106,11 @@ export function OccupationPicker({ accessToken, title, value, preselected, missi
 
   return (
     <fieldset className="text-sm">
-      <legend className="text-slate-700">ESCO occupation</legend>
-      {query.length <= 1 ? <p className="mt-1 text-xs text-slate-500">Type the job title to see suggestions.</p> : null}
-      {suggestions.isFetching ? <p className="mt-1 text-xs text-slate-500">Looking up occupations…</p> : null}
+      <legend className="text-ink">ESCO occupation</legend>
+      {query.length <= 1 ? <p className="mt-1 text-xs text-muted">Type the job title to see suggestions.</p> : null}
+      {suggestions.isFetching ? <p className="mt-1 text-xs text-muted">Looking up occupations…</p> : null}
       {query.length > 1 && ready && options.length === 0 ? (
-        <p className="mt-1 text-xs text-slate-500">No matching ESCO occupation. Search for another one, or choose None of these.</p>
+        <p className="mt-1 text-xs text-muted">No matching ESCO occupation. Search for another one, or choose None of these.</p>
       ) : null}
       <div className="mt-1 space-y-1.5">
         {options.map((item) => (
@@ -125,17 +125,17 @@ export function OccupationPicker({ accessToken, title, value, preselected, missi
         </label>
       </div>
       {meaningBased ? (
-        <p className="mt-1 text-xs text-slate-500">Some suggestions are based on similar meaning rather than matching words. Check that they fit.</p>
+        <p className="mt-1 text-xs text-muted">Some suggestions are based on similar meaning rather than matching words. Check that they fit.</p>
       ) : null}
       {searching ? (
         <OccupationSearch accessToken={accessToken} onPick={(occupation) => { onChange(occupation, false); setSearching(false); }} />
       ) : (
-        <button className="mt-2 text-sm font-medium text-ocean hover:text-teal-900" onClick={() => setSearching(true)} type="button">
+        <button className="mt-2 text-sm font-medium text-ocean hover:text-teal-hover" onClick={() => setSearching(true)} type="button">
           Search other occupation…
         </button>
       )}
       {missing && value === undefined ? (
-        <p role="alert" className="mt-2 text-sm text-amber-800">
+        <p role="alert" className="mt-2 text-sm text-caution-text">
           Pick an occupation so this experience can be compared with jobs, or choose None of these
         </p>
       ) : null}

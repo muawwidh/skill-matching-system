@@ -36,26 +36,26 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      title="Skill Gap Matching"
-      subtitle="Sign in to review recommendations"
+      title="Sign in"
+      subtitle="See the jobs that fit your skills and the skills you are missing."
       footerText="New here?"
       footerLinkText="Create an account"
       footerHref="/register"
     >
       {accountDeleted ? (
-        <p role="status" className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
+        <p role="status" className="mb-4 rounded-lg border border-teal bg-teal-soft p-3 text-sm text-teal-text">
           Your account and data have been deleted.
         </p>
       ) : null}
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField label="Email" error={form.formState.errors.email?.message}>
-          <input className="w-full rounded-md border border-slate-300 px-3 py-2" {...form.register("email")} />
+          <input className="field w-full" {...form.register("email")} />
         </FormField>
         <FormField label="Password" error={form.formState.errors.password?.message}>
-          <input className="w-full rounded-md border border-slate-300 px-3 py-2" type="password" {...form.register("password")} />
+          <input className="field w-full" type="password" {...form.register("password")} />
         </FormField>
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
-        <button className="flex w-full items-center justify-center gap-2 rounded-md bg-ocean px-4 py-2.5 font-medium text-white hover:bg-teal-800" type="submit">
+        {error ? <p className="text-sm text-miss-text">{error}</p> : null}
+        <button className="btn-primary w-full py-2.5" type="submit">
           <LogIn size={18} aria-hidden="true" />
           Sign in
         </button>

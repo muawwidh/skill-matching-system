@@ -6,6 +6,7 @@ import { listJobSkills, reviewJobSkill } from "../api/documents";
 import type { JobSkill } from "../types/documents";
 import { AUTOMATIC_TOOLTIP, reviewStatusLabel } from "../utils/reviewStatus";
 import { CandidateSkillGroups, skillSourceLabel } from "./CandidateSkillGroups";
+import { LoadingBlock } from "../ui/Feedback";
 
 type SkillReviewPanelProps = {
   accessToken: string;
@@ -76,35 +77,35 @@ function JobSkillGroups({ accessToken, jobId, canReview, liveJob }: { accessToke
   });
 
   if (skillQuery.isLoading) {
-    return <p className="text-sm text-slate-500">Loading extracted skills...</p>;
+    return <LoadingBlock label="Loading extracted skills" />;
   }
   const groups = groupJobSkills(skillQuery.data ?? []);
   if (groups.length === 0) {
-    return <p className="text-sm text-slate-500">No skills or indicators extracted yet.</p>;
+    return <p className="text-sm text-muted">No skills or indicators extracted yet.</p>;
   }
 
   return (
-    <div className="mt-4 rounded-md border border-slate-200 bg-white p-3">
+    <div className="mt-4 rounded-lg border border-line bg-white p-3">
       <h3 className="mb-3 text-sm font-semibold text-ink">Extracted Skills and Indicators</h3>
-      {review.error ? <p role="alert" className="mb-2 text-sm text-red-700">{review.error.message}</p> : null}
+      {review.error ? <p role="alert" className="mb-2 text-sm text-miss-text">{review.error.message}</p> : null}
       <div className="space-y-2">
         {groups.map((group) => {
           const statuses = new Set(group.occurrences.map((item) => item.review_status));
           const withEvidence = group.occurrences.filter((item) => item.evidence_sentence);
           return (
-            <article key={group.key} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <article key={group.key} className="rounded-lg border border-line bg-mist p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium text-ink">{group.label}</span>
-                <span className="rounded bg-amber-100 px-2 py-1 text-xs text-ember">{group.skillType.replace(/_/g, " ")}</span>
-                <span className="rounded bg-slate-200 px-2 py-1 text-xs text-slate-700" title="Strongest requirement type among occurrences">
+                <span className="rounded-lg bg-caution-bg px-2 py-1 text-xs text-caution-text">{group.skillType.replace(/_/g, " ")}</span>
+                <span className="rounded-lg bg-neutral-bg px-2 py-1 text-xs text-ink" title="Strongest requirement type among occurrences">
                   {group.requirement}
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted">
                   {group.occurrences.length} occurrence{group.occurrences.length === 1 ? "" : "s"}
                   {sectionList(group.occurrences) ? ` · from ${sectionList(group.occurrences)}` : ""}
                 </span>
                 <span
-                  className="rounded bg-white px-2 py-1 text-xs text-slate-600"
+                  className="rounded-lg bg-white px-2 py-1 text-xs text-muted"
                   title={liveJob && statuses.has("pending") ? AUTOMATIC_TOOLTIP : undefined}
                 >
                   {statuses.size > 1 ? `Mixed: ${reviewSummary(group.occurrences, liveJob)}` : reviewSummary(group.occurrences, liveJob)}
@@ -113,7 +114,7 @@ function JobSkillGroups({ accessToken, jobId, canReview, liveJob }: { accessToke
               {withEvidence.length || canReview ? (
                 <div className="mt-2">
                   <button
-                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600"
+                    className="inline-flex items-center gap-1 rounded-lg border border-line bg-white px-2 py-1 text-xs font-medium text-muted"
                     onClick={() => setExpandedEvidence((current) => ({ ...current, [group.key]: !current[group.key] }))}
                     type="button"
                   >
@@ -123,8 +124,8 @@ function JobSkillGroups({ accessToken, jobId, canReview, liveJob }: { accessToke
                   {expandedEvidence[group.key] ? (
                     <ul className="mt-2 space-y-2">
                       {group.occurrences.map((item) => (
-                        <li key={item.id} className="rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-600">
-                          <p className="mb-1 text-xs text-slate-500">
+                        <li key={item.id} className="rounded-lg border border-line bg-white p-2 text-sm text-muted">
+                          <p className="mb-1 text-xs text-muted">
                             {item.raw_text} · {item.requirement_type}{item.source_section ? ` · ${sectionLabel(item.source_section)}` : ""} · {skillSourceLabel(item.source)} · {reviewStatusLabel(item.review_status, liveJob)}
                           </p>
                           {item.evidence_sentence || "No evidence text"}
@@ -133,8 +134,8 @@ function JobSkillGroups({ accessToken, jobId, canReview, liveJob }: { accessToke
                               <button
                                 aria-label={`Approve job skill occurrence ${item.id}`}
                                 aria-pressed={item.review_status === "approved"}
-                                className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium ${
-                                  item.review_status === "approved" ? "border-ocean bg-ocean text-white" : "border-slate-300 text-ocean"
+                                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${
+                                  item.review_status === "approved" ? "border-ocean bg-ocean text-white" : "border-line text-ocean"
                                 }`}
                                 disabled={review.isPending || item.review_status === "approved"}
                                 onClick={() => review.mutate({ skill: item, status: "approved" })}
@@ -146,8 +147,8 @@ function JobSkillGroups({ accessToken, jobId, canReview, liveJob }: { accessToke
                               <button
                                 aria-label={`Reject job skill occurrence ${item.id}`}
                                 aria-pressed={item.review_status === "rejected"}
-                                className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium ${
-                                  item.review_status === "rejected" ? "border-red-700 bg-red-700 text-white" : "border-slate-300 text-red-700"
+                                className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium ${
+                                  item.review_status === "rejected" ? "border-miss-text bg-miss-text text-white" : "border-line text-miss-text"
                                 }`}
                                 disabled={review.isPending || item.review_status === "rejected"}
                                 onClick={() => review.mutate({ skill: item, status: "rejected" })}

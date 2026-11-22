@@ -1,5 +1,6 @@
-import { BriefcaseBusiness } from "lucide-react";
 import { Link } from "react-router-dom";
+
+import { Wordmark } from "../layouts/AppLayout";
 
 type AuthCardProps = {
   title: string;
@@ -10,34 +11,24 @@ type AuthCardProps = {
   children: React.ReactNode;
 };
 
-export function AuthCard({
-  title,
-  subtitle,
-  footerText,
-  footerLinkText,
-  footerHref,
-  children,
-}: AuthCardProps) {
+export function AuthCard({ title, subtitle, footerText, footerLinkText, footerHref, children }: AuthCardProps) {
   return (
     <main className="grid min-h-screen place-items-center bg-mist px-4 py-10">
-      <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-md bg-ocean text-white">
-            <BriefcaseBusiness size={22} aria-hidden="true" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-ink">{title}</h1>
-            <p className="text-sm text-slate-600">{subtitle}</p>
-          </div>
-        </div>
-        {children}
-        <p className="mt-6 text-center text-sm text-slate-600">
-          {footerText}{" "}
-          <Link className="font-medium text-ocean hover:text-teal-900" to={footerHref}>
-            {footerLinkText}
-          </Link>
+      <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-center"><Wordmark /></div>
+        <section className="card p-8">
+          <h1 className="text-2xl font-semibold text-ink">{title}</h1>
+          <p className="mt-1 text-sm text-muted">{subtitle}</p>
+          <div className="mt-6">{children}</div>
+          <p className="mt-6 text-center text-sm text-muted">
+            {footerText} <Link className="link" to={footerHref}>{footerLinkText}</Link>
+          </p>
+        </section>
+        <p className="mt-6 text-center text-xs text-muted">
+          Career guidance only — not a hiring decision. <Link className="link" to="/about">About</Link> ·{" "}
+          <Link className="link" to="/privacy">Privacy</Link>
         </p>
-      </section>
+      </div>
     </main>
   );
 }

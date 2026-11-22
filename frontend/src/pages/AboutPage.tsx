@@ -21,15 +21,16 @@ const steps = [
 
 export function AboutPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-semibold text-ink">About</h1>
-      <p className="mt-4 leading-7 text-slate-700">
-        Skill Gap Job Matching helps you see which jobs fit your skills and which skills you would still need. Skills
+    <div className="mx-auto max-w-3xl">
+      <section className="card p-8">
+      <h1 className="text-3xl font-semibold tracking-tight text-ink">SkillGap – Skill Gap Job Matching</h1>
+      <p className="mt-4 leading-7 text-ink">
+        SkillGap helps you see which jobs fit your skills and which skills you would still need. Skills
         and occupations follow the European ESCO classification.
       </p>
       <ol className="mt-6 space-y-4">
         {steps.map((step, index) => (
-          <li key={step.title} className="leading-7 text-slate-700">
+          <li key={step.title} className="leading-7 text-ink">
             <span className="font-semibold text-ink">
               {index + 1}. {step.title}.
             </span>{" "}
@@ -37,13 +38,14 @@ export function AboutPage() {
           </li>
         ))}
       </ol>
-      <p className="mt-6 leading-7 text-slate-700">
+      <p className="mt-6 leading-7 text-ink">
         This is career guidance, not a hiring decision. Employers do not see your results, and the system does not
         select or reject anyone.
       </p>
-      <Link className="mt-6 inline-block font-medium text-ocean hover:text-teal-900" to="/dashboard">
+      <Link className="mt-6 inline-block link" to="/dashboard">
         Back to dashboard
       </Link>
-    </main>
+      </section>
+    </div>
   );
 }
