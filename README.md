@@ -155,6 +155,19 @@ docker compose exec backend python -m app.retrieval.cli index profiles --limit 1
 To continue after 1,000 items, run the command again with `--after <next_after>`,
 using the `next_after` value it printed.
 
+### Before a candidate sees results
+
+A fresh installation shows no jobs until all of these are done:
+
+| Step | Without it |
+| --- | --- |
+| Database migrated (`migrate`) | The backend does not start |
+| Embedding model provisioned (step 1) | No profile or job can be embedded, so the Jobs page stays empty |
+| ESCO 1.2.1 imported (step 4) | Skills are not linked to ESCO: no related skills, no occupations |
+| Occupation labels embedded (step 5) | The work-experience form offers only name-based occupation suggestions |
+| Jobs available (step 6, or jobs added by staff) | There is nothing to match |
+| The candidate has confirmed skills or added skills | The profile is empty and cannot be matched |
+
 ## Demo account
 
 The development database used for the screenshots has a synthetic candidate,
@@ -245,6 +258,34 @@ Set in `.env` (see `.env.example`); defaults are in `backend/app/core/config.py`
 - [Privacy](docs/privacy.md)
 - [User guide](docs/user-guide.md)
 
+## Data sources and attribution
+
+**ESCO.** This service uses the ESCO classification of the European
+Commission. ESCO v1.2.1 (classification, English) is reused under Commission
+Decision 2011/833/EU on the reuse of Commission documents
+(https://esco.ec.europa.eu/en/about-esco/faq). ESCO data is imported into a
+local database and, for the occupation suggestions, converted into embedding
+vectors. The test fixtures in `backend/tests/fixtures/taxonomy/esco/` contain
+modified, abridged excerpts of ESCO files.
+
+**O\*NET.** This application can import, and its test fixtures include
+information from, the O\*NET® 29.0 Database and the O\*NET® 31.0 Database by
+the U.S. Department of Labor, Employment and Training Administration
+(USDOL/ETA). Used under the [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+license. O\*NET® is a trademark of USDOL/ETA. The authors of this project have
+modified all or some of this information (subset selection and JSON
+serialization for the test fixtures; import into a local database).
+USDOL/ETA has not approved, endorsed, or tested these modifications.
+Source: https://www.onetcenter.org/database.html, licence:
+https://www.onetcenter.org/license_db.html.
+
+**Embedding model.** `intfloat/multilingual-e5-small`, MIT license, downloaded
+separately (not included in this repository).
+
+**Job postings.** Live jobs come from the public Arbeitnow job board API and
+public Greenhouse job boards; each job links to its original posting. Test
+fixtures for these sources use synthetic titles, companies, people and texts.
+
 ## Limitations
 
 - Scanned PDFs are not supported (no OCR).
@@ -253,3 +294,8 @@ Set in `.env` (see `.env.example`); defaults are in `backend/app/core/config.py`
 - The retrieval evaluation is small (8 candidate profiles, 30 jobs, one rater).
 - There is no export of a candidate's own data, and no automatic expiry of
   inactive accounts.
+
+## License
+
+The source code is released under the MIT License, see [LICENSE](LICENSE).
+Third-party data keeps its own terms (see Data sources and attribution).

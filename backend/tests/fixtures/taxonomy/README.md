@@ -5,7 +5,8 @@ They retain native headers, quoting, multiline descriptions and source identifie
 Generated test ZIPs are assembled in memory; no production taxonomy is seeded by tests.
 
 - ESCO: European Commission, ESCO v1.2.1, classification, English CSV.
-  Derived from the user's root-folder release, supplied 2026-10-01.
+  Modified, abridged excerpts of the official release, reused under Commission
+  Decision 2011/833/EU (https://esco.ec.europa.eu/en/about-esco/faq).
   Source: https://esco.ec.europa.eu/en/use-esco/download
 - O*NET: U.S. Department of Labor, Employment and Training Administration,
   O*NET Database 29.0 (August 2024), native tab-delimited text.
