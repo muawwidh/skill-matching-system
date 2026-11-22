@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, BriefcaseBusiness, ChevronLeft, ChevronRight, ExternalLink, Info, Plus, RefreshCw } from "lucide-react";
-import { FormEvent, ReactNode, useState } from "react";
+import { Archive, BriefcaseBusiness, ExternalLink, FileSearch, Plus, RefreshCw } from "lucide-react";
+import { FormEvent, ReactNode, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
 import {
   archiveJob,
@@ -11,213 +12,124 @@ import {
   refreshRecommendations,
   setHideBelowExperience,
 } from "../api/documents";
-import { JobExperienceLine } from "../components/JobExperienceLine";
-import { JobMatchPanel } from "../components/JobMatchPanel";
-import { SectionList } from "../components/SectionList";
+import { JobDetailPanel, jobMeta } from "../components/JobDetailPanel";
 import { LiveJobImportPanel } from "../components/LiveJobImportPanel";
+import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { useAuth } from "../features/auth/AuthProvider";
-import type { Job, JobPayload, RecommendationList } from "../types/documents";
+import type { Job, JobPayload, RecommendationItem, RecommendationList } from "../types/documents";
+import { ExperienceBadge, RankBadge } from "../ui/Badges";
+import { Chip } from "../ui/Chip";
+import { CoverageBar, CoverageLegend } from "../ui/CoverageBar";
+import { EmptyState, ErrorText, Notice, Skeleton } from "../ui/Feedback";
+import { CardTitle, PageHeader } from "../ui/Page";
+import { Pager } from "../ui/Pager";
+import { requiredCounts } from "../utils/coverage";
 import { isLiveJobSource } from "../utils/reviewStatus";
 
-const emptyJob: JobPayload = {
-  title: "",
-  company: "",
-  location: "",
-  employment_type: "",
-  description: "",
-};
+const emptyJob: JobPayload = { title: "", company: "", location: "", employment_type: "", description: "" };
+const MAX_CHIPS = 6;
 
-/** Source attribution and the original posting for live jobs (D053). */
-function JobSourceLine({ job }: { job: Job }) {
-  if (!job.attribution && !job.external_url) return null;
-  const posted = job.posted_at ? new Date(job.posted_at).toLocaleDateString() : null;
-  return (
-    <p className="mt-1 text-xs text-slate-500">
-      {job.attribution ? (
-        <>
-          Source:{" "}
-          <a className="underline" href={job.attribution.url} rel="noopener noreferrer" target="_blank">
-            {job.attribution.name}
-          </a>
-        </>
-      ) : null}
-      {posted ? ` · posted ${posted}` : ""}
-      {job.external_url ? (
-        <>
-          {" · "}
-          <a className="inline-flex items-center gap-0.5 underline" href={job.external_url} rel="noopener noreferrer" target="_blank">
-            Original posting
-            <ExternalLink size={12} aria-hidden="true" />
-          </a>
-        </>
-      ) : null}
-    </p>
-  );
-}
+// --- Candidate: job list and detail ---------------------------------------------------------------
 
-function JobCard({ job, actions, children }: { job: Job; actions?: ReactNode; children?: ReactNode }) {
+function JobChips({ item }: { item: RecommendationItem }) {
+  const chips = [
+    ...item.matched_required.map((skill) => ({ kind: "matched" as const, label: skill.label })),
+    ...item.partial_required.map((skill) => ({ kind: "related" as const, label: skill.label })),
+    ...item.missing_required.map((skill) => ({ kind: "missing" as const, label: skill.label })),
+  ];
+  if (!chips.length) return null;
+  const shown = chips.slice(0, MAX_CHIPS);
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">{job.title}</h2>
-          <p className="text-sm text-slate-600">
-            {job.company || "Unknown company"}
-            {job.location ? ` · ${job.location}` : ""} · {job.status}
-          </p>
-          <JobSourceLine job={job} />
-        </div>
-        {actions}
-      </div>
-      <div className="mt-4">
-        <SectionList sections={job.sections} />
-      </div>
-      {children}
-    </article>
-  );
-}
-
-function RecommendationSummary({ data }: { data: RecommendationList }) {
-  if (data.status !== "ready") {
-    return (
-      <div role="status" className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-        <Info size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
-        <p>{data.message}</p>
-      </div>
-    );
-  }
-  const first = (data.page - 1) * data.page_size + 1;
-  const last = first + data.results.length - 1;
-  return (
-    <p className="text-sm text-slate-600">
-      {data.results.length === 0
-        ? "No jobs could be found for your profile."
-        : `Showing ${first}–${last} of ${data.total} best-matching jobs (closest to your matching profile, top ${data.top_n} of ${data.active_jobs} active jobs).`}
-      {data.unindexed_jobs > 0
-        ? ` ${data.unindexed_jobs} active job${data.unindexed_jobs === 1 ? " is" : "s are"} still being prepared and cannot be shown yet.`
-        : ""}
-    </p>
-  );
-}
-
-/** Optional related-experience filter (D060): off by default, remembered per candidate. */
-function ExperienceFilter({ data, onChange, pending }: { data: RecommendationList; onChange: (value: boolean) => void; pending: boolean }) {
-  const enabled = Boolean(data.has_work_entries_with_occupation);
-  return (
-    <div className="mt-3 text-sm text-slate-700">
-      <label className="flex items-center gap-2">
-        <input
-          checked={Boolean(data.hide_below_experience)}
-          disabled={pending}
-          onChange={(event) => onChange(event.target.checked)}
-          type="checkbox"
-        />
-        Hide jobs where my related experience is below the requirement
-      </label>
-      <p className="ml-6 text-xs text-slate-500">
-        {!enabled
-          ? "Add work entries with an ESCO occupation on the CVs page to use this. "
-          : data.hide_below_experience && data.hidden_by_experience
-            ? `${data.hidden_by_experience} job${data.hidden_by_experience === 1 ? "" : "s"} hidden; positions (#N of ${data.total}) count only the jobs shown. `
-            : ""}
-        Jobs without a stated minimum or without a determined occupation are never hidden.
-      </p>
+    <div className="flex flex-wrap gap-1.5">
+      {shown.map((chip) => <Chip key={`${chip.kind}-${chip.label}`} kind={chip.kind}>{chip.label}</Chip>)}
+      {chips.length > MAX_CHIPS ? <span className="self-center text-xs text-muted">+{chips.length - MAX_CHIPS} more</span> : null}
     </div>
   );
 }
 
-function Pager({
-  data,
-  onPage,
-  onPageSize,
-}: {
-  data: RecommendationList;
-  onPage: (page: number) => void;
-  onPageSize: (size: number) => void;
-}) {
-  const pages = Math.max(1, Math.ceil(data.total / data.page_size));
-  const button = "inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 disabled:opacity-40";
+function JobListCard({ item, selected, onSelect }: { item: RecommendationItem; selected: boolean; onSelect: () => void }) {
+  const meta = jobMeta(item);
   return (
-    <nav aria-label="Job result pages" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm text-slate-600">
-      <label className="flex items-center gap-2">
-        Jobs per page
-        <select
-          className="rounded-md border border-slate-300 px-2 py-1"
-          onChange={(event) => onPageSize(Number(event.target.value))}
-          value={data.page_size}
-        >
-          {RECOMMENDATION_PAGE_SIZES.map((size) => (
-            <option key={size} value={size}>{size}</option>
-          ))}
-        </select>
-      </label>
-      <div className="flex items-center gap-2">
-        <button className={button} disabled={data.page <= 1} onClick={() => onPage(data.page - 1)} type="button">
-          <ChevronLeft size={16} aria-hidden="true" />
-          Previous
-        </button>
-        <span aria-current="page">Page {data.page} of {pages}</span>
-        <button className={button} disabled={data.page >= pages} onClick={() => onPage(data.page + 1)} type="button">
-          Next
-          <ChevronRight size={16} aria-hidden="true" />
-        </button>
-      </div>
-    </nav>
+    <li>
+      <button
+        aria-pressed={selected}
+        className={`w-full rounded-card border bg-white p-5 text-left transition-shadow hover:shadow-md ${selected ? "border-2 border-teal shadow-md" : "border-line"}`}
+        onClick={onSelect}
+        type="button"
+      >
+        <div className="flex gap-4">
+          <RankBadge rank={item.rank} />
+          <div className="min-w-0 flex-1 space-y-3">
+            <div>
+              <p className="font-display text-lg font-semibold leading-snug text-ink">{item.job.title}</p>
+              {meta ? <p className="mt-0.5 text-sm text-muted">{meta}</p> : null}
+            </div>
+            <ExperienceBadge item={item} />
+            <CoverageBar counts={requiredCounts(item)} />
+            <JobChips item={item} />
+          </div>
+        </div>
+      </button>
+    </li>
   );
 }
 
-export function JobsPage() {
-  const { accessToken, user } = useAuth();
-  const roles = user?.roles.map((role) => role.name) ?? [];
-  const canManageJobs = roles.includes("admin") || roles.includes("researcher");
-  // Job matching is for candidate accounts only; staff accounts get 403 from /matches (D049).
-  const isCandidate = roles.includes("candidate") && !canManageJobs;
+function summary(data: RecommendationList): string {
+  if (!data.results.length) return "No jobs to show.";
+  const first = (data.page - 1) * data.page_size + 1;
+  const last = first + data.results.length - 1;
+  return `Showing ${first}–${last} of ${data.total} best-matching jobs · ranked by similarity to your profile`;
+}
+
+function Controls({ data, pageSize, onPageSize, onFilter, filterPending }: {
+  data: RecommendationList | undefined; pageSize: number; onPageSize: (size: number) => void;
+  onFilter: (value: boolean) => void; filterPending: boolean;
+}) {
+  const canFilter = Boolean(data?.has_work_entries_with_occupation);
+  return (
+    <>
+      <label className="flex items-center gap-2 text-sm text-ink" title="Hides jobs whose stated minimum is above your related experience. Jobs without a stated minimum or occupation are never hidden.">
+        <input
+          checked={Boolean(data?.hide_below_experience)}
+          className="h-4 w-4 accent-teal"
+          disabled={!canFilter || filterPending}
+          onChange={(event) => onFilter(event.target.checked)}
+          type="checkbox"
+        />
+        Hide jobs above my experience
+      </label>
+      <label className="flex items-center gap-2 text-sm text-ink">
+        Per page
+        <select className="field py-1.5" onChange={(event) => onPageSize(Number(event.target.value))} value={pageSize}>
+          {RECOMMENDATION_PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+        </select>
+      </label>
+    </>
+  );
+}
+
+function CandidateJobs({ accessToken }: { accessToken: string }) {
   const queryClient = useQueryClient();
-  const [job, setJob] = useState<JobPayload>(emptyJob);
+  const [params, setParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(RECOMMENDATION_PAGE_SIZES[0]);
+  const detailRef = useRef<HTMLDivElement>(null);
 
-  const jobsQuery = useQuery({
-    queryKey: ["jobs"],
-    queryFn: () => listJobs(accessToken as string),
-    enabled: Boolean(accessToken) && canManageJobs,
-  });
-
-  const recommendationsQuery = useQuery({
+  const query = useQuery({
     queryKey: ["recommendations", page, pageSize],
-    queryFn: () => listRecommendations(accessToken as string, page, pageSize),
-    enabled: Boolean(accessToken) && isCandidate,
+    queryFn: () => listRecommendations(accessToken, page, pageSize),
     placeholderData: keepPreviousData,
   });
-
-  const createMutation = useMutation({
-    mutationFn: () => createJob(accessToken as string, job),
-    onSuccess: () => {
-      setJob(emptyJob);
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
-    },
-  });
-
-  const archiveMutation = useMutation({
-    mutationFn: (jobId: string) => archiveJob(accessToken as string, jobId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
-    },
-  });
-
-  const filterMutation = useMutation({
-    mutationFn: (value: boolean) => setHideBelowExperience(accessToken as string, value),
+  const filter = useMutation({
+    mutationFn: (value: boolean) => setHideBelowExperience(accessToken, value),
     onSuccess: () => {
       setPage(1);
       queryClient.invalidateQueries({ queryKey: ["recommendations"] });
     },
   });
-
-  const refreshMutation = useMutation({
-    mutationFn: () => refreshRecommendations(accessToken as string, page, pageSize),
+  const refresh = useMutation({
+    mutationFn: () => refreshRecommendations(accessToken, page, pageSize),
     onSuccess: (data) => {
       // The server clamps the page when fewer jobs are retrieved now.
       queryClient.setQueryData(["recommendations", data.page, data.page_size], data);
@@ -225,133 +137,235 @@ export function JobsPage() {
     },
   });
 
-  function submitJob(event: FormEvent) {
-    event.preventDefault();
-    if (canManageJobs) createMutation.mutate();
-  }
+  const data = query.data;
+  const wanted = params.get("job");
+  const selected = data?.results.find((item) => item.job_id === wanted) ?? data?.results[0];
 
-  function updateJobField(field: keyof JobPayload, value: string) {
-    setJob((current) => ({ ...current, [field]: value }));
+  function select(item: RecommendationItem) {
+    setParams({ job: item.job_id }, { replace: true });
+    if (window.matchMedia("(max-width: 1023px)").matches) detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
-
-  const recommendations = recommendationsQuery.data;
 
   function changePage(next: number) {
     setPage(next);
+    setParams({}, { replace: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function changePageSize(size: number) {
-    setPageSize(size);
-    setPage(1);
-  }
-
-  const pager =
-    recommendations && recommendations.total > 0 ? (
-      <Pager data={recommendations} onPage={changePage} onPageSize={changePageSize} />
-    ) : null;
+  const pages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
 
   return (
-    <div className="space-y-6">
-      {isCandidate ? (
-        <section className="space-y-4" aria-labelledby="recommendations-heading">
-          <div className="rounded-lg border border-slate-200 bg-white p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h1 id="recommendations-heading" className="text-xl font-semibold text-ink">Jobs for your profile</h1>
-              <button
-                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700"
-                disabled={refreshMutation.isPending}
-                onClick={() => refreshMutation.mutate()}
-                type="button"
-              >
-                <RefreshCw size={16} className={refreshMutation.isPending ? "animate-spin" : ""} aria-hidden="true" />
-                Refresh
-              </button>
+    <section className="space-y-6" aria-labelledby="jobs-heading">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 id="jobs-heading" className="text-3xl font-semibold tracking-tight text-ink">Best-matching jobs</h1>
+          <p className="mt-1 text-sm text-muted" role="status">
+            {data ? summary(data) : "Loading your matches…"}
+            {data && data.unindexed_jobs > 0
+              ? ` · ${data.unindexed_jobs} active job${data.unindexed_jobs === 1 ? " is" : "s are"} still being prepared`
+              : ""}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <Controls
+            data={data}
+            filterPending={filter.isPending}
+            onFilter={(value) => filter.mutate(value)}
+            onPageSize={(size) => { setPageSize(size); setPage(1); setParams({}, { replace: true }); }}
+            pageSize={pageSize}
+          />
+          <button className="btn-secondary" disabled={refresh.isPending} onClick={() => refresh.mutate()} type="button">
+            <RefreshCw size={16} className={refresh.isPending ? "animate-spin" : ""} aria-hidden="true" />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <ErrorText error={query.error ?? refresh.error ?? filter.error} />
+      {data && !data.has_work_entries_with_occupation && data.status === "ready" ? (
+        <p className="text-xs text-muted">
+          To hide jobs above your experience, <Link className="link" to="/profile#experience">add work entries with an occupation</Link>.
+        </p>
+      ) : null}
+      {data?.hide_below_experience && data.hidden_by_experience ? (
+        <Notice>
+          {data.hidden_by_experience} job{data.hidden_by_experience === 1 ? " is" : "s are"} hidden because the stated minimum is above your
+          related experience. Positions (#N of {data.total}) count only the jobs shown; jobs without a stated minimum are never hidden.
+        </Notice>
+      ) : null}
+
+      {query.isLoading ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="space-y-4">{[0, 1, 2].map((index) => <Skeleton key={index} className="h-44" />)}</div>
+          <Skeleton className="h-[32rem]" />
+        </div>
+      ) : data && data.status !== "ready" ? (
+        <EmptyState
+          icon={FileSearch}
+          title={data.status === "profile_not_indexed" ? "Your profile is being prepared" : "No matches yet"}
+          action={data.status === "profile_not_indexed" ? undefined : <Link className="btn-primary" to="/profile">Go to my profile</Link>}
+        >
+          {data.message}
+        </EmptyState>
+      ) : data && data.results.length === 0 ? (
+        <EmptyState icon={FileSearch} title="No jobs to show">
+          {data.hide_below_experience ? "All jobs are hidden by the experience filter. Turn it off to see them." : "No jobs fit your profile yet. Try again after the next job update."}
+        </EmptyState>
+      ) : data && selected ? (
+        <>
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="space-y-4">
+              <CoverageLegend />
+              <ul className="space-y-4" aria-label="Jobs on this page">
+                {data.results.map((item) => (
+                  <JobListCard key={item.job_id} item={item} selected={item.job_id === selected.job_id} onSelect={() => select(item)} />
+                ))}
+              </ul>
             </div>
-            <div className="mt-3">
-              {recommendationsQuery.isLoading ? <p className="text-sm text-slate-500">Loading jobs...</p> : null}
-              {recommendationsQuery.error ? (
-                <p role="alert" className="text-sm text-red-700">{recommendationsQuery.error.message}</p>
-              ) : null}
-              {recommendations ? <RecommendationSummary data={recommendations} /> : null}
-              {recommendations && recommendations.status === "ready" ? (
-                <ExperienceFilter data={recommendations} onChange={(value) => filterMutation.mutate(value)} pending={filterMutation.isPending} />
-              ) : null}
+            <div ref={detailRef} className="scroll-mt-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+              <JobDetailPanel
+                item={selected}
+                rankTotal={data.total}
+                extra={
+                  <details className="border-t border-line pt-4 text-sm">
+                    <summary className="cursor-pointer font-medium text-ink">All skills found in this posting</summary>
+                    <div className="mt-3">
+                      <SkillReviewPanel accessToken={accessToken} canReview={false} liveJob={isLiveJobSource(selected.job.source)} ownerId={selected.job_id} ownerType="job" />
+                    </div>
+                  </details>
+                }
+              />
             </div>
           </div>
-          {pager}
-          {recommendations?.results.map((item) => (
-            <JobCard key={item.job_id} job={item.job}>
-              <JobExperienceLine item={item} />
-              <JobMatchPanel match={item} rankTotal={recommendations.total} />
-              {accessToken ? (
-                <SkillReviewPanel
-                  accessToken={accessToken}
-                  canReview={false}
-                  liveJob={isLiveJobSource(item.job.source)}
-                  ownerId={item.job_id}
-                  ownerType="job"
-                />
-              ) : null}
-            </JobCard>
-          ))}
-          {recommendations && recommendations.results.length > 0 ? pager : null}
-        </section>
+          <Pager label="Job result pages" onPage={changePage} page={data.page} pages={pages} />
+        </>
       ) : null}
+    </section>
+  );
+}
 
-      {canManageJobs ? (
-        <section className="space-y-4" aria-labelledby="manage-jobs-heading">
-          {roles.includes("admin") && accessToken ? <LiveJobImportPanel accessToken={accessToken} /> : null}
-          <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={submitJob}>
-            <div className="flex items-center gap-2">
-              <BriefcaseBusiness size={22} className="text-ocean" aria-hidden="true" />
-              <h2 id="manage-jobs-heading" className="text-xl font-semibold text-ink">Create Job Description</h2>
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("title", event.target.value)} placeholder="Job title" value={job.title} />
-              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("company", event.target.value)} placeholder="Company" value={job.company} />
-              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("location", event.target.value)} placeholder="Location" value={job.location} />
-              <input className="rounded-md border border-slate-300 px-3 py-2" onChange={(event) => updateJobField("employment_type", event.target.value)} placeholder="Employment type" value={job.employment_type} />
-            </div>
-            <textarea
-              className="mt-4 min-h-44 w-full rounded-md border border-slate-300 px-3 py-2"
-              onChange={(event) => updateJobField("description", event.target.value)}
-              placeholder="Paste the job description with responsibilities, requirements, and preferred skills"
-              value={job.description}
-            />
-            {createMutation.error ? <p className="mt-3 text-sm text-red-700">{createMutation.error.message}</p> : null}
-            <button className="mt-4 flex items-center gap-2 rounded-md bg-ocean px-4 py-2 font-medium text-white" type="submit">
-              <Plus size={18} aria-hidden="true" />
-              Create and process
-            </button>
-          </form>
+// --- Staff: job management -------------------------------------------------------------------------
 
-          <h2 className="text-lg font-semibold text-ink">All jobs</h2>
-          {jobsQuery.data?.map((item) => (
-            <JobCard
-              key={item.id}
-              job={item}
-              actions={
-                <button
-                  aria-label="Archive job"
-                  className="grid h-10 w-10 place-items-center rounded-md border border-slate-300 text-slate-700"
-                  onClick={() => archiveMutation.mutate(item.id)}
-                  type="button"
-                >
-                  <Archive size={18} aria-hidden="true" />
-                </button>
-              }
-            >
-              {accessToken ? (
-                <SkillReviewPanel accessToken={accessToken} canReview liveJob={isLiveJobSource(item.source)} ownerId={item.id} ownerType="job" />
+function StaffJobCard({ job, actions, children }: { job: Job; actions?: ReactNode; children?: ReactNode }) {
+  const posted = job.posted_at ? new Date(job.posted_at).toLocaleDateString() : null;
+  return (
+    <article className="card">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-semibold text-ink">{job.title}</h3>
+          <p className="text-sm text-muted">
+            {job.company || "Unknown company"}
+            {job.location ? ` · ${job.location}` : ""} · {job.status}
+            {posted ? ` · posted ${posted}` : ""}
+          </p>
+          {job.attribution || job.external_url ? (
+            <p className="mt-1 text-xs text-muted">
+              {job.attribution ? <>Source: <a className="link" href={job.attribution.url} rel="noopener noreferrer" target="_blank">{job.attribution.name}</a></> : null}
+              {job.external_url ? (
+                <>
+                  {job.attribution ? " · " : ""}
+                  <a className="link inline-flex items-center gap-0.5" href={job.external_url} rel="noopener noreferrer" target="_blank">
+                    Original posting <ExternalLink size={12} aria-hidden="true" />
+                  </a>
+                </>
               ) : null}
-            </JobCard>
-          ))}
-          {jobsQuery.data?.length === 0 ? (
-            <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500">No jobs created yet.</p>
+            </p>
           ) : null}
-        </section>
-      ) : null}
+        </div>
+        {actions}
+      </div>
+      <div className="mt-4"><SectionList sections={job.sections} /></div>
+      {children}
+    </article>
+  );
+}
+
+function StaffJobs({ accessToken, isAdmin }: { accessToken: string; isAdmin: boolean }) {
+  const queryClient = useQueryClient();
+  const [job, setJob] = useState<JobPayload>(emptyJob);
+  const jobs = useQuery({ queryKey: ["jobs"], queryFn: () => listJobs(accessToken) });
+  const create = useMutation({
+    mutationFn: () => createJob(accessToken, job),
+    onSuccess: () => {
+      setJob(emptyJob);
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+    },
+  });
+  const archive = useMutation({
+    mutationFn: (jobId: string) => archiveJob(accessToken, jobId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["recommendations"] });
+    },
+  });
+  const update = (field: keyof JobPayload, value: string) => setJob((current) => ({ ...current, [field]: value }));
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    create.mutate();
+  }
+
+  return (
+    <section className="space-y-6" aria-labelledby="manage-jobs-heading">
+      <PageHeader title="Jobs" subtitle="Create, review and archive jobs." />
+      {isAdmin ? <LiveJobImportPanel accessToken={accessToken} /> : null}
+      <form className="card" onSubmit={submit}>
+        <CardTitle id="manage-jobs-heading" aside={<BriefcaseBusiness size={20} className="text-teal" aria-hidden="true" />}>Create a job</CardTitle>
+        <div className="grid gap-4 md:grid-cols-2">
+          {(["title", "company", "location", "employment_type"] as const).map((field) => (
+            <label key={field} className="text-sm text-ink">
+              {{ title: "Job title", company: "Company", location: "Location", employment_type: "Employment type" }[field]}
+              <input className="field mt-1 w-full" onChange={(event) => update(field, event.target.value)} value={job[field]} />
+            </label>
+          ))}
+        </div>
+        <label className="mt-4 block text-sm text-ink">
+          Job description
+          <textarea
+            className="field mt-1 min-h-44 w-full"
+            onChange={(event) => update("description", event.target.value)}
+            placeholder="Responsibilities, requirements and preferred skills"
+            value={job.description}
+          />
+        </label>
+        <div className="mt-3"><ErrorText error={create.error} /></div>
+        <button className="btn-primary mt-4" disabled={create.isPending} type="submit">
+          <Plus size={18} aria-hidden="true" /> Create and process
+        </button>
+      </form>
+
+      <h2 className="text-xl font-semibold text-ink">All jobs</h2>
+      {jobs.isLoading ? <div className="space-y-4">{[0, 1].map((index) => <Skeleton key={index} className="h-40" />)}</div> : null}
+      {jobs.data?.map((item) => (
+        <StaffJobCard
+          key={item.id}
+          job={item}
+          actions={
+            <button aria-label={`Archive ${item.title}`} className="btn-secondary h-10 w-10 p-0" onClick={() => archive.mutate(item.id)} type="button">
+              <Archive size={18} aria-hidden="true" />
+            </button>
+          }
+        >
+          <SkillReviewPanel accessToken={accessToken} canReview liveJob={isLiveJobSource(item.source)} ownerId={item.id} ownerType="job" />
+        </StaffJobCard>
+      ))}
+      {jobs.data?.length === 0 ? <EmptyState icon={BriefcaseBusiness} title="No jobs yet">Create the first job above.</EmptyState> : null}
+    </section>
+  );
+}
+
+export function JobsPage() {
+  const { accessToken, user } = useAuth();
+  const roles = user?.roles.map((role) => role.name) ?? [];
+  const isStaff = roles.includes("admin") || roles.includes("researcher");
+  // Job matching is for candidate accounts only; staff accounts get 403 from /matches.
+  const isCandidate = roles.includes("candidate") && !isStaff;
+  if (!accessToken) return null;
+  return (
+    <div className="space-y-10">
+      {isCandidate ? <CandidateJobs accessToken={accessToken} /> : null}
+      {isStaff ? <StaffJobs accessToken={accessToken} isAdmin={roles.includes("admin")} /> : null}
     </div>
   );
 }
