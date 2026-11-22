@@ -150,8 +150,19 @@ export type RecommendationItem = {
   candidate_skill_count: number;
   job_skill_count: number;
   explanation: string;
+  /** Job terms of other kinds (qualification, experience, certification): listed, not assessed. */
+  not_assessed_required?: string[];
+  not_assessed_preferred?: string[];
+  /** Minimum years the job text asks for; null when none is stated. */
+  min_required_years?: number | null;
   job: Job;
 };
+
+/** GET /matches/skill-gaps: most frequent required missing skills across the top results. */
+export type SkillGaps = { status: RecommendationStatus; of: number; gaps: { label: string; missing_in: number }[] };
+
+/** GET /matches/job-pool: live jobs searched and the last successful import. */
+export type JobPool = { live_jobs: number; last_import_at: string | null };
 
 export type RecommendationStatus =
   | "ready"

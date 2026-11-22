@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { deleteCv, listCvs, pasteCv, uploadCv } from "../api/documents";
 import { listWorkEntries } from "../api/experience";
 import { CandidateTaxonomyLinks } from "../components/CandidateTaxonomyLinks";
+import { DeleteAccountPanel } from "../components/DeleteAccountPanel";
 import { MatchingProfileBox } from "../components/MatchingProfileBox";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
@@ -201,6 +202,7 @@ export function CvsPage() {
           {cvQuery.data?.length === 0 ? <p className="text-sm text-slate-500">No CVs processed yet.</p> : null}
         </div>
       </section>
+      {accessToken && isCandidate ? <DeleteAccountPanel accessToken={accessToken} /> : null}
       </div>
     </div>
   );

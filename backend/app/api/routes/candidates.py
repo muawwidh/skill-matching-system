@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import candidate_only, get_current_user
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.documents import CandidateProfileRead, CandidateProfileUpdate, MatchingProfileRead
+from app.schemas.documents import CandidateProfileRead, CandidateProfileUpdate, CandidateSkillRead, MatchingProfileRead
 from app.schemas.experience import DetectedWorkEntryRead, OccupationSuggestionRead, WorkEntryRead, WorkEntryWrite
 from app.services.candidate_service import CandidateService
+from app.services.skill_service import SkillService
 from app.services.work_entry_service import WorkEntryService
 
 router = APIRouter()
@@ -37,6 +38,12 @@ def get_my_matching_profile(
     db: Session = Depends(get_db),
 ) -> MatchingProfileRead:
     return CandidateService(db).my_matching_profile(current_user)
+
+
+@router.get("/me/manual-skills", response_model=list[CandidateSkillRead])
+def my_manual_skills(current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
+    """Skills the candidate added by hand (not from a CV). Read-only."""
+    return [skill for skill in SkillService(db).list_my_candidate_skills(current_user) if skill.source == "manual_review"]
 
 
 # --- Work entries for relevant experience (D060): candidate accounts only ---------------------

@@ -254,7 +254,28 @@ class JobCoverageRead(BaseModel):
     candidate_skill_count: int
     job_skill_count: int
     explanation: str
+    # Job terms of other kinds (qualification, experience, certification, ...): listed, never assessed.
+    not_assessed_required: list[str] = []
+    not_assessed_preferred: list[str] = []
     job: JobRead
+
+
+class SkillGapRead(BaseModel):
+    label: str
+    missing_in: int  # number of the top results that list this required skill as missing
+
+
+class SkillGapsRead(BaseModel):
+    """Most frequent required missing skills across the candidate's current top results (read-only)."""
+    status: str
+    of: int  # number of top results looked at (at most 10)
+    gaps: list[SkillGapRead]
+
+
+class JobPoolRead(BaseModel):
+    """Live jobs the candidate's matches are searched in, and the last successful import."""
+    live_jobs: int
+    last_import_at: datetime | None
 
 
 class JobOccupationRead(BaseModel):
@@ -289,9 +310,14 @@ class RecommendationItem(BaseModel):
     candidate_skill_count: int
     job_skill_count: int
     explanation: str
+    # Job terms of other kinds (qualification, experience, certification, ...): listed, never assessed.
+    not_assessed_required: list[str] = []
+    not_assessed_preferred: list[str] = []
     job: JobRead
     job_occupation: JobOccupationRead | None = None
     related_experience: RelatedExperienceRead | None = None
+    # Minimum years the job text asks for (None: none stated); shown even when experience is not assessed.
+    min_required_years: int | None = None
 
 
 class RecommendationList(BaseModel):

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import candidate_only
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.documents import JobCoverageRead, MatchPreferences, RecommendationList
+from app.schemas.documents import JobCoverageRead, JobPoolRead, MatchPreferences, RecommendationList, SkillGapsRead
 from app.services.matching_service import DEFAULT_PAGE_SIZE, PAGE_SIZES, MatchingService
 
 router = APIRouter(dependencies=[Depends(candidate_only)])
@@ -38,6 +38,18 @@ def refresh_recommendations(
     db: Session = Depends(get_db),
 ) -> RecommendationList:
     return MatchingService(db).refresh_my_recommendations(current_user, page, page_size)
+
+
+@router.get("/skill-gaps", response_model=SkillGapsRead)
+def skill_gaps(current_user: User = Depends(candidate_only), db: Session = Depends(get_db)) -> SkillGapsRead:
+    """Most frequent required missing skills across the current top 10 results (read-only)."""
+    return MatchingService(db).my_skill_gaps(current_user)
+
+
+@router.get("/job-pool", response_model=JobPoolRead)
+def job_pool(db: Session = Depends(get_db)) -> JobPoolRead:
+    """Number of active live jobs and the date of the last successful import."""
+    return MatchingService(db).job_pool()
 
 
 @router.put("/preferences", response_model=MatchPreferences)

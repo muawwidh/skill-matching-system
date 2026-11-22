@@ -5,10 +5,12 @@ import type {
   CvDocument,
   Job,
   JobPayload,
+  JobPool,
   JobSkill,
   MatchingProfile,
   ProcessingLog,
   RecommendationList,
+  SkillGaps,
   SystemOverview,
 } from "../types/documents";
 
@@ -120,6 +122,19 @@ export function setHideBelowExperience(accessToken: string, value: boolean) {
     accessToken,
     body: JSON.stringify({ hide_below_experience: value }),
   });
+}
+
+export function getSkillGaps(accessToken: string) {
+  return apiRequest<SkillGaps>("/matches/skill-gaps", { accessToken });
+}
+
+export function getJobPool(accessToken: string) {
+  return apiRequest<JobPool>("/matches/job-pool", { accessToken });
+}
+
+/** Skills the candidate added by hand. */
+export function listManualSkills(accessToken: string) {
+  return apiRequest<CandidateSkill[]>("/candidates/me/manual-skills", { accessToken });
 }
 
 export function getSystemOverview(accessToken: string) {

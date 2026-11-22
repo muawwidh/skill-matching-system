@@ -220,6 +220,8 @@ def build_explanation(result: CoverageResult) -> str:
     return "\n".join(lines)
 
 
+SKILL_GAP_TOP = 10  # skill gaps are counted over the current top 10 results
+
 PROFILE_MESSAGES = {
     "ready": "",
     "profile_not_ready": "Add a CV with consent to processing to build your matching profile.",
@@ -335,7 +337,8 @@ class MatchingService:
                 # Related experience explains the job; it never changes the order (D060).
                 results.append({"rank": start + offset, **self._coverage(job, candidate_items),
                                 "job_occupation": occupation,
-                                "related_experience": experience.assess(job, occupation, periods)})
+                                "related_experience": experience.assess(job, occupation, periods),
+                                "min_required_years": experience.minimum_years(job)})
         # Before the commit, which would expire and reload every active job one by one.
         unindexed = self._unindexed_job_count(retrieval, active_jobs, excluded)
         # Only a newly created empty profile is written here; no match rows (D049).
@@ -358,6 +361,35 @@ class MatchingService:
         # about 29 s per request with 978 jobs (2026-11-21).
         ready = retrieval.ready_job_ids(exclude_sources)
         return sum(1 for job in active_jobs if job.id not in ready)
+
+    def my_skill_gaps(self, user: User, top: int = SKILL_GAP_TOP, limit: int = 5) -> dict:
+        """Required missing skills that occur most often across the candidate's current top results.
+
+        Uses the same retrieval and coverage as the Jobs page (first page of `top`), so it reflects the
+        candidate's filter setting. Counts each skill once per job; ties by label. Read-only.
+        """
+        recommendations = self.list_my_recommendations(user, 1, top)
+        counts: dict[str, list] = {}
+        for item in recommendations["results"]:
+            for key, label in {m["label"].casefold(): m["label"] for m in item["missing_required"]}.items():
+                counts.setdefault(key, [label, 0])[1] += 1
+        gaps = sorted(counts.values(), key=lambda entry: (-entry[1], entry[0].casefold(), entry[0]))[:limit]
+        return {"status": recommendations["status"], "of": len(recommendations["results"]),
+                "gaps": [{"label": label, "missing_in": count} for label, count in gaps]}
+
+    def job_pool(self) -> dict:
+        """Active live jobs the candidate can be matched with, and when the last import succeeded."""
+        from sqlalchemy import func, select
+
+        from app.db.models import ProcessingLog
+        from app.job_sources import NON_LIVE_SOURCES, candidate_excluded_sources
+        from app.services.job_import_service import IMPORT_ENTITY
+
+        excluded = candidate_excluded_sources() | NON_LIVE_SOURCES
+        live = sum(1 for job in self.repository.list_jobs(include_archived=False) if job.source not in excluded)
+        last = self.db.scalar(select(func.max(ProcessingLog.created_at)).where(
+            ProcessingLog.entity_type == IMPORT_ENTITY, ProcessingLog.status.in_(["success", "partial"])))
+        return {"live_jobs": live, "last_import_at": last}
 
     def set_hide_below_experience(self, user: User, value: bool) -> dict:
         """Remember the candidate's related-experience filter switch (D060)."""
@@ -422,4 +454,6 @@ class MatchingService:
             "candidate_skill_count": result.candidate_skill_count,
             "job_skill_count": result.required_total + result.preferred_total,
             "explanation": build_explanation(result),
+            "not_assessed_required": result.not_assessed_required,
+            "not_assessed_preferred": result.not_assessed_preferred,
         }
