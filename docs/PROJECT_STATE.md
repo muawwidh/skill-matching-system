@@ -494,6 +494,19 @@ Startup cache warm-up (2026-11-21, D059):
   after the warm-up has finished 0.49-0.50 s; during the warm-up 3.4-3.7 s.
 - Tests: `tests/test_warmup.py`.
 
+## Stage 3 — Open Items
+
+Agreed follow-ups, not started (feature freeze since 2026-11-21; each needs
+the owner's go-ahead).
+
+- **Dedicated manual-skill endpoint.** Replace the "+ Add a skill" path on
+  My profile, which saves through `PUT /cvs/{id}/extracted-skills`. That
+  endpoint deletes skills added by hand that are not in the request, so
+  the page has to send them all along. Add dedicated add/remove endpoints
+  for hand-added skills, so they can never be deleted by omission. Include
+  tests, among them one showing that a CV skill review no longer removes
+  them.
+
 ## Relevant Experience (reduced version, D060)
 
 Item 1 (2026-11-21): minimum required years.
