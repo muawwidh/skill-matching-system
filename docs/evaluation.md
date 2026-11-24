@@ -156,16 +156,94 @@ byte-for-byte with the stored outputs. All were identical:
 
 ## 7. Skill extraction on live jobs
 
-*Placeholder — to be completed.* A seeded random sample of 20 active live
-jobs, labelled by hand: precision of the extracted skills and required skills
-the extractor missed. Tooling: `python -m app.job_sources.cli
-sample-extraction` and `score-extraction`.
+### Method
 
-| Measure | Value |
+- **Sample.** 20 jobs drawn at random (seed 20261121) from the 977 active
+  live jobs, with all 145 skills the job extraction (version v3) found in
+  them. Tooling: `python -m app.job_sources.cli sample-extraction` and
+  `score-extraction`.
+- **Labels.** One rater marked each extracted skill correct or incorrect,
+  listed the required skills each posting asks for that were not extracted,
+  and logged every error in a separate file with its type (missed, false
+  positive, wrong mapping) and a cause. Both files are private; they are
+  identified by SHA-256 `751a6e31…` (labels) and `739d1567…` (error log).
+- This is the baseline for later changes to job extraction.
+
+### Baseline results
+
+| Precision of extracted skills | Correct / labelled | Precision |
+| --- | --- | --- |
+| All skills | 111 / 145 | 0.766 (95 % Wilson interval 0.69–0.83) |
+| Requirement: required | 62 / 73 | 0.849 |
+| Requirement: preferred | 4 / 4 | 1.000 |
+| Requirement: unknown (section not recognised) | 45 / 68 | 0.662 |
+| Type: domain knowledge | 49 / 70 | 0.700 |
+| Type: skill | 30 / 35 | 0.857 |
+| Type: tool | 14 / 15 | 0.933 |
+| Type: experience | 12 / 13 | 0.923 |
+| Type: qualification | 6 / 9 | 0.667 |
+| Type: certification | 0 / 3 | 0.000 |
+
+| Missed required skills | Value |
 | --- | --- |
-| Jobs labelled | |
-| Extracted skills judged correct | |
-| Required skills missed | |
+| From the labels file (19 of 20 jobs labelled) | 232 in total, 19 of 19 jobs with at least one, 12.2 per job |
+| From the error log (20 jobs) | 185 required, plus 44 preferred and 26 named as responsibilities |
+
+The two missed-skill counts were recorded separately and do not agree job by
+job; the error log is the more detailed of the two. Either way, recall is the
+weak side of the extractor: a job has about 7 extracted skills and roughly
+9 to 12 required skills that were not found.
+
+**Comparison: the 30 evaluation jobs.** Every skill on these jobs was approved
+or rejected by hand. 289 of 357 were approved (0.810); for the 265 skills found
+by version v3 rules, 207 (0.781). By requirement: required 153 / 160 (0.956),
+preferred 43 / 44 (0.977), unknown 93 / 153 (0.608). These jobs were used while
+the extractor was developed, and the review was done with a different aim
+(keeping or removing skills, not judging the extractor), so this is an
+optimistic reference, not an independent result.
+
+### Error analysis
+
+296 logged errors in the 20 jobs:
+
+| Cause | Missed | False positive | Wrong mapping | Other | Total |
+| --- | --- | --- | --- | --- | --- |
+| Skill list not split into items | 141 | | | | 141 |
+| Term not in the vocabulary | 84 | | | | 84 |
+| Generic term ("IT", "certification") | | 17 | | | 17 |
+| No rules for languages | 15 | | | | 15 |
+| Text about the company, not the role | | 12 | | | 12 |
+| Certification asked for without a name | 10 | | | | 10 |
+| Recruiting boilerplate | | 5 | | | 5 |
+| Pattern did not match (experience) | 5 | | | | 5 |
+| Acronym linked to the wrong concept | | | 5 | | 5 |
+| Only part of the phrase extracted | | 1 | | 1 | 2 |
+| **Total** | **255** | **35** | **5** | **1** | **296** |
+
+| Missed items by category | Count | Of which required |
+| --- | --- | --- |
+| Business skills | 107 | 83 |
+| Technical skills | 62 | 42 |
+| Tools | 50 | 38 |
+| **Skills and tools together** | **219** | **163** |
+| Languages | 15 | 11 |
+| Certifications | 11 | 2 |
+| Experience | 5 | 5 |
+| Qualifications | 5 | 4 |
+
+The missed terms are spread out: 216 different terms, 189 of them seen only
+once. The most frequent are "English" and "artificial intelligence (AI)" (6
+jobs each), then "go-to-market (GTM)", "enterprise sales", "APIs" and
+"presentation skills" (3 jobs each); 21 further terms appear in 2 jobs, among
+them German, French, GCP, TOGAF and Microsoft Excel.
+
+Most misses (141 of 255) are skills written as a comma-separated list that the
+extractor reads as one unit; most of the rest (84) are terms that are not in
+the vocabulary at all. False positives come mainly from generic words and from
+text describing the company rather than the job.
+
+Limitations: one rater, 20 jobs, English only; the causes were assigned by the
+same rater.
 
 ## 8. Explanation quality
 
