@@ -107,7 +107,11 @@ def test_cv_extraction_does_not_depend_on_the_job_version() -> None:
     sections = SectionDetectionService().detect(text)
     v3 = SkillExtractor(job_version="v3").extract_from_sections(sections, text, "candidate")
     v4 = SkillExtractor(job_version="v4").extract_from_sections(sections, text, "candidate")
-    assert v3 == v4 and all(term.extraction_method.endswith("@v2") for term in v4)
+    assert v3 == v4
+    # CVs use only the v4 language rule; every other CV term keeps the v2 contract.
+    assert [(t.normalized_text, t.term_type) for t in v4 if t.extraction_method == "language_rule@v4"] == [
+        ("english", "language")]
+    assert all(t.extraction_method.endswith("@v2") for t in v4 if t.extraction_method != "language_rule@v4")
 
 
 def test_unknown_job_version_is_rejected() -> None:
@@ -252,3 +256,29 @@ We are an equal opportunity employer and do not discriminate on the basis of rac
     terms = {term.normalized_text for term in _terms(text)}
     assert not terms & {"religion", "age", "sex", "dental", "pto", "written", "spoken", "government"}
     assert "english" in terms
+
+
+def test_reextraction_makes_the_job_embedding_stale_and_reindex_refreshes_it(db_session, monkeypatch) -> None:
+    """New skill rows change the job's embedding input hash, so the stored vector is stale until re-embedded."""
+    from app.db.models import JobEmbedding
+    from app.repositories.retrieval_repository import RetrievalRepository
+    from app.services.job_service import JobReextractionService
+    from app.services.retrieval_service import RetrievalService
+    from tests.test_retrieval import FakeEmbedder
+
+    monkeypatch.setattr(settings, "JOB_EXTRACTION_VERSION", "v3")
+    job = _live_job(db_session, "Requirements\n- Experience with Python, Terraform and Snowflake")
+    service, fake = RetrievalService(db_session), FakeEmbedder()
+    assert service.index_job(job.id, fake).outcome == "indexed"
+    db_session.commit()
+    stored = db_session.scalar(select(JobEmbedding).where(JobEmbedding.job_id == job.id)).source_hash
+
+    reextraction = JobReextractionService(db_session, use_esco_vocabulary=False, version="v4")
+    plan = reextraction.plan(job)
+    assert {term.normalized_text for term in plan.new_terms} >= {"terraform", "snowflake"}
+    reextraction.apply(job, plan)
+    embedding = db_session.scalar(select(JobEmbedding).where(JobEmbedding.job_id == job.id))
+    assert embedding.status == "stale"
+    assert RetrievalRepository(db_session).job_input(job).source_hash != stored  # freshness check sees the change
+    assert service.index_job(job.id, fake).outcome == "indexed" and len(fake.texts) == 2
+    assert "Terraform" in fake.texts[-1]

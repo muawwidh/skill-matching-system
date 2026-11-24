@@ -15,7 +15,8 @@ const isManual = (item: CandidateSkill) => item.source === "manual_review";
 export function summarizeSkills(groupsByCv: { cvId: string; groups: CandidateSkillGroup[] }[], manual: CandidateSkill[]): SkillSummary {
   const byKey = new Map<string, { label: string; linked: boolean; occurrences: CandidateSkill[]; cvIds: Set<string> }>();
   for (const { cvId, groups } of groupsByCv) {
-    for (const group of groups) {
+    // Languages have their own card on My profile.
+    for (const group of groups.filter((g) => !g.occurrences.every((item) => item.skill_type === "language"))) {
       const key = group.label.trim().toLowerCase();
       const entry = byKey.get(key) ?? { label: group.label, linked: false, occurrences: [], cvIds: new Set<string>() };
       entry.linked ||= Boolean(group.taxonomy);
@@ -26,7 +27,7 @@ export function summarizeSkills(groupsByCv: { cvId: string; groups: CandidateSki
       byKey.set(key, entry);
     }
   }
-  for (const item of manual) {
+  for (const item of manual.filter((skill) => skill.skill_type !== "language")) {
     const key = item.raw_text.trim().toLowerCase();
     const entry = byKey.get(key) ?? { label: item.raw_text, linked: false, occurrences: [], cvIds: new Set<string>() };
     if (!entry.occurrences.some((known) => known.id === item.id)) entry.occurrences.push(item);

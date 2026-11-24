@@ -7,11 +7,11 @@ const sections = [
   },
   {
     title: "What is stored",
-    text: "Your name, e-mail address and a protected form of your password; the text of your CVs (the uploaded file itself is not kept); the skills found and your decisions on them; work entries you add (job title, months and an occupation, never the employer); and your settings on the Jobs page.",
+    text: "Your name, e-mail address and a protected form of your password; the text of your CVs (the uploaded file itself is not kept); the skills found and your decisions on them; work entries you add (job title, months and an occupation, never the employer); languages with an optional level; and your settings on the Jobs page.",
   },
   {
     title: "What is used for matching",
-    text: "Only the skills you have confirmed. Age, gender, religion, nationality, marital status, photographs and other personal characteristics are not used.",
+    text: "Only the skills you have confirmed. Your languages are only compared by name with the languages a job asks for and shown next to the job; they never change the order. Age, gender, religion, nationality, marital status, photographs and other personal characteristics are not used.",
   },
   {
     title: "Who sees your results",

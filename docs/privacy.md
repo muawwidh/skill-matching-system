@@ -22,13 +22,17 @@ is responsible for its own privacy notice, records and legal review.
 | Account | Name, e-mail address, password as a bcrypt hash | — |
 | CV | Extracted text, sections, found skills with the sentence they came from | The uploaded file itself (read in memory only) |
 | Skills | Found and hand-added skills, the candidate's review decisions, ESCO links | — |
+| Languages (optional) | Languages found in a CV or added by the candidate, an optional level (A1–C2, native), review decisions | — |
 | Work experience (optional) | Job title, start and end month, chosen ESCO occupation | Employer, location, description, references |
 | Settings | The Jobs page experience filter | — |
 | Matching | One embedding vector of the confirmed skills | Rankings and explanations (computed when viewed, never stored) |
 
 **Not used for matching:** age, gender, religion, nationality, marital status,
 photographs or any other personal characteristic. Only confirmed skills feed
-the ranking. Years of experience never affect the ranking, because they
+the ranking. Languages are not part of the ranking: a job's language
+requirements are compared by name with the candidate's confirmed languages
+and only shown next to the job (levels are never compared). A language is not
+treated as nationality. Years of experience never affect the ranking, because they
 correlate with age; they are only shown next to a job and, if the candidate
 chooses, used to hide jobs above their experience.
 

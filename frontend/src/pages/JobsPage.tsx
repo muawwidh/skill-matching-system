@@ -12,7 +12,7 @@ import {
   refreshRecommendations,
   setHideBelowExperience,
 } from "../api/documents";
-import { JobDetailPanel, jobMeta } from "../components/JobDetailPanel";
+import { JobDetailPanel, LanguageChips, jobMeta } from "../components/JobDetailPanel";
 import { LiveJobImportPanel } from "../components/LiveJobImportPanel";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
@@ -68,6 +68,7 @@ function JobListCard({ item, selected, onSelect }: { item: RecommendationItem; s
             <ExperienceBadge item={item} />
             <CoverageBar counts={requiredCounts(item)} />
             <JobChips item={item} />
+            <LanguageChips item={item} />
           </div>
         </div>
       </button>

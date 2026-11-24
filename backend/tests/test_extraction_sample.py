@@ -120,3 +120,35 @@ def test_cli_scores_a_labels_file(tmp_path, capsys):
     _write(labels, [{"row_type": "job", "missed_required_skills": "none"}, {"row_type": "skill", "label": "correct"}])
     assert cli.main(["score-extraction", "--labels", str(labels)]) == 0
     assert json.loads(capsys.readouterr().out)["precision"] == 1.0
+
+
+def test_score_excludes_unlabelled_jobs_and_reads_missed_skills_from_the_error_log(tmp_path):
+    labels, gaps = tmp_path / "labels.csv", tmp_path / "gaps.csv"
+    job = lambda number: {"row_type": "job", "job_no": number}  # noqa: E731
+    skill = lambda number, label: {"row_type": "skill", "job_no": number, "label": label,  # noqa: E731
+                                   "skill_type": "skill", "status": "automatic", "requirement": "required"}
+    # Jobs 1 and 2 labelled (job 2 has no logged misses); job 3 left for later.
+    _write(labels, [job(1), skill(1, "correct"), skill(1, "incorrect"), job(2), skill(2, "correct"),
+                    job(3), skill(3, ""), skill(3, "")])
+    with gaps.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(GAP_COLUMNS)
+        writer.writerow(["J01", "missed", "Terraform", "tool", "list_not_split", "required", "x"])
+        writer.writerow(["J01", "missed", "terraform", "tool", "list_not_split", "required", "x"])
+        writer.writerow(["J01", "missed", "German", "language", "no_language_rules", "required", "x"])
+        writer.writerow(["J01", "missed", "Dbt", "tool", "not_in_vocabulary", "preferred", "x"])
+        writer.writerow(["J01", "false_positive", "IT", "-", "generic_term", "-", "x"])
+    result = score(labels, gaps)
+    assert (result["correct"], result["labelled"], result["unlabelled_skill_rows"]) == (2, 3, 2)
+    assert result["excluded_jobs"] == [3] and result["partially_labelled_jobs"] == []
+    assert result["missed_required"] == {"jobs_labelled": 2, "jobs_unlabelled": 1, "total": 1,
+                                         "jobs_with_any": 1, "mean_per_job": 0.5}
+    assert result["gaps_for_excluded_jobs"] == []
+
+
+def test_score_rejects_invalid_error_log_rows(tmp_path):
+    labels, gaps = tmp_path / "labels.csv", tmp_path / "gaps.csv"
+    _write(labels, [{"row_type": "job", "job_no": "1"}])
+    gaps.write_text(",".join(GAP_COLUMNS) + "\nJ01,partial_span,x,experience,partial_span,required,e\n")
+    with pytest.raises(ValueError, match="line 2: type='partial_span'"):
+        score(labels, gaps)

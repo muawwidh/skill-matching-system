@@ -222,6 +222,51 @@ def build_explanation(result: CoverageResult) -> str:
     return "\n".join(lines)
 
 
+LANGUAGE_TYPE = "language"
+NO_LANGUAGES_NOTE = "Add your languages on My profile to compare."
+
+
+def compare_languages(candidate_languages: set[str], job_items: list[SkillItem], result: CoverageResult) -> dict:
+    """Job language requirements against the candidate's confirmed languages, by name only (no levels).
+
+    Compared languages are removed from the not-assessed lists of `result`. Without any
+    confirmed candidate language nothing is compared and the languages stay not assessed.
+    Never part of the skill counts or the order.
+    """
+    required: dict[str, bool] = {}
+    reviewed: dict[str, bool] = {}
+    for item in job_items:
+        if item.skill_type == LANGUAGE_TYPE:
+            required[item.name] = required.get(item.name, False) or item.requirement == "required"
+            reviewed[item.name] = reviewed.get(item.name, False) or item.reviewed
+    if not required:
+        return {"compared": False, "matched": [], "missing": [], "note": ""}
+    if not candidate_languages:
+        return {"compared": False, "matched": [], "missing": [], "note": NO_LANGUAGES_NOTE}
+    names = set(required)
+    result.not_assessed_required = [label for label in result.not_assessed_required if label not in names]
+    result.not_assessed_preferred = [label for label in result.not_assessed_preferred if label not in names]
+    out: dict = {"compared": True, "matched": [], "missing": [], "note": ""}
+    for name in sorted(names):
+        entry = {"label": name[:1].upper() + name[1:], "requirement": "required" if required[name] else "preferred",
+                 "reviewed": reviewed[name]}
+        out["matched" if name in candidate_languages else "missing"].append(entry)
+    return out
+
+
+def _language_line(languages: dict) -> str:
+    if not languages["compared"]:
+        return ""
+    matched = [entry["label"] for entry in languages["matched"]]
+    missing = [entry["label"] for entry in languages["missing"]]
+    line = f"\nLanguages: {len(matched)} of {len(matched) + len(missing)} matched by name"
+    if matched:
+        line += " (in your profile: " + ", ".join(matched) + ")"
+    if missing:
+        line += "; not found in your profile: " + ", ".join(missing)
+    return line + "."
+
+
 SKILL_GAP_TOP = 10  # skill gaps are counted over the current top 10 results
 
 PROFILE_MESSAGES = {
@@ -334,10 +379,11 @@ class MatchingService:
         results = []
         if ranked[start:start + page_size]:
             candidate_items = self._candidate_items(profile.id)
+            languages = self._candidate_languages(profile.id)
             for offset, job in enumerate(ranked[start:start + page_size], start=1):
                 occupation = experience.job_occupation(job)
                 # Related experience explains the job; it never changes the order.
-                results.append({"rank": start + offset, **self._coverage(job, candidate_items),
+                results.append({"rank": start + offset, **self._coverage(job, candidate_items, languages),
                                 "job_occupation": occupation,
                                 "related_experience": experience.assess(job, occupation, periods),
                                 "min_required_years": experience.minimum_years(job)})
@@ -410,12 +456,22 @@ class MatchingService:
         job = self.repository.get_job(job_id)
         if not job or job.status == "archived" or job.source in candidate_excluded_sources():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
-        coverage = self._coverage(job, self._candidate_items(profile.id))
+        coverage = self._coverage(job, self._candidate_items(profile.id), self._candidate_languages(profile.id))
         self.db.commit()
         return coverage
 
+    def _candidate_languages(self, candidate_profile_id: UUID) -> set[str]:
+        """Names of the candidate's confirmed languages (any origin, incl. skills typed "language")."""
+        return {skill.normalized_text for skill in self.repository.list_matchable_candidate_skills(candidate_profile_id)
+                if skill.skill_type == LANGUAGE_TYPE}
+
     def _candidate_items(self, candidate_profile_id: UUID) -> list[SkillItem]:
+        from app.services.language_service import profile_language_ids
+
         skills = self.repository.list_matchable_candidate_skills(candidate_profile_id)
+        # Profile languages are compared separately (`_languages`), never as skills.
+        languages = profile_language_ids(self.db, skills)
+        skills = [skill for skill in skills if skill.id not in languages]
         concepts = self.repository.approved_skill_concepts("candidate", skills)
         return [self._item(skill, concepts.get(skill.id), "") for skill in skills]
 
@@ -436,7 +492,7 @@ class MatchingService:
             reviewed=skill.review_status == "approved",
         )
 
-    def _coverage(self, job: Job, candidate_items: list[SkillItem]) -> dict:
+    def _coverage(self, job: Job, candidate_items: list[SkillItem], candidate_languages: set[str] | None = None) -> dict:
         from app.job_sources import NON_LIVE_SOURCES
 
         # Live jobs are rarely reviewed: their pending skills count, flagged as not reviewed.
@@ -444,6 +500,7 @@ class MatchingService:
         concepts = {item.concept_id for item in candidate_items + job_items if item.concept_id is not None}
         broader = self.repository.specific_esco_broader_concepts(concepts)
         result = compute_coverage(candidate_items, job_items, broader)
+        languages = compare_languages(candidate_languages or set(), job_items, result)
         return {
             "job_id": job.id,
             "job": job,
@@ -455,7 +512,8 @@ class MatchingService:
             "partial_preferred": result.partial_preferred,
             "candidate_skill_count": result.candidate_skill_count,
             "job_skill_count": result.required_total + result.preferred_total,
-            "explanation": build_explanation(result),
+            "explanation": build_explanation(result) + _language_line(languages),
             "not_assessed_required": result.not_assessed_required,
             "not_assessed_preferred": result.not_assessed_preferred,
+            "languages": languages,
         }

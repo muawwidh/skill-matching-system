@@ -182,7 +182,7 @@ def test_results_are_paged_with_overall_ranks_and_coverage_only_for_the_page(cli
     covered = []
     real_coverage = MatchingService._coverage
     monkeypatch.setattr(MatchingService, "_coverage",
-                        lambda self, job, items: covered.append(job.id) or real_coverage(self, job, items))
+                        lambda self, job, *args: covered.append(job.id) or real_coverage(self, job, *args))
 
     body = client.get("/matches/recommendations", headers=headers).json()
     assert (body["total"], body["page"], body["page_size"], body["top_n"]) == (12, 1, 10, 100)

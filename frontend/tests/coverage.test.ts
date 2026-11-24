@@ -34,3 +34,10 @@ test("posted ago, page list and initials", () => {
   assert.equal(initials("Demo Candidate", "x@y"), "DC");
   assert.equal(initials("", "demo@example.com"), "D");
 });
+
+test("languages are labelled separately and only when compared", async () => {
+  const { languageLabel } = await import("../src/utils/coverage.ts");
+  assert.equal(languageLabel({ compared: true, matched: [1], missing: [2] }), "Languages: 1 of 2 matched");
+  assert.equal(languageLabel({ compared: false, matched: [], missing: [] }), null);
+  assert.equal(languageLabel(undefined), null);
+});

@@ -462,9 +462,11 @@ def main(argv: list[str] | None = None) -> int:
             db.rollback()
         print(f"TOTAL {dict(totals)}; jobs with changes: {len(changed)}")
         if args.apply and changed:
-            # The index command re-embeds only jobs whose embedding input (source hash) changed.
+            # Changed skill rows change each job's embedding input (source hash). With AUTO_REINDEX on,
+            # every commit above already re-embedded its job; the index command re-embeds any left stale.
             print("Changed jobs: " + ", ".join(map(str, changed)))
-            print("Reindex them with: python -m app.retrieval.cli index jobs --limit 100")
+            print(f"Automatic re-embedding: {'on' if settings.AUTO_REINDEX else 'off'}. Check or catch up with: "
+                  "python -m app.retrieval.cli index jobs --limit 1000")
     return 0
 
 

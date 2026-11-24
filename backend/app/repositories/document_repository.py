@@ -308,7 +308,11 @@ class DocumentRepository:
             .select_from(CandidateSkill)
             .join(ExtractedCandidateTerm, CandidateSkill.extracted_term_id == ExtractedCandidateTerm.id,
                   isouter=True)
-            .where(CandidateSkill.candidate_profile_id == candidate_profile_id)
+            .where(CandidateSkill.candidate_profile_id == candidate_profile_id,
+                   # Profile languages are not part of the matching profile.
+                   CandidateSkill.source != "manual_language",
+                   ~((CandidateSkill.skill_type == "language")
+                     & ExtractedCandidateTerm.extraction_method.startswith("language_rule@").is_(True)))
             .group_by(ExtractedCandidateTerm.cv_document_id, CandidateSkill.source, CandidateSkill.review_status)
         ).all()]
 

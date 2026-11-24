@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.db.models import (CandidateProfile, CandidateProfileEmbedding, CandidateSkill,
+from app.db.models import (CandidateProfile, CandidateProfileEmbedding,
                            Job, JobEmbedding, JobSkill, User)
 from app.services.retrieval_service import RetrievalService
 from test_retrieval import FakeEmbedder
@@ -49,8 +49,11 @@ def pg_retrieval(monkeypatch):
                             "cleaned_description, status, source, error_message) VALUES (:id, 'Python Engineer', "
                             "'Example', 'Vilnius', 'full time', 'Build Python APIs', 'Build Python APIs', "
                             "'processed', 'manual', '')"), {"id": job_id})
-            db.add(CandidateSkill(candidate_profile_id=profile.id, raw_text="Python",
-                       normalized_text="python", review_status="approved", source="manual_review"))
+            # candidate_skills is also at its 0007 shape (no proficiency_level), so SQL as well.
+            db.execute(text("INSERT INTO candidate_skills (id, candidate_profile_id, raw_text, normalized_text, "
+                            "skill_type, evidence_sentence, confidence_score, review_status, source) VALUES "
+                            "(:id, :p, 'Python', 'python', 'skill', '', 0, 'approved', 'manual_review')"),
+                       {"id": uuid4(), "p": profile.id})
             db.execute(text("INSERT INTO job_skills (id, job_id, raw_text, normalized_text, skill_type, "
                             "requirement_type, evidence_sentence, confidence_score, review_status, source) VALUES "
                             "(:id, :job, 'Python', 'python', 'skill', 'required', '', 0, 'pending', 'manual_review')"),
@@ -77,7 +80,7 @@ def pg_retrieval(monkeypatch):
 def test_populated_upgrade_extension_dimension_downgrade_reupgrade(pg_retrieval):
     engine, config, profile_id, job_id, user_id = pg_retrieval
     with engine.connect() as connection:
-        assert connection.scalar(text("select version_num from alembic_version")) == "0013_work_entry_source_cv"
+        assert connection.scalar(text("select version_num from alembic_version")) == "0014_candidate_language_level"
         assert connection.scalar(text("select extversion from pg_extension where extname='vector'"))
         assert connection.scalar(text("select format_type(a.atttypid,a.atttypmod) from pg_attribute a "
             "where a.attrelid='job_embeddings'::regclass and a.attname='embedding'")) == "vector(384)"

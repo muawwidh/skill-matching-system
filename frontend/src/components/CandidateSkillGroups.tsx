@@ -33,6 +33,7 @@ export function CandidateSkillGroups({ accessToken, cvId }: { accessToken: strin
       await cache.invalidateQueries({ queryKey: ["taxonomy"] });
       await cache.invalidateQueries({ queryKey: ["matching-profile"] });
       await cache.invalidateQueries({ queryKey: ["recommendations"] });
+      await cache.invalidateQueries({ queryKey: ["languages"] });
     },
   });
   function edit(id: string, patch: Partial<CandidateSkill>) {

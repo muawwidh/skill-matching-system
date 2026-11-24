@@ -8,6 +8,7 @@ import type {
   JobPool,
   JobSkill,
   MatchingProfile,
+  ProfileLanguage,
   RecommendationList,
   SkillGaps,
   SystemOverview,
@@ -126,6 +127,32 @@ export function addManualSkill(accessToken: string, label: string) {
 
 export function removeManualSkill(accessToken: string, skillId: string) {
   return apiRequest<void>(`/candidates/me/manual-skills/${skillId}`, { method: "DELETE", accessToken });
+}
+
+/** Languages on My profile (rejected ones left out). */
+export function listLanguages(accessToken: string) {
+  return apiRequest<ProfileLanguage[]>("/candidates/me/languages", { accessToken });
+}
+
+export function addLanguage(accessToken: string, name: string, level: string | null) {
+  return apiRequest<ProfileLanguage>("/candidates/me/languages", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({ name, level }),
+  });
+}
+
+/** Confirm or reject a language found in a CV. */
+export function reviewLanguage(accessToken: string, id: string, decision: "approved" | "rejected") {
+  return apiRequest<ProfileLanguage>(`/candidates/me/languages/${id}/review`, {
+    method: "PUT",
+    accessToken,
+    body: JSON.stringify({ decision }),
+  });
+}
+
+export function removeLanguage(accessToken: string, id: string) {
+  return apiRequest<void>(`/candidates/me/languages/${id}`, { method: "DELETE", accessToken });
 }
 
 export function getSkillGaps(accessToken: string) {

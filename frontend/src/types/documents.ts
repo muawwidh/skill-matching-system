@@ -62,6 +62,27 @@ export type CandidateSkill = {
   source: string;
 };
 
+/** A language on My profile; origin: added (by hand), cv (found in a CV), skill_editor (typed as a skill earlier). */
+export type ProfileLanguage = {
+  id: string;
+  label: string;
+  name: string;
+  level: string | null;
+  status: string;
+  origin: "added" | "cv" | "skill_editor";
+  evidence: string;
+};
+
+export const LANGUAGE_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2", "native"] as const;
+
+/** Job languages against the candidate's confirmed languages, by name only; never part of skill counts or order. */
+export type LanguageCoverage = {
+  compared: boolean;
+  matched: { label: string; requirement: string; reviewed: boolean }[];
+  missing: { label: string; requirement: string; reviewed: boolean }[];
+  note: string;
+};
+
 export type JobSkill = CandidateSkill & {
   requirement_type: string;
   /** Detected section of the extracted occurrence; empty for manual skills. */
@@ -142,6 +163,7 @@ export type RecommendationItem = {
   /** Job terms of other kinds (qualification, experience, certification): listed, not assessed. */
   not_assessed_required?: string[];
   not_assessed_preferred?: string[];
+  languages?: LanguageCoverage;
   /** Minimum years the job text asks for; null when none is stated. */
   min_required_years?: number | null;
   job: Job;

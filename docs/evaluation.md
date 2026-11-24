@@ -161,7 +161,9 @@ byte-for-byte with the stored outputs. All were identical:
 - **Sample.** 20 jobs drawn at random (seed 20261121) from the 977 active
   live jobs, with all 145 skills the job extraction (version v3) found in
   them. Tooling: `python -m app.job_sources.cli sample-extraction` and
-  `score-extraction`.
+  `score-extraction` (with `--gaps FILE`, missed skills are read from the
+  error log; jobs with no labelled row and no missed entry are excluded and
+  listed, so a partly labelled sample can be scored).
 - **Labels.** One rater marked each extracted skill correct or incorrect and
   logged every error in a separate file with its type (missed, false
   positive, wrong mapping), category, requirement and cause. The error log is

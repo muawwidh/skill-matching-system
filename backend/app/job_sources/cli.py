@@ -29,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     score = commands.add_parser("score-extraction",
                                 help="Precision and missed required skills from a labelled labels.csv.")
     score.add_argument("--labels", type=Path, required=True)
+    score.add_argument("--gaps", type=Path, help="Error log: missed required skills and tools come from it.")
     args = parser.parse_args(argv)
 
     if args.command == "sample-extraction":
@@ -44,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "score-extraction":
         from app.job_sources.extraction_sample import score as score_labels
 
-        print(json.dumps(score_labels(args.labels), indent=2, sort_keys=True))
+        print(json.dumps(score_labels(args.labels, args.gaps), indent=2, sort_keys=True))
         return 0
 
     if args.command == "import-live-jobs":

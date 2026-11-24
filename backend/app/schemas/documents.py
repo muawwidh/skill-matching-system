@@ -195,6 +195,52 @@ class ManualSkillCreate(BaseModel):
         return value
 
 
+class LanguageCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    level: Literal["A1", "A2", "B1", "B2", "C1", "C2", "native"] | None = None
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, value: str) -> str:
+        value = " ".join(value.split())
+        if not value:
+            raise ValueError("The language is required.")
+        return value
+
+
+class LanguageRead(BaseModel):
+    """A language on the candidate's profile; origin: added (by hand), cv (found in a CV), skill_editor."""
+    id: UUID
+    label: str
+    name: str
+    level: str | None = None
+    status: str
+    origin: str
+    evidence: str = ""
+
+
+class LanguageReview(BaseModel):
+    decision: Literal["approved", "rejected"]
+
+
+class LanguageEntryRead(BaseModel):
+    label: str
+    requirement: str
+    reviewed: bool = True
+
+
+class LanguageCoverageRead(BaseModel):
+    """Job language requirements against the candidate's confirmed languages, by name only.
+
+    `compared` is false when the candidate has no confirmed language; the job's languages
+    are then listed as not assessed, with `note`. Never part of the order or the skill counts.
+    """
+    compared: bool = False
+    matched: list[LanguageEntryRead] = []
+    missing: list[LanguageEntryRead] = []
+    note: str = ""
+
+
 class CandidateSkillReviewRequest(BaseModel):
     skills: list[CandidateSkillUpsert]
 
@@ -269,6 +315,7 @@ class JobCoverageRead(BaseModel):
     # Job terms of other kinds (qualification, experience, certification, ...): listed, never assessed.
     not_assessed_required: list[str] = []
     not_assessed_preferred: list[str] = []
+    languages: LanguageCoverageRead = LanguageCoverageRead()
     job: JobRead
 
 
@@ -325,6 +372,7 @@ class RecommendationItem(BaseModel):
     # Job terms of other kinds (qualification, experience, certification, ...): listed, never assessed.
     not_assessed_required: list[str] = []
     not_assessed_preferred: list[str] = []
+    languages: LanguageCoverageRead = LanguageCoverageRead()
     job: JobRead
     job_occupation: JobOccupationRead | None = None
     related_experience: RelatedExperienceRead | None = None

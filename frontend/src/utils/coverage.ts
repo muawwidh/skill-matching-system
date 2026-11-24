@@ -33,6 +33,15 @@ export function coverageLabel({ matched, related, missing }: CoverageCounts): st
   return `${matched} of ${total} required skills${related > 0 ? ` · ${related} related` : ""}`;
 }
 
+type LanguageInput = { compared: boolean; matched: unknown[]; missing: unknown[] };
+
+/** "Languages: X of Y matched", or null when the job's languages were not compared. Separate from skill counts. */
+export function languageLabel(languages: LanguageInput | undefined | null): string | null {
+  if (!languages?.compared) return null;
+  const total = languages.matched.length + languages.missing.length;
+  return total ? `Languages: ${languages.matched.length} of ${total} matched` : null;
+}
+
 export type ExperienceBadge = { tone: "meets" | "below" | "neutral"; text: string; title: string };
 
 type ExperienceInput = {

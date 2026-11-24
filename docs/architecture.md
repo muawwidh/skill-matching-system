@@ -89,7 +89,10 @@ text about the company, benefits, equal opportunity, privacy and the
 application process. The same linking rule applies, except that a short
 acronym found by these list rules links only to a label spelled the same way
 and is never approved automatically. The rule set is versioned
-(`JOB_EXTRACTION_VERSION`); CV extraction does not change with it. Live jobs that have not been seen at their source for 14 days
+(`JOB_EXTRACTION_VERSION`); CV extraction does not change with it, except
+that CVs always use the language rule (`language_rule@v4`): language names
+with a proficiency cue, or listed under a "Languages" heading, become
+"language" items for the candidate to confirm. Live jobs that have not been seen at their source for 14 days
 (configurable) are archived, and a cap keeps at most 1,500 active live jobs,
 with at most 70 % from one source.
 
@@ -127,8 +130,17 @@ sequenceDiagram
   classified as *matched* (same ESCO concept or same name as a confirmed
   skill), *related* (a confirmed skill shares a specific ESCO parent concept)
   or *missing*. On live jobs, skills nobody reviewed count but are marked as
-  automatically extracted. Qualifications, certificates, languages and similar
+  automatically extracted. Qualifications, certificates and similar
   terms are listed as "not assessed".
+- **Languages.** A job's language items are compared by name with the
+  candidate's confirmed languages ("in your profile" / "not found in your
+  profile"), without levels, in a separate group that is not part of the skill
+  counts. Profile languages (found by the language rule or added on My
+  profile, optional level in `candidate_skills.proficiency_level`) are left out
+  of the profile embedding and the skill coverage, so they never affect the
+  order. Skills typed as "language" in the skill editor before this keep their
+  earlier behaviour. Without a confirmed language the job's languages stay
+  "not assessed".
 - **Experience.** If the candidate entered work experience, the years in roles
   of the same 3-digit ISCO group as the job are compared with the job's stated
   minimum. This is shown next to the job and can, at the candidate's request,

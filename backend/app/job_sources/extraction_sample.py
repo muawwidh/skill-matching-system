@@ -183,21 +183,79 @@ def _precision(counts: Counter) -> dict:
             "precision": round(counts["correct"] / labelled, 4) if labelled else None}
 
 
-def score(labels_path: Path) -> dict:
-    """Precision of extracted skills and missed required skills from a labelled `labels.csv`."""
+MISSED_CATEGORIES = frozenset({"technical_skill", "business_skill", "tool"})
+
+
+def read_gaps(gaps_path: Path) -> dict[int, list[str]]:
+    """Missed required skills and tools per job number from an error log; invalid rows raise."""
+    with gaps_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    if rows and set(GAP_COLUMNS) - set(rows[0]):
+        raise ValueError(f"{gaps_path} is not an error log (missing columns).")
+    invalid, missed = [], defaultdict(list)
+    for line, row in enumerate(rows, start=2):
+        if None in row or any(value is None for value in row.values()):
+            invalid.append(f"line {line}: wrong number of columns")
+            continue
+        problems = [f"{column}={row[column]!r}" for column, values in GAP_VALUES.items() if row[column] not in values]
+        number = re.fullmatch(r"J(\d+)", row["job_id"].strip())
+        if not number:
+            problems.append(f"job_id={row['job_id']!r}")
+        if not row["term"].strip():
+            problems.append("empty term")
+        if problems:
+            invalid.append(f"line {line}: " + ", ".join(problems))
+            continue
+        if row["type"] == "missed" and row["requirement"] == "required" and row["category"] in MISSED_CATEGORIES:
+            term = " ".join(row["term"].split()).casefold()
+            if term not in missed[int(number.group(1))]:
+                missed[int(number.group(1))].append(term)
+    if invalid:
+        raise ValueError("Invalid error-log rows: " + "; ".join(invalid[:20]))
+    return dict(missed)
+
+
+def _job_number(row: dict) -> int | str:
+    value = row["job_no"].strip()
+    return int(value) if value.isdigit() else value
+
+
+def score(labels_path: Path, gaps_path: Path | None = None) -> dict:
+    """Precision of extracted skills and missed required skills from a labelled `labels.csv`.
+
+    A job counts as labelled when at least one of its skill rows is labelled or its
+    `missed_required_skills` cell is filled; other jobs are excluded and listed. With
+    `gaps_path`, the missed required skills and tools of the labelled jobs come from the
+    error log (no entry = none missed) instead of the `missed_required_skills` column.
+    """
     with labels_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     if not rows or set(COLUMNS) - set(rows[0]):
         raise ValueError(f"{labels_path} is not a labelling file (missing columns).")
+    gaps = read_gaps(gaps_path) if gaps_path is not None else None
+    skill_labels: dict[str, list[bool]] = defaultdict(list)
+    for row in rows:
+        if row["row_type"] == "skill":
+            skill_labels[row["job_no"]].append(bool(row["label"].strip()))
     overall: Counter = Counter()
     by: dict[str, dict[str, Counter]] = {"skill_type": defaultdict(Counter), "requirement": defaultdict(Counter),
                                          "status": defaultdict(Counter)}
     invalid: list[str] = []
     unlabelled_skills = 0
     jobs_labelled, missed_per_job = 0, []
+    excluded, partial = [], []
     for line, row in enumerate(rows, start=2):
         if row["row_type"] == "job":
             missed = _missed(row["missed_required_skills"])
+            labels = skill_labels.get(row["job_no"], [])
+            labelled = any(labels) or missed is not None
+            if not labelled:
+                excluded.append(_job_number(row))
+                continue
+            if labels and not all(labels):
+                partial.append(_job_number(row))
+            if gaps is not None:
+                missed = gaps.get(_job_number(row), [])
             if missed is not None:
                 jobs_labelled += 1
                 missed_per_job.append(len(missed))
@@ -221,6 +279,9 @@ def score(labels_path: Path) -> dict:
     jobs = sum(row["row_type"] == "job" for row in rows)
     return {
         "jobs": jobs, "skill_rows": len(rows) - jobs, "unlabelled_skill_rows": unlabelled_skills,
+        "excluded_jobs": excluded, "partially_labelled_jobs": partial,
+        "missed_source": "gaps.csv" if gaps is not None else "missed_required_skills column",
+        "gaps_for_excluded_jobs": sorted(set(gaps or {}) & set(excluded)),
         **_precision(overall),
         "by": {key: {name: _precision(counts) for name, counts in sorted(groups.items())}
                for key, groups in by.items()},

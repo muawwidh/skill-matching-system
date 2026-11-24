@@ -3,11 +3,26 @@ import type { ReactNode } from "react";
 
 import type { MatchedSkill, MissingSkill, PartialSkill, RecommendationItem } from "../types/documents";
 import { ExperienceBadge, RankBadge } from "../ui/Badges";
+import { Chip } from "../ui/Chip";
 import { CoverageBar } from "../ui/CoverageBar";
-import { postedAgo, requiredCounts } from "../utils/coverage";
+import { languageLabel, postedAgo, requiredCounts } from "../utils/coverage";
 import { isLiveJobSource } from "../utils/reviewStatus";
 
 export const UNREVIEWED = "automatically extracted, not reviewed";
+
+/** Job languages against the candidate's confirmed languages (by name). Not counted in the skill coverage. */
+export function LanguageChips({ item }: { item: RecommendationItem }) {
+  const languages = item.languages;
+  const label = languageLabel(languages);
+  if (!languages || !label) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" title="Compared by name with the languages on My profile; levels are not compared. Not part of the skill counts or the order.">
+      <span className="text-xs font-medium text-muted">{label}</span>
+      {languages.matched.map((entry) => <Chip key={`m-${entry.label}`} kind="matched">{entry.label}</Chip>)}
+      {languages.missing.map((entry) => <Chip key={`x-${entry.label}`} kind="missing">{entry.label}</Chip>)}
+    </div>
+  );
+}
 
 export function jobMeta(item: RecommendationItem): string {
   return [item.job.company, item.job.location, postedAgo(item.job.posted_at)].filter(Boolean).join(" · ");
@@ -167,6 +182,24 @@ export function JobDetailPanel({ item, rankTotal, extra }: { item: Recommendatio
         ) : <p className="mt-2 text-sm text-muted">You have every listed skill.</p>}
       </Section>
 
+      {item.languages?.compared ? (
+        <Section title={languageLabel(item.languages) ?? "Languages"}>
+          <ul className="divide-y divide-line">
+            {item.languages.matched.map((entry) => (
+              <Row key={`m-${entry.label}`} symbol="✓" symbolClass="bg-teal-soft text-teal-text" label={entry.label}
+                tag={entry.requirement === "required" ? "required" : "preferred"} detail="In your profile"
+                unreviewed={!entry.reviewed} />
+            ))}
+            {item.languages.missing.map((entry) => (
+              <Row key={`x-${entry.label}`} symbol="○" symbolClass="bg-miss-bg text-miss-text" label={entry.label}
+                tag={entry.requirement === "required" ? "required" : "preferred"} detail="Not found in your profile"
+                unreviewed={!entry.reviewed} />
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-muted">Compared by name with the languages on My profile; levels are not compared. Not part of the skill counts or the ranking.</p>
+        </Section>
+      ) : null}
+
       <Section title="Experience">
         <div className="mt-2"><ExperienceLine item={item} /></div>
       </Section>
@@ -179,10 +212,11 @@ export function JobDetailPanel({ item, rankTotal, extra }: { item: Recommendatio
               <p className="text-muted"><span className="font-medium text-ink">Also preferred — not assessed:</span> {notPreferred.join(", ")}</p>
             ) : null}
             <p className="text-xs text-muted">Qualifications, experience and certifications listed in the posting; the system does not check them.</p>
+            {item.languages?.note ? <p className="text-xs text-muted">Languages: {item.languages.note}</p> : null}
           </div>
         ) : (
           <p className="mt-2 text-sm text-muted">
-            Other requirements in the posting (for example a degree or languages) are not assessed; check the original posting.
+            Other requirements in the posting (for example a degree) are not assessed; check the original posting.
           </p>
         )}
       </Section>

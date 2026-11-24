@@ -34,6 +34,12 @@ Only confirmed skills and skills you added are used. Under **Review skills and
 ESCO links** you can also see which ESCO concept each skill is linked to and
 choose a different suggestion if a link is wrong.
 
+The **Languages** card lists languages found in your CV (confirm or reject
+each one) and languages you add with **+ Add a language**, with an optional
+level (A1–C2 or native). Remove one with the × on its chip. Languages are
+compared by name with the languages a job asks for; levels are not compared,
+and languages never change the order of your jobs.
+
 The dark **Your matching profile** box shows which CVs and how many skills are
 used for matching.
 
@@ -59,10 +65,14 @@ in pages of 10, 25 or 50. Select a job to see its details:
 - **Related skill in your profile**: job skills you do not have, but a close
   skill of yours shares an ESCO area with them.
 - **Skills to develop**: the job's missing skills, marked required or preferred.
+- **Languages: X of Y matched**: the languages the job asks for, ✓ in your
+  profile or ○ not found in your profile (by name only). Shown on the job card
+  too; not counted in the required/preferred skills.
 - **Experience**: your years in related roles against the years the job asks
   for, when both are known.
-- **Also required — not assessed**: qualifications, certificates, languages and similar
-  requirements the system cannot check.
+- **Also required — not assessed**: qualifications, certificates and similar
+  requirements the system cannot check. Languages appear here only while
+  you have no confirmed language; add your languages on My profile to compare.
 - **View original posting** opens the job at its source.
 
 On jobs collected from job sites, skills marked "automatically extracted, not

@@ -7,6 +7,7 @@ import { addManualSkill, deleteCv, getMatchingProfile, listCvs, pasteCv, removeM
 import { listWorkEntries } from "../api/experience";
 import { CandidateTaxonomyLinks } from "../components/CandidateTaxonomyLinks";
 import { DeleteAccountPanel } from "../components/DeleteAccountPanel";
+import { LanguagesPanel } from "../components/LanguagesPanel";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { TextPreview } from "../components/TextPreview";
@@ -91,7 +92,7 @@ function ChipGroup({ title, skills, kind, hint, onRemove }: {
   );
 }
 
-const SKILL_QUERIES = [["manual-skills"], ["cv"], ["matching-profile"], ["recommendations"]];
+const SKILL_QUERIES = [["manual-skills"], ["cv"], ["matching-profile"], ["recommendations"], ["languages"]];
 
 function AddSkill({ accessToken }: { accessToken: string }) {
   const queryClient = useQueryClient();
@@ -354,7 +355,7 @@ export function CvsPage() {
   const entries = useQuery({ queryKey: ["work-entries"], queryFn: () => listWorkEntries(token), enabled: Boolean(accessToken) && isCandidate });
 
   function refresh() {
-    for (const key of [["cvs"], ["cv"], ["matching-profile"], ["recommendations"], ["work-entries"], ["manual-skills"]]) {
+    for (const key of [["cvs"], ["cv"], ["matching-profile"], ["recommendations"], ["work-entries"], ["manual-skills"], ["languages"]]) {
       queryClient.invalidateQueries({ queryKey: key });
     }
   }
@@ -385,6 +386,7 @@ export function CvsPage() {
               )) : <p className="text-sm text-muted">Add a CV to find skills.</p>}
             </section>
           )}
+          {isCandidate ? <LanguagesPanel accessToken={token} /> : null}
           {isCandidate ? <WorkEntriesPanel accessToken={token} cvNames={cvNames} /> : null}
         </div>
         <div className="space-y-6">

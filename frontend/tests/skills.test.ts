@@ -30,3 +30,12 @@ test("manual skills count without any CV", () => {
   const summary = summarizeSkills([], [skill("m", "Go", "approved", "manual_review")]);
   assert.deepEqual([summary.confirmed, summary.skills[0].kind], [1, "added"]);
 });
+
+test("languages are left out of the skill summary (they have their own card)", () => {
+  const english = { ...skill("l1", "English", "approved"), skill_type: "language" };
+  const italian = { ...skill("l2", "Italian", "approved", "manual_review"), skill_type: "language" };
+  const summary = summarizeSkills([{ cvId: "cv1", groups: [group("Python", [skill("1", "Python", "approved")]), group("English", [english])] }],
+    [italian]);
+  assert.deepEqual(summary.skills.map((s) => s.label), ["Python"]);
+  assert.equal(summary.confirmed, 1);
+});

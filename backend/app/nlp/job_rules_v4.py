@@ -1,4 +1,4 @@
-"""Job extraction rules added in contract v4 (jobs only; CV extraction never uses them).
+"""Job extraction rules added in contract v4. CV extraction uses only the language rule.
 
 - `list_items`: splits skill lists in requirement and preference sections into
   short items (at most four words) and returns those not already covered by
@@ -188,9 +188,34 @@ def in_eeo_or_benefits_sentence(text: str, start: int, end: int) -> bool:
     return _eeo_or_benefits(text[left:right])
 
 
-def language_terms(text: str) -> list[Span]:
+_LANGUAGE_HEADING = re.compile(r"^[\W_]*(?:languages?|language skills|spoken languages)[\W_]*$", re.I)
+
+
+def _language_blocks(text: str) -> list[tuple[int, int]]:
+    """Spans of the lines under a "Languages" heading line, up to the next blank line (CVs)."""
+    blocks, position, start = [], 0, None
+    for line in text.split("\n"):
+        end = position + len(line)
+        if _LANGUAGE_HEADING.match(line):
+            start = end
+        elif start is not None and not line.strip():
+            blocks.append((start, position))
+            start = None
+        position = end + 1
+    if start is not None:
+        blocks.append((start, len(text)))
+    return blocks
+
+
+def language_terms(text: str, cv: bool = False) -> list[Span]:
+    """Language names in a sentence with a proficiency cue; in a CV also every name listed
+    under a "Languages" heading."""
     found = []
+    blocks = _language_blocks(text) if cv else []
     for match in _LANGUAGE.finditer(text):
+        if any(start <= match.start() < end for start, end in blocks):
+            found.append(Span(match.start(), match.end(), match.group(0), match.group(0).lower()))
+            continue
         left, right = sentence_bounds(text, match.start(), match.end())
         sentence = text[left:right]
         relative = match.start() - left

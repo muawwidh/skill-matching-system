@@ -166,6 +166,16 @@ docker compose exec backend python -m app.services.job_service reextract        
 docker compose exec backend python -m app.services.job_service reextract --apply --retire-unreviewed
 ```
 
+Languages in CVs processed before the CV language rule are added with a
+separate, additive command (dry run unless `--apply`). It only adds pending
+"language" items, never changes other items or review decisions, and skips
+the users listed under `"candidates"` in the given mapping file (the
+evaluation profiles):
+
+```bash
+docker compose exec backend python -m app.services.language_backfill --exclude-mapping /path/to/database-mapping.json [--apply]
+```
+
 ### Before a candidate sees results
 
 A fresh installation shows no jobs until all of these are done:
@@ -260,7 +270,7 @@ Set in `.env` (see `.env.example`); defaults are in `backend/app/core/config.py`
 | `LIVE_JOB_IMPORT_INTERVAL_SECONDS` | 86400 | Interval of the optional scheduled import |
 | `CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS` | false | Show the fixed evaluation jobs to candidates |
 | `JOB_EXTRACTION_ESCO_VOCABULARY` | true | Use ESCO skill labels when extracting job skills |
-| `JOB_EXTRACTION_VERSION` | v4 | Job skill extraction rules: `v4` adds list splitting, language and named-certification rules and filters for generic terms and company, benefits and equal-opportunity text; `v3` is the previous rule set. CVs are not affected |
+| `JOB_EXTRACTION_VERSION` | v4 | Job skill extraction rules: `v4` adds list splitting, language and named-certification rules and filters for generic terms and company, benefits and equal-opportunity text; `v3` is the previous rule set. CVs use only the language rule, whatever this setting |
 
 ## Documentation
 

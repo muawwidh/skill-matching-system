@@ -216,6 +216,8 @@ class SkillExtractor:
                 )
             if v4:
                 section_terms = self._apply_v4_rules(section, section_offset, requirement_type, section_terms)
+            elif document_kind != "job":
+                section_terms.extend(self._cv_language_terms(section, section_offset, requirement_type))
             terms.extend(section_terms)
         return self._deduplicate(terms)
 
@@ -233,6 +235,14 @@ class SkillExtractor:
             end_char=section_offset + span.end,
             requirement_type=requirement_type,
         )
+
+    def _cv_language_terms(self, section, section_offset: int, requirement_type: str) -> list[ExtractedTerm]:
+        """Languages in a CV, as "language" terms for the candidate to confirm (method language_rule@v4)."""
+        from app.nlp import job_rules_v4 as rules
+
+        return [self._v4_term(section.content, span, "language", "language_rule", 0.85, section.section_type,
+                              section_offset, requirement_type)
+                for span in rules.language_terms(section.content, cv=True)]
 
     def _apply_v4_rules(self, section, section_offset: int, requirement_type: str,
                         terms: list[ExtractedTerm]) -> list[ExtractedTerm]:

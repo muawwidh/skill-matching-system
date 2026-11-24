@@ -68,6 +68,10 @@ class RetrievalRepository:
 
     def profile_input(self, profile_id: UUID):
         skills = list(self.db.scalars(select(CandidateSkill).where(CandidateSkill.candidate_profile_id == profile_id)))
+        # Profile languages (found by the language rule or added on My profile) never enter the embedding.
+        from app.services.language_service import profile_language_ids
+        languages = profile_language_ids(self.db, skills)
+        skills = [skill for skill in skills if skill.id not in languages]
         term_ids = [item.extracted_term_id for item in skills if item.extracted_term_id]
         canonicals = self._canonicals("candidate", term_ids)
         rows = []

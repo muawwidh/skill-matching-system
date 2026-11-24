@@ -108,6 +108,8 @@ class CandidateSkill(TimestampMixin, Base):
     confidence_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     review_status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
     source: Mapped[str] = mapped_column(String(80), default="extraction", nullable=False)
+    # Languages added by hand: optional level (A1-C2, native); shown only, never compared.
+    proficiency_level: Mapped[str] = mapped_column(String(20), nullable=True)
 
 
 class Job(TimestampMixin, Base):

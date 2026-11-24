@@ -6,10 +6,11 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import candidate_only, get_current_user
 from app.db.models import User
 from app.db.session import get_db
-from app.schemas.documents import (CandidateProfileRead, CandidateProfileUpdate, CandidateSkillRead, ManualSkillCreate,
-                                   MatchingProfileRead)
+from app.schemas.documents import (CandidateProfileRead, CandidateProfileUpdate, CandidateSkillRead, LanguageCreate,
+                                   LanguageRead, LanguageReview, ManualSkillCreate, MatchingProfileRead)
 from app.schemas.experience import DetectedWorkEntryRead, OccupationSuggestionRead, WorkEntryRead, WorkEntryWrite
 from app.services.candidate_service import CandidateService
+from app.services.language_service import LanguageService
 from app.services.skill_service import MANUAL_SOURCE, SkillService
 from app.services.work_entry_service import WorkEntryService
 
@@ -57,6 +58,42 @@ def add_manual_skill(payload: ManualSkillCreate, current_user: User = Depends(ca
 @router.delete("/me/manual-skills/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_manual_skill(skill_id: UUID, current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
     SkillService(db).remove_my_manual_skill(current_user, skill_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --- Languages: compared with job language requirements by name; never used for ranking ---
+
+def _language(service: LanguageService, user: User, skill_id: UUID) -> dict:
+    return next(entry for entry in service.list_languages(user) if entry["id"] == skill_id)
+
+
+@router.get("/me/languages", response_model=list[LanguageRead])
+def my_languages(current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
+    return LanguageService(db).list_languages(current_user)
+
+
+@router.post("/me/languages", response_model=LanguageRead, status_code=status.HTTP_201_CREATED)
+def add_language(payload: LanguageCreate, current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
+    service = LanguageService(db)
+    skill = service.add_language(current_user, payload.name, payload.level)
+    return _language(service, current_user, skill.id)
+
+
+@router.put("/me/languages/{skill_id}/review", response_model=LanguageRead)
+def review_language(skill_id: UUID, payload: LanguageReview, current_user: User = Depends(candidate_only),
+                    db: Session = Depends(get_db)):
+    """Confirm or reject a language found in a CV."""
+    service = LanguageService(db)
+    skill = service.review_language(current_user, skill_id, payload.decision)
+    if payload.decision == "rejected":
+        return {"id": skill.id, "label": skill.raw_text, "name": skill.normalized_text, "level": None,
+                "status": "rejected", "origin": "cv", "evidence": skill.evidence_sentence}
+    return _language(service, current_user, skill.id)
+
+
+@router.delete("/me/languages/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_language(skill_id: UUID, current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
+    LanguageService(db).remove_language(current_user, skill_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
