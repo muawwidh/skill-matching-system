@@ -162,11 +162,13 @@ byte-for-byte with the stored outputs. All were identical:
   live jobs, with all 145 skills the job extraction (version v3) found in
   them. Tooling: `python -m app.job_sources.cli sample-extraction` and
   `score-extraction`.
-- **Labels.** One rater marked each extracted skill correct or incorrect,
-  listed the required skills each posting asks for that were not extracted,
-  and logged every error in a separate file with its type (missed, false
-  positive, wrong mapping) and a cause. Both files are private; they are
-  identified by SHA-256 `751a6e31…` (labels) and `739d1567…` (error log).
+- **Labels.** One rater marked each extracted skill correct or incorrect and
+  logged every error in a separate file with its type (missed, false
+  positive, wrong mapping), category, requirement and cause. The error log is
+  the single source of missed skills: a job's missed required skills are its
+  logged missed items that are required and are a business skill, technical
+  skill or tool. Both files are private; they are identified by SHA-256
+  `b6150afa…` (labels) and `c8c68edb…` (error log).
 - This is the baseline for later changes to job extraction.
 
 ### Baseline results
@@ -184,15 +186,25 @@ byte-for-byte with the stored outputs. All were identical:
 | Type: qualification | 6 / 9 | 0.667 |
 | Type: certification | 0 / 3 | 0.000 |
 
-| Missed required skills | Value |
+| Missed required skills and tools (20 of 20 jobs labelled) | Value |
 | --- | --- |
-| From the labels file (19 of 20 jobs labelled) | 232 in total, 19 of 19 jobs with at least one, 12.2 per job |
-| From the error log (20 jobs) | 185 required, plus 44 preferred and 26 named as responsibilities |
+| Total | 163 |
+| Jobs with at least one | 20 of 20 |
+| Per job, mean | 8.15 |
 
-The two missed-skill counts were recorded separately and do not agree job by
-job; the error log is the more detailed of the two. Either way, recall is the
-weak side of the extractor: a job has about 7 extracted skills and roughly
-9 to 12 required skills that were not found.
+Not counted above: 36 further missed items that are languages,
+certifications, experience or qualifications, and 56 missed skills or tools
+listed as preferred or as responsibilities.
+
+**Approximate recall: 111 / (111 + 163) = 0.41.** Correct extracted items
+divided by correct extracted items plus missed required skills and tools.
+This is an approximation, not a true recall: the numerator counts every
+correct item, including experience and qualification items and items whose
+requirement is unknown, while the denominator adds only required skills and
+tools that were missed. Missed preferred skills are left out, so the true
+recall over all skills is likely lower. Either way, recall is the weak side of
+the extractor: a job has about 7 extracted skills and about 8 missed required
+skills or tools.
 
 **Comparison: the 30 evaluation jobs.** Every skill on these jobs was approved
 or rejected by hand. 289 of 357 were approved (0.810); for the 265 skills found
@@ -206,19 +218,19 @@ optimistic reference, not an independent result.
 
 296 logged errors in the 20 jobs:
 
-| Cause | Missed | False positive | Wrong mapping | Other | Total |
-| --- | --- | --- | --- | --- | --- |
-| Skill list not split into items | 141 | | | | 141 |
-| Term not in the vocabulary | 84 | | | | 84 |
-| Generic term ("IT", "certification") | | 17 | | | 17 |
-| No rules for languages | 15 | | | | 15 |
-| Text about the company, not the role | | 12 | | | 12 |
-| Certification asked for without a name | 10 | | | | 10 |
-| Recruiting boilerplate | | 5 | | | 5 |
-| Pattern did not match (experience) | 5 | | | | 5 |
-| Acronym linked to the wrong concept | | | 5 | | 5 |
-| Only part of the phrase extracted | | 1 | | 1 | 2 |
-| **Total** | **255** | **35** | **5** | **1** | **296** |
+| Cause | Missed | False positive | Wrong mapping | Total |
+| --- | --- | --- | --- | --- |
+| Skill list not split into items | 141 | | | 141 |
+| Term not in the vocabulary | 84 | | | 84 |
+| Generic term ("IT", "certification") | | 17 | | 17 |
+| No rules for languages | 15 | | | 15 |
+| Text about the company, not the role | | 12 | | 12 |
+| Certification asked for without a name | 10 | | | 10 |
+| Recruiting boilerplate | | 5 | | 5 |
+| Pattern did not match (experience) | 5 | | | 5 |
+| Acronym linked to the wrong concept | | | 5 | 5 |
+| Only part of the phrase extracted | | 2 | | 2 |
+| **Total** | **255** | **36** | **5** | **296** |
 
 | Missed items by category | Count | Of which required |
 | --- | --- | --- |
