@@ -32,6 +32,12 @@ from app.services.job_service import build_job_extractor
 from app.services.section_detection_service import SectionDetectionService, classify_job_heading, detect_job_segments
 
 
+@pytest.fixture
+def v3_jobs(monkeypatch):
+    """Tests of job extraction contract v3 behaviour (v4 is the default)."""
+    monkeypatch.setattr(settings, "JOB_EXTRACTION_VERSION", "v3")
+
+
 def auth_headers(client: TestClient) -> dict[str, str]:
     response = client.post(
         "/auth/register",
@@ -176,6 +182,7 @@ def test_optional_spacy_method_keeps_distinct_versioned_provenance() -> None:
     assert (terms[0].raw_text, terms[0].start_char, terms[0].end_char) == ("Python", 0, 6)
 
 
+@pytest.mark.usefixtures("v3_jobs")
 def test_versioned_extraction_methods_are_persisted_for_candidate_and_job(
     client: TestClient, db_session: Session
 ) -> None:
@@ -649,6 +656,7 @@ def _seed_esco_release(db_session: Session, is_sample: bool = False) -> None:
     db_session.commit()
 
 
+@pytest.mark.usefixtures("v3_jobs")
 def test_esco_vocabulary_config_switch_compares_old_and_new(client: TestClient, db_session: Session, monkeypatch) -> None:
     _seed_esco_release(db_session)
     assert build_job_extractor(db_session, use_esco_vocabulary=False).esco_vocabulary is None
@@ -703,6 +711,7 @@ def _legacy_job(client: TestClient, db_session: Session, description: str):
     return job, headers
 
 
+@pytest.mark.usefixtures("v3_jobs")
 def test_additive_reextraction_keeps_reviews_and_adds_new_terms_as_pending(
     client: TestClient, db_session: Session
 ) -> None:
@@ -761,6 +770,7 @@ def test_additive_reextraction_links_only_new_terms(client: TestClient, db_sessi
     assert len(new_ids) == 1 and linked == [set(new_ids)]
 
 
+@pytest.mark.usefixtures("v3_jobs")
 def test_reextraction_cli_dry_run_writes_nothing(client: TestClient, db_session: Session, monkeypatch, capsys) -> None:
     from app.services import job_service
 
@@ -769,12 +779,13 @@ def test_reextraction_cli_dry_run_writes_nothing(client: TestClient, db_session:
     count = lambda: len(list(db_session.scalars(select(ExtractedJobTerm).where(ExtractedJobTerm.job_id == job_id))))
     before = count()
     monkeypatch.setattr("app.db.session.SessionLocal", lambda: db_session)
-    assert job_service.main(["reextract", "--esco", "off", "--job", str(job_id)]) == 0
+    assert job_service.main(["reextract", "--esco", "off", "--sources", "all", "--job", str(job_id)]) == 0
     output = capsys.readouterr().out
     assert "DRY-RUN (no writes)" in output and "new   1" in output
     assert count() == before
 
 
+@pytest.mark.usefixtures("v3_jobs")
 def test_reextraction_does_not_re_add_text_a_reviewer_corrected(client: TestClient, db_session: Session) -> None:
     from app.services.job_service import JobReextractionService
 

@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     # Job extraction v3: add filtered ESCO skill/knowledge labels as a second dictionary.
     # Off = curated dictionary only, for old-vs-new comparison.
     JOB_EXTRACTION_ESCO_VOCABULARY: bool = True
+    # Job extraction rules: v4 adds list splitting, precision guards, language and
+    # named-certification rules; v3 is the previous rule set. CV extraction is not affected.
+    JOB_EXTRACTION_VERSION: Literal["v3", "v4"] = "v4"
     # Jobs page: retrieval returns the top-N jobs by similarity, shown in pages;
     # coverage explains each job on the current page.
     RECOMMENDATION_TOP_N: int = Field(default=100, ge=1, le=500)

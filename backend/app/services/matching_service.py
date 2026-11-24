@@ -20,6 +20,9 @@ from app.repositories.document_repository import DocumentRepository
 # experience_indicator, certification, occupation, ...) is listed as
 # "not assessed by the system" and never scored.
 SKILL_LIKE_TYPES = frozenset({"skill", "tool", "domain_knowledge", "language"})
+# Job items compared with the candidate's skills. A job's language requirement is
+# listed as not assessed: proficiency levels cannot be checked from a skill list.
+JOB_ASSESSED_TYPES = SKILL_LIKE_TYPES - {"language"}
 MATCHED_VIA_CONCEPT = "taxonomy_concept"
 MATCHED_VIA_NAME = "skill_name"
 # How a missing job skill was looked for: by taxonomy concept (and name), or by name only.
@@ -133,7 +136,7 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
             candidate_broader.setdefault(parent_id, (parent_label, item.concept_label or item.name))
 
     result = CoverageResult(candidate_skill_count=len(candidate))
-    for group in _job_groups([item for item in job_items if item.skill_type in SKILL_LIKE_TYPES]):
+    for group in _job_groups([item for item in job_items if item.skill_type in JOB_ASSESSED_TYPES]):
         if group.concept_id is not None:
             checked_via = CHECKED_VIA_CONCEPT
             if group.concept_id in candidate_concepts:
@@ -170,7 +173,7 @@ def compute_coverage(candidate_items: list[SkillItem], job_items: list[SkillItem
                     result.partial_required, result.partial_preferred,
                     result.missing_required, result.missing_preferred):
         entries.sort(key=by_label)
-    other = [item for item in job_items if item.skill_type not in SKILL_LIKE_TYPES]
+    other = [item for item in job_items if item.skill_type not in JOB_ASSESSED_TYPES]
     result.not_assessed_required = _sorted_labels(i.name for i in other if i.requirement == "required")
     result.not_assessed_preferred = _sorted_labels(
         i.name for i in other if i.requirement != "required" and i.name not in result.not_assessed_required

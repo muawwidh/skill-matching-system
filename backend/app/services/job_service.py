@@ -49,10 +49,14 @@ def load_esco_vocabulary(db: Session) -> EscoVocabulary | None:
     return _VOCABULARY_CACHE[key]
 
 
-def build_job_extractor(db: Session, use_esco_vocabulary: bool | None = None) -> SkillExtractor:
-    """Job extractor; the ESCO vocabulary follows JOB_EXTRACTION_ESCO_VOCABULARY unless overridden."""
+def build_job_extractor(
+    db: Session, use_esco_vocabulary: bool | None = None, version: str | None = None
+) -> SkillExtractor:
+    """Job extractor; vocabulary and rule version follow JOB_EXTRACTION_ESCO_VOCABULARY and
+    JOB_EXTRACTION_VERSION unless overridden."""
     enabled = settings.JOB_EXTRACTION_ESCO_VOCABULARY if use_esco_vocabulary is None else use_esco_vocabulary
-    return SkillExtractor(esco_vocabulary=load_esco_vocabulary(db) if enabled else None)
+    return SkillExtractor(esco_vocabulary=load_esco_vocabulary(db) if enabled else None,
+                          job_version=version or settings.JOB_EXTRACTION_VERSION)
 
 
 class JobService:
@@ -137,6 +141,12 @@ class JobService:
         return job
 
     def _process_existing_job(self, job: Job) -> None:
+        from app.job_sources import EVALUATION_SOURCE
+
+        if job.source == EVALUATION_SOURCE and job.processed_at is not None:
+            # The offline evaluation depends on the stored skills of these jobs.
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                detail="Evaluation jobs are never re-processed.")
         # Stored sections (display, retrieval input) keep the shared detector; extraction
         # uses the job requirement segmentation, which also drops benefits/EEO/application text.
         sections = self.section_detector.detect(job.cleaned_description)
@@ -267,16 +277,18 @@ def _classify_type_change(plan: JobReextractionPlan, stored_term: ExtractedJobTe
 
 class JobReextractionService:
     def __init__(
-        self, db: Session, use_esco_vocabulary: bool | None = None, extractor: SkillExtractor | None = None
+        self, db: Session, use_esco_vocabulary: bool | None = None, extractor: SkillExtractor | None = None,
+        version: str | None = None,
     ) -> None:
         self.db = db
         self.repository = DocumentRepository(db)
-        self.extractor = extractor or build_job_extractor(db, use_esco_vocabulary)
+        self.extractor = extractor or build_job_extractor(db, use_esco_vocabulary, version)
 
     def plan(self, job: Job, allow_moves: bool = False) -> JobReextractionPlan:
         """Read-only: extract from the stored cleaned text and compare."""
         text = job.cleaned_description
-        terms = self.extractor.extract_from_sections(detect_job_segments(text), text, "job")
+        terms = self.extractor.extract_from_sections(
+            detect_job_segments(text, self.extractor.job_version), text, "job")
         return plan_job_reextraction(job, self.repository.job_extraction_state(job.id), terms, allow_moves)
 
     def apply(self, job: Job, plan: JobReextractionPlan) -> list[UUID]:
@@ -310,6 +322,58 @@ class JobReextractionService:
         return new_ids
 
 
+def retirable(db: Session, job: Job, plan: JobReextractionPlan) -> list[tuple[ExtractedJobTerm, JobSkill | None]]:
+    """Vanished items of a live job that no person has touched.
+
+    An item qualifies when its job skill is still pending with the extracted text and
+    type, the term itself is pending, and no person reviewed or approved a taxonomy link
+    for it (only automatic link approvals). Evaluation and manual jobs never qualify.
+    """
+    from sqlalchemy import select
+    from app.db.models import ApprovedTaxonomyLink, TaxonomyLinkCandidate
+    from app.db.models.taxonomy import TaxonomyReviewEvent
+    from app.job_sources import NON_LIVE_SOURCES
+
+    if job.source is None or job.source in NON_LIVE_SOURCES or not plan.vanished:
+        return []
+    term_ids = [term.id for term, _ in plan.vanished]
+    touched = set(db.scalars(select(TaxonomyReviewEvent.extracted_term_id).where(
+        TaxonomyReviewEvent.term_source == "job", TaxonomyReviewEvent.extracted_term_id.in_(term_ids))))
+    touched |= set(db.scalars(select(ApprovedTaxonomyLink.extracted_term_id).where(
+        ApprovedTaxonomyLink.term_source == "job", ApprovedTaxonomyLink.extracted_term_id.in_(term_ids),
+        ApprovedTaxonomyLink.approval_source != "automatic")))
+    touched |= set(db.scalars(select(TaxonomyLinkCandidate.extracted_term_id).where(
+        TaxonomyLinkCandidate.term_source == "job", TaxonomyLinkCandidate.extracted_term_id.in_(term_ids),
+        TaxonomyLinkCandidate.reviewed_by.is_not(None))))
+    return [
+        (term, skill) for term, skill in plan.vanished
+        if term.id not in touched and term.review_status == "pending"
+        and (skill is None or (skill.review_status == "pending" and skill.normalized_text == term.normalized_text
+                               and skill.skill_type == term.term_type))
+    ]
+
+
+def retire(db: Session, job: Job, items: list[tuple[ExtractedJobTerm, JobSkill | None]]) -> int:
+    """Delete untouched vanished items with their automatic links; logged on the job."""
+    if not items:
+        return 0
+    repository = DocumentRepository(db)
+    repository._delete_taxonomy_links("job", [term.id for term, _ in items])
+    for term, skill in items:
+        if skill is not None:
+            db.delete(skill)
+        db.delete(term)
+    from app.repositories.retrieval_repository import RetrievalRepository
+    RetrievalRepository(db).invalidate_job(job.id)
+    repository.add_processing_log(
+        "job", job.id, "retire_unreviewed", "success",
+        f"Removed {len(items)} unreviewed terms the current extraction no longer finds.",
+        {"retired": len(items), "extraction_methods": sorted({term.extraction_method for term, _ in items})},
+    )
+    db.commit()
+    return len(items)
+
+
 def _requirement_counts(items) -> str:
     counts = Counter(items)
     return "/".join(str(counts.get(kind, 0)) for kind in ("required", "preferred", "unknown"))
@@ -333,7 +397,7 @@ def _print_plan(plan: JobReextractionPlan, verbose: bool) -> None:
     for _, skill, new_type in plan.approved_upgrades:
         print(f"    ^ {skill.normalized_text!r} approved: unknown -> {new_type} (review kept)")
     for _, skill, new_type in plan.reviewed_type_changes:
-        print(f"    ! {skill.normalized_text!r} {skill.review_status}: stays {skill.requirement_type}, v3 says {new_type}")
+        print(f"    ! {skill.normalized_text!r} {skill.review_status}: stays {skill.requirement_type}, extraction says {new_type}")
     for stored_term, skill, term in plan.reviewer_edited:
         print(f"    = {stored_term.normalized_text!r} {skill.review_status if skill else 'no skill'}: kept; not adding {term.normalized_text!r}")
     for term, skill in plan.vanished:
@@ -347,6 +411,12 @@ def main(argv: list[str] | None = None) -> int:
     reextract.add_argument("--apply", action="store_true", help="write changes; default is a read-only dry-run")
     reextract.add_argument("--esco", choices=["config", "on", "off"], default="config",
                            help="ESCO vocabulary; default follows JOB_EXTRACTION_ESCO_VOCABULARY")
+    reextract.add_argument("--version", choices=["config", "v3", "v4"], default="config",
+                           help="rule version; default follows JOB_EXTRACTION_VERSION")
+    reextract.add_argument("--sources", choices=["live", "all"], default="live",
+                           help="live job sources only (default), or also manually added jobs")
+    reextract.add_argument("--retire-unreviewed", action="store_true",
+                           help="with --apply: remove vanished items of live jobs that no person has touched")
     reextract.add_argument("--job", action="append", default=[], help="job UUID (repeatable); default all active jobs")
     reextract.add_argument("--include-archived", action="store_true")
     reextract.add_argument("--verbose", action="store_true", help="list every term per job")
@@ -354,29 +424,40 @@ def main(argv: list[str] | None = None) -> int:
 
     from app.db.session import SessionLocal
 
+    from app.job_sources import EVALUATION_SOURCE, NON_LIVE_SOURCES
+
     esco = {"config": None, "on": True, "off": False}[args.esco]
     with SessionLocal() as db:
-        service = JobReextractionService(db, use_esco_vocabulary=esco)
+        service = JobReextractionService(db, use_esco_vocabulary=esco,
+                                         version=None if args.version == "config" else args.version)
         repository = DocumentRepository(db)
         jobs = [repository.get_job(UUID(value)) for value in args.job] if args.job else repository.list_jobs(
             include_archived=args.include_archived)
-        jobs = sorted((job for job in jobs if job is not None), key=lambda job: (job.title.casefold(), str(job.id)))
+        # The evaluation jobs are never re-extracted: the offline evaluation depends on their stored skills.
+        skipped = [job for job in jobs if job is not None and (job.source == EVALUATION_SOURCE or (
+            args.sources == "live" and job.source in NON_LIVE_SOURCES))]
+        jobs = sorted((job for job in jobs if job is not None and job not in skipped),
+                      key=lambda job: (job.title.casefold(), str(job.id)))
         vocabulary = service.extractor.esco_vocabulary
-        print(f"{'APPLY' if args.apply else 'DRY-RUN (no writes)'}: {len(jobs)} jobs, extraction contract v3, "
+        print(f"{'APPLY' if args.apply else 'DRY-RUN (no writes)'}: {len(jobs)} jobs ({len(skipped)} evaluation/"
+              f"non-live skipped), extraction contract {service.extractor.job_version}, "
               f"ESCO vocabulary {vocabulary.version + ' (o7)' if vocabulary else 'off'}")
         totals: Counter = Counter()
         changed: list[UUID] = []
         for job in jobs:
             plan = service.plan(job)
             _print_plan(plan, args.verbose)
+            retirable_items = retirable(db, job, plan) if args.retire_unreviewed else []
+            totals.update(retirable=len(retirable_items))
             totals.update(matched=plan.matched, new=len(plan.new_terms), retype_pending=len(plan.pending_type_changes),
                           reviewed_differs=len(plan.reviewed_type_changes), vanished=len(plan.vanished),
                           reviewer_edited=len(plan.reviewer_edited), approved_upgrades=len(plan.approved_upgrades),
                           new_esco=sum(t.extraction_method.startswith("esco_vocabulary") for t in plan.new_terms))
-            if plan.changes_data:
+            if plan.changes_data or retirable_items:
                 changed.append(job.id)
                 if args.apply:
                     service.apply(job, plan)
+                    retire(db, job, retirable_items)
         if not args.apply:
             db.rollback()
         print(f"TOTAL {dict(totals)}; jobs with changes: {len(changed)}")

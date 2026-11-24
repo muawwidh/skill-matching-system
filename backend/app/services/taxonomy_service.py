@@ -44,6 +44,15 @@ SOURCE_DETAILS = {
 }
 
 
+def _acronym_safe(term) -> bool:
+    from app.nlp.job_rules_v4 import is_short_acronym
+
+    method = term.extraction_method or ""
+    # Curated dictionary terms (SQL, AWS) have fixed labels and keep the normal linking.
+    curated = method.startswith(("dictionary@", "spacy_phrase_matcher@"))
+    return "@v4" in method and not curated and is_short_acronym(term.raw_text)
+
+
 class TaxonomyService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -307,7 +316,12 @@ class TaxonomyService:
         auto_approved = 0
         for term in terms:
             self.repository.replace_link_candidates(term_source, term.id)
-            ranked, unique_top = index.rank_with_top_uniqueness(term.normalized_text)
+            if term_source == "job" and _acronym_safe(term):
+                # Job extraction v4: a short acronym links only to a label spelled exactly the
+                # same, and the link is never approved automatically.
+                ranked, unique_top = index.rank_acronym(term.raw_text), False
+            else:
+                ranked, unique_top = index.rank_with_top_uniqueness(term.normalized_text)
             for rank, result in enumerate(ranked, start=1):
                 should_auto_approve = rank == 1 and unique_top and result.confidence >= 0.95
                 candidate = self.repository.add_link_candidate(

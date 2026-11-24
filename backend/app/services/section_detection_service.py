@@ -170,25 +170,47 @@ JOB_SEGMENT_TYPES = {
     "context": "summary",
 }
 JOB_SEGMENTATION_METHOD = "job_heading_rules@v3"
+JOB_SEGMENTATION_METHOD_V4 = "job_heading_rules@v4"
 _MAX_HEADING_LENGTH = 70
 
 
-def _job_heading_aliases() -> list[tuple[str, str]]:
+# v4 also leaves out company descriptions, privacy notices and recruiting-process text.
+JOB_EXCLUDED_HEADINGS_V4 = JOB_EXCLUDED_HEADINGS + (
+    "about us", "about the company", "our company", "the company", "who we are", "company overview",
+    "company description", "company profile", "our mission", "our story", "our vision", "why us", "why work with us",
+    "why work for us", "life at", "working at", "privacy", "privacy notice", "privacy policy", "data protection",
+    "data privacy", "applicant privacy notice", "candidate privacy notice", "recruitment privacy notice",
+    "recruitment process", "recruiting process", "hiring process", "interview process", "our hiring process",
+    "our interview process", "our recruitment process", "the process", "next steps", "diversity",
+    "diversity and inclusion", "diversity & inclusion", "diversity, equity and inclusion", "inclusion",
+    "accommodations", "reasonable accommodations", "accessibility", "disclaimer", "recruitment fraud",
+    "fraud warning", "note to recruiters", "to recruiters", "recruitment agencies", "agencies",
+)
+# "About <Company>", "Life at <Company>", "Why join <Company>" headings. "About you", "about the
+# role" and similar requirement headings are matched as aliases first; team and role headings stay.
+_ABOUT_COMPANY_HEADING = re.compile(
+    r"(?:about|life\s+at|working\s+at|why\s+join|why\s+work\s+(?:at|for|with))\s+"
+    r"(?!(?:the\s+|this\s+|our\s+|your\s+)?(?:team|opportunity|position|role|job|you|candidate)\b)"
+    r"[a-z0-9][\w&.'’ -]{0,40}", re.I)
+
+
+def _job_heading_aliases(excluded: tuple[str, ...] = JOB_EXCLUDED_HEADINGS) -> list[tuple[str, str]]:
     from app.retrieval.job_budget import HEADINGS
 
     pairs = {(alias, kind) for kind, aliases in HEADINGS.items() for alias in aliases}
     pairs |= set(_JOB_EXTRA_HEADINGS)
-    pairs |= {(alias, "excluded") for alias in JOB_EXCLUDED_HEADINGS}
+    pairs |= {(alias, "excluded") for alias in excluded}
     # An excluded heading also listed as generic context (e.g. "benefits") is excluded.
-    pairs = {(a, k) for a, k in pairs if not (k == "context" and a in JOB_EXCLUDED_HEADINGS)}
+    pairs = {(a, k) for a, k in pairs if not (k == "context" and a in excluded)}
     return sorted(pairs, key=lambda pair: (-len(pair[0]), pair[0], pair[1]))
 
 
 _JOB_ALIASES = _job_heading_aliases()
+_JOB_ALIASES_V4 = _job_heading_aliases(JOB_EXCLUDED_HEADINGS_V4)
 _INLINE_SEPARATOR = re.compile(r"[ \t]*(?::|[-–][ \t])[ \t]*(?=\S)")
 
 
-def classify_job_heading(line: str) -> tuple[str, int] | None:
+def classify_job_heading(line: str, version: str = "v3") -> tuple[str, int] | None:
     """Return (heading class, offset where same-line content starts) or None.
 
     A heading stands alone on its line (optionally ending in ':' or '?') or,
@@ -202,7 +224,7 @@ def classify_job_heading(line: str) -> tuple[str, int] | None:
     body = stripped.strip("*#_ ").replace("’", "'")
     lead += stripped.find(body[:1]) if body else 0
     lower = body.lower()
-    for alias, kind in _JOB_ALIASES:
+    for alias, kind in (_JOB_ALIASES_V4 if version == "v4" else _JOB_ALIASES):
         if not lower.startswith(alias):
             continue
         rest = body[len(alias):]
@@ -214,6 +236,8 @@ def classify_job_heading(line: str) -> tuple[str, int] | None:
             return kind, lead + len(alias) + separator.end()
     from app.retrieval.job_budget import _GENERIC_HEADING
 
+    if version == "v4" and _ABOUT_COMPANY_HEADING.fullmatch(body.rstrip(":?* ")):
+        return "excluded", len(line)
     if len(body) <= _MAX_HEADING_LENGTH:
         generic = _GENERIC_HEADING.fullmatch(body.rstrip(":?* "))
         if generic and not generic.group(2):
@@ -222,7 +246,7 @@ def classify_job_heading(line: str) -> tuple[str, int] | None:
     return None
 
 
-def detect_job_segments(text: str) -> list[DetectedSection]:
+def detect_job_segments(text: str, version: str = "v3") -> list[DetectedSection]:
     """Split a job description into requirement segments for extraction.
 
     Text before the first recognised heading (or a description without any)
@@ -232,7 +256,7 @@ def detect_job_segments(text: str) -> list[DetectedSection]:
     segments: list[tuple[str, str, int, int]] = []
     current_kind, current_heading, start, position = "full_text", "Full text", 0, 0
     for line in text.splitlines(keepends=True):
-        classified = classify_job_heading(line.rstrip("\r\n"))
+        classified = classify_job_heading(line.rstrip("\r\n"), version)
         if classified:
             segments.append((current_kind, current_heading, start, position))
             heading_text = line.rstrip("\r\n")[: classified[1]]
@@ -258,7 +282,7 @@ def detect_job_segments(text: str) -> list[DetectedSection]:
                 start_char=content_start,
                 end_char=content_start + len(content),
                 confidence_score=0.6 if kind == "full_text" else 1.0,
-                extraction_method=JOB_SEGMENTATION_METHOD,
+                extraction_method=JOB_SEGMENTATION_METHOD_V4 if version == "v4" else JOB_SEGMENTATION_METHOD,
             )
         )
     return sections

@@ -155,6 +155,17 @@ docker compose exec backend python -m app.retrieval.cli index profiles --limit 1
 To continue after 1,000 items, run the command again with `--after <next_after>`,
 using the `next_after` value it printed.
 
+After changing the job extraction rules, re-extract the stored live jobs. The
+command is a dry run unless `--apply` is given. It adds new items, keeps every
+reviewed item, and never touches the evaluation jobs. With
+`--retire-unreviewed` it also removes items the current rules no longer find,
+but only from live jobs and only if no person has reviewed them:
+
+```bash
+docker compose exec backend python -m app.services.job_service reextract                                # dry run
+docker compose exec backend python -m app.services.job_service reextract --apply --retire-unreviewed
+```
+
 ### Before a candidate sees results
 
 A fresh installation shows no jobs until all of these are done:
@@ -249,6 +260,7 @@ Set in `.env` (see `.env.example`); defaults are in `backend/app/core/config.py`
 | `LIVE_JOB_IMPORT_INTERVAL_SECONDS` | 86400 | Interval of the optional scheduled import |
 | `CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS` | false | Show the fixed evaluation jobs to candidates |
 | `JOB_EXTRACTION_ESCO_VOCABULARY` | true | Use ESCO skill labels when extracting job skills |
+| `JOB_EXTRACTION_VERSION` | v4 | Job skill extraction rules: `v4` adds list splitting, language and named-certification rules and filters for generic terms and company, benefits and equal-opportunity text; `v3` is the previous rule set. CVs are not affected |
 
 ## Documentation
 

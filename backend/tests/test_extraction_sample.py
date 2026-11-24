@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 
 from app.db.models import Job, JobSkill, ProcessingLog
 from app.job_sources import cli
-from app.job_sources.extraction_sample import COLUMNS, sample, score
+from app.job_sources.extraction_sample import COLUMNS, GAP_COLUMNS, sample, score
 
 
 def _jobs(db):
@@ -63,7 +63,9 @@ def test_sample_is_seeded_read_only_and_only_live_active_jobs(db_session, tmp_pa
     assert all(r["label"] == "" and r["missed_required_skills"] == "" for r in rows)
     manifest = json.loads((tmp_path / "a" / "manifest.json").read_text())
     assert manifest["seed"] == 7 and manifest["job_ids"] == [str(i) for i in first.job_ids]
-    assert manifest["skill_rows"] == 10 and set(manifest["sha256"]) == {"labels.csv", "postings.md"}
+    assert manifest["skill_rows"] == 10 and set(manifest["sha256"]) == {"labels.csv", "postings.md", "gaps.csv"}
+    assert (tmp_path / "a" / "gaps.csv").read_text().splitlines() == [",".join(GAP_COLUMNS)]
+    assert manifest["gaps_allowed_values"]["type"] == ["missed", "false_positive", "wrong_mapping"]
     assert "Need Python" in (tmp_path / "a" / "postings.md").read_text()
 
 

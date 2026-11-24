@@ -82,8 +82,14 @@ are converted from HTML to text, kept only if they are in English and located
 in Europe or remote, stripped of e-mail addresses, phone numbers and contact
 names, and checked for duplicates (same posting ID or same text). Extraction
 for jobs also reads requirement headings ("Required", "Nice to have"),
-experience ranges ("3+ years") and filtered ESCO skill labels. The same linking
-rule applies. Live jobs that have not been seen at their source for 14 days
+experience ranges ("3+ years") and filtered ESCO skill labels. It splits skill
+lists in requirement sections into short items, recognises languages with a
+proficiency cue and named certifications, and leaves out generic words and
+text about the company, benefits, equal opportunity, privacy and the
+application process. The same linking rule applies, except that a short
+acronym found by these list rules links only to a label spelled the same way
+and is never approved automatically. The rule set is versioned
+(`JOB_EXTRACTION_VERSION`); CV extraction does not change with it. Live jobs that have not been seen at their source for 14 days
 (configurable) are archived, and a cap keeps at most 1,500 active live jobs,
 with at most 70 % from one source.
 
@@ -121,8 +127,8 @@ sequenceDiagram
   classified as *matched* (same ESCO concept or same name as a confirmed
   skill), *related* (a confirmed skill shares a specific ESCO parent concept)
   or *missing*. On live jobs, skills nobody reviewed count but are marked as
-  automatically extracted. Qualifications, certificates and similar terms are
-  listed as "not assessed".
+  automatically extracted. Qualifications, certificates, languages and similar
+  terms are listed as "not assessed".
 - **Experience.** If the candidate entered work experience, the years in roles
   of the same 3-digit ISCO group as the job are compared with the job's stated
   minimum. This is shown next to the job and can, at the candidate's request,

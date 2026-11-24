@@ -8,8 +8,11 @@ new directory (normally under the git-ignored `evaluation/local/`):
   with `correct` or `incorrect`);
 - `postings.md`: each posting's text with its numbered extracted skills, to
   read while labelling;
-- `manifest.json`: seed, population, sampled job IDs and the SHA-256 of the
-  files as written.
+- `gaps.csv`: an empty error log (header only) with the columns and allowed
+  values in `GAP_COLUMNS` and `GAP_VALUES`; `job_id` is "J" plus the two-digit
+  job number;
+- `manifest.json`: seed, population, sampled job IDs, the allowed error-log
+  values and the SHA-256 of the files as written.
 
 Nothing is written to the database. `score` reads a labelled `labels.csv` and
 reports extraction precision and the number of missed required skills.
@@ -41,6 +44,16 @@ REQUIREMENT_STRENGTH = {"required": 3, "preferred": 2, "unknown": 1}
 CORRECT = {"correct", "c", "yes", "y", "1"}
 INCORRECT = {"incorrect", "i", "no", "n", "0", "wrong"}
 NONE_MISSED = {"none", "-", "0"}
+GAP_COLUMNS = ["job_id", "type", "term", "category", "cause", "requirement", "evidence"]
+GAP_VALUES = {
+    "type": ["missed", "false_positive", "wrong_mapping"],
+    "category": ["technical_skill", "business_skill", "tool", "language", "certification", "experience",
+                 "qualification", "-"],
+    "cause": ["not_in_vocabulary", "list_not_split", "pattern_missed", "no_language_rules",
+              "certification_unnamed", "company_description", "boilerplate", "generic_term", "partial_span",
+              "acronym_mislinked", "section_missed"],
+    "requirement": ["required", "preferred", "responsibility", "-"],
+}
 INSTRUCTIONS = (
     "label: 'correct' if the posting asks for or mentions this as a skill/requirement of the role and the "
     "extracted text names it correctly; otherwise 'incorrect'. Leave blank = not labelled. "
@@ -135,14 +148,20 @@ def sample(db: Session, out_dir: Path, size: int = 20, seed: int = 20261121) -> 
         writer.writeheader()
         for row in rows:
             writer.writerow({column: row.get(column, "") for column in COLUMNS})
+    with (out_dir / "gaps.csv").open("w", newline="", encoding="utf-8") as handle:
+        csv.writer(handle).writerow(GAP_COLUMNS)
+    gap_help = "gaps.csv (one row per error; job_id = J01..J{:02d}): ".format(size) + "; ".join(
+        f"{column} = {' | '.join(values)}" for column, values in GAP_VALUES.items())
     (out_dir / "postings.md").write_text(
-        f"# Live job extraction sample (seed {seed}, {size} jobs)\n\n{INSTRUCTIONS}\n\n" + "\n".join(postings),
+        f"# Live job extraction sample (seed {seed}, {size} jobs)\n\n{INSTRUCTIONS}\n\n{gap_help}\n\n"
+        + "\n".join(postings),
         encoding="utf-8")
     manifest = {"created_at": datetime.now(timezone.utc).isoformat(), "seed": seed, "size": size,
                 "population": len(population), "population_rule": "active (processed) jobs with a live source",
                 "job_ids": [str(job.id) for job in chosen], "skill_rows": skill_rows, "instructions": INSTRUCTIONS,
+                "gaps_columns": GAP_COLUMNS, "gaps_allowed_values": GAP_VALUES,
                 "sha256": {name: hashlib.sha256((out_dir / name).read_bytes()).hexdigest()
-                           for name in ("labels.csv", "postings.md")}}
+                           for name in ("labels.csv", "postings.md", "gaps.csv")}}
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return SampleResult(out_dir, len(population), [job.id for job in chosen], skill_rows)
 

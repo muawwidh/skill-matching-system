@@ -61,7 +61,7 @@ in pages of 10, 25 or 50. Select a job to see its details:
 - **Skills to develop**: the job's missing skills, marked required or preferred.
 - **Experience**: your years in related roles against the years the job asks
   for, when both are known.
-- **Also required — not assessed**: qualifications, certificates and similar
+- **Also required — not assessed**: qualifications, certificates, languages and similar
   requirements the system cannot check.
 - **View original posting** opens the job at its source.
 

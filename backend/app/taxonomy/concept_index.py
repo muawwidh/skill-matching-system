@@ -40,7 +40,8 @@ class IndexedConcept:
 
 class ConceptIndex:
     def __init__(self, concepts: list[IndexedConcept], alternatives: dict[UUID, set[str]],
-                 fuzzy_threshold: float = 0.70, max_candidates: int = 5, cache_size: int = 50_000) -> None:
+                 fuzzy_threshold: float = 0.70, max_candidates: int = 5, cache_size: int = 50_000,
+                 acronym_labels: dict[UUID, set[str]] | None = None) -> None:
         self.concepts = concepts
         self.fuzzy_threshold = fuzzy_threshold
         self.max_candidates = max_candidates
@@ -55,6 +56,16 @@ class ConceptIndex:
             # Fuzzy candidates per concept: preferred label and alternative labels.
             for label in {concept.normalized_label, *labels}:
                 label_owners.setdefault(label, []).append(position)
+        # Short acronym labels as published (case kept): position lists for case-sensitive lookup.
+        from app.nlp.job_rules_v4 import is_short_acronym
+
+        self._acronyms: dict[str, list[tuple[int, bool]]] = {}
+        for position, concept in enumerate(concepts):
+            if is_short_acronym(concept.preferred_label):
+                self._acronyms.setdefault(concept.preferred_label.strip(), []).append((position, True))
+            for label in (acronym_labels or {}).get(concept.id, ()):
+                if is_short_acronym(label) and label.strip() != concept.preferred_label.strip():
+                    self._acronyms.setdefault(label.strip(), []).append((position, False))
         self._choices = list(label_owners)
         self._owners = [label_owners[label] for label in self._choices]
         self._cache: OrderedDict[str, tuple[list[RankedConcept], bool]] = OrderedDict()
@@ -79,6 +90,18 @@ class ConceptIndex:
             if len(self._cache) > self._cache_size:
                 self._cache.popitem(last=False)
         return list(result[0]), result[1]
+
+    def rank_acronym(self, raw_text: str) -> list[RankedConcept]:
+        """Concepts with a label spelled exactly like the acronym (case-sensitive); no fuzzy matches.
+
+        Callers never approve these automatically.
+        """
+        matches = [RankedConcept(self.concepts[position], "exact_preferred" if preferred else "exact_alternative",
+                                 1.0 if preferred else 0.98)
+                   for position, preferred in self._acronyms.get(raw_text.strip(), ())]
+        matches.sort(key=lambda item: (-item.confidence, item.concept.preferred_label.casefold(),
+                                       str(item.concept.taxonomy_version_id), str(item.concept.id)))
+        return matches[: self.max_candidates]
 
     def _rank(self, normalized: str) -> tuple[list[RankedConcept], bool]:
         best: dict[int, RankedConcept] = {}
@@ -133,12 +156,17 @@ def _build(db: Session) -> ConceptIndex:
         select(TaxonomyConcept.id, TaxonomyConcept.taxonomy_version_id, TaxonomyConcept.preferred_label,
                TaxonomyConcept.normalized_label)
         .where(TaxonomyConcept.taxonomy_version_id.in_(active)).order_by(TaxonomyConcept.id))]
+    from app.nlp.job_rules_v4 import is_short_acronym
+
     alternatives: dict[UUID, set[str]] = {}
-    for concept_id, label in db.execute(
-            select(TaxonomyLabel.concept_id, TaxonomyLabel.normalized_label).join(TaxonomyConcept)
+    acronym_labels: dict[UUID, set[str]] = {}
+    for concept_id, label, raw_label in db.execute(
+            select(TaxonomyLabel.concept_id, TaxonomyLabel.normalized_label, TaxonomyLabel.label).join(TaxonomyConcept)
             .where(TaxonomyConcept.taxonomy_version_id.in_(active))):
         alternatives.setdefault(concept_id, set()).add(label)
-    return ConceptIndex(concepts, alternatives)
+        if is_short_acronym(raw_label):
+            acronym_labels.setdefault(concept_id, set()).add(raw_label)
+    return ConceptIndex(concepts, alternatives, acronym_labels=acronym_labels)
 
 
 def active_concept_index(db: Session) -> ConceptIndex:
