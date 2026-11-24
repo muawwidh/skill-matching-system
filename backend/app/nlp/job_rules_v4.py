@@ -181,6 +181,9 @@ class ListVocabulary:
 
     Sources, in priority order: the curated dictionary, ESCO skill/knowledge labels
     (preferred and alternative), O*NET Technology Skills tool names. A one-word
+    ESCO label counts only if its concept is in the ESCO digital collection
+    (otherwise "measurement", "curiosity", "design" would pass); one-word words
+    from the dictionary or the O*NET tool list are unaffected. A one-word
     ESCO or O*NET entry that is published with capitals ("Go", "SAND", "Chef")
     matches only one of those spellings, so ordinary lower-case words are not
     taken for tool names.
@@ -193,7 +196,7 @@ class ListVocabulary:
     @classmethod
     def build(cls, dictionary: list[tuple[str, str]] = (), esco: list[tuple[str, str]] = (),
               tools: list[str] = ()) -> "ListVocabulary":
-        """`dictionary`: (alias, type); `esco`: (label, concept type skill|knowledge); `tools`: names."""
+        """`dictionary`: (alias, type); `esco`: (label, concept type skill|knowledge[, digital]); `tools`: names."""
         entries: dict[str, VocabularyHit] = {}
         forms: dict[str, set[str]] = {}
         for alias, term_type in dictionary:
@@ -201,8 +204,11 @@ class ListVocabulary:
             if key:
                 entries.setdefault(key, VocabularyHit("dictionary", term_type))
         esco_types: dict[str, set[str]] = {}
-        for label, concept_type in esco:
+        for label, concept_type, *rest in esco:
             key = vocabulary_key(label)
+            digital = bool(rest and rest[0])
+            if " " not in key and not digital:
+                continue  # one-word ESCO label outside the digital collection
             if key and key not in entries:
                 esco_types.setdefault(key, set()).add(concept_type)
                 if " " not in key:
@@ -232,6 +238,11 @@ class ListVocabulary:
         if spellings and item.strip() not in spellings:
             return None
         return hit
+
+
+def names_a_language(text: str) -> bool:
+    """A language name in the item (handled by the language rule, not as a list item)."""
+    return bool(_LANGUAGE.search(text))
 
 
 def normalize_term(text: str) -> str:

@@ -64,9 +64,10 @@ def load_list_vocabulary(db: Session, extractor: SkillExtractor):
         labels: list[tuple[str, str]] = []
         if esco is not None:
             concepts, rows = repository.esco_vocabulary_rows(esco.id)
-            types = {concept_id: concept_type for concept_id, concept_type, _, _ in concepts}
-            labels = [(preferred, concept_type) for _, concept_type, _, preferred in concepts]
-            labels += [(label, types[concept_id]) for concept_id, label in rows if concept_id in types]
+            info = {concept_id: (concept_type, ESCO_DIGITAL_SCHEME in str((metadata or {}).get("source", {}).get("inScheme", "")))
+                    for concept_id, concept_type, metadata, _ in concepts}
+            labels = [(preferred, *info[concept_id]) for concept_id, _, _, preferred in concepts]
+            labels += [(label, *info[concept_id]) for concept_id, label in rows if concept_id in info]
         tools = repository.onet_tool_names(onet.id) if onet is not None else []
         _LIST_VOCABULARY_CACHE.clear()
         _LIST_VOCABULARY_CACHE[key] = ListVocabulary.build(extractor.dictionary_aliases(), labels, tools)
@@ -227,15 +228,27 @@ class JobReextractionPlan:
     reviewed_type_changes: list[tuple[ExtractedJobTerm, JobSkill, str]] = field(default_factory=list)
     moved: list[tuple[ExtractedJobTerm, JobSkill | None, ExtractedTerm]] = field(default_factory=list)
     reviewer_edited: list[tuple[ExtractedJobTerm, JobSkill | None, ExtractedTerm]] = field(default_factory=list)
+    # Untouched list items on the same span whose type the current rule gives differently: re-typed only.
+    list_retypes: list[tuple[ExtractedJobTerm, JobSkill, str]] = field(default_factory=list)
     vanished: list[tuple[ExtractedJobTerm, JobSkill | None]] = field(default_factory=list)
 
     @property
     def changes_data(self) -> bool:
-        return bool(self.new_terms or self.pending_type_changes or self.approved_upgrades or self.moved)
+        return bool(self.new_terms or self.pending_type_changes or self.approved_upgrades or self.moved
+                    or self.list_retypes)
 
 
 def _occurrence_key(normalized_text: str, term_type: str, start: int, end: int) -> tuple:
     return normalized_text, term_type, start, end
+
+
+def _list_retype(stored: ExtractedJobTerm, skill: JobSkill | None, fresh: ExtractedTerm) -> bool:
+    """Same list item, same text, only the type differs, and nobody touched it (both pending, skill unedited)."""
+    return (skill is not None and stored.extraction_method.startswith("list_item@")
+            and fresh.extraction_method.startswith("list_item@")
+            and stored.normalized_text == fresh.normalized_text and stored.term_type != fresh.term_type
+            and stored.review_status == "pending" and skill.review_status == "pending"
+            and skill.normalized_text == stored.normalized_text and skill.skill_type == stored.term_type)
 
 
 def plan_job_reextraction(
@@ -284,7 +297,10 @@ def plan_job_reextraction(
         if edited:
             stored_term, skill = edited.pop(0)
             matched_ids.add(stored_term.id)
-            plan.reviewer_edited.append((stored_term, skill, term))
+            if _list_retype(stored_term, skill, term):
+                plan.list_retypes.append((stored_term, skill, term.term_type))
+            else:
+                plan.reviewer_edited.append((stored_term, skill, term))
         else:
             plan.new_terms.append(term)
     plan.vanished = [(term, skill) for term, skill in stored if term.id not in matched_ids]
@@ -326,6 +342,9 @@ class JobReextractionService:
         for stored_term, skill, requirement_type in [*plan.pending_type_changes, *plan.approved_upgrades]:
             stored_term.requirement_type = requirement_type
             skill.requirement_type = requirement_type
+        for stored_term, skill, term_type in plan.list_retypes:
+            stored_term.term_type = term_type  # type only; method, text, review and links unchanged
+            skill.skill_type = term_type
         for stored_term, _, fresh in plan.moved:
             stored_term.start_char, stored_term.end_char = fresh.start_char, fresh.end_char
             stored_term.source_section = fresh.source_section
@@ -338,6 +357,7 @@ class JobReextractionService:
             f"{len(plan.approved_upgrades)} approved (unknown) skills.",
             {"new_terms": len(new_ids), "pending_type_changes": len(plan.pending_type_changes),
              "approved_unknown_upgrades": len(plan.approved_upgrades), "moved": len(plan.moved),
+             "list_retypes": len(plan.list_retypes),
              "reviewed_type_changes_reported": len(plan.reviewed_type_changes),
              "vanished_kept": len(plan.vanished), "reviewer_edited_kept": len(plan.reviewer_edited),
              "matched": plan.matched,
@@ -479,6 +499,7 @@ def main(argv: list[str] | None = None) -> int:
             totals.update(matched=plan.matched, new=len(plan.new_terms), retype_pending=len(plan.pending_type_changes),
                           reviewed_differs=len(plan.reviewed_type_changes), vanished=len(plan.vanished),
                           reviewer_edited=len(plan.reviewer_edited), approved_upgrades=len(plan.approved_upgrades),
+                          list_retypes=len(plan.list_retypes),
                           new_esco=sum(t.extraction_method.startswith("esco_vocabulary") for t in plan.new_terms))
             if plan.changes_data or retirable_items:
                 changed.append(job.id)

@@ -1252,21 +1252,31 @@ per job, approximate recall 0.41) and a quality check of v4.
   ESCO skill/knowledge label (preferred or alternative, active non-sample
   release) or an O*NET Technology Skills tool name ("Workplace Example" of the
   active O*NET release). Unknown items are dropped, not kept as pending. A
-  one-word ESCO/O*NET entry published only with capitals ("Go", "Chef") must
-  appear with that spelling. The precision guards still apply to every item.
+  one-word ESCO label counts only if its concept is in the ESCO digital
+  collection (generic words such as "measurement", "curiosity", "design"
+  otherwise pass); one-word dictionary entries and O*NET tool names are
+  unaffected. List items naming a language are skipped (the language rule
+  handles them). A one-word ESCO/O*NET entry published only with capitals
+  ("Go", "Chef") must appear with that spelling. The precision guards still
+  apply to every item.
 - **Versioning.** `JOB_EXTRACTION_VERSION` (v3 | v4 | v4.1, default v4.1).
   Only the list rule changes, so only list items carry `list_item@v4.1`;
   every other rule keeps its v4 method string.
 - **Live data.** Re-extraction of live jobs retires v4 list items the new rule
   no longer produces only if no person touched them (D054 rules for
-  "automatic" items). Evaluation jobs are never re-extracted; CVs use only the
+  "automatic" items). A kept, untouched list item whose type the rule now gives
+  differently (tool, domain knowledge, skill) is re-typed; nothing else about it
+  changes, and reviewed items are never re-typed. Evaluation jobs are never re-extracted; CVs use only the
   language rule (D062).
 - **Trade-off.** Precision over recall: a vocabulary-gated list cannot find
   skills that no taxonomy names, and an ESCO label can still be generic. On
-  the 977 live jobs v4.1 kept 354 of 11,662 v4 list items (most known terms
-  were already found by the dictionary or ESCO scan), so the recall gain of
-  v4 is largely given up. The extraction sample (seed 20261124) is labelled
-  against v4.1 output.
+  the 977 live jobs the final v4.1 kept 152 of 11,662 v4 list items (most
+  known terms were already found by the dictionary or ESCO scan; 142 of the
+  152 are tool names), so the recall gain of v4 is largely given up. The
+  comparison is recorded in docs/evaluation.md section 7. The extraction
+  sample (seed 20261124) is labelled against the final v4.1 output.
+- **Frozen.** Job extraction is frozen at v4.1 from 2026-11-24; further
+  changes need a new decision.
 
 ## D062 - Candidate Languages: Compared By Name, Never Ranked
 

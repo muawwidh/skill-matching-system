@@ -165,7 +165,7 @@ byte-for-byte with the stored outputs. All were identical:
   error log; jobs with no labelled row and no missed entry are excluded and
   listed, so a partly labelled sample can be scored).
   A second sample (seed 20261124, same population of 977 live jobs) is drawn
-  from the v4.1 extraction output (D061) and not yet labelled.
+  from the final v4.1 extraction output (D061) and not yet labelled.
 - **Labels.** One rater marked each extracted skill correct or incorrect and
   logged every error in a separate file with its type (missed, false
   positive, wrong mapping), category, requirement and cause. The error log is
@@ -260,6 +260,41 @@ text describing the company rather than the job.
 
 Limitations: one rater, 20 jobs, English only; the causes were assigned by the
 same rater.
+
+### Design iteration: v3 → v4 → v4.1
+
+The error analysis suggested splitting skill lists (most misses) and filtering
+generic and company text (most false positives). Three rule versions were run
+on the same 977 live jobs (2026-11-24). Counts are over active live jobs;
+"required items" are required skills, tools and domain knowledge, one per
+distinct name per job; "linked" is the share of them with an approved ESCO
+link. Item quality of v4 and v4.1 comes from unlabelled random checks of list
+items by the developer (jobs outside both samples), not from the labelled
+sample, and is indicative only.
+
+| Version | Items per job | List items per job | Required items per job (mean / median) | Jobs with no required item | Linked share | Item quality |
+| --- | --- | --- | --- | --- | --- | --- |
+| v3 (baseline) | 7.36 | — | 2.0 / 1 | 446 | 82.7% | precision 0.766 on the labelled sample (all items) |
+| v4: lists split, guards | 18.91 | 11.94 | 11.9 / 8 | 382 | 15.1% | 3 of 10 random list items useful |
+| v4.1 first pass: list item must be in the vocabulary | 7.34 | 0.36 | 2.2 / 1 | 462 | 74.6% | 14 of 20 useful, 1 unclear, 5 noise |
+| v4.1 final: no one-word non-digital ESCO labels, no languages | 7.13 | 0.16 | 2.0 / 1 | 479 | 76.4% | 20 of 20 useful (19 tool names) |
+
+- **v4** splits lists in requirement sections and adds language,
+  certification and guard rules. It multiplied the items, but most list items
+  were fragments or generic phrases ("business masterminds", "Deep",
+  "Deutschlandticket").
+- **v4.1** keeps a list item only if it is a curated dictionary entry, an
+  ESCO skill/knowledge label or an O*NET Technology Skills tool name. Most
+  known terms were already found by the dictionary and ESCO scan, so only 354
+  of 11,662 v4 list items stayed. The final clean-up also drops one-word ESCO
+  labels outside the digital collection ("measurement", "curiosity",
+  "design") and language names, leaving 152 list items, 142 of them tools.
+  Tool names from O*NET have no ESCO link, which lowers the linked share
+  slightly.
+- **Outcome.** v4.1 keeps v4's language and certification rules and guards
+  but gives up most of v4's recall gain: it recovers mainly tool names
+  written in lists. Precision was preferred over recall (D061). The recall of
+  the final version is measured on the second sample once it is labelled.
 
 ## 8. Explanation quality
 

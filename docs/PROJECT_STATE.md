@@ -504,27 +504,32 @@ Job extraction v4 and v4.1 (2026-11-24, D061; approved exceptions to the freeze)
   entry, an ESCO skill/knowledge label (active non-sample release, preferred or
   alternative) or an O*NET Technology Skills tool name (`software_skills.csv`
   "Workplace Example" of O*NET 31.0; `Technology Skills.txt` "Example" for older
-  packages); about 108k entries (99,371 ESCO, 8,642 O*NET tools, 44 curated).
-  One-word ESCO/O*NET entries published only with capitals must match that
-  spelling. Only list items carry `list_item@v4.1`; other rules keep `@v4`.
+  packages). One-word ESCO labels count only from the ESCO digital
+  collection; list items naming a language are skipped. One-word ESCO/O*NET
+  entries published only with capitals must match that spelling. Only list
+  items carry `list_item@v4.1`; other rules keep `@v4`. Untouched kept list
+  items whose type differs are re-typed (`JobReextractionPlan.list_retypes`).
+  Job extraction is frozen at v4.1 (2026-11-24).
 - `JOB_EXTRACTION_VERSION` v3 | v4 | v4.1 (default v4.1).
   `python -m app.services.job_service reextract [--version ...] [--apply]
   [--retire-unreviewed] [--sources live|all]`: evaluation jobs are never
   re-extracted; retirement removes only untouched items of live jobs.
-- Applied to live jobs (977): 11,308 v4 list items retired, nothing added,
-  654 jobs changed and re-embedded automatically (1,008 embeddings ready).
-  Items per job 18.91 -> 7.34; list items per job 11.94 -> 0.36; required
-  skill/tool/domain items 11,615 -> 2,114 (mean per job 11.9 -> 2.2, median
-  8 -> 1, 462 jobs with none); share with an approved link 15.1% -> 74.6%.
-  315 kept list items stay typed "skill" where v4.1 would say tool or domain
-  knowledge (same position counts as a kept item, not re-added).
+- Applied to live jobs (977) in two steps: first pass 11,308 v4 list items
+  retired (654 jobs changed); clean-up 202 more retired and 148 re-typed
+  (142 tool, 6 domain knowledge; 225 jobs changed). Nothing added; changed
+  jobs re-embedded automatically (1,008 embeddings ready). Final: items per
+  job 7.13 (v3 7.36, v4 18.91); list items 152 (0.16 per job); required
+  skill/tool/domain items 1,930 (mean 2.0, median 1, 479 jobs with none);
+  share with an approved link 76.4% (v4 15.1%). Comparison table in
+  docs/evaluation.md section 7.
 - DB snapshots (outside the repository): `pre-job-extraction-v4-20261124.dump`,
-  `pre-job-extraction-v41-20261124.dump` in `~/skillgap-db-snapshots/`.
+  `pre-job-extraction-v41-20261124.dump`,
+  `pre-job-extraction-v41-cleanup-20261124.dump` in `~/skillgap-db-snapshots/`.
 - Offline isolation check byte-identical after each step
-  (`evaluation/local/job-extraction-v41-isolation-check-20261124/`).
-- Extraction sample 2 (seed 20261124): regenerated from v4.1 output, same 20
-  jobs, 119 skill rows, empty `gaps.csv` template; the unlabelled v4 files are
-  in `v4-unlabelled-backup/`. `score-extraction --gaps FILE` reads missed
+  (`evaluation/local/job-extraction-v41-cleanup-isolation-check-20261124/`).
+- Extraction sample 2 (seed 20261124): regenerated from the final v4.1
+  output, same 20 jobs, 116 skill rows, empty `gaps.csv` template; the
+  unlabelled v4 files are in `v4-unlabelled-backup/`. `score-extraction --gaps FILE` reads missed
   skills from the error log and excludes jobs with nothing labelled.
 - Tests: `tests/test_job_extraction_v4.py`, `tests/test_job_extraction_v41.py`,
   `tests/test_extraction_sample.py`.

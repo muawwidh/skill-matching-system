@@ -285,6 +285,8 @@ class SkillExtractor:
                        for start, end in taken):
                     continue
                 if self.job_version == JOB_EXTRACTION_V41:
+                    if rules.names_a_language(span.text):
+                        continue  # the language rule handles languages
                     hit = self.list_vocabulary.match(span.text)
                     if hit is None:
                         continue  # unknown item: dropped
