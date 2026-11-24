@@ -1234,3 +1234,64 @@ CVs for matching.
   embedding, about 118 ms per title. Embedding neighbours are used only as
   extra suggestions in the candidate's work-entry form, where the candidate
   picks an occupation or none.
+
+## D061 - Job Extraction v4.1: Split List Items Must Match The Vocabulary
+
+Decided by the project owner on 2026-11-24, after the extraction baseline
+(docs/evaluation.md section 7: precision 0.766, about 8 missed required skills
+per job, approximate recall 0.41) and a quality check of v4.
+
+- **v4 (2026-11-24).** Job extraction contract v4 added list splitting in
+  requirement sections, a language rule, named certifications, precision
+  guards (stoplist; equal-opportunity, benefits, company, privacy and
+  recruiting text) and acronym-safe linking. It raised recall but a random
+  sample of 10 new list items was about 70% noise ("business masterminds",
+  "Deep", "Deutschlandticket").
+- **v4.1.** List splitting stays, but a split item is kept only when it equals,
+  after the taxonomy normalisation, an entry of the curated dictionary, an
+  ESCO skill/knowledge label (preferred or alternative, active non-sample
+  release) or an O*NET Technology Skills tool name ("Workplace Example" of the
+  active O*NET release). Unknown items are dropped, not kept as pending. A
+  one-word ESCO/O*NET entry published only with capitals ("Go", "Chef") must
+  appear with that spelling. The precision guards still apply to every item.
+- **Versioning.** `JOB_EXTRACTION_VERSION` (v3 | v4 | v4.1, default v4.1).
+  Only the list rule changes, so only list items carry `list_item@v4.1`;
+  every other rule keeps its v4 method string.
+- **Live data.** Re-extraction of live jobs retires v4 list items the new rule
+  no longer produces only if no person touched them (D054 rules for
+  "automatic" items). Evaluation jobs are never re-extracted; CVs use only the
+  language rule (D062).
+- **Trade-off.** Precision over recall: a vocabulary-gated list cannot find
+  skills that no taxonomy names, and an ESCO label can still be generic. On
+  the 977 live jobs v4.1 kept 354 of 11,662 v4 list items (most known terms
+  were already found by the dictionary or ESCO scan), so the recall gain of
+  v4 is largely given up. The extraction sample (seed 20261124) is labelled
+  against v4.1 output.
+
+## D062 - Candidate Languages: Compared By Name, Never Ranked
+
+Decided by the project owner on 2026-11-24.
+
+- **Sources.** Languages found in a CV by the language rule
+  (`language_rule@v4`: a language name with a proficiency cue, or listed under
+  a "Languages" heading) are pending until the candidate confirms them.
+  Candidates can add and remove languages on My profile, with an optional
+  level (A1-C2 or native, `candidate_skills.proficiency_level`, migration
+  0014). The level is shown to the candidate only and never compared.
+- **Comparison.** A job's language items are compared by name with the
+  candidate's confirmed languages, including skills typed "language" earlier
+  in the skill editor: "Languages: X of Y matched", in your profile / not
+  found in your profile. This is a separate group, not part of the
+  required/preferred skill counts, and never affects the order or the
+  experience filter. Compared languages leave "not assessed"; without any
+  confirmed language they stay there with a hint to add languages.
+- **Not in the embedding.** Languages from the language rule or added on My
+  profile are excluded from the profile embedding and the skill coverage, so
+  a language cannot move a job up or down. Skills typed "language" before this
+  keep their earlier behaviour, which keeps the offline evaluation
+  byte-identical (three such skills belong to evaluation profiles).
+- **Existing CVs.** Languages are added to existing CVs only by an additive
+  command that skips the evaluation profiles and never changes other items or
+  review decisions.
+- **Fairness.** A language is a job requirement the candidate states, not a
+  proxy for nationality; it is shown, not scored.

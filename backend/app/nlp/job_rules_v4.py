@@ -3,6 +3,9 @@
 - `list_items`: splits skill lists in requirement and preference sections into
   short items (at most four words) and returns those not already covered by
   another extracted term.
+- v4.1: a split item is kept only if `ListVocabulary` knows it (curated
+  dictionary, an ESCO skill/knowledge label, or an O*NET Technology Skills tool
+  name); unknown items are dropped.
 - `language_terms`: language names in a sentence with a proficiency cue.
 - `certification_terms`: named certifications instead of the bare word.
 - guards: a stoplist of generic terms; equal-opportunity and benefits sentences
@@ -156,6 +159,79 @@ class Span:
     end: int
     text: str
     normalized: str
+
+
+def vocabulary_key(text: str) -> str:
+    """Same normalisation as the taxonomy labels (casefold, punctuation except + # . to spaces)."""
+    import unicodedata
+
+    normalized = unicodedata.normalize("NFKC", text).casefold()
+    normalized = re.sub(r"[^a-z0-9+#.]+", " ", normalized)
+    return " ".join(normalized.split()).strip(".")
+
+
+@dataclass(frozen=True)
+class VocabularyHit:
+    source: str  # dictionary | esco | onet_tool
+    term_type: str  # skill | domain_knowledge | tool
+
+
+class ListVocabulary:
+    """Phrases a v4.1 list item must equal (after normalisation) to be kept.
+
+    Sources, in priority order: the curated dictionary, ESCO skill/knowledge labels
+    (preferred and alternative), O*NET Technology Skills tool names. A one-word
+    ESCO or O*NET entry that is published with capitals ("Go", "SAND", "Chef")
+    matches only one of those spellings, so ordinary lower-case words are not
+    taken for tool names.
+    """
+
+    def __init__(self, entries: dict[str, VocabularyHit], cased: dict[str, frozenset[str]]) -> None:
+        self.entries = entries
+        self.cased = cased
+
+    @classmethod
+    def build(cls, dictionary: list[tuple[str, str]] = (), esco: list[tuple[str, str]] = (),
+              tools: list[str] = ()) -> "ListVocabulary":
+        """`dictionary`: (alias, type); `esco`: (label, concept type skill|knowledge); `tools`: names."""
+        entries: dict[str, VocabularyHit] = {}
+        forms: dict[str, set[str]] = {}
+        for alias, term_type in dictionary:
+            key = vocabulary_key(alias)
+            if key:
+                entries.setdefault(key, VocabularyHit("dictionary", term_type))
+        esco_types: dict[str, set[str]] = {}
+        for label, concept_type in esco:
+            key = vocabulary_key(label)
+            if key and key not in entries:
+                esco_types.setdefault(key, set()).add(concept_type)
+                if " " not in key:
+                    forms.setdefault(key, set()).add(label.strip())
+        for key, types in esco_types.items():
+            entries[key] = VocabularyHit("esco", "skill" if "skill" in types else "domain_knowledge")
+        for name in tools:
+            key = vocabulary_key(name)
+            if key and key not in entries:
+                entries[key] = VocabularyHit("onet_tool", "tool")
+                if " " not in key:
+                    forms.setdefault(key, set()).add(name.strip())
+        # Case-sensitive only when every published spelling has capitals.
+        cased = {key: frozenset(spellings) for key, spellings in forms.items()
+                 if entries[key].source != "dictionary" and all(f != f.lower() for f in spellings)}
+        return cls(entries, cased)
+
+    def __len__(self) -> int:
+        return len(self.entries)
+
+    def match(self, item: str) -> VocabularyHit | None:
+        key = vocabulary_key(item)
+        hit = self.entries.get(key)
+        if hit is None:
+            return None
+        spellings = self.cased.get(key)
+        if spellings and item.strip() not in spellings:
+            return None
+        return hit
 
 
 def normalize_term(text: str) -> str:

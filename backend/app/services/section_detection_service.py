@@ -224,7 +224,7 @@ def classify_job_heading(line: str, version: str = "v3") -> tuple[str, int] | No
     body = stripped.strip("*#_ ").replace("’", "'")
     lead += stripped.find(body[:1]) if body else 0
     lower = body.lower()
-    for alias, kind in (_JOB_ALIASES_V4 if version == "v4" else _JOB_ALIASES):
+    for alias, kind in (_JOB_ALIASES_V4 if version in ("v4", "v4.1") else _JOB_ALIASES):
         if not lower.startswith(alias):
             continue
         rest = body[len(alias):]
@@ -236,7 +236,7 @@ def classify_job_heading(line: str, version: str = "v3") -> tuple[str, int] | No
             return kind, lead + len(alias) + separator.end()
     from app.retrieval.job_budget import _GENERIC_HEADING
 
-    if version == "v4" and _ABOUT_COMPANY_HEADING.fullmatch(body.rstrip(":?* ")):
+    if version in ("v4", "v4.1") and _ABOUT_COMPANY_HEADING.fullmatch(body.rstrip(":?* ")):
         return "excluded", len(line)
     if len(body) <= _MAX_HEADING_LENGTH:
         generic = _GENERIC_HEADING.fullmatch(body.rstrip(":?* "))
@@ -282,7 +282,7 @@ def detect_job_segments(text: str, version: str = "v3") -> list[DetectedSection]
                 start_char=content_start,
                 end_char=content_start + len(content),
                 confidence_score=0.6 if kind == "full_text" else 1.0,
-                extraction_method=JOB_SEGMENTATION_METHOD_V4 if version == "v4" else JOB_SEGMENTATION_METHOD,
+                extraction_method=JOB_SEGMENTATION_METHOD_V4 if version in ("v4", "v4.1") else JOB_SEGMENTATION_METHOD,
             )
         )
     return sections

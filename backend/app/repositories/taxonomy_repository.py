@@ -223,6 +223,29 @@ class TaxonomyRepository:
             .limit(1)
         )
 
+    def onet_tool_release(self) -> TaxonomyVersion | None:
+        """Most recently imported active, non-sample O*NET release."""
+        return self.db.scalar(
+            select(TaxonomyVersion)
+            .join(TaxonomySource, TaxonomySource.id == TaxonomyVersion.source_id)
+            .where(TaxonomySource.code == "ONET", TaxonomyVersion.status == "active", TaxonomyVersion.is_sample.is_(False))
+            .order_by(TaxonomyVersion.imported_at.desc())
+            .limit(1)
+        )
+
+    def onet_tool_names(self, version_id: UUID) -> list[str]:
+        """Distinct tool names of O*NET Technology Skills (release 31: software_skills.csv "Workplace Example";
+        older packages: Technology Skills.txt "Example")."""
+        from app.db.models.taxonomy import OnetDataRecord
+
+        names = set()
+        for dataset, key in (("software_skills.csv", "Workplace Example"), ("Technology Skills.txt", "Example")):
+            names.update(value for value in self.db.scalars(
+                select(OnetDataRecord.source_data[key].as_string()).where(
+                    OnetDataRecord.taxonomy_version_id == version_id, OnetDataRecord.dataset == dataset).distinct())
+                if value)
+        return sorted(names)
+
     def esco_vocabulary_rows(self, version_id: UUID) -> tuple[list[tuple], list[tuple]]:
         """(concept id, type, metadata) for skill/knowledge concepts and their non-hidden labels."""
         concepts = self.db.execute(

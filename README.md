@@ -270,7 +270,7 @@ Set in `.env` (see `.env.example`); defaults are in `backend/app/core/config.py`
 | `LIVE_JOB_IMPORT_INTERVAL_SECONDS` | 86400 | Interval of the optional scheduled import |
 | `CANDIDATE_VIEW_INCLUDES_EVALUATION_JOBS` | false | Show the fixed evaluation jobs to candidates |
 | `JOB_EXTRACTION_ESCO_VOCABULARY` | true | Use ESCO skill labels when extracting job skills |
-| `JOB_EXTRACTION_VERSION` | v4 | Job skill extraction rules: `v4` adds list splitting, language and named-certification rules and filters for generic terms and company, benefits and equal-opportunity text; `v3` is the previous rule set. CVs use only the language rule, whatever this setting |
+| `JOB_EXTRACTION_VERSION` | v4.1 | Job skill extraction rules: `v4` adds list splitting, language and named-certification rules and filters for generic terms and company, benefits and equal-opportunity text; `v4.1` keeps a split list item only if the curated dictionary, an ESCO skill/knowledge label or an O*NET Technology Skills tool name matches it; `v3` is the previous rule set. CVs use only the language rule, whatever this setting |
 
 ## Documentation
 

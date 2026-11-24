@@ -164,6 +164,8 @@ byte-for-byte with the stored outputs. All were identical:
   `score-extraction` (with `--gaps FILE`, missed skills are read from the
   error log; jobs with no labelled row and no missed entry are excluded and
   listed, so a partly labelled sample can be scored).
+  A second sample (seed 20261124, same population of 977 live jobs) is drawn
+  from the v4.1 extraction output (D061) and not yet labelled.
 - **Labels.** One rater marked each extracted skill correct or incorrect and
   logged every error in a separate file with its type (missed, false
   positive, wrong mapping), category, requirement and cause. The error log is

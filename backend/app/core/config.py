@@ -32,8 +32,10 @@ class Settings(BaseSettings):
     # Off = curated dictionary only, for old-vs-new comparison.
     JOB_EXTRACTION_ESCO_VOCABULARY: bool = True
     # Job extraction rules: v4 adds list splitting, precision guards, language and
-    # named-certification rules; v3 is the previous rule set. CV extraction is not affected.
-    JOB_EXTRACTION_VERSION: Literal["v3", "v4"] = "v4"
+    # named-certification rules; v4.1 keeps a split list item only if the curated dictionary,
+    # an ESCO skill/knowledge label or an O*NET tool name matches it; v3 is the previous rule set.
+    # CVs use only the language rule, whatever this setting.
+    JOB_EXTRACTION_VERSION: Literal["v3", "v4", "v4.1"] = "v4.1"
     # Jobs page: retrieval returns the top-N jobs by similarity, shown in pages;
     # coverage explains each job on the current page.
     RECOMMENDATION_TOP_N: int = Field(default=100, ge=1, le=500)

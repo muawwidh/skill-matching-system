@@ -83,7 +83,9 @@ in Europe or remote, stripped of e-mail addresses, phone numbers and contact
 names, and checked for duplicates (same posting ID or same text). Extraction
 for jobs also reads requirement headings ("Required", "Nice to have"),
 experience ranges ("3+ years") and filtered ESCO skill labels. It splits skill
-lists in requirement sections into short items, recognises languages with a
+lists in requirement sections into short items and, since v4.1, keeps an item
+only if it equals a curated dictionary entry, an ESCO skill/knowledge label or
+an O*NET Technology Skills tool name (unknown items are dropped); it recognises languages with a
 proficiency cue and named certifications, and leaves out generic words and
 text about the company, benefits, equal opportunity, privacy and the
 application process. The same linking rule applies, except that a short

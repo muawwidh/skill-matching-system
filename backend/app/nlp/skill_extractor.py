@@ -13,7 +13,9 @@ from app.taxonomy.normalization import normalize_taxonomy_text
 EXTRACTION_CONTRACT_VERSION = "v2"
 JOB_EXTRACTION_CONTRACT_VERSION = "v3"
 JOB_EXTRACTION_V4 = "v4"
-JOB_EXTRACTION_VERSIONS = (JOB_EXTRACTION_CONTRACT_VERSION, JOB_EXTRACTION_V4)
+# v4.1 = the v4 rules, but a list item is kept only if the list vocabulary knows it.
+JOB_EXTRACTION_V41 = "v4.1"
+JOB_EXTRACTION_VERSIONS = (JOB_EXTRACTION_CONTRACT_VERSION, JOB_EXTRACTION_V4, JOB_EXTRACTION_V41)
 
 _EXPERIENCE_V2 = r"\b\d+\+?\s+(?:years?|yrs?)\s+(?:of\s+)?experience\b"
 # v3: ranges ("3-5", "1 to 3", "0–2"), "3+ years", and up to three words before "experience".
@@ -167,6 +169,7 @@ class SkillExtractor:
         dictionary: SkillDictionary | None = None,
         esco_vocabulary: EscoVocabulary | None = None,
         job_version: str = JOB_EXTRACTION_CONTRACT_VERSION,
+        list_vocabulary=None,
     ) -> None:
         if job_version not in JOB_EXTRACTION_VERSIONS:
             raise ValueError(f"Unknown job extraction version {job_version!r}.")
@@ -174,6 +177,7 @@ class SkillExtractor:
         dictionary_path = Path(__file__).resolve().with_name("skill_dictionary.json")
         self.dictionary = dictionary or SkillDictionary.from_json(dictionary_path)
         self.esco_vocabulary = esco_vocabulary
+        self._list_vocabulary = list_vocabulary
         self.spacy_nlp = None
         self.spacy_matcher = None
         self._configure_spacy_matcher()
@@ -186,7 +190,9 @@ class SkillExtractor:
     ) -> list[ExtractedTerm]:
         terms: list[ExtractedTerm] = []
         version = self.job_version if document_kind == "job" else EXTRACTION_CONTRACT_VERSION
-        v4 = document_kind == "job" and version == JOB_EXTRACTION_V4
+        v4 = document_kind == "job" and version in (JOB_EXTRACTION_V4, JOB_EXTRACTION_V41)
+        # v4.1 changes only the list rule; every other rule (and its method string) stays v4.
+        version = JOB_EXTRACTION_V4 if version == JOB_EXTRACTION_V41 else version
         for section in sections:
             section_offset = self._section_offset(full_text, section.content, section.start_char)
             requirement_type = self._requirement_type(section.section_type, document_kind)
@@ -221,15 +227,27 @@ class SkillExtractor:
             terms.extend(section_terms)
         return self._deduplicate(terms)
 
+    @property
+    def list_vocabulary(self):
+        """Vocabulary for v4.1 list items; the curated dictionary alone unless one was given."""
+        if self._list_vocabulary is None:
+            from app.nlp.job_rules_v4 import ListVocabulary
+
+            self._list_vocabulary = ListVocabulary.build(dictionary=self.dictionary_aliases())
+        return self._list_vocabulary
+
+    def dictionary_aliases(self) -> list[tuple[str, str]]:
+        return [(alias, entry.term_type) for entry in self.dictionary.entries for alias in entry.aliases]
+
     def _v4_term(self, text: str, span, term_type: str, method: str, confidence: float, source_section: str,
-                 section_offset: int, requirement_type: str) -> ExtractedTerm:
+                 section_offset: int, requirement_type: str, version: str = JOB_EXTRACTION_V4) -> ExtractedTerm:
         return ExtractedTerm(
             raw_text=span.text,
             normalized_text=span.normalized,
             term_type=term_type,
             source_section=source_section,
             evidence_sentence=self._evidence_sentence(text, span.start, span.end),
-            extraction_method=f"{method}@{JOB_EXTRACTION_V4}",
+            extraction_method=f"{method}@{version}",
             confidence_score=confidence,
             start_char=section_offset + span.start,
             end_char=section_offset + span.end,
@@ -265,6 +283,13 @@ class SkillExtractor:
                     continue
                 if any(span.start < end and start < span.end and (end - start) >= (span.end - span.start)
                        for start, end in taken):
+                    continue
+                if self.job_version == JOB_EXTRACTION_V41:
+                    hit = self.list_vocabulary.match(span.text)
+                    if hit is None:
+                        continue  # unknown item: dropped
+                    terms.append(self._v4_term(text, span, hit.term_type, "list_item", 0.7, kind, section_offset,
+                                               requirement_type, JOB_EXTRACTION_V41))
                     continue
                 terms.append(self._v4_term(text, span, "skill", "list_item", 0.6, kind, section_offset,
                                            requirement_type))

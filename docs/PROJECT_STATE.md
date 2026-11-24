@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-21
+Last updated: 2026-11-24
 
 ## Repository
 
@@ -493,6 +493,61 @@ Startup cache warm-up (2026-11-21, D059):
 - First Jobs page request after a restart (page 1 of 10): before 4.5-4.7 s;
   after the warm-up has finished 0.49-0.50 s; during the warm-up 3.4-3.7 s.
 - Tests: `tests/test_warmup.py`.
+
+Job extraction v4 and v4.1 (2026-11-24, D061; approved exceptions to the freeze):
+- v4 (`app/nlp/job_rules_v4.py`, commit 5e36cb1): list splitting in
+  requirement sections, language rule, named certifications, precision guards
+  (stoplist; equal-opportunity, benefits, company, privacy, recruiting and
+  contact text), acronym-safe linking, extended experience pattern. Applied
+  additively to live jobs: items per job 7.36 -> 18.91; 1,366 v3 items retired.
+- v4.1: a split list item is kept only if it equals a curated dictionary
+  entry, an ESCO skill/knowledge label (active non-sample release, preferred or
+  alternative) or an O*NET Technology Skills tool name (`software_skills.csv`
+  "Workplace Example" of O*NET 31.0; `Technology Skills.txt` "Example" for older
+  packages); about 108k entries (99,371 ESCO, 8,642 O*NET tools, 44 curated).
+  One-word ESCO/O*NET entries published only with capitals must match that
+  spelling. Only list items carry `list_item@v4.1`; other rules keep `@v4`.
+- `JOB_EXTRACTION_VERSION` v3 | v4 | v4.1 (default v4.1).
+  `python -m app.services.job_service reextract [--version ...] [--apply]
+  [--retire-unreviewed] [--sources live|all]`: evaluation jobs are never
+  re-extracted; retirement removes only untouched items of live jobs.
+- Applied to live jobs (977): 11,308 v4 list items retired, nothing added,
+  654 jobs changed and re-embedded automatically (1,008 embeddings ready).
+  Items per job 18.91 -> 7.34; list items per job 11.94 -> 0.36; required
+  skill/tool/domain items 11,615 -> 2,114 (mean per job 11.9 -> 2.2, median
+  8 -> 1, 462 jobs with none); share with an approved link 15.1% -> 74.6%.
+  315 kept list items stay typed "skill" where v4.1 would say tool or domain
+  knowledge (same position counts as a kept item, not re-added).
+- DB snapshots (outside the repository): `pre-job-extraction-v4-20261124.dump`,
+  `pre-job-extraction-v41-20261124.dump` in `~/skillgap-db-snapshots/`.
+- Offline isolation check byte-identical after each step
+  (`evaluation/local/job-extraction-v41-isolation-check-20261124/`).
+- Extraction sample 2 (seed 20261124): regenerated from v4.1 output, same 20
+  jobs, 119 skill rows, empty `gaps.csv` template; the unlabelled v4 files are
+  in `v4-unlabelled-backup/`. `score-extraction --gaps FILE` reads missed
+  skills from the error log and excludes jobs with nothing labelled.
+- Tests: `tests/test_job_extraction_v4.py`, `tests/test_job_extraction_v41.py`,
+  `tests/test_extraction_sample.py`.
+
+Candidate languages (2026-11-24, D062; approved exception to the freeze):
+- CV extraction runs the language rule (`language_rule@v4`, cue or
+  "Languages" heading); other CV terms keep contract v2. Found languages are
+  pending for the candidate.
+- Migration `0014_candidate_language_level`: `candidate_skills.proficiency_level`
+  (A1-C2, native; NULL otherwise).
+- `GET/POST /candidates/me/languages`, `PUT .../{id}/review`,
+  `DELETE .../{id}` (candidate only; `app/services/language_service.py`).
+  My profile has a Languages card.
+- Job card and detail: "Languages: X of Y matched" by name against confirmed
+  languages (incl. older "language"-typed skills); not in skill counts,
+  ranking or filters; compared languages leave "not assessed".
+- Profile languages are excluded from the profile embedding and skill
+  coverage; older "language"-typed skills unchanged.
+- `python -m app.services.language_backfill --exclude-mapping FILE [--apply]`:
+  additive; applied 2026-11-24 to 7 non-evaluation CVs (12 pending languages,
+  3 distinct); the 8 evaluation profiles' CVs skipped; no embedding changed.
+- Tests: `tests/test_candidate_languages.py`, frontend `coverage.test.ts`,
+  `skills.test.ts`.
 
 ## Stage 3 — Open Items
 

@@ -49,14 +49,41 @@ def load_esco_vocabulary(db: Session) -> EscoVocabulary | None:
     return _VOCABULARY_CACHE[key]
 
 
+_LIST_VOCABULARY_CACHE: dict[tuple, object] = {}
+
+
+def load_list_vocabulary(db: Session, extractor: SkillExtractor):
+    """v4.1 list vocabulary: curated dictionary, every ESCO skill/knowledge label of the active
+    non-sample release and O*NET Technology Skills tool names; cached per release import."""
+    from app.nlp.job_rules_v4 import ListVocabulary
+
+    repository = TaxonomyRepository(db)
+    esco, onet = repository.esco_vocabulary_release(), repository.onet_tool_release()
+    key = tuple((release.id, release.imported_at) if release else None for release in (esco, onet))
+    if key not in _LIST_VOCABULARY_CACHE:
+        labels: list[tuple[str, str]] = []
+        if esco is not None:
+            concepts, rows = repository.esco_vocabulary_rows(esco.id)
+            types = {concept_id: concept_type for concept_id, concept_type, _, _ in concepts}
+            labels = [(preferred, concept_type) for _, concept_type, _, preferred in concepts]
+            labels += [(label, types[concept_id]) for concept_id, label in rows if concept_id in types]
+        tools = repository.onet_tool_names(onet.id) if onet is not None else []
+        _LIST_VOCABULARY_CACHE.clear()
+        _LIST_VOCABULARY_CACHE[key] = ListVocabulary.build(extractor.dictionary_aliases(), labels, tools)
+    return _LIST_VOCABULARY_CACHE[key]
+
+
 def build_job_extractor(
     db: Session, use_esco_vocabulary: bool | None = None, version: str | None = None
 ) -> SkillExtractor:
     """Job extractor; vocabulary and rule version follow JOB_EXTRACTION_ESCO_VOCABULARY and
     JOB_EXTRACTION_VERSION unless overridden."""
     enabled = settings.JOB_EXTRACTION_ESCO_VOCABULARY if use_esco_vocabulary is None else use_esco_vocabulary
-    return SkillExtractor(esco_vocabulary=load_esco_vocabulary(db) if enabled else None,
-                          job_version=version or settings.JOB_EXTRACTION_VERSION)
+    extractor = SkillExtractor(esco_vocabulary=load_esco_vocabulary(db) if enabled else None,
+                               job_version=version or settings.JOB_EXTRACTION_VERSION)
+    if extractor.job_version == "v4.1":
+        extractor._list_vocabulary = load_list_vocabulary(db, extractor)
+    return extractor
 
 
 class JobService:
@@ -411,7 +438,7 @@ def main(argv: list[str] | None = None) -> int:
     reextract.add_argument("--apply", action="store_true", help="write changes; default is a read-only dry-run")
     reextract.add_argument("--esco", choices=["config", "on", "off"], default="config",
                            help="ESCO vocabulary; default follows JOB_EXTRACTION_ESCO_VOCABULARY")
-    reextract.add_argument("--version", choices=["config", "v3", "v4"], default="config",
+    reextract.add_argument("--version", choices=["config", "v3", "v4", "v4.1"], default="config",
                            help="rule version; default follows JOB_EXTRACTION_VERSION")
     reextract.add_argument("--sources", choices=["live", "all"], default="live",
                            help="live job sources only (default), or also manually added jobs")

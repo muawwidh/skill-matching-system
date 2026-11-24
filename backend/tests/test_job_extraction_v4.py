@@ -233,6 +233,8 @@ def test_processed_evaluation_jobs_cannot_be_reprocessed(db_session) -> None:
 def test_config_switch_selects_the_job_rules(db_session, monkeypatch) -> None:
     from app.services.job_service import build_job_extractor
 
+    assert build_job_extractor(db_session, use_esco_vocabulary=False).job_version == "v4.1"
+    monkeypatch.setattr(settings, "JOB_EXTRACTION_VERSION", "v4")
     assert build_job_extractor(db_session, use_esco_vocabulary=False).job_version == "v4"
     monkeypatch.setattr(settings, "JOB_EXTRACTION_VERSION", "v3")
     assert build_job_extractor(db_session, use_esco_vocabulary=False).job_version == "v3"
