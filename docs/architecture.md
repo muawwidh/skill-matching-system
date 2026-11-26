@@ -146,7 +146,18 @@ sequenceDiagram
 - **Experience.** If the candidate entered work experience, the years in roles
   of the same 3-digit ISCO group as the job are compared with the job's stated
   minimum. This is shown next to the job and can, at the candidate's request,
-  hide jobs above their experience. It never changes the order.
+  hide jobs above their experience. It never changes the order. A minimum
+  counts only in a clause that says "experience"/"experienced" and has no
+  company-age cue (founded, incorporated, established, since, history, "for N
+  years we ...").
+- **Coverage basis.** The bar counts required skills; when a job marks none as
+  required it counts every non-rejected skill the ad mentions ("Skills
+  mentioned in the ad"), and with no skills it shows a notice. Display only.
+- **Duplicate postings.** In the candidate's list, jobs with the same title and
+  company and near-identical descriptions (word-level similarity >= 0.9,
+  `app/matching/duplicates.py`) are shown as one card at the best rank, listing
+  all locations; ranks follow the collapsed list. Jobs stay in the database and
+  the offline evaluation is unaffected.
 - **Nothing is stored per request.** Rankings and explanations are computed on
   read from the current data.
 

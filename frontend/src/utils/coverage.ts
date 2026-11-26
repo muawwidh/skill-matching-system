@@ -33,6 +33,66 @@ export function coverageLabel({ matched, related, missing }: CoverageCounts): st
   return `${matched} of ${total} required skills${related > 0 ? ` · ${related} related` : ""}`;
 }
 
+type Labelled = { label: string };
+type ViewInput = {
+  coverage_basis?: string;
+  matched_required: Labelled[];
+  partial_required?: Labelled[];
+  missing_required: Labelled[];
+  matched_preferred: Labelled[];
+  partial_preferred?: Labelled[];
+  missing_preferred: Labelled[];
+};
+export type CoverageBasis = "required" | "mentioned" | "none";
+export type CoverageView = {
+  basis: CoverageBasis;
+  counts: CoverageCounts;
+  label: string;
+  note: string | null;
+  chips: { kind: Segment; label: string }[];
+};
+
+export const NO_REQUIRED_NOTE = "This ad doesn't mark which skills are required";
+export const NO_SKILLS_LABEL = "Skills couldn't be identified for this posting — see the original ad.";
+
+/**
+ * What the coverage bar shows: required skills; when the ad marks none as required, every skill it
+ * mentions ("Skills mentioned in the ad: X of Y in your profile"); when none was identified, a notice.
+ * Display only: the order of jobs never changes.
+ */
+export function coverageView(item: ViewInput): CoverageView {
+  const preferred = (item.matched_preferred.length + (item.partial_preferred?.length ?? 0) + item.missing_preferred.length);
+  const required = item.matched_required.length + (item.partial_required?.length ?? 0) + item.missing_required.length;
+  const basis = (item.coverage_basis as CoverageBasis | undefined)
+    ?? (required ? "required" : preferred ? "mentioned" : "none");
+  const chipsOf = (matched: Labelled[], related: Labelled[] = [], missing: Labelled[]) => [
+    ...matched.map((skill) => ({ kind: "matched" as const, label: skill.label })),
+    ...related.map((skill) => ({ kind: "related" as const, label: skill.label })),
+    ...missing.map((skill) => ({ kind: "missing" as const, label: skill.label })),
+  ];
+  if (basis === "required") {
+    const counts = requiredCounts(item);
+    return { basis, counts, label: coverageLabel(counts), note: null,
+      chips: chipsOf(item.matched_required, item.partial_required, item.missing_required) };
+  }
+  if (basis === "mentioned") {
+    const counts = { matched: item.matched_preferred.length, related: item.partial_preferred?.length ?? 0,
+      missing: item.missing_preferred.length };
+    const total = counts.matched + counts.related + counts.missing;
+    return {
+      basis, counts, note: NO_REQUIRED_NOTE,
+      label: `Skills mentioned in the ad: ${counts.matched} of ${total} in your profile${counts.related ? ` · ${counts.related} related` : ""}`,
+      chips: chipsOf(item.matched_preferred, item.partial_preferred, item.missing_preferred),
+    };
+  }
+  return { basis: "none", counts: { matched: 0, related: 0, missing: 0 }, label: NO_SKILLS_LABEL, note: null, chips: [] };
+}
+
+/** "London, Madrid" when the same posting is listed in several locations; otherwise the job's location. */
+export function locationText(item: { locations?: string[]; job: { location?: string | null } }): string {
+  return item.locations && item.locations.length > 1 ? item.locations.join(", ") : item.job.location ?? "";
+}
+
 type LanguageInput = { compared: boolean; matched: unknown[]; missing: unknown[] };
 
 /** "Languages: X of Y matched", or null when the job's languages were not compared. Separate from skill counts. */

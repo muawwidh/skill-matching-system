@@ -19,8 +19,11 @@ Minimum required years (`minimum_required_years`), the rule:
       "relevant", "hands-on", "practical", "industry", "work", or a verb in
       -ing, optionally after an adverb ("5+ years in IT support", "at least 2
       years leading teams", "5+ years directly managing").
+   In either case the clause must contain "experience" or "experienced"
+   ("13 years of expertise and innovation" about the company does not count).
 3. A mention is dropped when its clause contains a company-age, retention or
-   benefit cue: history, founded, established, anniversary, "for over",
+   benefit cue: history, founded, incorporated, established, since,
+   "for N years we/our/the company", anniversary, "for over",
    "over the last/past", "next N years", "years running", "of service",
    sabbatical, retain(ed), "kept for", stored, warranty, "years old",
    "year olds", ago, "in business", "on the market", "has/have helped",
@@ -47,16 +50,20 @@ _MENTION = re.compile(
     rf"(?P<range>(?:-|–|—|to)\s*(?:{_NUMBER})\s*\+?\s*)?(?:years?|yrs?)\b['’]?",
     re.I)
 _CLAUSE_BREAK = re.compile(r"[\n.;!?•]|\s-\s")
-_EXPERIENCE_AFTER = re.compile(r"^\s*\+?\s*(?:of\s+)?(?:[\w&/'’-]+\s+){0,4}?(?:experience|expertise|track record)\b", re.I)
+_EXPERIENCE_AFTER = re.compile(r"^\s*\+?\s*(?:of\s+)?(?:[\w&/'’-]+\s+){0,4}?(?:experienced?|expertise|track record)\b", re.I)
 _FOLLOWER = re.compile(r"^\s*\)?\s*(?:(?:of|in|as|within|across|on|at|minimum|min\.?|or more|and above|"
                        r"professional|relevant|hands-on|practical|industry|work)\b|(?:\w+ly\s+)?[a-z]+ing\b)", re.I)
 _CUE_BEFORE = re.compile(r"(?:at least|minimum(?: of)?|min\.?|you have|have|having|with|bring|requires?|"
                          r"required|need(?:s|ed)?|approximately|ca\.|experience:|experience \()\s*$", re.I)
 _LINE_START = re.compile(r"^[\s\-–—*•·>]*$")
 _NEGATIVE = re.compile(
-    r"\b(?:history|founded|established|anniversary|for over|over the (?:last|past)|next\s+\S+\s+years|"
+    r"\b(?:history|founded|incorporated|established|since|anniversary|for over|over the (?:last|past)|next\s+\S+\s+years|"
     r"years running|of service|sabbatical|retain(?:ed)?|kept for|stored|warranty|years? old|year olds|ago|"
     r"in business|on the market|ha(?:s|ve) helped|ha(?:s|ve) empowered|we have been)\b", re.I)
+_EXPERIENCE_WORD = re.compile(r"\bexperience[ds]?\b", re.I)
+# "for 13 years we have ...", "for over 20 years, our team ..." (company age).
+_COMPANY_FOR_YEARS = re.compile(rf"\bfor\s+(?:more than\s+|almost\s+|nearly\s+)?(?:{_NUMBER})\+?\s*years?\b,?\s+"
+                                r"(?:we|our|the company|it|they)\b", re.I)
 _PREFERENCE = re.compile(r"\b(?:preferred|nice to have|ideally|a plus|bonus|advantage(?:ous)?)\b", re.I)
 
 
@@ -89,7 +96,9 @@ def requirement_mentions(text: str) -> list[YearsMention]:
             continue
         before, after = _clause(text, match.start(), match.end())
         clause = before + match.group(0) + after
-        if _NEGATIVE.search(clause) or _PREFERENCE.search(clause):
+        if _NEGATIVE.search(clause) or _PREFERENCE.search(clause) or _COMPANY_FOR_YEARS.search(clause):
+            continue
+        if not _EXPERIENCE_WORD.search(clause):
             continue
         shaped = bool(match["plus"] or match["plus_before"] or match["range"] or _CUE_BEFORE.search(before)
                       or _LINE_START.match(before))

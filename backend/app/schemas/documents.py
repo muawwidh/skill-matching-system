@@ -316,6 +316,9 @@ class JobCoverageRead(BaseModel):
     not_assessed_required: list[str] = []
     not_assessed_preferred: list[str] = []
     languages: LanguageCoverageRead = LanguageCoverageRead()
+    # "required": required skills exist; "mentioned": none marked required, all mentioned skills
+    # (shown as "Skills mentioned in the ad"); "none": no skills identified.
+    coverage_basis: str = "required"
     job: JobRead
 
 
@@ -373,6 +376,10 @@ class RecommendationItem(BaseModel):
     not_assessed_required: list[str] = []
     not_assessed_preferred: list[str] = []
     languages: LanguageCoverageRead = LanguageCoverageRead()
+    coverage_basis: str = "required"
+    # Same posting in other locations (shown as one card): all locations, the other job IDs.
+    locations: list[str] = []
+    duplicate_job_ids: list[UUID] = []
     job: JobRead
     job_occupation: JobOccupationRead | None = None
     related_experience: RelatedExperienceRead | None = None
@@ -402,6 +409,8 @@ class RecommendationList(BaseModel):
     # among the jobs considered for the top N.
     hide_below_experience: bool = False
     hidden_by_experience: int = 0
+    # Further postings of the same job in other locations, folded into one card each.
+    collapsed_duplicates: int = 0
     has_work_entries_with_occupation: bool = False
     results: list[RecommendationItem]
 

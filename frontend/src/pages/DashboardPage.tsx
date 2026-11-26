@@ -12,7 +12,7 @@ import { RankBadge } from "../ui/Badges";
 import { CoverageBar, CoverageLegend } from "../ui/CoverageBar";
 import { EmptyState, ErrorText, LoadingBlock, Skeleton } from "../ui/Feedback";
 import { CardTitle, PageHeader } from "../ui/Page";
-import { requiredCounts } from "../utils/coverage";
+import { coverageView, locationText } from "../utils/coverage";
 import { AUTOMATIC_TOOLTIP } from "../utils/reviewStatus";
 
 // --- Administrator overview (unchanged data, new styling) -----------------------------------------
@@ -163,7 +163,7 @@ function SetupCard({ steps }: { steps: Step[] }) {
 }
 
 function MatchRow({ item }: { item: RecommendationItem }) {
-  const meta = [item.job.company, item.job.location].filter(Boolean).join(" · ");
+  const meta = [item.job.company, locationText(item)].filter(Boolean).join(" · ");
   return (
     <li>
       <Link
@@ -175,7 +175,7 @@ function MatchRow({ item }: { item: RecommendationItem }) {
           <p className="truncate font-semibold text-ink">{item.job.title}</p>
           {meta ? <p className="truncate text-sm text-muted">{meta}</p> : null}
           <div className="mt-2">
-            <CoverageBar counts={requiredCounts(item)} compact />
+            <CoverageBar view={coverageView(item)} compact />
           </div>
         </div>
       </Link>

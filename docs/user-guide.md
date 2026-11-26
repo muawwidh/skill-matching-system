@@ -57,7 +57,12 @@ each job. It never changes the order of the jobs.
 ### 5. See your matches
 
 Open **Jobs**. The list shows the jobs that fit your profile best, best first,
-in pages of 10, 25 or 50. Select a job to see its details:
+in pages of 10, 25 or 50. The bar on each job counts its required skills. If the
+ad does not mark any skill as required, it counts every skill the ad mentions
+("Skills mentioned in the ad: X of Y in your profile"); if no skills could be
+identified, it says so and points to the original ad. The same posting published
+for several locations is shown once, with all its locations. Select a job to see
+its details:
 
 - **Why this job**: a short explanation from your skills.
 - **Skills you have**: the job's skills you have, and how they matched (same

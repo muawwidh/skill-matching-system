@@ -11,19 +11,31 @@ from app.matching.experience import (WorkPeriod, isco_group, merged_months, mini
     ("- 5+ years of experience as a Machine Learning Engineer", 5),
     ("You have 1-2 years’ experience closing deals", 1),
     ("Minimum of 3 years of industry experience in robotics", 3),
-    ("At least 2 years leading teams", 2),
-    ("- 7+ years in IT Support, IT Operations or Service Desk", 7),
-    ("- Seven to ten years in PR and communications", 7),
     ("Three years of professional experience with Python.", 3),
     ("We need someone with five years experience in sales.", 5),
     ("- +4 years' experience from an institution", 4),
     ("Significant experience (7+ years) in a senior Solutions Engineer role", 7),
     ("Experience: 5 years minimum in embedded hardware design", 5),
-    ("with at least 5+ years directly managing partners", 5),
     ("- 4 years + experience in Software Engineering", 4),
     # The first requirement mention wins: later ones are sub-requirements.
     ("Have 4+ years of Product Management experience, including at least 1 year in B2B.", 4),
-    ("- 8+ years in design, with 3+ years leading designers", 8),
+    ("- 8+ years of experience in design, with 3+ years leading designers", 8),
+    ("- At least 3 years experienced as a developer", 3),
+    ("Experience: 5+ years in IT support", 5),
+    # Since 2026-11-26 the clause must contain "experience"/"experienced" (user decision).
+    ("At least 2 years leading teams", None),
+    ("- 7+ years in IT Support, IT Operations or Service Desk", None),
+    ("- Seven to ten years in PR and communications", None),
+    ("with at least 5+ years directly managing partners", None),
+    # Company age, not a requirement (the "13+ years" bug on the mirakllabs MLOps postings).
+    ("Built on Mirakl's 13 years of expertise and innovation, and powered by 100,000 sellers.", None),
+    ("For 13 years we have built experience in retail.", None),
+    ("For over 20 years, our team has gained experience in payments.", None),
+    ("Founded in 2010, 15 years of experience serving clients", None),
+    ("Incorporated in 2005 with 20 years of experience in logistics", None),
+    ("Established 2009: 16 years of experience", None),
+    ("Since 2012 we bring 12 years of experience", None),
+    ("15 years of history and experience in e-commerce", None),
 ])
 def test_minimum_required_years(text, years):
     assert minimum_required_years(text) == years

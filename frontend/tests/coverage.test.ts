@@ -41,3 +41,27 @@ test("languages are labelled separately and only when compared", async () => {
   assert.equal(languageLabel({ compared: false, matched: [], missing: [] }), null);
   assert.equal(languageLabel(undefined), null);
 });
+
+test("coverage falls back to mentioned skills, then to a notice", async () => {
+  const { coverageView, locationText, NO_REQUIRED_NOTE, NO_SKILLS_LABEL } = await import("../src/utils/coverage.ts");
+  const s = (label: string) => ({ label });
+  const base = { matched_required: [], partial_required: [], missing_required: [], matched_preferred: [], partial_preferred: [], missing_preferred: [] };
+  const required = coverageView({ ...base, matched_required: [s("Python")], missing_required: [s("Go")], matched_preferred: [s("SQL")] });
+  assert.equal(required.basis, "required");
+  assert.equal(required.label, "1 of 2 required skills");
+  assert.deepEqual(required.chips.map((c) => c.label), ["Python", "Go"]);
+  const mentioned = coverageView({ ...base, matched_preferred: [s("SQL")], partial_preferred: [s("Spark")], missing_preferred: [s("Docker"), s("Kafka")] });
+  assert.equal(mentioned.basis, "mentioned");
+  assert.equal(mentioned.label, "Skills mentioned in the ad: 1 of 4 in your profile · 1 related");
+  assert.equal(mentioned.note, NO_REQUIRED_NOTE);
+  assert.deepEqual(mentioned.counts, { matched: 1, related: 1, missing: 2 });
+  assert.deepEqual(mentioned.chips.map((c) => c.kind), ["matched", "related", "missing", "missing"]);
+  const none = coverageView(base);
+  assert.equal(none.basis, "none");
+  assert.equal(none.label, NO_SKILLS_LABEL);
+  assert.deepEqual(none.chips, []);
+  // The server's basis wins when present.
+  assert.equal(coverageView({ ...base, coverage_basis: "none" }).basis, "none");
+  assert.equal(locationText({ locations: ["London", "Madrid"], job: { location: "London" } }), "London, Madrid");
+  assert.equal(locationText({ locations: ["London"], job: { location: "London" } }), "London");
+});

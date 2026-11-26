@@ -1182,6 +1182,13 @@ CVs for matching.
   the 3-digit ISCO group; overlapping periods are merged and the months
   summed. The check showed 4 digits too narrow (data scientist 2511 vs software
   developer 2512) and 2 digits too broad (chemists with civil engineers).
+- **Minimum rule tightened (2026-11-26).** A years mention counts only when
+  its clause contains "experience" or "experienced" and no company-age cue
+  (founded, incorporated, established, since, history, "for N years we/our").
+  This fixed "13+ years" read from "Built on Mirakl's 13 years of expertise"
+  and removed 65 of 428 live minimums, most of them genuine requirements
+  worded without "experience" ("5+ years in procurement"): precision was
+  preferred over coverage.
 - **Explanation, not a score.** The job card shows "About N years in related
   roles (ISCO xxx ...) · job asks M+ years → meets / below requirement" only
   when the job has a minimum and an occupation and the candidate has entries

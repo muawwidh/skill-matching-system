@@ -5,7 +5,7 @@ import type { MatchedSkill, MissingSkill, PartialSkill, RecommendationItem } fro
 import { ExperienceBadge, RankBadge } from "../ui/Badges";
 import { Chip } from "../ui/Chip";
 import { CoverageBar } from "../ui/CoverageBar";
-import { languageLabel, postedAgo, requiredCounts } from "../utils/coverage";
+import { coverageView, languageLabel, locationText, postedAgo } from "../utils/coverage";
 import { isLiveJobSource } from "../utils/reviewStatus";
 
 export const UNREVIEWED = "automatically extracted, not reviewed";
@@ -25,10 +25,12 @@ export function LanguageChips({ item }: { item: RecommendationItem }) {
 }
 
 export function jobMeta(item: RecommendationItem): string {
-  return [item.job.company, item.job.location, postedAgo(item.job.posted_at)].filter(Boolean).join(" · ");
+  return [item.job.company, locationText(item), postedAgo(item.job.posted_at)].filter(Boolean).join(" · ");
 }
 
-function Tag({ tone, children }: { tone: "required" | "preferred"; children: ReactNode }) {
+type TagTone = "required" | "preferred" | "mentioned";
+
+function Tag({ tone, children }: { tone: TagTone; children: ReactNode }) {
   return (
     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${tone === "required" ? "bg-night text-white" : "bg-neutral-bg text-neutral-text"}`}>
       {children}
@@ -37,7 +39,7 @@ function Tag({ tone, children }: { tone: "required" | "preferred"; children: Rea
 }
 
 function Row({ symbol, symbolClass, label, tag, detail, unreviewed }: {
-  symbol: string; symbolClass: string; label: string; tag: "required" | "preferred"; detail: ReactNode; unreviewed?: boolean;
+  symbol: string; symbolClass: string; label: string; tag: TagTone; detail: ReactNode; unreviewed?: boolean;
 }) {
   return (
     <li className="flex gap-3 py-2.5">
@@ -68,9 +70,10 @@ function Section({ title, count, children }: { title: string; count?: number; ch
   );
 }
 
-const withTag = <T,>(required: T[], preferred: T[]) => [
-  ...required.map((item) => ({ item, tag: "required" as const })),
-  ...preferred.map((item) => ({ item, tag: "preferred" as const })),
+const withTag = <T,>(required: T[], preferred: T[], mentioned = false) => [
+  ...required.map((item) => ({ item, tag: "required" as TagTone })),
+  // When the ad marks nothing as required, its skills are "mentioned" rather than preferred.
+  ...preferred.map((item) => ({ item, tag: (mentioned ? "mentioned" : "preferred") as TagTone })),
 ];
 
 const MATCHED_VIA: Record<MatchedSkill["matched_via"], string> = {
@@ -113,9 +116,11 @@ function ExperienceLine({ item }: { item: RecommendationItem }) {
 export function JobDetailPanel({ item, rankTotal, extra }: { item: RecommendationItem; rankTotal: number; extra?: ReactNode }) {
   const job = item.job;
   const live = isLiveJobSource(job.source);
-  const have = withTag<MatchedSkill>(item.matched_required, item.matched_preferred);
-  const related = withTag<PartialSkill>(item.partial_required, item.partial_preferred);
-  const develop = withTag<MissingSkill>(item.missing_required, item.missing_preferred);
+  const view = coverageView(item);
+  const mentioned = view.basis === "mentioned";
+  const have = withTag<MatchedSkill>(item.matched_required, item.matched_preferred, mentioned);
+  const related = withTag<PartialSkill>(item.partial_required, item.partial_preferred, mentioned);
+  const develop = withTag<MissingSkill>(item.missing_required, item.missing_preferred, mentioned);
   const notRequired = item.not_assessed_required ?? [];
   const notPreferred = item.not_assessed_preferred ?? [];
   const meta = jobMeta(item);
@@ -139,7 +144,10 @@ export function JobDetailPanel({ item, rankTotal, extra }: { item: Recommendatio
         </div>
       </div>
 
-      <CoverageBar counts={requiredCounts(item)} />
+      <CoverageBar view={view} />
+      {item.locations && item.locations.length > 1 ? (
+        <p className="text-xs text-muted">Posted for {item.locations.length} locations: {item.locations.join(" · ")}. Shown once.</p>
+      ) : null}
 
       <div className="rounded-xl bg-teal-soft p-4 text-sm text-teal-text">
         <h3 className="mb-1.5 font-semibold">Why this job</h3>

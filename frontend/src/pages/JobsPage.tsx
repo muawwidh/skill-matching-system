@@ -24,7 +24,7 @@ import { CoverageBar, CoverageLegend } from "../ui/CoverageBar";
 import { EmptyState, ErrorText, Notice, Skeleton } from "../ui/Feedback";
 import { CardTitle, PageHeader } from "../ui/Page";
 import { Pager } from "../ui/Pager";
-import { requiredCounts } from "../utils/coverage";
+import { coverageView } from "../utils/coverage";
 import { isLiveJobSource } from "../utils/reviewStatus";
 
 const emptyJob: JobPayload = { title: "", company: "", location: "", employment_type: "", description: "" };
@@ -33,11 +33,7 @@ const MAX_CHIPS = 6;
 // --- Candidate: job list and detail ---------------------------------------------------------------
 
 function JobChips({ item }: { item: RecommendationItem }) {
-  const chips = [
-    ...item.matched_required.map((skill) => ({ kind: "matched" as const, label: skill.label })),
-    ...item.partial_required.map((skill) => ({ kind: "related" as const, label: skill.label })),
-    ...item.missing_required.map((skill) => ({ kind: "missing" as const, label: skill.label })),
-  ];
+  const chips = coverageView(item).chips;
   if (!chips.length) return null;
   const shown = chips.slice(0, MAX_CHIPS);
   return (
@@ -66,7 +62,7 @@ function JobListCard({ item, selected, onSelect }: { item: RecommendationItem; s
               {meta ? <p className="mt-0.5 text-sm text-muted">{meta}</p> : null}
             </div>
             <ExperienceBadge item={item} />
-            <CoverageBar counts={requiredCounts(item)} />
+            <CoverageBar view={coverageView(item)} />
             <JobChips item={item} />
             <LanguageChips item={item} />
           </div>
@@ -80,7 +76,8 @@ function summary(data: RecommendationList): string {
   if (!data.results.length) return "No jobs to show.";
   const first = (data.page - 1) * data.page_size + 1;
   const last = first + data.results.length - 1;
-  return `Showing ${first}–${last} of ${data.total} best-matching jobs · ranked by similarity to your profile`;
+  const folded = data.collapsed_duplicates ? ` · ${data.collapsed_duplicates} repeated postings in other locations shown once` : "";
+  return `Showing ${first}–${last} of ${data.total} best-matching jobs · ranked by similarity to your profile${folded}`;
 }
 
 function Controls({ data, pageSize, onPageSize, onFilter, filterPending }: {

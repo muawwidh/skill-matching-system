@@ -164,6 +164,11 @@ export type RecommendationItem = {
   not_assessed_required?: string[];
   not_assessed_preferred?: string[];
   languages?: LanguageCoverage;
+  /** required | mentioned (no skill marked required: all mentioned skills) | none (no skills identified). */
+  coverage_basis?: "required" | "mentioned" | "none";
+  /** Same posting in several locations, shown as one card. */
+  locations?: string[];
+  duplicate_job_ids?: string[];
   /** Minimum years the job text asks for; null when none is stated. */
   min_required_years?: number | null;
   job: Job;
@@ -195,6 +200,8 @@ export type RecommendationList = {
   /** Related-experience filter. */
   hide_below_experience?: boolean;
   hidden_by_experience?: number;
+  /** Further postings of the same job in other locations folded into one card. */
+  collapsed_duplicates?: number;
   has_work_entries_with_occupation?: boolean;
   results: RecommendationItem[];
 };

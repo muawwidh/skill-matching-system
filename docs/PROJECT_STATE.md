@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-24
+Last updated: 2026-11-26
 
 ## Repository
 
@@ -553,6 +553,27 @@ Candidate languages (2026-11-24, D062; approved exception to the freeze):
   3 distinct); the 8 evaluation profiles' CVs skipped; no embedding changed.
 - Tests: `tests/test_candidate_languages.py`, frontend `coverage.test.ts`,
   `skills.test.ts`.
+
+Job card fixes (2026-11-26; display and bug fixes, extraction unchanged):
+- Coverage basis: `coverage_basis` required | mentioned | none on each job
+  (list and detail). 977 live jobs: 498 required, 381 mentioned (bar over all
+  mentioned skills, "This ad doesn't mark which skills are required"), 98 none
+  ("Skills couldn't be identified for this posting — see the original ad.").
+  Order unchanged. Frontend helper `coverageView` (`src/utils/coverage.ts`).
+- Minimum years (`app/matching/experience.py`): the clause must contain
+  "experience"/"experienced"; company-age cues extended (incorporated, since,
+  "for N years we/our/the company"). Live minimums: 70 of 977 changed (65
+  removed, 5 values: 13->2 twice on the Mirakl MLOps postings, 10->5, 10->4,
+  4->1); jobs with a minimum 428 -> 363; minimums >= 10: 44 -> 35. Computed on
+  read, so no data was rewritten.
+- Duplicate postings (`app/matching/duplicates.py`): same title and company,
+  description similarity >= 0.9; one card per posting at its best rank with
+  `locations` and `duplicate_job_ids`; the list reports
+  `collapsed_duplicates`. Over all 977 live jobs: 80 postings fold into 48
+  groups (897 cards; largest group 9; 9 of the 80 have the same location
+  string). Jobs stay in the database.
+- Tests: `tests/test_job_card_fixes.py`, `tests/test_experience.py`,
+  frontend `coverage.test.ts`.
 
 ## Stage 3 — Open Items
 

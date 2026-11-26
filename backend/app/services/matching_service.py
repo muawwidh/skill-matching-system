@@ -372,7 +372,13 @@ class MatchingService:
                 # e.g. the pinned tokenizer needed for job freshness is missing on this server.
                 state = "retrieval_unavailable"
         jobs = {job.id: job for job in active_jobs}
-        ranked = [jobs[row["job_id"]] for row in rows if row["job_id"] in jobs]
+        from app.matching.duplicates import collapse_duplicates
+
+        # The same posting in several locations is shown once (display only; ranks follow the collapsed list).
+        groups = collapse_duplicates([jobs[row["job_id"]] for row in rows if row["job_id"] in jobs])
+        ranked = [group.job for group in groups]
+        group_of = {group.job.id: group for group in groups}
+        collapsed = sum(len(group.duplicates) for group in groups)
         last_page = max(1, -(-len(ranked) // page_size))
         page = min(max(1, page), last_page)
         start = (page - 1) * page_size
@@ -383,7 +389,10 @@ class MatchingService:
             for offset, job in enumerate(ranked[start:start + page_size], start=1):
                 occupation = experience.job_occupation(job)
                 # Related experience explains the job; it never changes the order.
+                group = group_of[job.id]
                 results.append({"rank": start + offset, **self._coverage(job, candidate_items, languages),
+                                "locations": group.locations,
+                                "duplicate_job_ids": [other.id for other in group.duplicates],
                                 "job_occupation": occupation,
                                 "related_experience": experience.assess(job, occupation, periods),
                                 "min_required_years": experience.minimum_years(job)})
@@ -395,6 +404,7 @@ class MatchingService:
                 "total": len(ranked), "page": page, "page_size": page_size,
                 "active_jobs": len(active_jobs), "unindexed_jobs": unindexed,
                 "hide_below_experience": hide_below, "hidden_by_experience": len(hidden),
+                "collapsed_duplicates": collapsed,
                 "has_work_entries_with_occupation": bool(periods), "results": results}
 
     @staticmethod
@@ -513,6 +523,9 @@ class MatchingService:
             "candidate_skill_count": result.candidate_skill_count,
             "job_skill_count": result.required_total + result.preferred_total,
             "explanation": build_explanation(result) + _language_line(languages),
+            # What the coverage bar shows: required skills, otherwise every skill the ad mentions.
+            "coverage_basis": ("required" if result.required_total else
+                               "mentioned" if result.preferred_total else "none"),
             "not_assessed_required": result.not_assessed_required,
             "not_assessed_preferred": result.not_assessed_preferred,
             "languages": languages,
