@@ -19,8 +19,10 @@ Minimum required years (`minimum_required_years`), the rule:
       "relevant", "hands-on", "practical", "industry", "work", or a verb in
       -ing, optionally after an adverb ("5+ years in IT support", "at least 2
       years leading teams", "5+ years directly managing").
-   In either case the clause must contain "experience" or "experienced"
-   ("13 years of expertise and innovation" about the company does not count).
+   When only "expertise" or "track record" follows (path a), the clause must
+   also contain "experience"/"experienced" ("13 years of expertise and
+   innovation" about the company does not count); path b needs no such word
+   ("5+ years in procurement").
 3. A mention is dropped when its clause contains a company-age, retention or
    benefit cue: history, founded, incorporated, established, since,
    "for N years we/our/the company", anniversary, "for over",
@@ -98,11 +100,13 @@ def requirement_mentions(text: str) -> list[YearsMention]:
         clause = before + match.group(0) + after
         if _NEGATIVE.search(clause) or _PREFERENCE.search(clause) or _COMPANY_FOR_YEARS.search(clause):
             continue
-        if not _EXPERIENCE_WORD.search(clause):
-            continue
         shaped = bool(match["plus"] or match["plus_before"] or match["range"] or _CUE_BEFORE.search(before)
                       or _LINE_START.match(before))
-        if _EXPERIENCE_AFTER.match(after) or (shaped and _FOLLOWER.match(after)):
+        experience_after = _EXPERIENCE_AFTER.match(after)
+        if experience_after and not _EXPERIENCE_WORD.search(experience_after.group(0)):
+            # "expertise"/"track record" alone is often about the company: needs "experience" in the clause.
+            experience_after = experience_after if _EXPERIENCE_WORD.search(clause) else None
+        if experience_after or (shaped and _FOLLOWER.match(after)):
             mentions.append(YearsMention(years, match.start()))
     return mentions
 

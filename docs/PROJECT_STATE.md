@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-26
+Last updated: 2026-11-27
 
 ## Repository
 
@@ -560,18 +560,21 @@ Job card fixes (2026-11-26; display and bug fixes, extraction unchanged):
   mentioned skills, "This ad doesn't mark which skills are required"), 98 none
   ("Skills couldn't be identified for this posting — see the original ad.").
   Order unchanged. Frontend helper `coverageView` (`src/utils/coverage.ts`).
-- Minimum years (`app/matching/experience.py`): the clause must contain
-  "experience"/"experienced"; company-age cues extended (incorporated, since,
-  "for N years we/our/the company"). Live minimums: 70 of 977 changed (65
-  removed, 5 values: 13->2 twice on the Mirakl MLOps postings, 10->5, 10->4,
-  4->1); jobs with a minimum 428 -> 363; minimums >= 10: 44 -> 35. Computed on
-  read, so no data was rewritten.
+- Minimum years (`app/matching/experience.py`, revised 2026-11-27): a mention
+  followed only by "expertise"/"track record" needs "experience"/"experienced"
+  in its clause; requirement-shaped phrases ("N+ years in/of <field>") count
+  as before; company-age cues extended (incorporated, since, "for N years
+  we/our/the company"). Live: 428 jobs with a minimum (same as before the
+  fix); only the two Mirakl MLOps postings changed (13 -> 2). The first
+  version (every clause needs "experience") had removed 65 minimums; all 65
+  are back with their original values. Computed on read; no data rewritten.
 - Duplicate postings (`app/matching/duplicates.py`): same title and company,
-  description similarity >= 0.9; one card per posting at its best rank with
-  `locations` and `duplicate_job_ids`; the list reports
-  `collapsed_duplicates`. Over all 977 live jobs: 80 postings fold into 48
-  groups (897 cards; largest group 9; 9 of the 80 have the same location
-  string). Jobs stay in the database.
+  description similarity >= 0.95 (raised from 0.9 on 2026-11-27); one card
+  per posting at its best rank with `locations` and `duplicate_job_ids`; the
+  list reports `collapsed_duplicates`. Over all 977 live jobs: 77 postings
+  fold into 47 groups (900 cards; largest group 9). Highest pair left apart:
+  0.948, the same Elastic role in another country differing by a
+  pay-transparency paragraph. Jobs stay in the database.
 - Tests: `tests/test_job_card_fixes.py`, `tests/test_experience.py`,
   frontend `coverage.test.ts`.
 

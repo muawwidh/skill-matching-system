@@ -3,9 +3,10 @@
 Two jobs are the same posting when their titles and companies are identical
 (case, punctuation and spacing ignored) and their descriptions are
 near-identical: a word-level similarity (difflib ratio) of at least
-`MIN_SIMILARITY`. Live examples (2026-11-26): the same role published per
-country differs only in a pay-transparency or benefits paragraph (0.918-0.995);
-two different roles of one company with the same title scored 0.886 and 0.898.
+`MIN_SIMILARITY` (0.95 since 2026-11-27, so different roles are never folded).
+Live examples (2026-11-26): the same role published per country differs only
+in a pay-transparency or benefits paragraph (0.918-0.995); two different roles
+of one company with the same title scored 0.886 and 0.898.
 
 The list keeps the best-ranked posting of each group at its position and lists
 the locations of all of them; the order of the remaining jobs is unchanged.
@@ -17,7 +18,7 @@ from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from functools import lru_cache
 
-MIN_SIMILARITY = 0.9
+MIN_SIMILARITY = 0.95
 
 
 def _key(value: str | None) -> str:

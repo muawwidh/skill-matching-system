@@ -22,11 +22,19 @@ from app.matching.experience import (WorkPeriod, isco_group, merged_months, mini
     ("- 8+ years of experience in design, with 3+ years leading designers", 8),
     ("- At least 3 years experienced as a developer", 3),
     ("Experience: 5+ years in IT support", 5),
-    # Since 2026-11-26 the clause must contain "experience"/"experienced" (user decision).
-    ("At least 2 years leading teams", None),
-    ("- 7+ years in IT Support, IT Operations or Service Desk", None),
-    ("- Seven to ten years in PR and communications", None),
-    ("with at least 5+ years directly managing partners", None),
+    # Requirement-shaped phrases need no "experience" word (restored 2026-11-27).
+    ("At least 2 years leading teams", 2),
+    ("- 7+ years in IT Support, IT Operations or Service Desk", 7),
+    ("- Seven to ten years in PR and communications", 7),
+    ("with at least 5+ years directly managing partners", 5),
+    ("- 8+ years in design, with 3+ years leading designers", 8),
+    ("- 5+ years of Python and SQL", 5),
+    # "expertise"/"track record" alone needs "experience" in the clause.
+    ("The firm offers 10 years of expertise in tax law.", None),
+    ("The firm offers 10 years of expertise and experience in tax law.", 10),
+    # A bullet is requirement-shaped: "N years of <field>" counts.
+    ("- 10 years of expertise in tax law", 10),
+    ("Proven 6+ years track record of experience in sales", 6),
     # Company age, not a requirement (the "13+ years" bug on the mirakllabs MLOps postings).
     ("Built on Mirakl's 13 years of expertise and innovation, and powered by 100,000 sellers.", None),
     ("For 13 years we have built experience in retail.", None),

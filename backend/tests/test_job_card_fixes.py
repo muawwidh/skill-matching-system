@@ -23,11 +23,14 @@ def _posting(title, company, location, text):
 def test_similarity_and_grouping_keep_order_and_list_locations():
     pay = " The salary range for this position in Spain is 60,000 to 80,000 EUR."
     a = _posting("Senior Engineer", "Acme", "London", BODY)
-    b = _posting("senior engineer ", "ACME", "Madrid", BODY + pay)
+    b = _posting("senior engineer ", "ACME", "Madrid", BODY + " Office in Madrid.")
+    # Below 0.95 (here 0.94): kept apart, so different roles are never folded.
+    assert description_similarity(BODY, BODY + pay) < 0.95
+    assert collapse_duplicates([a, _posting("Senior Engineer", "Acme", "Madrid", BODY + pay)])[1].job.location == "Madrid"
     c = _posting("Senior Engineer", "Acme", "Paris", "A completely different role in sales operations. " * 20)
     d = _posting("Staff Engineer", "Acme", "Berlin", BODY)
     e = _posting("Senior Engineer", "Acme", "london", BODY)
-    assert description_similarity(a.cleaned_description, b.cleaned_description) >= 0.9
+    assert description_similarity(a.cleaned_description, b.cleaned_description) >= 0.95
     groups = collapse_duplicates([a, c, d, b, e])
     assert [g.job for g in groups] == [a, c, d]  # best-ranked posting kept in place; others keep their order
     assert groups[0].duplicates == [b, e] and groups[0].locations == ["London", "Madrid"]
