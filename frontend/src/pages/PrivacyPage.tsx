@@ -34,8 +34,8 @@ const sections = [
 export function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <section className="card p-8">
-      <h1 className="text-3xl font-semibold tracking-tight text-ink">Privacy</h1>
+      <section className="card animate-rise p-8">
+      <h1 className="text-4xl font-semibold tracking-tight text-ink">Privacy</h1>
       <dl className="mt-6 space-y-5">
         {sections.map((section) => (
           <div key={section.title}>

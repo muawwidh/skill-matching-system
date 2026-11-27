@@ -10,7 +10,7 @@ inside the backend process; no external AI service is called. Taxonomies
 ```mermaid
 flowchart LR
   subgraph Browser
-    FE["React frontend<br/>Dashboard · Jobs · My profile · Taxonomy"]
+    FE["React frontend<br/>Dashboard · Matches · My profile · Taxonomy"]
   end
 
   subgraph Backend["FastAPI backend"]
@@ -45,7 +45,7 @@ modules that can be tested on their own.
 
 | Part | Location | Role |
 | --- | --- | --- |
-| Frontend | `frontend/src` | Candidate pages (Dashboard, Jobs, My profile) and staff pages (Taxonomy, job management, live import, overview) |
+| Frontend | `frontend/src` | Candidate pages (Dashboard, Matches, My profile) and staff pages (Taxonomy, job management, live import, overview) |
 | API routes | `backend/app/api/routes` | `/auth`, `/candidates`, `/cvs`, `/jobs`, `/matches`, `/retrieval`, `/taxonomy`, `/admin` |
 | Services | `backend/app/services` | Business logic |
 | Repositories | `backend/app/repositories` | Database access |
@@ -153,6 +153,13 @@ sequenceDiagram
 - **Coverage basis.** The bar counts required skills; when a job marks none as
   required it counts every non-rejected skill the ad mentions ("Skills
   mentioned in the ad"), and with no skills it shows a notice. Display only.
+- **Skill map (display only).** Coverage entries, CV skill groups and skills
+  added by hand carry `esco_area`: the nearest ESCO skill group one level
+  below the top (about 25 groups, e.g. "06" ICT, "S4" management skills;
+  `DocumentRepository.esco_areas`). The job detail (`GET /matches/jobs/{id}`)
+  also lists `not_needed`: the candidate's skills the job does not ask for.
+  The "what if I learned" preview is computed in the browser from the page's
+  results and never reorders them.
 - **Duplicate postings.** In the candidate's list, jobs with the same title and
   company and near-identical descriptions (word-level similarity >= 0.95,
   `app/matching/duplicates.py`) are shown as one card at the best rank, listing

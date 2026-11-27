@@ -1,12 +1,17 @@
-import { BriefcaseBusiness, ExternalLink, Info } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 
-import type { MatchedSkill, MissingSkill, PartialSkill, RecommendationItem } from "../types/documents";
+import { getJobMatch } from "../api/documents";
+import type { RecommendationItem } from "../types/documents";
 import { ExperienceBadge, RankBadge } from "../ui/Badges";
 import { Chip } from "../ui/Chip";
-import { CoverageBar } from "../ui/CoverageBar";
-import { coverageView, languageLabel, locationText, postedAgo } from "../utils/coverage";
-import { isLiveJobSource } from "../utils/reviewStatus";
+import { SkillBar } from "../ui/CoverageBar";
+import { Tip } from "../ui/Tip";
+import { coverageView, languageLabel, locationText, NO_REQUIRED_NOTE, NO_SKILLS_LABEL, postedAgo } from "../utils/coverage";
+import { AUTOMATIC_TOOLTIP, isLiveJobSource } from "../utils/reviewStatus";
+import { fraction, jobMapNodes, previewCoverage } from "../utils/skillMap";
+import { SkillMap } from "./SkillMap";
 
 export const UNREVIEWED = "automatically extracted, not reviewed";
 
@@ -16,11 +21,10 @@ export function LanguageChips({ item }: { item: RecommendationItem }) {
   const label = languageLabel(languages);
   if (!languages || !label) return null;
   return (
-    <div className="flex flex-wrap items-center gap-1.5" title="Compared by name with the languages on My profile; levels are not compared. Not part of the skill counts or the order.">
-      <span className="text-xs font-medium text-muted">{label}</span>
+    <span className="flex flex-wrap items-center gap-1.5">
       {languages.matched.map((entry) => <Chip key={`m-${entry.label}`} kind="matched">{entry.label}</Chip>)}
       {languages.missing.map((entry) => <Chip key={`x-${entry.label}`} kind="missing">{entry.label}</Chip>)}
-    </div>
+    </span>
   );
 }
 
@@ -28,219 +32,138 @@ export function jobMeta(item: RecommendationItem): string {
   return [item.job.company, locationText(item), postedAgo(item.job.posted_at)].filter(Boolean).join(" · ");
 }
 
-type TagTone = "required" | "preferred" | "mentioned";
-
-function Tag({ tone, children }: { tone: TagTone; children: ReactNode }) {
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${tone === "required" ? "bg-night text-white" : "bg-neutral-bg text-neutral-text"}`}>
-      {children}
-    </span>
-  );
-}
-
-function Row({ symbol, symbolClass, label, tag, detail, unreviewed }: {
-  symbol: string; symbolClass: string; label: string; tag: TagTone; detail: ReactNode; unreviewed?: boolean;
-}) {
-  return (
-    <li className="flex gap-3 py-2.5">
-      <span aria-hidden="true" className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${symbolClass}`}>{symbol}</span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-medium text-ink">{label}</span>
-          <Tag tone={tag}>{tag}</Tag>
-        </div>
-        <p className="mt-0.5 text-xs text-muted">
-          {detail}
-          {unreviewed ? ` · ${UNREVIEWED}` : ""}
-        </p>
-      </div>
-    </li>
-  );
-}
-
-function Section({ title, count, children }: { title: string; count?: number; children: ReactNode }) {
-  return (
-    <section className="border-t border-line pt-4">
-      <h3 className="text-sm font-semibold text-ink">
-        {title}
-        {count !== undefined ? <span className="ml-1.5 font-normal text-muted">({count})</span> : null}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-const withTag = <T,>(required: T[], preferred: T[], mentioned = false) => [
-  ...required.map((item) => ({ item, tag: "required" as TagTone })),
-  // When the ad marks nothing as required, its skills are "mentioned" rather than preferred.
-  ...preferred.map((item) => ({ item, tag: (mentioned ? "mentioned" : "preferred") as TagTone })),
-];
-
-const MATCHED_VIA: Record<MatchedSkill["matched_via"], string> = {
-  taxonomy_concept: "Matched by ESCO concept",
-  skill_name: "Matched by the same skill name",
-};
-const CHECKED_VIA: Record<MissingSkill["checked_via"], string> = {
-  taxonomy_concept: "Not found in your profile by ESCO concept or name",
-  skill_name: "Not found by name; it may be in your CV under a different wording",
-};
-
-/** Explanation lines, without the not-assessed lists (shown in their own section). */
+/** Explanation lines, without the not-assessed lists (shown on their own line). */
 function explanationLines(text: string): string[] {
   return text.split("\n").filter((line) => line && !/^Also (required|preferred) — not assessed/.test(line));
 }
 
-function ExperienceLine({ item }: { item: RecommendationItem }) {
-  const related = item.related_experience;
-  const occupation = item.job_occupation;
+function Line({ term, children, tip }: { term: string; children: ReactNode; tip?: ReactNode }) {
   return (
-    <div className="space-y-1.5 text-sm">
-      <ExperienceBadge item={item} />
-      {related ? (
-        <p className="text-ink">
-          About {related.relevant_years} year{related.relevant_years === 1 ? "" : "s"} in related roles ({related.isco_group_label || `ISCO ${related.isco_group}`});
-          the job asks {related.min_required_years}+ years.
-        </p>
-      ) : null}
-      {occupation ? (
-        <p className="flex items-start gap-1.5 text-xs text-muted" title="ESCO occupation linked automatically from the job title">
-          <BriefcaseBusiness size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-          {occupation.determined ? `Occupation: ${occupation.label}${occupation.isco_unit_group ? ` · ${occupation.isco_unit_group}` : ""}` : "Occupation not determined"}
-        </p>
-      ) : null}
-      <p className="text-xs text-muted">Experience is shown for information; it never changes the ranking.</p>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5">
+      <dt className="eyebrow w-24 shrink-0">{term}</dt>
+      <dd className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 text-sm text-ink">
+        {children}
+        {tip ? <Tip label={`About ${term.toLowerCase()}`} align="right">{tip}</Tip> : null}
+      </dd>
     </div>
   );
 }
 
-export function JobDetailPanel({ item, rankTotal, extra }: { item: RecommendationItem; rankTotal: number; extra?: ReactNode }) {
+function experienceTip(item: RecommendationItem): ReactNode {
+  const related = item.related_experience;
+  const occupation = item.job_occupation;
+  return (
+    <>
+      {related ? (
+        <span className="block">
+          About {related.relevant_years} year{related.relevant_years === 1 ? "" : "s"} in related roles
+          ({related.isco_group_label || `ISCO ${related.isco_group}`}); the job asks {related.min_required_years}+.
+        </span>
+      ) : null}
+      {occupation ? (
+        <span className="block">
+          {occupation.determined ? `Occupation: ${occupation.label}${occupation.isco_unit_group ? ` · ${occupation.isco_unit_group}` : ""}` : "Occupation not determined"}
+        </span>
+      ) : null}
+      <span className="mt-1 block text-muted">Shown for information; never changes the order.</span>
+    </>
+  );
+}
+
+export function JobDetailPanel({ item, rankTotal, extra, accessToken, preview }: {
+  item: RecommendationItem; rankTotal: number; extra?: ReactNode; accessToken?: string; preview?: string | null;
+}) {
   const job = item.job;
   const live = isLiveJobSource(job.source);
   const view = coverageView(item);
-  const mentioned = view.basis === "mentioned";
-  const have = withTag<MatchedSkill>(item.matched_required, item.matched_preferred, mentioned);
-  const related = withTag<PartialSkill>(item.partial_required, item.partial_preferred, mentioned);
-  const develop = withTag<MissingSkill>(item.missing_required, item.missing_preferred, mentioned);
-  const notRequired = item.not_assessed_required ?? [];
-  const notPreferred = item.not_assessed_preferred ?? [];
+  // The candidate's skills this job does not ask for come from the job detail request.
+  const detail = useQuery({
+    queryKey: ["recommendations", "job", item.job_id],
+    queryFn: () => getJobMatch(accessToken as string, item.job_id),
+    enabled: Boolean(accessToken),
+  });
+  const nodes = jobMapNodes({ ...item, not_needed: detail.data?.not_needed ?? [] });
+  const shown = previewCoverage(item, preview ?? null);
+  const notAssessed = [...(item.not_assessed_required ?? []), ...(item.not_assessed_preferred ?? [])];
   const meta = jobMeta(item);
+  const basisText = view.basis === "required" ? "required skills" : view.basis === "mentioned" ? "skills mentioned in the ad" : null;
 
   return (
     <article className="card space-y-5" aria-labelledby="job-detail-title">
-      <div className="flex items-start gap-3">
+      <header key={item.job_id} className="flex animate-rise items-start gap-4">
         <RankBadge rank={item.rank} large />
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-muted" title="Position among the jobs found for your profile, closest in meaning first. Skill coverage explains the job; it does not change the order.">
-            #{item.rank} of {rankTotal}
-          </p>
-          <h2 id="job-detail-title" className="text-2xl font-semibold leading-tight text-ink">{job.title}</h2>
+        <div className="min-w-0 flex-1">
+          <p className="eyebrow">#{item.rank} of {rankTotal}</p>
+          <h2 id="job-detail-title" className="mt-0.5 text-2xl font-semibold leading-tight text-ink">{job.title}</h2>
           {meta ? <p className="mt-1 text-sm text-muted">{meta}</p> : null}
-          {job.attribution ? (
-            <p className="mt-0.5 text-xs text-muted">
-              Source:{" "}
-              <a className="link" href={job.attribution.url} rel="noopener noreferrer" target="_blank">{job.attribution.name}</a>
-            </p>
-          ) : null}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {job.external_url ? (
+              <a className="btn-primary" href={job.external_url} rel="noopener noreferrer" target="_blank">
+                Original posting <ExternalLink size={15} aria-hidden="true" />
+              </a>
+            ) : null}
+            {live ? (
+              <Tip label="About automatic skills" text="automatic skills" align="left">
+                {AUTOMATIC_TOOLTIP}. Taken from the posting text; may be incomplete or wrong.
+              </Tip>
+            ) : null}
+            {job.attribution ? (
+              <a className="text-xs text-muted underline underline-offset-4 hover:text-ink" href={job.attribution.url} rel="noopener noreferrer" target="_blank">
+                via {job.attribution.name}
+              </a>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </header>
 
-      <CoverageBar view={view} />
-      {item.locations && item.locations.length > 1 ? (
-        <p className="text-xs text-muted">Posted for {item.locations.length} locations: {item.locations.join(" · ")}. Shown once.</p>
+      <section aria-label="Skill coverage" className="space-y-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="numeral text-3xl text-ink">
+            {view.basis === "none" ? "—" : fraction(shown.counts, shown.closes)}
+            {basisText ? <span className="ml-2 font-sans text-sm font-normal tracking-normal text-muted">{basisText}</span> : null}
+          </p>
+          {view.basis === "mentioned" ? <Tip label="About mentioned skills" align="right">{NO_REQUIRED_NOTE}.</Tip> : null}
+        </div>
+        <SkillBar counts={shown.counts} closes={shown.closes} label={view.label} />
+        {view.basis === "none" ? <p className="text-sm text-muted">{NO_SKILLS_LABEL}</p> : null}
+      </section>
+
+      {nodes.length ? (
+        <section aria-labelledby="skill-map-heading" className="space-y-2">
+          <h3 id="skill-map-heading" className="eyebrow flex items-center gap-1.5">
+            Skill map
+            <Tip label="About the skill map" align="left">
+              Grouped by ESCO skill area. Hover or focus a skill for how it was compared. Related: you have a skill in the same
+              narrow ESCO area. Not needed: in your profile, not asked for by this job.
+            </Tip>
+          </h3>
+          <SkillMap nodes={nodes} glow={preview} />
+        </section>
       ) : null}
 
-      <div className="rounded-xl bg-teal-soft p-4 text-sm text-teal-text">
-        <h3 className="mb-1.5 font-semibold">Why this job</h3>
-        <ul className="space-y-1">
+      <dl className="divide-y divide-line border-y border-line">
+        <Line term="Experience" tip={experienceTip(item)}>
+          <ExperienceBadge item={item} />
+        </Line>
+        {item.languages?.compared ? (
+          <Line term="Languages" tip="Compared by name with the languages on My profile; levels are not compared. Not part of the skill counts or the order.">
+            <span className="numeral">{item.languages.matched.length}/{item.languages.matched.length + item.languages.missing.length}</span>
+            <LanguageChips item={item} />
+          </Line>
+        ) : item.languages?.note ? (
+          <Line term="Languages" tip={item.languages.note}><span className="text-muted">not compared</span></Line>
+        ) : null}
+        <Line term="Not assessed" tip="Qualifications, experience and certifications listed in the posting; the system does not check them.">
+          <span className={notAssessed.length ? "" : "text-muted"}>{notAssessed.length ? notAssessed.join(", ") : "—"}</span>
+        </Line>
+      </dl>
+
+      <details className="group text-sm">
+        <summary className="cursor-pointer font-medium text-ink">Explanation</summary>
+        <ul className="mt-2 space-y-1 text-muted">
           {explanationLines(item.explanation).map((line) => <li key={line}>{line}</li>)}
         </ul>
-      </div>
-
-      <Section title="Skills you have" count={have.length}>
-        {have.length ? (
-          <ul className="divide-y divide-line">
-            {have.map(({ item: skill, tag }) => (
-              <Row key={`${tag}-${skill.label}`} symbol="✓" symbolClass="bg-teal-soft text-teal-text" label={skill.label} tag={tag}
-                detail={MATCHED_VIA[skill.matched_via]} unreviewed={skill.reviewed === false} />
-            ))}
-          </ul>
-        ) : <p className="mt-2 text-sm text-muted">None of the listed skills yet.</p>}
-      </Section>
-
-      {related.length ? (
-        <Section title="Related skill in your profile" count={related.length}>
-          <ul className="divide-y divide-line">
-            {related.map(({ item: skill, tag }) => (
-              <Row key={`${tag}-${skill.label}`} symbol="~" symbolClass="bg-caution-bg text-caution-text" label={skill.label} tag={tag}
-                detail={`Not in your CV, but related: you have ${skill.candidate_skill} (same ESCO area: ${skill.broader_concept})`}
-                unreviewed={skill.reviewed === false} />
-            ))}
-          </ul>
-        </Section>
-      ) : null}
-
-      <Section title="Skills to develop" count={develop.length}>
-        {develop.length ? (
-          <ul className="divide-y divide-line">
-            {develop.map(({ item: skill, tag }) => (
-              <Row key={`${tag}-${skill.label}`} symbol="○" symbolClass="bg-miss-bg text-miss-text" label={skill.label} tag={tag}
-                detail={CHECKED_VIA[skill.checked_via]} unreviewed={skill.reviewed === false} />
-            ))}
-          </ul>
-        ) : <p className="mt-2 text-sm text-muted">You have every listed skill.</p>}
-      </Section>
-
-      {item.languages?.compared ? (
-        <Section title={languageLabel(item.languages) ?? "Languages"}>
-          <ul className="divide-y divide-line">
-            {item.languages.matched.map((entry) => (
-              <Row key={`m-${entry.label}`} symbol="✓" symbolClass="bg-teal-soft text-teal-text" label={entry.label}
-                tag={entry.requirement === "required" ? "required" : "preferred"} detail="In your profile"
-                unreviewed={!entry.reviewed} />
-            ))}
-            {item.languages.missing.map((entry) => (
-              <Row key={`x-${entry.label}`} symbol="○" symbolClass="bg-miss-bg text-miss-text" label={entry.label}
-                tag={entry.requirement === "required" ? "required" : "preferred"} detail="Not found in your profile"
-                unreviewed={!entry.reviewed} />
-            ))}
-          </ul>
-          <p className="mt-1 text-xs text-muted">Compared by name with the languages on My profile; levels are not compared. Not part of the skill counts or the ranking.</p>
-        </Section>
-      ) : null}
-
-      <Section title="Experience">
-        <div className="mt-2"><ExperienceLine item={item} /></div>
-      </Section>
-
-      <Section title="Also required — not assessed">
-        {notRequired.length || notPreferred.length ? (
-          <div className="mt-2 space-y-2 text-sm">
-            {notRequired.length ? <p className="text-ink">{notRequired.join(", ")}</p> : null}
-            {notPreferred.length ? (
-              <p className="text-muted"><span className="font-medium text-ink">Also preferred — not assessed:</span> {notPreferred.join(", ")}</p>
-            ) : null}
-            <p className="text-xs text-muted">Qualifications, experience and certifications listed in the posting; the system does not check them.</p>
-            {item.languages?.note ? <p className="text-xs text-muted">Languages: {item.languages.note}</p> : null}
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-muted">
-            Other requirements in the posting (for example a degree) are not assessed; check the original posting.
-          </p>
-        )}
-      </Section>
-
-      {job.external_url ? (
-        <a className="btn-primary w-full" href={job.external_url} rel="noopener noreferrer" target="_blank">
-          View original posting <ExternalLink size={16} aria-hidden="true" />
-        </a>
-      ) : null}
-
-      {live ? (
-        <p className="flex gap-2 text-xs text-muted">
-          <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-          Skills of this job were {UNREVIEWED}: they come from the posting text and may be incomplete or wrong.
-        </p>
-      ) : null}
+      </details>
       {extra}
     </article>
   );

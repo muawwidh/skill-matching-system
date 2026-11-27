@@ -1,20 +1,18 @@
 import { experienceBadge } from "../utils/coverage";
 
+/** Big rank numeral ("01"); the position in the retrieval order. */
 export function RankBadge({ rank, large = false }: { rank: number; large?: boolean }) {
   return (
-    <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-night font-display font-semibold text-white ${large ? "h-11 min-w-11 px-2 text-base" : "h-8 min-w-8 px-1.5 text-sm"}`}
-      title="Position among the jobs found for your profile, closest in meaning first"
-    >
-      #{rank}
+    <span className={`numeral shrink-0 leading-none text-[#B3BAC4] ${large ? "text-5xl" : "w-12 text-4xl"}`} aria-label={`Rank ${rank}`}>
+      {String(rank).padStart(2, "0")}
     </span>
   );
 }
 
 const TONE = {
-  meets: "bg-teal-soft text-teal-text",
-  below: "border border-dashed border-caution-line bg-caution-bg text-caution-text",
-  neutral: "bg-neutral-bg text-neutral-text",
+  meets: "border border-have/25 bg-have-bg text-have-text",
+  below: "border border-gap/30 bg-gap-bg text-gap-text",
+  neutral: "border border-line bg-mist text-idle-text",
 } as const;
 
 export function ExperienceBadge({ item }: { item: Parameters<typeof experienceBadge>[0] }) {

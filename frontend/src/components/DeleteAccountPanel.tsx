@@ -31,19 +31,19 @@ export function DeleteAccountPanel({ accessToken }: { accessToken: string }) {
 
   return (
     <section className="rounded-xl border border-miss-text/25 p-4" aria-labelledby="delete-account-heading">
-      <h3 id="delete-account-heading" className="font-semibold text-ink">Delete my account and data</h3>
-      <p className="mt-1 text-sm text-muted">
-        This permanently deletes your account, all of your CVs, the skills found in them and the skills you added, your
-        decisions on those skills, your work entries, your Jobs page settings and the profile used to find jobs for you.
-        It cannot be undone.
-      </p>
+      <h3 id="delete-account-heading" className="sr-only">Delete my account and data</h3>
       {!open ? (
-        <button className="btn-danger mt-3" onClick={() => setOpen(true)} type="button">
+        <button className="btn-danger" onClick={() => setOpen(true)} type="button">
           <Trash2 size={16} aria-hidden="true" />
           Delete my account and data
         </button>
       ) : (
-        <form className="mt-3 space-y-3" onSubmit={submit}>
+        <form className="space-y-3" onSubmit={submit}>
+          <p className="text-sm text-ink">
+            This permanently deletes your account, all of your CVs, the skills found in them and the skills you added, your
+            decisions on those skills, your work entries, your Jobs page settings and the profile used to find jobs for you.
+            It cannot be undone.
+          </p>
           <label className="block text-sm text-ink">
             Confirm with your password
             <input

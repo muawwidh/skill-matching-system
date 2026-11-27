@@ -20,8 +20,8 @@ export function LoadingBlock({ label = "Loading", lines = 3 }: { label?: string;
 
 export function EmptyState({ icon: Icon, title, children, action }: { icon: LucideIcon; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center rounded-card border border-dashed border-line bg-white px-6 py-10 text-center">
-      <span className="grid h-12 w-12 place-items-center rounded-full bg-teal-soft text-teal">
+    <div className="flex animate-rise flex-col items-center rounded-card border border-dashed border-line bg-white px-6 py-10 text-center">
+      <span className="grid h-12 w-12 place-items-center rounded-full bg-mist text-ink">
         <Icon size={22} aria-hidden="true" />
       </span>
       <h3 className="mt-3 text-lg font-semibold text-ink">{title}</h3>
@@ -34,7 +34,7 @@ export function EmptyState({ icon: Icon, title, children, action }: { icon: Luci
 export function Notice({ tone = "caution", children }: { tone?: "caution" | "info"; children: ReactNode }) {
   const style = tone === "caution"
     ? "border border-dashed border-caution-line bg-caution-bg text-caution-text"
-    : "border border-line bg-teal-soft text-teal-text";
+    : "border border-line bg-white text-ink";
   return <div role="status" className={`rounded-xl px-4 py-3 text-sm ${style}`}>{children}</div>;
 }
 

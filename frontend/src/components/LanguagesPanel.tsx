@@ -7,6 +7,7 @@ import { LANGUAGE_LEVELS, type ProfileLanguage } from "../types/documents";
 import { Chip } from "../ui/Chip";
 import { ErrorText, LoadingBlock } from "../ui/Feedback";
 import { CardTitle } from "../ui/Page";
+import { Tip } from "../ui/Tip";
 
 const QUERIES = [["languages"], ["cv"], ["recommendations"]];
 
@@ -38,11 +39,13 @@ export function LanguagesPanel({ accessToken }: { accessToken: string }) {
 
   return (
     <section className="card space-y-4" aria-labelledby="languages-heading">
-      <CardTitle id="languages-heading">Languages</CardTitle>
-      <p className="text-sm text-muted">
-        Compared by name with the languages a job asks for (“in your profile” / “not found in your profile”).
-        Levels are shown only to you and are not compared. Languages never change the order of your jobs.
-      </p>
+      <CardTitle id="languages-heading">
+        Languages
+        <Tip label="About languages" align="left">
+          Compared by name with the languages a job asks for. Levels are shown only to you and are not compared.
+          Languages never change the order of your matches.
+        </Tip>
+      </CardTitle>
       {languages.isLoading ? <LoadingBlock label="Loading languages" /> : null}
       <ErrorText error={languages.error ?? review.error ?? remove.error} />
       {confirmed.length ? (
@@ -56,10 +59,10 @@ export function LanguagesPanel({ accessToken }: { accessToken: string }) {
             </Chip>
           ))}
         </div>
-      ) : languages.data ? <p className="text-sm text-muted">No confirmed languages yet.</p> : null}
+      ) : languages.data ? <p className="text-sm text-muted">None yet</p> : null}
       {pending.length ? (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-ink">Found in your CV — please confirm</p>
+          <p className="eyebrow">From your CV · to confirm</p>
           <ul className="divide-y divide-line">
             {pending.map((entry) => (
               <li key={entry.id} className="flex items-center gap-2 py-2 text-sm">
@@ -99,7 +102,7 @@ export function LanguagesPanel({ accessToken }: { accessToken: string }) {
         </form>
       ) : (
         <button className="btn-secondary" onClick={() => setOpen(true)} type="button">
-          <Plus size={16} aria-hidden="true" /> Add a language
+          <Plus size={16} aria-hidden="true" /> Add language
         </button>
       )}
     </section>

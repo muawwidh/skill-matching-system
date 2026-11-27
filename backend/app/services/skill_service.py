@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import CandidateSkill, JobSkill, User
 from app.repositories.document_repository import DocumentRepository
-from app.schemas.documents import (CandidateSkillRead, CandidateSkillGroup, CandidateSkillTaxonomy,
+from app.schemas.documents import (CandidateSkillRead, CandidateSkillGroup, CandidateSkillTaxonomy, EscoAreaRead, ManualSkillRead,
                                    CandidateSkillReviewRequest, JobSkillUpdate)
 
 
@@ -109,6 +109,18 @@ class SkillService:
                                            "Removed a skill added by hand.", {"skill_count": 1})
         self.db.commit()
 
+    def my_manual_skills(self, user: User) -> list[ManualSkillRead]:
+        """Skills added by hand, each with its ESCO area when it has an approved link (display only)."""
+        skills = [skill for skill in self.list_my_candidate_skills(user) if skill.source == MANUAL_SOURCE]
+        concepts = self.repository.approved_skill_concepts("candidate", skills)
+        areas = self.repository.esco_areas({concept for concept, _ in concepts.values()})
+        result = []
+        for skill in skills:
+            area = areas.get(concepts[skill.id][0]) if skill.id in concepts else None
+            result.append(ManualSkillRead.model_validate(skill).model_copy(
+                update={"esco_area": EscoAreaRead(code=area[0], label=area[1]) if area else None}))
+        return result
+
     def grouped_cv_skills(self, user: User, document_id: UUID) -> list[CandidateSkillGroup]:
         skills = self.list_my_cv_skills(user, document_id)
         identities = self.repository.candidate_skill_taxonomies(skills)
@@ -133,6 +145,12 @@ class SkillService:
                     label=taxonomy.preferred_label if taxonomy else skill.normalized_text,
                     taxonomy=taxonomy, occurrences=[])
             groups[key].occurrences.append(CandidateSkillRead.model_validate(skill))
+        # ESCO area for the profile's skill map (display only).
+        areas = self.repository.esco_areas({g.taxonomy.concept_id for g in groups.values() if g.taxonomy})
+        for group in groups.values():
+            area = areas.get(group.taxonomy.concept_id) if group.taxonomy else None
+            if area:
+                group.esco_area = EscoAreaRead(code=area[0], label=area[1])
         return list(groups.values())
 
     def list_job_skills(self, job_id: UUID) -> list[JobSkill]:

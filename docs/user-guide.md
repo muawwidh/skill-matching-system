@@ -22,13 +22,13 @@ all of them form your profile.
 
 ### 3. Check your skills
 
-The **Skills** card on My profile shows:
+The **Skills** card on My profile shows your skills as a map, grouped by ESCO
+skill area (skills without an ESCO link are under "Other"):
 
-- **Confirmed** skills (✓): used for matching.
-- **Needs review** (dashed): found in your CV but not yet confirmed. Select
-  **Review now**, then confirm, reject or correct each one and save.
-- **Added by you**: skills you added with **+ Add a skill**. Remove one with
-  the × on its chip.
+- **Confirmed** (green): used for matching, including skills you added with
+  **+ Add a skill**; remove an added skill with the × on it.
+- **To review** (outlined): found in your CV but not yet confirmed. Select
+  **Review**, then confirm, reject or correct each one and save.
 
 Only confirmed skills and skills you added are used. Under **Review skills and
 ESCO links** you can also see which ESCO concept each skill is linked to and
@@ -40,8 +40,8 @@ level (A1–C2 or native). Remove one with the × on its chip. Languages are
 compared by name with the languages a job asks for; levels are not compared,
 and languages never change the order of your jobs.
 
-The dark **Your matching profile** box shows which CVs and how many skills are
-used for matching.
+The box at the top shows your numbers (skills, ESCO links, work entries) and
+which CVs are used for matching.
 
 ### 4. Add work experience (optional)
 
@@ -56,41 +56,49 @@ each job. It never changes the order of the jobs.
 
 ### 5. See your matches
 
-Open **Jobs**. The list shows the jobs that fit your profile best, best first,
-in pages of 10, 25 or 50. The bar on each job counts its required skills. If the
-ad does not mark any skill as required, it counts every skill the ad mentions
-("Skills mentioned in the ad: X of Y in your profile"); if no skills could be
-identified, it says so and points to the original ad. The same posting published
-for several locations is shown once, with all its locations. Select a job to see
-its details:
+Open **Matches**. The list shows the jobs that fit your profile best, best
+first (big rank numbers), in pages of 10, 25 or 50. Each job shows **X/Y** and
+a bar with one segment per skill: green you have it, violet a related skill is
+in your profile, orange a gap. Required skills are counted ("required"); if the
+ad marks none as required, every skill it mentions is counted ("mentioned");
+if no skills could be identified, the job says so and points to the original
+ad. The same posting published for several locations is shown once, with all
+its locations. The ⓘ buttons explain each part; the About page has the full
+explanations.
 
-- **Why this job**: a short explanation from your skills.
-- **Skills you have**: the job's skills you have, and how they matched (same
-  ESCO concept or same name).
-- **Related skill in your profile**: job skills you do not have, but a close
-  skill of yours shares an ESCO area with them.
-- **Skills to develop**: the job's missing skills, marked required or preferred.
-- **Languages: X of Y matched**: the languages the job asks for, ✓ in your
-  profile or ○ not found in your profile (by name only). Shown on the job card
-  too; not counted in the required/preferred skills.
+Select a job to see its details:
+
+- **X/Y** and the bar, as on the card.
+- **Skill map**: the job's skills and yours, grouped by ESCO skill area. Green:
+  you have it; violet (dashed): related; orange: gap; outlined: in your profile
+  but not asked for by this job. Bold skills are required. Hover or focus a
+  skill to see how it was compared.
 - **Experience**: your years in related roles against the years the job asks
-  for, when both are known.
-- **Also required — not assessed**: qualifications, certificates and similar
-  requirements the system cannot check. Languages appear here only while
-  you have no confirmed language; add your languages on My profile to compare.
-- **View original posting** opens the job at its source.
+  for, when both are known (ⓘ for details).
+- **Languages**: the languages the job asks for, green in your profile or
+  orange not found (by name only); not counted in the skill bar.
+- **Not assessed**: qualifications, certificates and similar requirements the
+  system cannot check.
+- **Original posting** opens the job at its source. "automatic skills ⓘ" marks
+  jobs from job sites whose skills were extracted automatically and not
+  reviewed by a person.
+- **Explanation** and **Evidence** (collapsed): the text explanation and the
+  sentences each skill was found in.
 
-On jobs collected from job sites, skills marked "automatically extracted, not
-reviewed" were found by the system and not checked by a person.
+**What if I learned** (above the list) offers the five most frequent gaps on
+the page. Select one to preview: the bars gain orange segments for the gaps it
+would close, the skill glows in the map, and a line says in how many of the
+shown matches it closes a gap. Nothing is saved and the order never changes.
 
-**Hide jobs above my experience** hides jobs whose stated minimum is above
-your related experience. Jobs without a stated minimum are never hidden.
+**Hide above my experience** hides jobs whose stated minimum is above your
+related experience. Jobs without a stated minimum are never hidden.
 
 ### 6. Dashboard
 
-The Dashboard shows your setup progress, your top 3 matches, the skill that is
-missing most often among your top 10 jobs ("Your skill gaps"), and the number
-of live jobs with the date of the last update.
+The Dashboard shows the setup steps still open, your top 3 matches, the
+required skills missing most often among your top 10 matches ("Top gaps"),
+your confirmed skills, how many top matches with a stated minimum you meet,
+and the number of live jobs with the date of the last update.
 
 ### 7. Delete data
 

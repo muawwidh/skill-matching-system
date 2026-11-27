@@ -7,11 +7,12 @@ from app.api.dependencies.auth import candidate_only, get_current_user
 from app.db.models import User
 from app.db.session import get_db
 from app.schemas.documents import (CandidateProfileRead, CandidateProfileUpdate, CandidateSkillRead, LanguageCreate,
-                                   LanguageRead, LanguageReview, ManualSkillCreate, MatchingProfileRead)
+                                   LanguageRead, LanguageReview, ManualSkillCreate, ManualSkillRead,
+                                   MatchingProfileRead)
 from app.schemas.experience import DetectedWorkEntryRead, OccupationSuggestionRead, WorkEntryRead, WorkEntryWrite
 from app.services.candidate_service import CandidateService
 from app.services.language_service import LanguageService
-from app.services.skill_service import MANUAL_SOURCE, SkillService
+from app.services.skill_service import SkillService
 from app.services.work_entry_service import WorkEntryService
 
 router = APIRouter()
@@ -42,10 +43,10 @@ def get_my_matching_profile(
     return CandidateService(db).my_matching_profile(current_user)
 
 
-@router.get("/me/manual-skills", response_model=list[CandidateSkillRead])
+@router.get("/me/manual-skills", response_model=list[ManualSkillRead])
 def my_manual_skills(current_user: User = Depends(candidate_only), db: Session = Depends(get_db)):
-    """Skills the candidate added by hand (not from a CV). Read-only."""
-    return [skill for skill in SkillService(db).list_my_candidate_skills(current_user) if skill.source == MANUAL_SOURCE]
+    """Skills the candidate added by hand (not from a CV), with their ESCO area. Read-only."""
+    return SkillService(db).my_manual_skills(current_user)
 
 
 @router.post("/me/manual-skills", response_model=CandidateSkillRead, status_code=status.HTTP_201_CREATED)

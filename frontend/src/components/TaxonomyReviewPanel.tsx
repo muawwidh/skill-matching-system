@@ -98,7 +98,7 @@ export function TaxonomyReviewPanel({ accessToken }: { accessToken: string }) {
     else mutation.mutate(action);
   }
   function search(event: FormEvent) { event.preventDefault(); setFilter(query.trim()); setOffset(0); }
-  return <section className="card">
+  return <section className="card animate-rise">
     <h2 className="text-lg font-semibold text-ink">Taxonomy review</h2>
     <div role="tablist" aria-label="Review status" className="mt-3 flex gap-5 border-b border-line">
       {[["pending", "Pending"], ["selected", "Selected"], ["all", "All"]].map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={state === value}

@@ -158,6 +158,11 @@ class CandidateSkillRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ManualSkillRead(CandidateSkillRead):
+    """A skill added by hand, with its ESCO area when linked (display only)."""
+    esco_area: "EscoAreaRead | None" = None
+
+
 class CandidateSkillTaxonomy(BaseModel):
     concept_id: UUID
     release_id: UUID
@@ -167,10 +172,17 @@ class CandidateSkillTaxonomy(BaseModel):
     version: str
 
 
+class EscoAreaRead(BaseModel):
+    """An ESCO skill group one level below the top (e.g. "06" ICT, "S4" management skills). Display only."""
+    code: str
+    label: str
+
+
 class CandidateSkillGroup(BaseModel):
     key: str
     label: str
     taxonomy: CandidateSkillTaxonomy | None = None
+    esco_area: EscoAreaRead | None = None
     occurrences: list[CandidateSkillRead]
 
 
@@ -274,6 +286,13 @@ class MatchedSkillRead(BaseModel):
     matched_via: Literal["taxonomy_concept", "skill_name"]
     # False: an automatically extracted job skill nobody reviewed (live jobs).
     reviewed: bool = True
+    esco_area: EscoAreaRead | None = None
+
+
+class ProfileSkillRead(BaseModel):
+    """One of the candidate's skills, for the skill map."""
+    label: str
+    esco_area: EscoAreaRead | None = None
 
 
 class MissingSkillRead(BaseModel):
@@ -281,6 +300,7 @@ class MissingSkillRead(BaseModel):
     # Name-only checks cannot rule out the skill appearing under other wording.
     checked_via: Literal["taxonomy_concept", "skill_name"]
     reviewed: bool = True
+    esco_area: EscoAreaRead | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -298,6 +318,7 @@ class PartialSkillRead(BaseModel):
     broader_concept: str
     candidate_skill: str
     reviewed: bool = True
+    esco_area: EscoAreaRead | None = None
 
 
 class JobCoverageRead(BaseModel):
@@ -319,6 +340,8 @@ class JobCoverageRead(BaseModel):
     # "required": required skills exist; "mentioned": none marked required, all mentioned skills
     # (shown as "Skills mentioned in the ad"); "none": no skills identified.
     coverage_basis: str = "required"
+    # The candidate's skills this job does not ask for (skill map; detail only).
+    not_needed: list[ProfileSkillRead] = []
     job: JobRead
 
 
@@ -511,3 +534,6 @@ class SystemOverviewRead(BaseModel):
     skills: SkillOverview
     taxonomy_links: TaxonomyLinkOverview
     retrieval_index: RetrievalIndexOverview
+
+
+ManualSkillRead.model_rebuild()

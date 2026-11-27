@@ -61,7 +61,7 @@ def test_order_is_retrieval_order_and_coverage_only_explains(client, db_session,
     assert body["status"] == "ready"
     assert [(item["rank"], item["job_id"]) for item in body["results"]] == [(1, none), (2, full)]
     # Coverage is reported but does not reorder: the fully covered job stays second.
-    assert body["results"][1]["matched_required"] == [{"label": "python", "matched_via": "skill_name", "reviewed": True}]
+    assert body["results"][1]["matched_required"] == [{"label": "python", "matched_via": "skill_name", "reviewed": True, "esco_area": None}]
     assert body["results"][0]["matched_required"] == []
 
 
@@ -140,7 +140,7 @@ def test_matches_are_computed_on_read_without_storing_rows(client, db_session, f
         assert [item["job_id"] for item in body["results"]] == [job_id]
     coverage = client.get(f"/matches/jobs/{job_id}", headers=headers)
     assert coverage.status_code == 200
-    assert coverage.json()["matched_required"] == [{"label": "python", "matched_via": "skill_name", "reviewed": True}]
+    assert coverage.json()["matched_required"] == [{"label": "python", "matched_via": "skill_name", "reviewed": True, "esco_area": None}]
     assert "score" not in coverage.json() and "rank" not in coverage.json()
     assert client.get(f"/matches/jobs/{archived}", headers=headers).status_code == 404
     assert row_counts(db_session) == before

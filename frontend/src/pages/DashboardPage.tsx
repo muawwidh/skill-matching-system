@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BriefcaseBusiness, CheckCircle2, Circle, FileSearch, Globe2, Lightbulb, ServerCog, Sparkles } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, FileSearch, Network } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
@@ -9,11 +9,13 @@ import { useAuth } from "../features/auth/AuthProvider";
 import { useSkillSummary } from "../hooks/useSkillSummary";
 import type { LinkCoverage, RecommendationItem, RecommendationList, ReviewCounts, SkillGaps, SystemOverview } from "../types/documents";
 import { RankBadge } from "../ui/Badges";
-import { CoverageBar, CoverageLegend } from "../ui/CoverageBar";
+import { CoverageLegend, SkillBar } from "../ui/CoverageBar";
 import { EmptyState, ErrorText, LoadingBlock, Skeleton } from "../ui/Feedback";
-import { CardTitle, PageHeader } from "../ui/Page";
+import { CardTitle, PageHeader, riseDelay } from "../ui/Page";
+import { Tip } from "../ui/Tip";
 import { coverageView, locationText } from "../utils/coverage";
 import { AUTOMATIC_TOOLTIP } from "../utils/reviewStatus";
+import { fraction } from "../utils/skillMap";
 
 // --- Administrator overview (unchanged data, new styling) -----------------------------------------
 
@@ -25,7 +27,7 @@ function OverviewTable({ title, head, rows }: { title: string; head: string[]; r
       <h3 className="mb-2 text-sm font-semibold text-ink">{title}</h3>
       <div className="overflow-x-auto rounded-xl border border-line">
         <table className="w-full text-left text-sm">
-          <thead className="bg-mist text-xs uppercase tracking-wide text-muted">
+          <thead className="bg-mist text-[11px] uppercase tracking-[0.08em] text-muted">
             <tr>{head.map((cell) => <th className="px-3 py-2 font-medium" key={cell} scope="col">{cell}</th>)}</tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -104,8 +106,8 @@ function OverviewTables({ data }: { data: SystemOverview }) {
 function SystemOverviewSection({ accessToken }: { accessToken: string }) {
   const overview = useQuery({ queryKey: ["admin", "overview"], queryFn: () => getSystemOverview(accessToken) });
   return (
-    <section className="card" aria-labelledby="overview-heading">
-      <CardTitle id="overview-heading" aside={<ServerCog size={20} className="text-teal" aria-hidden="true" />}>System overview</CardTitle>
+    <section className="card animate-rise" aria-labelledby="overview-heading">
+      <CardTitle id="overview-heading">System overview</CardTitle>
       {overview.isPending ? <LoadingBlock label="Loading counts" lines={6} /> : null}
       <ErrorText error={overview.error} />
       {overview.data ? <OverviewTables data={overview.data} /> : null}
@@ -115,43 +117,30 @@ function SystemOverviewSection({ accessToken }: { accessToken: string }) {
 
 // --- Candidate dashboard ----------------------------------------------------------------------------
 
-type Step = { title: string; text: string; done: boolean; to: string; action: string };
+type Step = { title: string; done: boolean; to: string; action: string };
 
 function SetupCard({ steps }: { steps: Step[] }) {
   const done = steps.filter((step) => step.done).length;
   const next = steps.find((step) => !step.done);
+  if (!next) return null;
   return (
-    <section className="card" aria-labelledby="setup-heading">
-      <CardTitle id="setup-heading" aside={<span className="text-sm text-muted">{done} of {steps.length} done</span>}>
-        Your profile setup
-      </CardTitle>
-      <div className="flex gap-1.5" role="img" aria-label={`Profile setup: ${done} of ${steps.length} steps done`}>
-        {steps.map((step) => (
-          <span key={step.title} className={`h-2 flex-1 rounded-sm ${step.done ? "bg-teal" : "bg-neutral-bar"}`} />
-        ))}
-      </div>
-      <ol className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="card animate-rise" aria-labelledby="setup-heading">
+      <CardTitle id="setup-heading" aside={<span className="numeral text-sm text-muted">{done}/{steps.length}</span>}>Setup</CardTitle>
+      <ol className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {steps.map((step, index) => {
           const isNext = step === next;
           return (
-            <li
-              key={step.title}
-              className={`rounded-xl border p-4 ${isNext ? "border-teal bg-teal-soft" : "border-line bg-white"}`}
-            >
-              <div className="flex items-center gap-2">
-                {step.done ? (
-                  <CheckCircle2 size={18} className="text-teal" aria-hidden="true" />
-                ) : (
-                  <Circle size={18} className={isNext ? "text-teal" : "text-muted"} aria-hidden="true" />
-                )}
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted">Step {index + 1}</span>
-                <span className="sr-only">{step.done ? "done" : isNext ? "next" : "to do"}</span>
-              </div>
-              <p className="mt-2 font-semibold text-ink">{step.title}</p>
-              <p className="mt-1 text-sm text-muted">{step.text}</p>
+            <li key={step.title} className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 ${isNext ? "border-ink" : "border-line"}`}>
+              {step.done ? (
+                <CheckCircle2 size={18} className="shrink-0 text-have" aria-hidden="true" />
+              ) : (
+                <span className="numeral grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-idle text-[10px] text-muted" aria-hidden="true">{index + 1}</span>
+              )}
+              <span className="sr-only">{step.done ? "done:" : isNext ? "next:" : "to do:"}</span>
+              <span className={`flex-1 text-sm ${step.done ? "text-muted line-through decoration-line" : "font-medium text-ink"}`}>{step.title}</span>
               {isNext ? (
-                <Link className="mt-3 inline-flex items-center gap-1 text-sm link" to={step.to}>
-                  {step.action} <ArrowRight size={14} aria-hidden="true" />
+                <Link className="inline-flex items-center gap-1 text-sm link" to={step.to} aria-label={step.action}>
+                  <ArrowRight size={15} aria-hidden="true" />
                 </Link>
               ) : null}
             </li>
@@ -162,22 +151,19 @@ function SetupCard({ steps }: { steps: Step[] }) {
   );
 }
 
-function MatchRow({ item }: { item: RecommendationItem }) {
+function MatchRow({ item, index }: { item: RecommendationItem; index: number }) {
   const meta = [item.job.company, locationText(item)].filter(Boolean).join(" · ");
+  const view = coverageView(item);
   return (
-    <li>
-      <Link
-        className="flex gap-4 rounded-xl border border-line p-4 transition-colors hover:border-teal hover:bg-mist"
-        to={`/jobs?job=${item.job_id}`}
-      >
+    <li className="animate-rise" style={riseDelay(index)}>
+      <Link className="lift flex items-center gap-4 rounded-xl border border-line bg-white p-4" to={`/jobs?job=${item.job_id}`}>
         <RankBadge rank={item.rank} />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-ink">{item.job.title}</p>
+          <p className="truncate font-display font-semibold text-ink">{item.job.title}</p>
           {meta ? <p className="truncate text-sm text-muted">{meta}</p> : null}
-          <div className="mt-2">
-            <CoverageBar view={coverageView(item)} compact />
-          </div>
+          <SkillBar className="mt-2.5" counts={view.counts} label={view.label} />
         </div>
+        <p className="numeral shrink-0 text-xl text-ink">{fraction(view.counts)}</p>
       </Link>
     </li>
   );
@@ -186,22 +172,20 @@ function MatchRow({ item }: { item: RecommendationItem }) {
 function TopMatches({ data, loading }: { data: RecommendationList | undefined; loading: boolean }) {
   const top = data?.results.slice(0, 3) ?? [];
   return (
-    <section className="card flex flex-col" aria-labelledby="top-matches-heading">
-      <CardTitle id="top-matches-heading" aside={top.length ? <Link className="text-sm link" to="/jobs">View all</Link> : null}>
-        Your top matches
+    <section className="card flex animate-rise flex-col" aria-labelledby="top-matches-heading">
+      <CardTitle id="top-matches-heading" aside={top.length ? <Link className="text-sm link" to="/jobs">All matches</Link> : null}>
+        Top matches
       </CardTitle>
       {loading ? (
-        <div className="space-y-3">
-          {[0, 1, 2].map((index) => <Skeleton key={index} className="h-20" />)}
-        </div>
+        <div className="space-y-3">{[0, 1, 2].map((index) => <Skeleton key={index} className="h-20" />)}</div>
       ) : top.length ? (
         <>
-          <ul className="space-y-3">{top.map((item) => <MatchRow key={item.job_id} item={item} />)}</ul>
+          <ul className="space-y-2.5">{top.map((item, index) => <MatchRow key={item.job_id} item={item} index={index} />)}</ul>
           <div className="mt-4"><CoverageLegend /></div>
         </>
       ) : (
-        <EmptyState icon={FileSearch} title="No matches yet" action={<Link className="btn-primary" to="/profile">Go to my profile</Link>}>
-          {data && data.status !== "ready" ? data.message : "Confirm a few skills on your profile and your best-matching jobs appear here."}
+        <EmptyState icon={FileSearch} title="No matches yet" action={<Link className="btn-primary" to="/profile">My profile</Link>}>
+          {data && data.status !== "ready" ? data.message : null}
         </EmptyState>
       )}
     </section>
@@ -209,40 +193,36 @@ function TopMatches({ data, loading }: { data: RecommendationList | undefined; l
 }
 
 function SkillGapsCard({ data }: { data: SkillGaps }) {
-  const [first, ...rest] = data.gaps;
+  const most = Math.max(...data.gaps.map((gap) => gap.missing_in), 1);
   return (
-    <section className="card-dark flex flex-col" aria-labelledby="skill-gaps-heading">
-      <div className="flex items-center gap-2">
-        <Lightbulb size={20} className="text-caution-bar" aria-hidden="true" />
-        <h2 id="skill-gaps-heading" className="text-lg font-semibold">Your skill gaps</h2>
-      </div>
-      <p className="mt-4 font-display text-2xl font-semibold leading-snug">
-        Learning {first.label} would close a required gap in {first.missing_in} of your top {data.of} matches.
-      </p>
-      {rest.length ? (
-        <ul className="mt-5 space-y-2 border-t border-white/15 pt-4 text-sm">
-          {rest.map((gap) => (
-            <li key={gap.label} className="flex justify-between gap-3">
-              <span className="font-medium text-white">{gap.label}</span>
-              <span className="text-night-muted">missing in {gap.missing_in} of {data.of}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <p className="mt-auto pt-5 text-xs text-night-muted">Required skills your top {data.of} matches list and your profile does not have.</p>
+    <section className="card flex animate-rise flex-col" aria-labelledby="skill-gaps-heading" style={riseDelay(1)}>
+      <CardTitle id="skill-gaps-heading" aside={<Tip label="About top gaps" align="right">Required skills your top {data.of} matches list and your profile does not have. Preview them on Matches with “What if I learned”.</Tip>}>
+        Top gaps
+      </CardTitle>
+      <ol className="space-y-3">
+        {data.gaps.map((gap) => (
+          <li key={gap.label}>
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="font-medium text-ink">{gap.label}</span>
+              <span className="numeral text-gap-text">{gap.missing_in}/{data.of}</span>
+            </div>
+            <div className="mt-1 h-1.5 rounded-full bg-gap-bg" aria-hidden="true">
+              <div className="h-1.5 origin-left animate-fill rounded-full bg-gap" style={{ width: `${(gap.missing_in / most) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ol>
+      <Link className="mt-auto pt-5 text-sm link" to="/jobs">What if I learned</Link>
     </section>
   );
 }
 
-function StatCard({ icon: Icon, label, value, detail }: { icon: typeof Sparkles; label: string; value: ReactNode; detail: ReactNode }) {
+function StatCard({ label, value, detail, index }: { label: string; value: ReactNode; detail?: ReactNode; index: number }) {
   return (
-    <div className="card">
-      <div className="flex items-center gap-2 text-muted">
-        <Icon size={18} aria-hidden="true" />
-        <span className="eyebrow">{label}</span>
-      </div>
-      <p className="mt-3 font-display text-3xl font-semibold text-ink">{value}</p>
-      <p className="mt-1 text-sm text-muted">{detail}</p>
+    <div className="card animate-rise" style={riseDelay(index)}>
+      <p className="eyebrow">{label}</p>
+      <p className="numeral mt-2 text-4xl text-ink">{value}</p>
+      {detail ? <p className="mt-1 text-sm text-muted">{detail}</p> : null}
     </div>
   );
 }
@@ -263,25 +243,11 @@ function CandidateDashboard({ accessToken }: { accessToken: string }) {
     ? profile.data.cvs.reduce((sum, cv) => sum + (cv.skills.pending ?? 0), 0) + (profile.data.manual_skills.pending ?? 0)
     : 0;
   const steps: Step[] = [
-    { title: "Upload your CV", text: "Paste or upload a CV with your consent.", done: hasCv, to: "/profile", action: "Add a CV" },
-    {
-      title: "Review your skills",
-      text: pending ? `${pending} skill mention${pending === 1 ? "" : "s"} still need your review.` : "Confirm the skills that were found.",
-      done: Boolean(summary && summary.confirmed > 0 && pending === 0),
-      to: "/profile#skills",
-      action: "Review skills",
-    },
-    { title: "See your matches", text: "Jobs ranked by how closely they fit your skills.", done: Boolean(data?.status === "ready" && data.total > 0), to: "/jobs", action: "See my matches" },
-    { title: "Add work experience", text: "Optional: compare your years with what jobs ask.", done: (entries.data?.length ?? 0) > 0, to: "/profile#experience", action: "Add experience" },
+    { title: "Add a CV", done: hasCv, to: "/profile", action: "Add a CV" },
+    { title: pending ? `Review ${pending} skills` : "Review skills", done: Boolean(summary && summary.confirmed > 0 && pending === 0), to: "/profile#skills", action: "Review skills" },
+    { title: "See matches", done: Boolean(data?.status === "ready" && data.total > 0), to: "/jobs", action: "See matches" },
+    { title: "Add experience", done: (entries.data?.length ?? 0) > 0, to: "/profile#experience", action: "Add experience" },
   ];
-
-  const status = !data
-    ? "Loading your matches…"
-    : data.status === "ready" && data.total > 0
-      ? `${data.total} best-matching jobs are ready for you.`
-      : data.status === "ready"
-        ? "No matching jobs yet."
-        : data.message;
 
   // Related experience: how many top matches that state a minimum you meet.
   const assessed = data?.results.filter((item) => item.related_experience) ?? [];
@@ -291,9 +257,9 @@ function CandidateDashboard({ accessToken }: { accessToken: string }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Welcome back"
-        subtitle={<span role="status">{status}</span>}
-        actions={<Link className="btn-primary" to="/jobs">See my matches <ArrowRight size={16} aria-hidden="true" /></Link>}
+        title="Dashboard"
+        subtitle={<span role="status">{data?.status === "ready" ? <><span className="numeral text-ink">{data.total}</span> matches</> : data ? data.message : "…"}</span>}
+        actions={<Link className="btn-primary" to="/jobs">Matches <ArrowRight size={16} aria-hidden="true" /></Link>}
       />
       <SetupCard steps={steps} />
       <div className={`grid gap-6 ${gaps.data && gaps.data.gaps.length ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" : ""}`}>
@@ -301,35 +267,19 @@ function CandidateDashboard({ accessToken }: { accessToken: string }) {
         {gaps.data && gaps.data.gaps.length ? <SkillGapsCard data={gaps.data} /> : null}
       </div>
       <div className="grid gap-6 md:grid-cols-3">
+        <StatCard index={0} label="Confirmed skills" value={summary ? summary.confirmed : <Skeleton className="h-10 w-16" />}
+          detail={summary ? `${summary.linked} linked to ESCO` : null} />
         <StatCard
-          icon={Sparkles}
-          label="Confirmed skills"
-          value={summary ? summary.confirmed : <Skeleton className="h-9 w-16" />}
-          detail={summary ? `${summary.linked} linked to ESCO` : "Loading…"}
+          index={1}
+          label="Experience met"
+          value={withOccupation === 0 || !assessed.length ? "—" : `${meets}/${assessed.length}`}
+          detail={withOccupation === 0 ? <Link className="link" to="/profile#experience">Add work entries</Link> : assessed.length ? "top matches with a stated minimum" : "no comparable minimum"}
         />
         <StatCard
-          icon={BriefcaseBusiness}
-          label="Related experience"
-          value={withOccupation === 0 ? "—" : assessed.length ? `${meets} of ${assessed.length}` : `${withOccupation}`}
-          detail={
-            withOccupation === 0 ? (
-              <Link className="link" to="/profile#experience">Add work entries to see this</Link>
-            ) : assessed.length ? (
-              "top matches with a stated minimum where you meet it"
-            ) : (
-              `work entr${withOccupation === 1 ? "y" : "ies"} with an occupation; none of your top matches states a comparable minimum`
-            )
-          }
-        />
-        <StatCard
-          icon={Globe2}
+          index={2}
           label="Jobs searched"
-          value={pool.data ? pool.data.live_jobs.toLocaleString() : <Skeleton className="h-9 w-20" />}
-          detail={
-            pool.data
-              ? `live jobs${pool.data.last_import_at ? ` · last updated ${shortDate(pool.data.last_import_at)}` : ""}`
-              : "Loading…"
-          }
+          value={pool.data ? pool.data.live_jobs.toLocaleString() : <Skeleton className="h-10 w-20" />}
+          detail={pool.data?.last_import_at ? `updated ${shortDate(pool.data.last_import_at)}` : null}
         />
       </div>
     </div>
@@ -346,17 +296,17 @@ export function DashboardPage() {
   if (isCandidate && accessToken) return <CandidateDashboard accessToken={accessToken} />;
   return (
     <div className="space-y-6">
-      <PageHeader title={`Welcome back${user?.full_name ? `, ${user.full_name}` : ""}`} subtitle="Staff account: manage jobs and the taxonomy, and review skill links." />
+      <PageHeader title="Dashboard" subtitle={user?.full_name} />
       {/* Mounted only for administrators, so the overview request is never made for anyone else. */}
       {isAdmin && accessToken ? <SystemOverviewSection accessToken={accessToken} /> : null}
       <div className="grid gap-6 md:grid-cols-2">
-        <Link className="card transition-colors hover:border-teal" to="/jobs">
-          <h2 className="text-lg font-semibold text-ink">Jobs</h2>
-          <p className="mt-1 text-sm text-muted">Create and archive jobs, review job skills and run the live job import.</p>
+        <Link className="card lift flex items-center justify-between" to="/jobs">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-ink"><BriefcaseBusiness size={18} aria-hidden="true" /> Jobs</h2>
+          <ArrowRight size={18} className="text-muted" aria-hidden="true" />
         </Link>
-        <Link className="card transition-colors hover:border-teal" to="/taxonomy">
-          <h2 className="text-lg font-semibold text-ink">Taxonomy</h2>
-          <p className="mt-1 text-sm text-muted">Taxonomy releases, imports and the review of skill links.</p>
+        <Link className="card lift flex items-center justify-between" to="/taxonomy">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-ink"><Network size={18} aria-hidden="true" /> Taxonomy</h2>
+          <ArrowRight size={18} className="text-muted" aria-hidden="true" />
         </Link>
       </div>
     </div>

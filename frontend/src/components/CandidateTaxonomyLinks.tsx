@@ -5,6 +5,7 @@ import { listMyCvTaxonomyLinks, reviewMyCvTaxonomyLink } from "../api/taxonomy";
 import type { TaxonomyLinkCandidate, TaxonomyReviewGroup } from "../types/taxonomy";
 import { matchMethodLabel } from "./TaxonomyReviewPanel";
 import { LoadingBlock } from "../ui/Feedback";
+import { Tip } from "../ui/Tip";
 
 type Action = { group: TaxonomyReviewGroup; candidate: TaxonomyLinkCandidate; status: "approved" | "rejected" };
 
@@ -39,13 +40,13 @@ export function CandidateTaxonomyLinks({ accessToken, cvId }: { accessToken: str
   return (
     <section className="mt-4 border-t border-line pt-4" aria-labelledby={`links-${cvId}`}>
       <div className="flex items-center gap-2">
-        <Link2 size={16} className="text-ocean" aria-hidden="true" />
-        <h3 id={`links-${cvId}`} className="text-sm font-semibold">Taxonomy links for your skills</h3>
+        <Link2 size={16} className="text-ink" aria-hidden="true" />
+        <h3 id={`links-${cvId}`} className="text-sm font-semibold">ESCO links</h3>
+        <Tip label="About ESCO links" align="left">
+          A link to an ESCO or O*NET concept lets your skill match a job skill worded differently. Confirm the concept
+          that means your skill, or mark suggestions as wrong.
+        </Tip>
       </div>
-      <p className="mt-1 text-xs text-muted">
-        A link to an ESCO or O*NET concept lets your skill match a job skill worded differently. Confirm the concept
-        that means your skill, or mark suggestions as wrong.
-      </p>
       {query.error || review.error ? (
         <p role="alert" className="mt-2 text-sm text-miss-text">{(query.error ?? review.error)?.message}</p>
       ) : null}

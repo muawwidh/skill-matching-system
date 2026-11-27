@@ -37,13 +37,12 @@ export function LoginPage() {
   return (
     <AuthCard
       title="Sign in"
-      subtitle="See the jobs that fit your skills and the skills you are missing."
       footerText="New here?"
       footerLinkText="Create an account"
       footerHref="/register"
     >
       {accountDeleted ? (
-        <p role="status" className="mb-4 rounded-lg border border-teal bg-teal-soft p-3 text-sm text-teal-text">
+        <p role="status" className="mb-4 rounded-lg border border-line bg-mist p-3 text-sm text-ink">
           Your account and data have been deleted.
         </p>
       ) : null}

@@ -226,6 +226,26 @@ LANGUAGE_TYPE = "language"
 NO_LANGUAGES_NOTE = "Add your languages on My profile to compare."
 
 
+def _area(areas: dict[UUID, tuple[str, str]], concept_id: UUID | None) -> dict | None:
+    area = areas.get(concept_id) if concept_id is not None else None
+    return {"code": area[0], "label": area[1]} if area else None
+
+
+def _not_needed(candidate_items: list[SkillItem], groups: list[_JobGroup]) -> list[SkillItem]:
+    """The candidate's skills that no compared job skill matches (by concept or name); one per concept/name,
+    sorted by label. Display only (the job detail's skill map)."""
+    job_concepts = {group.concept_id for group in groups if group.concept_id is not None}
+    job_names = {name for group in groups for name in group.names}
+    kept: dict[object, SkillItem] = {}
+    for item in candidate_items:
+        if item.skill_type not in SKILL_LIKE_TYPES or item.name in job_names:
+            continue
+        if item.concept_id is not None and item.concept_id in job_concepts:
+            continue
+        kept.setdefault(item.concept_id or item.name, item)
+    return sorted(kept.values(), key=lambda item: ((item.concept_label or item.name).casefold(), item.name))
+
+
 def compare_languages(candidate_languages: set[str], job_items: list[SkillItem], result: CoverageResult) -> dict:
     """Job language requirements against the candidate's confirmed languages, by name only (no levels).
 
@@ -466,7 +486,8 @@ class MatchingService:
         job = self.repository.get_job(job_id)
         if not job or job.status == "archived" or job.source in candidate_excluded_sources():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
-        coverage = self._coverage(job, self._candidate_items(profile.id), self._candidate_languages(profile.id))
+        coverage = self._coverage(job, self._candidate_items(profile.id), self._candidate_languages(profile.id),
+                                  with_profile=True)
         self.db.commit()
         return coverage
 
@@ -502,7 +523,10 @@ class MatchingService:
             reviewed=skill.review_status == "approved",
         )
 
-    def _coverage(self, job: Job, candidate_items: list[SkillItem], candidate_languages: set[str] | None = None) -> dict:
+    def _coverage(self, job: Job, candidate_items: list[SkillItem], candidate_languages: set[str] | None = None,
+                  with_profile: bool = False) -> dict:
+        """Coverage of one job. With `with_profile` (job detail) also the candidate's skills the job does not
+        ask for (`not_needed`). Every skill entry carries its ESCO area for display (`esco_area`, or None)."""
         from app.job_sources import NON_LIVE_SOURCES
 
         # Live jobs are rarely reviewed: their pending skills count, flagged as not reviewed.
@@ -511,7 +535,20 @@ class MatchingService:
         broader = self.repository.specific_esco_broader_concepts(concepts)
         result = compute_coverage(candidate_items, job_items, broader)
         languages = compare_languages(candidate_languages or set(), job_items, result)
+        groups = _job_groups([item for item in job_items if item.skill_type in JOB_ASSESSED_TYPES])
+        not_needed = _not_needed(candidate_items, groups) if with_profile else []
+        areas = self.repository.esco_areas(
+            {group.concept_id for group in groups if group.concept_id is not None}
+            | {item.concept_id for item in not_needed if item.concept_id is not None})
+        concept_of = {group.label: group.concept_id for group in groups}
+        for entries in (result.matched_required, result.matched_preferred, result.partial_required,
+                        result.partial_preferred, result.missing_required, result.missing_preferred):
+            for entry in entries:
+                entry["esco_area"] = _area(areas, concept_of.get(entry["label"]))
+        extra = {"not_needed": [{"label": item.concept_label or item.name, "esco_area": _area(areas, item.concept_id)}
+                                for item in not_needed]} if with_profile else {}
         return {
+            **extra,
             "job_id": job.id,
             "job": job,
             "matched_required": result.matched_required,

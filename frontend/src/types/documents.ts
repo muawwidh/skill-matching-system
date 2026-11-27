@@ -89,9 +89,16 @@ export type JobSkill = CandidateSkill & {
   source_section?: string;
 };
 
+/** An ESCO skill group just below the top level (e.g. "06" ICT, "S4" management skills). Display only. */
+export type EscoArea = { code: string; label: string };
+
+/** A skill added by hand, with its ESCO area when linked. */
+export type ManualSkill = CandidateSkill & { esco_area?: EscoArea | null };
+
 export type CandidateSkillGroup = {
   key: string;
   label: string;
+  esco_area?: EscoArea | null;
   taxonomy: { concept_id: string; release_id: string; external_id: string;
     preferred_label: string; source: string; version: string } | null;
   occurrences: CandidateSkill[];
@@ -102,10 +109,11 @@ export type MatchedSkill = {
   matched_via: "taxonomy_concept" | "skill_name";
   /** false: automatically extracted, not reviewed (live jobs). */
   reviewed?: boolean;
+  esco_area?: EscoArea | null;
 };
 
 /** Not matched, but shares a direct ESCO broader skill/knowledge concept with a CV skill. */
-export type PartialSkill = { label: string; broader_concept: string; candidate_skill: string; reviewed?: boolean };
+export type PartialSkill = { label: string; broader_concept: string; candidate_skill: string; reviewed?: boolean; esco_area?: EscoArea | null };
 
 export type MissingSkill = {
   label: string;
@@ -113,6 +121,7 @@ export type MissingSkill = {
   checked_via: "taxonomy_concept" | "skill_name";
   /** false: automatically extracted, not reviewed (live jobs). */
   reviewed?: boolean;
+  esco_area?: EscoArea | null;
 };
 
 export type SkillStatusCounts = { approved: number; pending: number; rejected: number };
@@ -173,6 +182,9 @@ export type RecommendationItem = {
   min_required_years?: number | null;
   job: Job;
 };
+
+/** GET /matches/jobs/{id}: one job's coverage, plus the candidate's skills this job does not ask for. */
+export type JobMatch = Omit<RecommendationItem, "rank"> & { not_needed?: { label: string; esco_area?: EscoArea | null }[] };
 
 /** GET /matches/skill-gaps: most frequent required missing skills across the top results. */
 export type SkillGaps = { status: RecommendationStatus; of: number; gaps: { label: string; missing_in: number }[] };

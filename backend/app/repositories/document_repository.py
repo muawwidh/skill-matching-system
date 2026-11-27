@@ -629,6 +629,78 @@ class DocumentRepository:
             result.setdefault(child, {})[parent] = label
         return result
 
+    def esco_areas(self, concept_ids: set[UUID], max_depth: int = 8) -> dict[UUID, tuple[str, str]]:
+        """Each ESCO concept's area, as (code, preferred label), for display only.
+
+        The area is the nearest broader ESCO skill group that sits directly under
+        a top-level group (e.g. "06 information and communication technologies"
+        under "knowledge", "S4 management skills" under "skills"); about 25 such
+        groups. If no such group is reached, the nearest top-level group is used.
+        Ties at the same distance go to the lowest code. Concepts outside ESCO
+        (or without groups) are left out. Only relationships in active ESCO
+        releases are followed.
+        """
+        from app.db.models import TaxonomyRelationship, TaxonomySource, TaxonomyVersion
+
+        if not concept_ids:
+            return {}
+        parents: dict[UUID, set[UUID]] = {}
+        info: dict[UUID, tuple[str, str, str]] = {}  # id -> (concept type, code, label)
+        frontier, seen = set(concept_ids), set(concept_ids)
+        for _ in range(max_depth):
+            if not frontier:
+                break
+            rows = self.db.execute(
+                select(TaxonomyRelationship.source_concept_id, TaxonomyConcept.id, TaxonomyConcept.concept_type,
+                       TaxonomyConcept.preferred_label, TaxonomyConcept.metadata_json)
+                .join(TaxonomyConcept, TaxonomyConcept.id == TaxonomyRelationship.target_concept_id)
+                .join(TaxonomyVersion, TaxonomyVersion.id == TaxonomyRelationship.taxonomy_version_id)
+                .join(TaxonomySource, TaxonomySource.id == TaxonomyVersion.source_id)
+                .where(
+                    TaxonomyRelationship.source_concept_id.in_(frontier),
+                    TaxonomyRelationship.relationship_type == "broader",
+                    TaxonomySource.code == "ESCO",
+                    TaxonomyVersion.status == "active",
+                )
+            ).all()
+            next_frontier: set[UUID] = set()
+            for child, parent, concept_type, label, metadata in rows:
+                parents.setdefault(child, set()).add(parent)
+                source = (metadata or {}).get("source") if isinstance(metadata, dict) else None
+                code = str(source.get("code") or "") if isinstance(source, dict) else ""
+                info[parent] = (concept_type, code, label)
+                if parent not in seen:
+                    seen.add(parent)
+                    next_frontier.add(parent)
+            frontier = next_frontier
+
+        def is_group(node: UUID) -> bool:
+            return node in info and info[node][0] == "skill_group"
+
+        def is_top(node: UUID) -> bool:
+            return is_group(node) and not any(is_group(parent) for parent in parents.get(node, ()))
+
+        def is_area(node: UUID) -> bool:
+            return is_group(node) and any(is_top(parent) for parent in parents.get(node, ()))
+
+        result: dict[UUID, tuple[str, str]] = {}
+        for origin in concept_ids:
+            level, visited, fallback = {origin}, {origin}, None
+            while level:
+                level = {parent for node in level for parent in parents.get(node, ()) if parent not in visited}
+                visited |= level
+                areas = sorted((info[node][1], info[node][2]) for node in level if is_area(node))
+                if areas:
+                    result[origin] = areas[0]
+                    break
+                tops = sorted((info[node][1], info[node][2]) for node in level if is_top(node))
+                if tops and fallback is None:
+                    fallback = tops[0]
+            else:
+                if fallback is not None:
+                    result[origin] = fallback
+        return result
+
     def approved_skill_concepts(
         self, term_source: str, skills: list[CandidateSkill] | list[JobSkill]
     ) -> dict[UUID, tuple[UUID, str]]:

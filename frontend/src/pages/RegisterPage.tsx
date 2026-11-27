@@ -36,8 +36,7 @@ export function RegisterPage() {
 
   return (
     <AuthCard
-      title="Create your account"
-      subtitle="Upload your CV and see which jobs fit your skills."
+      title="Create account"
       footerText="Already registered?"
       footerLinkText="Sign in"
       footerHref="/login"

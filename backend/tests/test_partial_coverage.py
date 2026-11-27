@@ -129,9 +129,11 @@ def test_recommendations_show_partial_coverage(client, db_session, fake_retrieva
     assert result["matched_required"] == []
     assert result["partial_required"] == [{"label": "SQL", "broader_concept": "computer programming",
                                            "candidate_skill": "Python (computer programming)",
-                                           "reviewed": True}]
-    # Docker shares only a broad skill group with Python: still missing.
-    assert result["missing_required"] == [{"label": "containerisation software", "checked_via": "taxonomy_concept", "reviewed": True}]
+                                           "reviewed": True, "esco_area": None}]
+    # Docker shares only a broad skill group with Python: still missing. The group is its display area.
+    assert result["missing_required"] == [{"label": "containerisation software", "checked_via": "taxonomy_concept",
+                                           "reviewed": True, "esco_area": {
+                                               "code": "", "label": "software and applications development"}}]
     assert ("SQL: not in your CV, but related: you have Python (computer programming) "
             "(same ESCO area: computer programming).") in result["explanation"]
     assert client.get(f"/matches/jobs/{job['id']}", headers=headers).json()["partial_required"] == \

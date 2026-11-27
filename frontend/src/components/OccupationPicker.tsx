@@ -130,7 +130,7 @@ export function OccupationPicker({ accessToken, title, value, preselected, missi
       {searching ? (
         <OccupationSearch accessToken={accessToken} onPick={(occupation) => { onChange(occupation, false); setSearching(false); }} />
       ) : (
-        <button className="mt-2 text-sm font-medium text-ocean hover:text-teal-hover" onClick={() => setSearching(true)} type="button">
+        <button className="mt-2 text-sm font-medium text-ocean hover:underline" onClick={() => setSearching(true)} type="button">
           Search other occupation…
         </button>
       )}

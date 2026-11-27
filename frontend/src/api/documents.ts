@@ -6,7 +6,9 @@ import type {
   Job,
   JobPayload,
   JobPool,
+  JobMatch,
   JobSkill,
+  ManualSkill,
   MatchingProfile,
   ProfileLanguage,
   RecommendationList,
@@ -165,7 +167,12 @@ export function getJobPool(accessToken: string) {
 
 /** Skills the candidate added by hand. */
 export function listManualSkills(accessToken: string) {
-  return apiRequest<CandidateSkill[]>("/candidates/me/manual-skills", { accessToken });
+  return apiRequest<ManualSkill[]>("/candidates/me/manual-skills", { accessToken });
+}
+
+/** One job's coverage for the skill map (includes the candidate's skills the job does not ask for). */
+export function getJobMatch(accessToken: string, jobId: string) {
+  return apiRequest<JobMatch>(`/matches/jobs/${jobId}`, { accessToken });
 }
 
 export function getSystemOverview(accessToken: string) {

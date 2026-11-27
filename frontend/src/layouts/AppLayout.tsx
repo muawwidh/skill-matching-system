@@ -5,22 +5,21 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthProvider";
 import { initials } from "../utils/coverage";
 
-/** Logo mark: three rising bars (skills growing), drawn inline. */
-export function LogoMark() {
+/** Logo mark: three dots (have / gap / related) joined by lines — skills linked into a map. */
+export function LogoMark({ size = 32 }: { size?: number }) {
   return (
-    <span className="grid h-9 w-9 place-items-center rounded-xl bg-teal" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="2" y="11" width="4" height="7" rx="1" fill="#FFFFFF" opacity="0.6" />
-        <rect x="8" y="7" width="4" height="11" rx="1" fill="#FFFFFF" opacity="0.8" />
-        <rect x="14" y="2" width="4" height="16" rx="1" fill="#FFFFFF" />
-      </svg>
-    </span>
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M8 22 L16 9 L25 20 Z" stroke="#12161C" strokeOpacity="0.28" strokeWidth="1.6" strokeLinejoin="round" />
+      <circle cx="8" cy="22" r="4.2" fill="#0F8A6A" />
+      <circle cx="16" cy="9" r="4.2" fill="#E8590C" />
+      <circle cx="25" cy="20" r="4.2" fill="#6D4AE0" />
+    </svg>
   );
 }
 
 export function Wordmark() {
   return (
-    <span className="flex items-center gap-2.5">
+    <span className="flex items-center gap-2">
       <LogoMark />
       <span className="font-display text-xl font-bold tracking-tight text-ink">SkillGap</span>
     </span>
@@ -28,7 +27,7 @@ export function Wordmark() {
 }
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive ? "bg-teal-soft text-teal-text" : "text-muted hover:bg-mist hover:text-ink"}`;
+  `rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ${isActive ? "bg-ink text-white" : "text-muted hover:bg-mist hover:text-ink"}`;
 
 function AccountMenu() {
   const { signOut, user } = useAuth();
@@ -73,7 +72,7 @@ function AccountMenu() {
         onClick={() => setOpen((value) => !value)}
         type="button"
       >
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-night font-display text-sm font-semibold text-white">
+        <span className="grid h-9 w-9 place-items-center rounded-full border border-line bg-white font-display text-sm font-semibold text-ink">
           {initials(user?.full_name, user?.email)}
         </span>
         <ChevronDown size={16} className="text-muted" aria-hidden="true" />
@@ -86,10 +85,10 @@ function AccountMenu() {
           </div>
           <div className="pt-2">
             <Link className={item} onClick={() => setOpen(false)} to="/about">
-              <Info size={16} aria-hidden="true" /> About SkillGap
+              <Info size={16} aria-hidden="true" /> About
             </Link>
             <Link className={item} onClick={() => setOpen(false)} to="/privacy">
-              <Shield size={16} aria-hidden="true" /> Privacy and your data
+              <Shield size={16} aria-hidden="true" /> Privacy
             </Link>
             <button className={item} onClick={handleSignOut} type="button">
               <LogOut size={16} aria-hidden="true" /> Sign out
@@ -110,14 +109,14 @@ export function AppLayout() {
       <a className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-30 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2" href="#main">
         Skip to content
       </a>
-      <header className="border-b border-line bg-white">
+      <header className="border-b border-line bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-content flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <Link to="/dashboard" aria-label="SkillGap dashboard">
             <Wordmark />
           </Link>
           <nav aria-label="Main" className="order-3 flex w-full flex-wrap gap-1 md:order-none md:w-auto">
             <NavLink className={navClass} to="/dashboard">Dashboard</NavLink>
-            <NavLink className={navClass} to="/jobs">Jobs</NavLink>
+            <NavLink className={navClass} to="/jobs">{isStaff ? "Jobs" : "Matches"}</NavLink>
             <NavLink className={navClass} to="/profile">My profile</NavLink>
             <NavLink className={navClass} to="/privacy">Privacy</NavLink>
             {isStaff ? <NavLink className={navClass} to="/taxonomy">Taxonomy</NavLink> : null}
@@ -129,8 +128,10 @@ export function AppLayout() {
         <Outlet context={{ user }} />
       </main>
       <footer className="mx-auto max-w-content px-4 pb-10 sm:px-8">
-        <p className="border-t border-line pt-5 text-sm text-muted">
-          Career guidance only — not a hiring decision. Your results are visible only to you.
+        <p className="flex flex-wrap gap-x-3 border-t border-line pt-5 text-xs text-muted">
+          <span>Career guidance only — not a hiring decision.</span>
+          <Link className="hover:text-ink" to="/about">About</Link>
+          <Link className="hover:text-ink" to="/privacy">Privacy</Link>
         </p>
       </footer>
     </div>

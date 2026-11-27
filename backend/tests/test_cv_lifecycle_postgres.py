@@ -277,7 +277,7 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         job_id = job.id
         matched = MatchingService(db).match_my_job(db.get(User, user_id), job_id)
         # CV Python is concept-linked, the manual job skill is not: name fallback applies.
-        assert matched["matched_required"] == [{"label": "python", "matched_via": "skill_name"}]
+        assert matched["matched_required"] == [{"label": "python", "matched_via": "skill_name", "esco_area": None}]
         CvService(db).delete_my_cv(db.get(User, user_id), cv1_id)
     with Session(engine) as fresh:
         assert fresh.get(CvDocument, cv1_id) is None
@@ -307,7 +307,7 @@ def test_two_cvs_reprocessing_and_deletion_preserve_other_evidence(pg_database):
         recomputed = MatchingService(fresh).match_my_job(fresh.get(User, user_id), job_id)
         # The unlinked job skill no longer has a same-name CV skill: missing, checked by name only.
         assert recomputed["matched_required"] == []
-        assert recomputed["missing_required"] == [{"label": "python", "checked_via": "skill_name"}]
+        assert recomputed["missing_required"] == [{"label": "python", "checked_via": "skill_name", "esco_area": None}]
         assert "could not be compared" not in recomputed["explanation"]
         source = RetrievalRepository(fresh).profile_input(profile_id)
         assert source is not None and "Python" not in source.text and "Docker" in source.text

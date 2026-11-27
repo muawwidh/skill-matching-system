@@ -6,6 +6,7 @@ import { createWorkEntry, deleteWorkEntry, listDetectedWorkEntries, listWorkEntr
 import type { DetectedWorkEntry, WorkEntry, WorkEntryPayload } from "../types/experience";
 import { Chip } from "../ui/Chip";
 import { LoadingBlock } from "../ui/Feedback";
+import { Tip } from "../ui/Tip";
 import { OccupationPicker, type OccupationChoice } from "./OccupationPicker";
 
 type Draft = WorkEntryPayload & {
@@ -110,17 +111,19 @@ export function WorkEntriesPanel({ accessToken, cvNames = {} }: { accessToken: s
   return (
     <section className="card scroll-mt-4" id="experience" aria-labelledby="work-entries-heading">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-        <h2 id="work-entries-heading" className="text-lg font-semibold text-ink">Work experience</h2>
+        <h2 id="work-entries-heading" className="flex items-center gap-2 text-lg font-semibold text-ink">
+          Work experience
+          <Tip label="About work experience" align="left">
+            Job title and dates only (no employer). Used to show your years of related experience for each job. It never
+            changes the order; you can optionally hide jobs above your experience.
+          </Tip>
+        </h2>
         {!draft ? (
           <button className="btn-secondary" onClick={() => { setMissingOccupation(false); setDraft(emptyDraft); }} type="button">
             <Plus size={16} aria-hidden="true" /> Add experience
           </button>
         ) : null}
       </div>
-      <p className="text-sm text-muted">
-        Job title and dates only (no employer). Used to show your years of related experience for each job. It never changes
-        the ranking; you can optionally hide jobs above your experience.
-      </p>
 
       {draft ? (
         <form className="mt-4 space-y-3 rounded-xl border border-line bg-mist p-4" onSubmit={submit}>
@@ -132,7 +135,7 @@ export function WorkEntriesPanel({ accessToken, cvNames = {} }: { accessToken: s
                   <button
                     key={choice}
                     aria-pressed={draft.title === choice}
-                    className={`rounded-full border px-3 py-1 ${draft.title === choice ? "border-teal bg-teal-soft text-teal-text" : "border-line bg-white"}`}
+                    className={`rounded-full border px-3 py-1 ${draft.title === choice ? "border-ink bg-ink text-white" : "border-line bg-white"}`}
                     onClick={() => setDraft({ ...draft, title: choice })}
                     type="button"
                   >
@@ -161,7 +164,7 @@ export function WorkEntriesPanel({ accessToken, cvNames = {} }: { accessToken: s
                 onChange={(event) => setDraft({ ...draft, end_month: event.target.value || null })} />
             </label>
             <label className="flex items-center gap-2 pb-2 text-sm text-ink">
-              <input checked={draft.present} className="accent-teal" type="checkbox" onChange={(event) => setDraft({ ...draft, present: event.target.checked })} />
+              <input checked={draft.present} className="accent-ink" type="checkbox" onChange={(event) => setDraft({ ...draft, present: event.target.checked })} />
               Present
             </label>
           </div>
@@ -195,7 +198,7 @@ export function WorkEntriesPanel({ accessToken, cvNames = {} }: { accessToken: s
             return (
               <li key={entry.id} className="relative flex gap-4 pb-5 last:pb-0">
                 {index < sorted.length - 1 ? <span aria-hidden="true" className="absolute left-[7px] top-5 h-full w-0.5 bg-line" /> : null}
-                <span aria-hidden="true" className={`relative mt-1.5 h-4 w-4 shrink-0 rounded-full border-2 ${entry.end_month === null ? "border-teal bg-teal" : "border-teal bg-white"}`} />
+                <span aria-hidden="true" className={`relative mt-1.5 h-4 w-4 shrink-0 rounded-full border-2 ${entry.end_month === null ? "border-ink bg-ink" : "border-ink bg-white"}`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -229,7 +232,7 @@ export function WorkEntriesPanel({ accessToken, cvNames = {} }: { accessToken: s
         </ol>
       ) : null}
       {entries.data?.length === 0 && !draft ? (
-        <p className="mt-4 text-sm text-muted">No work entries yet. Add one, or use the dates found in your CV below.</p>
+        <p className="mt-4 text-sm text-muted">None yet</p>
       ) : null}
 
       {detected.data && detected.data.length > 0 ? (

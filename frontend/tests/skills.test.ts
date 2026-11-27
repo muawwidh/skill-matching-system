@@ -39,3 +39,10 @@ test("languages are left out of the skill summary (they have their own card)", (
   assert.deepEqual(summary.skills.map((s) => s.label), ["Python"]);
   assert.equal(summary.confirmed, 1);
 });
+
+test("profile skills keep their ESCO area for the skill map", () => {
+  const area = { code: "06", label: "ict" };
+  const manual = { ...skill("m1", "Kafka", "approved", "manual_review"), esco_area: area };
+  const summary = summarizeSkills([{ cvId: "cv1", groups: [{ ...group("Python", [skill("1", "Python", "approved")], true), esco_area: area }] }], [manual]);
+  assert.deepEqual(summary.skills.map((s) => [s.label, s.area?.code ?? null]), [["Kafka", "06"], ["Python", "06"]]);
+});

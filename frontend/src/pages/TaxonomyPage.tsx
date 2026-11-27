@@ -12,6 +12,7 @@ import {
 } from "../api/taxonomy";
 import { useAuth } from "../features/auth/AuthProvider";
 import { TaxonomyReviewPanel } from "../components/TaxonomyReviewPanel";
+import { Tip } from "../ui/Tip";
 
 type ImportSource = "esco" | "onet" | "mappings";
 
@@ -83,21 +84,18 @@ export function TaxonomyPage() {
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="animate-rise">
         <p className="eyebrow">Administration</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-ink">Taxonomy management</h1>
-        <p className="mt-2 max-w-3xl text-muted">
-          Import versioned ESCO and O*NET releases, inspect local concepts, and review uncertain links.
-        </p>
+        <h1 className="mt-1 text-4xl font-semibold tracking-tight text-ink">Taxonomy</h1>
       </header>
 
-      <section className="card">
+      <section className="card animate-rise">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-ink">Taxonomy releases</h2>
-            <p className="mt-1 text-sm text-muted">
-              Official imports are the primary data source. The bundled sample is only for local testing.
-            </p>
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+              Releases
+              <Tip label="About releases" align="left">Official imports are the primary data source. The bundled sample is only for local testing.</Tip>
+            </h2>
           </div>
           <button
             className="btn-secondary"
@@ -106,7 +104,7 @@ export function TaxonomyPage() {
             type="button"
           >
             <Database size={17} aria-hidden="true" />
-            Load development sample
+            Load sample
           </button>
         </div>
 
@@ -137,7 +135,7 @@ export function TaxonomyPage() {
             </button>
           </div>
         </form>
-        {source === "onet" ? <p className="text-sm text-muted">Official packages: O*NET 29.0 TXT ZIP or O*NET 31.0 CSV ZIP. No 31.0 TXT support.</p> : null}
+        {source === "onet" ? <p className="text-xs text-muted">O*NET 29.0 TXT ZIP or 31.0 CSV ZIP</p> : null}
         {sampleMutation.error || importMutation.error ? <p className="mt-3 text-sm text-miss-text">{(sampleMutation.error ?? importMutation.error)?.message}</p> : null}
 
         <div className="mt-4 overflow-x-auto">
@@ -145,11 +143,11 @@ export function TaxonomyPage() {
             <thead className="border-b border-line text-xs uppercase text-muted"><tr><th className="py-2 pr-4">Source</th><th className="py-2 pr-4">Version</th><th className="py-2 pr-4">Release</th><th className="py-2 pr-4">Mode</th><th className="py-2">Status</th></tr></thead>
             <tbody>{(versionsQuery.data ?? []).map((item) => <tr className="border-b border-line" key={item.id}><td className="py-3 pr-4 font-medium text-ink">{item.source_code}</td><td className="py-3 pr-4">{item.version}</td><td className="py-3 pr-4">{item.release_date || "Not supplied"}</td><td className="py-3 pr-4"><span className={`rounded-lg px-2 py-1 text-xs ${item.is_sample ? "bg-caution-bg text-caution-text" : "bg-teal-soft text-teal-text"}`}>{item.is_sample ? "Sample" : "Official"}</span></td><td className="py-3">{item.status}</td></tr>)}</tbody>
           </table>
-          {!versionsQuery.isLoading && (versionsQuery.data?.length ?? 0) === 0 ? <p className="py-4 text-sm text-muted">No taxonomy release has been imported.</p> : null}
+          {!versionsQuery.isLoading && (versionsQuery.data?.length ?? 0) === 0 ? <p className="py-4 text-sm text-muted">No releases</p> : null}
         </div>
       </section>
 
-      <section className="card">
+      <section className="card animate-rise">
         <h2 className="text-lg font-semibold text-ink">Concept search</h2>
         <form className="mt-3 flex max-w-xl gap-2" onSubmit={submitSearch}>
           <input className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2" onChange={(event) => setQuery(event.target.value)} placeholder="Search skills or occupations" value={query} />
@@ -162,7 +160,7 @@ export function TaxonomyPage() {
 
       {accessToken && isTaxonomyAdmin ? <TaxonomyReviewPanel accessToken={accessToken} /> : null}
 
-      <section className="card">
+      <section className="card animate-rise">
         <h2 className="text-lg font-semibold text-ink">ESCO–O*NET occupation mappings</h2>
         <div className="mt-4 divide-y divide-line border-y border-line">{(mappingsQuery.data ?? []).map((mapping) => <div className="grid gap-1 py-3 text-sm md:grid-cols-[1fr_auto_1fr] md:items-center" key={mapping.id}><span>{mapping.esco_label}</span><span className="text-muted">maps to</span><span className="font-medium text-ink">{mapping.onet_code} · {mapping.onet_title}</span></div>)}</div>
       </section>

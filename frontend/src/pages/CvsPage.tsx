@@ -16,9 +16,11 @@ import { useAuth } from "../features/auth/AuthProvider";
 import { useSkillSummary } from "../hooks/useSkillSummary";
 import type { CvDocument } from "../types/documents";
 import type { WorkEntry } from "../types/experience";
-import { Chip } from "../ui/Chip";
 import { EmptyState, ErrorText, LoadingBlock, Notice, Skeleton } from "../ui/Feedback";
 import { CardTitle, PageHeader } from "../ui/Page";
+import { Tip } from "../ui/Tip";
+import { SkillMap, type LegendEntry } from "../components/SkillMap";
+import type { MapNode } from "../utils/skillMap";
 import type { ProfileSkill, SkillSummary } from "../utils/skills";
 
 // --- Matching profile summary ------------------------------------------------------------------------
@@ -28,68 +30,58 @@ function MatchingSummary({ accessToken, summary, entries }: { accessToken: strin
   const data = profile.data;
   const stat = (value: number | string | undefined, label: string) => (
     <div>
-      <p className="font-display text-3xl font-semibold">{value ?? "–"}</p>
-      <p className="text-sm text-night-muted">{label}</p>
+      <p className="numeral text-4xl text-ink">{value ?? "–"}</p>
+      <p className="eyebrow mt-1">{label}</p>
     </div>
   );
   return (
-    <section className="card-dark" aria-labelledby="matching-profile-heading">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div>
-          <h2 id="matching-profile-heading" className="text-lg font-semibold">Your matching profile</h2>
-          <p className="mt-1 text-sm text-night-muted">
-            Jobs are matched against the skills you confirmed in these CVs and the skills you added yourself.
-          </p>
-          {profile.isLoading ? <Skeleton className="mt-3 h-10 bg-white/10" /> : null}
-          {data ? (
-            <ul className="mt-3 flex flex-wrap gap-2 text-sm">
-              {data.cvs.map((cv) => (
-                <li key={cv.id} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-                  <FileText size={14} aria-hidden="true" /> {cv.original_filename}
-                </li>
-              ))}
-              <li className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-                <Plus size={14} aria-hidden="true" /> {data.manual_skills.approved ?? 0} added by you
-              </li>
-            </ul>
-          ) : null}
-          {data && data.retrieval_status !== "ready" ? (
-            <p role="status" className="mt-3 rounded-lg bg-caution-bg px-3 py-2 text-sm text-caution-text">{data.retrieval_message}</p>
-          ) : data ? (
-            <p className="mt-3 text-sm text-night-muted">Your matching profile is up to date.</p>
-          ) : null}
-        </div>
-        <div className="grid grid-cols-3 gap-4 self-center">
+    <section className="card animate-rise" aria-labelledby="matching-profile-heading">
+      <h2 id="matching-profile-heading" className="sr-only">Matching profile</h2>
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <div className="flex flex-wrap gap-8">
           {stat(summary?.confirmed, "skills")}
           {stat(summary?.linked, "linked to ESCO")}
           {stat(entries?.length, "work entries")}
         </div>
+        {data ? (
+          <ul className="flex flex-wrap items-center gap-2 text-sm text-ink">
+            <li className="eyebrow mr-1 flex items-center gap-1">
+              Matched on
+              <Tip label="About the matching profile" align="right">Jobs are matched against the skills you confirmed in these CVs and the skills you added yourself.</Tip>
+            </li>
+            {data.cvs.map((cv) => (
+              <li key={cv.id} className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1">
+                <FileText size={14} aria-hidden="true" /> {cv.original_filename}
+              </li>
+            ))}
+            <li className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1">
+              <Plus size={14} aria-hidden="true" /> {data.manual_skills.approved ?? 0} added
+            </li>
+          </ul>
+        ) : profile.isLoading ? <Skeleton className="h-8 w-64" /> : null}
       </div>
+      {data && data.retrieval_status !== "ready" ? (
+        <p role="status" className="mt-4 rounded-lg bg-gap-bg px-3 py-2 text-sm text-gap-text">{data.retrieval_message}</p>
+      ) : null}
     </section>
   );
 }
 
 // --- Skills ------------------------------------------------------------------------------------------
 
-function ChipGroup({ title, skills, kind, hint, onRemove }: {
-  title: string; skills: ProfileSkill[]; kind: "matched" | "review" | "neutral"; hint?: string; onRemove?: (skill: ProfileSkill) => void;
-}) {
-  if (!skills.length) return null;
-  return (
-    <div>
-      <h3 className="mb-2 text-sm font-semibold text-ink">
-        {title} <span className="font-normal text-muted">({skills.length})</span>
-      </h3>
-      <div className="flex flex-wrap gap-1.5">
-        {skills.map((skill) => (
-          <Chip key={skill.key} kind={kind} title={hint ?? (skill.linked ? "Linked to an ESCO skill" : "Not linked to ESCO; matched by name")}
-            onRemove={onRemove && skill.manualIds.length ? () => onRemove(skill) : undefined} removeLabel={`Remove ${skill.label}`}>
-            {skill.label}
-          </Chip>
-        ))}
-      </div>
-    </div>
-  );
+const PROFILE_LEGEND: LegendEntry[] = [{ status: "have", label: "confirmed" }, { status: "idle", label: "to review" }];
+
+/** The profile's skills as the same map as on Matches: confirmed (and added) skills green, skills to review outlined. */
+function profileNodes(skills: ProfileSkill[]): MapNode[] {
+  return skills.map((skill) => ({
+    id: skill.key,
+    label: skill.label,
+    status: skill.kind === "review" ? "idle" : "have",
+    area: skill.area,
+    removable: skill.kind === "added" && skill.manualIds.length > 0,
+    detail: skill.kind === "review" ? "Found in your CV · to review"
+      : `${skill.kind === "added" ? "Added by you" : "Confirmed"} · ${skill.linked ? "linked to ESCO" : "not linked to ESCO; matched by name"}`,
+  }));
 }
 
 const SKILL_QUERIES = [["manual-skills"], ["cv"], ["matching-profile"], ["recommendations"], ["languages"]];
@@ -137,9 +129,7 @@ function SkillsCard({ accessToken, cvs, summary, loading }: {
   const [reviewOpen, setReviewOpen] = useState(false);
   const reviewRef = useRef<HTMLDivElement>(null);
   const skills = summary?.skills ?? [];
-  const confirmed = skills.filter((skill) => skill.kind === "confirmed");
   const review = skills.filter((skill) => skill.kind === "review");
-  const added = skills.filter((skill) => skill.kind === "added");
 
   function openReview() {
     setReviewOpen(true);
@@ -150,26 +140,27 @@ function SkillsCard({ accessToken, cvs, summary, loading }: {
     <section className="card scroll-mt-4" id="skills" aria-labelledby="skills-heading">
       <CardTitle id="skills-heading" aside={<AddSkill accessToken={accessToken} />}>
         Skills
+        <Tip label="About your skills" align="left">
+          Grouped by ESCO skill area. Only confirmed skills and skills you added are used for matching. Skills you added
+          can be removed with ×.
+        </Tip>
       </CardTitle>
       {review.length ? (
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-caution-line bg-caution-bg px-4 py-3 text-sm text-caution-text">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-idle px-4 py-2.5 text-sm text-ink">
           <span className="flex items-center gap-2">
-            <AlertTriangle size={16} aria-hidden="true" />
-            {review.length} skill{review.length === 1 ? " needs" : "s need"} your review
+            <AlertTriangle size={16} className="text-gap" aria-hidden="true" />
+            <span className="numeral">{review.length}</span> to review
           </span>
-          <button className="btn-secondary px-3 py-1.5" onClick={openReview} type="button">Review now</button>
+          <button className="btn-secondary px-3 py-1.5" onClick={openReview} type="button">Review</button>
         </div>
       ) : null}
       {loading ? <LoadingBlock label="Loading skills" lines={4} /> : null}
-      {!loading && !skills.length ? (
-        <p className="text-sm text-muted">{cvs.length ? "No skills found yet." : "Add a CV to find your skills, or add skills yourself."}</p>
+      {!loading && !skills.length ? <p className="text-sm text-muted">No skills yet.</p> : null}
+      {skills.length ? (
+        <SkillMap label="Your skills" legend={PROFILE_LEGEND} nodes={profileNodes(skills)}
+          onRemove={(node) => { const skill = skills.find((s) => s.key === node.id); if (skill) remove.mutate(skill); }} />
       ) : null}
-      <div className="space-y-5">
-        <ChipGroup title="Confirmed" skills={confirmed} kind="matched" />
-        <ChipGroup title="Needs review" skills={review} kind="review" hint="Found in your CV; confirm or reject it below" />
-        <ChipGroup title="Added by you" skills={added} kind="neutral" hint="Added by hand" onRemove={(skill) => remove.mutate(skill)} />
-        <ErrorText error={remove.error} />
-      </div>
+      <ErrorText error={remove.error} />
       {cvs.length ? (
         <div ref={reviewRef} className="mt-6 scroll-mt-4 border-t border-line pt-4">
           <button
@@ -235,14 +226,14 @@ function AddCv({ accessToken, onDone }: { accessToken: string; onDone: () => voi
     <form className="space-y-3" onSubmit={submit}>
       {mode === "upload" ? (
         <div
-          className={`flex flex-col items-center rounded-xl border-2 border-dashed px-4 py-6 text-center ${dragging ? "border-teal bg-teal-soft" : "border-line bg-mist"}`}
+          className={`flex flex-col items-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${dragging ? "border-ink bg-white" : "border-line bg-mist"}`}
           onDragLeave={() => setDragging(false)}
           onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
           onDrop={drop}
         >
-          <UploadCloud size={28} className="text-teal" aria-hidden="true" />
-          <p className="mt-2 text-sm text-ink">{file ? file.name : "Drop your CV here"}</p>
-          <p className="text-xs text-muted">PDF, Word (DOCX) or plain text, up to 5 MB</p>
+          <UploadCloud size={28} className="text-ink" aria-hidden="true" />
+          <p className="mt-2 text-sm font-medium text-ink">{file ? file.name : "Drop CV"}</p>
+          <p className="text-xs text-muted">PDF · DOCX · TXT · 5 MB</p>
           <button className="btn-secondary mt-3 px-3 py-1.5" onClick={() => input.current?.click()} type="button">
             <FileUp size={16} aria-hidden="true" /> Choose a file
           </button>
@@ -265,7 +256,7 @@ function AddCv({ accessToken, onDone }: { accessToken: string; onDone: () => voi
         {mode === "upload" ? "Paste text instead" : "Upload a file instead"}
       </button>
       <label className="flex items-start gap-2 text-sm text-ink">
-        <input checked={consent} className="mt-0.5 accent-teal" onChange={(event) => setConsent(event.target.checked)} type="checkbox" />
+        <input checked={consent} className="mt-0.5 accent-ink" onChange={(event) => setConsent(event.target.checked)} type="checkbox" />
         I consent to CV processing for job matching research.
       </label>
       <ErrorText error={upload.error ?? paste.error} />
@@ -290,7 +281,7 @@ function CvRow({ cv, accessToken, isCandidate, skillCount, entryCount, onDeleted
   return (
     <li className="py-3">
       <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-teal-soft text-teal"><FileText size={18} aria-hidden="true" /></span>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-mist text-ink"><FileText size={18} aria-hidden="true" /></span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-ink">{cv.original_filename}</p>
           <p className="text-xs text-muted">
@@ -298,7 +289,7 @@ function CvRow({ cv, accessToken, isCandidate, skillCount, entryCount, onDeleted
             {isCandidate ? ` · ${entryCount} work entr${entryCount === 1 ? "y" : "ies"}` : ""}
           </p>
           <button aria-expanded={details} className="mt-1 text-xs link" onClick={() => setDetails((value) => !value)} type="button">
-            {details ? "Hide details" : "Show sections and text"}
+            {details ? "Hide" : "Sections and text"}
           </button>
         </div>
         <button aria-label={`Delete ${cv.original_filename}`} className="btn-danger h-9 w-9 p-0" disabled={remove.isPending}
@@ -368,7 +359,7 @@ export function CvsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="My profile" subtitle={<span className="inline-flex items-center gap-1.5"><Lock size={14} aria-hidden="true" /> Only you can see it.</span>} />
+      <PageHeader title="My profile" subtitle={<span className="inline-flex items-center gap-1.5"><Lock size={14} aria-hidden="true" /> Only you</span>} />
       {isCandidate ? <MatchingSummary accessToken={token} summary={skillData.summary} entries={entries.data} /> : null}
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -391,7 +382,7 @@ export function CvsPage() {
         </div>
         <div className="space-y-6">
           <section className="card" aria-labelledby="cvs-heading">
-            <CardTitle id="cvs-heading">My CVs</CardTitle>
+            <CardTitle id="cvs-heading">CVs</CardTitle>
             <AddCv accessToken={token} onDone={refresh} />
             {cvQuery.isLoading ? <div className="mt-4"><LoadingBlock label="Loading CVs" /></div> : null}
             <ErrorText error={cvQuery.error} />
@@ -405,17 +396,15 @@ export function CvsPage() {
             ) : null}
             {cvQuery.data && !cvs.length ? (
               <div className="mt-4">
-                <EmptyState icon={FileText} title="No CV yet">Add your CV to find your skills and see matching jobs.</EmptyState>
+                <EmptyState icon={FileText} title="No CV yet" />
               </div>
             ) : null}
           </section>
           {isCandidate ? (
             <section className="card space-y-4" aria-labelledby="your-data-heading">
-              <h2 id="your-data-heading" className="text-lg font-semibold text-ink">Your data</h2>
-              <p className="text-sm text-muted">
-                Your CVs, skills and work entries are visible only to you. Read how your data is handled in the{" "}
-                <Link className="link" to="/privacy">privacy notice</Link>.
-              </p>
+              <h2 id="your-data-heading" className="flex items-center justify-between text-lg font-semibold text-ink">
+                Your data <Link className="text-sm font-normal link" to="/privacy">Privacy</Link>
+              </h2>
               <DeleteAccountPanel accessToken={token} />
             </section>
           ) : null}

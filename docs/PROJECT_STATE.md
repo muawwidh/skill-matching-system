@@ -578,6 +578,38 @@ Job card fixes (2026-11-26; display and bug fixes, extraction unchanged):
 - Tests: `tests/test_job_card_fixes.py`, `tests/test_experience.py`,
   frontend `coverage.test.ts`.
 
+Frontend redesign v2 (2026-11-27), presentation only, from an approved mockup:
+- Light theme, colour for meaning only: have #0F8A6A, related #6D4AE0
+  (dashed), gap #E8590C, not needed outline #DCE1E7; ink #12161C, muted
+  #626B78, page #F6F7F9, white panels with #E6E9EE borders. Fonts Bricolage
+  Grotesque + Instrument Sans, bundled with `@fontsource` (no Google Fonts
+  request any more). Logo: three dots (green/orange/violet) joined by lines.
+- Matches page (`/jobs`, nav "Matches" for candidates): ranked list (rank
+  numerals, X/Y, segmented bar) and the selected job with a skill map grouped
+  by ESCO area (`components/SkillMap.tsx`), experience/languages/not-assessed
+  as compact lines, "Original posting", "automatic skills ⓘ". "What if I
+  learned": top 5 bar gaps on the page; preview adds orange segments, glows
+  the map node and says "+X → closes a gap in N of M matches"; computed in the
+  browser (`utils/skillMap.ts`), order unchanged.
+- Minimal text on all pages (candidate and staff); explanations moved to ⓘ
+  tooltips (`ui/Tip.tsx`, hover/focus/click, Escape) and to a "Reading your
+  matches" section on About. Privacy texts unchanged; the account-deletion
+  explanation shows when the deletion form opens.
+- Motion: staggered rise (60 ms steps), bars fill, hover lift, colour fades,
+  2× glow on the previewed skill; none under prefers-reduced-motion.
+- My profile: skills as the same map (confirmed green, to review outlined;
+  added skills removable), stats strip, languages, work experience, CVs.
+  Dashboard: setup steps, top matches, top gaps, stats. Staff pages restyled;
+  live-import results as a number grid.
+- Read-only backend addition (no ranking, coverage, stored-data or evaluation
+  change): `esco_area` on coverage entries, CV skill groups and
+  `GET /candidates/me/manual-skills`; `not_needed` on `GET /matches/jobs/{id}`.
+  Live check: 521 of the 522 ESCO concepts linked to live-job skills get an
+  area (23 areas used; 51 ms for all of them).
+- Tests: backend `tests/test_skill_map.py`; frontend `tests/skillMap.test.ts`,
+  `tests/skills.test.ts`. Pages checked in headless Chromium with a synthetic
+  candidate account, deleted afterwards. Staff pages not checked visually.
+
 ## Stage 3 — Open Items
 
 Agreed follow-ups, not started (feature freeze since 2026-11-21; each needs

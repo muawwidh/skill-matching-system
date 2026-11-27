@@ -19,7 +19,7 @@ export function Pager({ page, pages, onPage, label }: { page: number; pages: num
             key={n}
             aria-current={n === page ? "page" : undefined}
             aria-label={`Page ${n}`}
-            className={`${base} ${n === page ? "border-teal bg-teal text-white" : "border-line bg-white text-ink hover:bg-mist"}`}
+            className={`${base} ${n === page ? "border-ink bg-ink text-white" : "border-line bg-white text-ink hover:bg-mist"}`}
             onClick={() => onPage(n)}
             type="button"
           >

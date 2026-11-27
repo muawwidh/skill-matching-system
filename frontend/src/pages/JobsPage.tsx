@@ -12,72 +12,92 @@ import {
   refreshRecommendations,
   setHideBelowExperience,
 } from "../api/documents";
-import { JobDetailPanel, LanguageChips, jobMeta } from "../components/JobDetailPanel";
+import { JobDetailPanel, jobMeta } from "../components/JobDetailPanel";
 import { LiveJobImportPanel } from "../components/LiveJobImportPanel";
 import { SectionList } from "../components/SectionList";
 import { SkillReviewPanel } from "../components/SkillReviewPanel";
 import { useAuth } from "../features/auth/AuthProvider";
 import type { Job, JobPayload, RecommendationItem, RecommendationList } from "../types/documents";
-import { ExperienceBadge, RankBadge } from "../ui/Badges";
+import { RankBadge } from "../ui/Badges";
 import { Chip } from "../ui/Chip";
-import { CoverageBar, CoverageLegend } from "../ui/CoverageBar";
+import { SkillBar } from "../ui/CoverageBar";
 import { EmptyState, ErrorText, Notice, Skeleton } from "../ui/Feedback";
-import { CardTitle, PageHeader } from "../ui/Page";
+import { CardTitle, PageHeader, riseDelay } from "../ui/Page";
 import { Pager } from "../ui/Pager";
+import { Tip } from "../ui/Tip";
 import { coverageView } from "../utils/coverage";
 import { isLiveJobSource } from "../utils/reviewStatus";
+import { fraction, previewCoverage, topGaps, whatIfSummary } from "../utils/skillMap";
 
 const emptyJob: JobPayload = { title: "", company: "", location: "", employment_type: "", description: "" };
-const MAX_CHIPS = 6;
 
-// --- Candidate: job list and detail ---------------------------------------------------------------
+// --- Candidate: ranked list, selected job with its skill map, "what if I learned" ----------------
 
-function JobChips({ item }: { item: RecommendationItem }) {
-  const chips = coverageView(item).chips;
-  if (!chips.length) return null;
-  const shown = chips.slice(0, MAX_CHIPS);
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {shown.map((chip) => <Chip key={`${chip.kind}-${chip.label}`} kind={chip.kind}>{chip.label}</Chip>)}
-      {chips.length > MAX_CHIPS ? <span className="self-center text-xs text-muted">+{chips.length - MAX_CHIPS} more</span> : null}
-    </div>
-  );
-}
-
-function JobListCard({ item, selected, onSelect }: { item: RecommendationItem; selected: boolean; onSelect: () => void }) {
+function JobListCard({ item, index, selected, onSelect, preview }: {
+  item: RecommendationItem; index: number; selected: boolean; onSelect: () => void; preview: string | null;
+}) {
   const meta = jobMeta(item);
+  const view = coverageView(item);
+  const shown = previewCoverage(item, preview);
+  const basis = view.basis === "required" ? "required" : view.basis === "mentioned" ? "mentioned" : "no skills found";
   return (
-    <li>
+    <li className="animate-rise" style={riseDelay(index)}>
       <button
         aria-pressed={selected}
-        className={`w-full rounded-card border bg-white p-5 text-left transition-shadow hover:shadow-md ${selected ? "border-2 border-teal shadow-md" : "border-line"}`}
+        className={`lift w-full rounded-card border bg-white p-4 text-left ${selected ? "border-ink ring-1 ring-ink" : "border-line"}`}
         onClick={onSelect}
         type="button"
       >
-        <div className="flex gap-4">
+        <div className="flex items-start gap-4">
           <RankBadge rank={item.rank} />
-          <div className="min-w-0 flex-1 space-y-3">
-            <div>
-              <p className="font-display text-lg font-semibold leading-snug text-ink">{item.job.title}</p>
-              {meta ? <p className="mt-0.5 text-sm text-muted">{meta}</p> : null}
-            </div>
-            <ExperienceBadge item={item} />
-            <CoverageBar view={coverageView(item)} />
-            <JobChips item={item} />
-            <LanguageChips item={item} />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-lg font-semibold leading-snug text-ink">{item.job.title}</p>
+            {meta ? <p className="mt-0.5 truncate text-sm text-muted">{meta}</p> : null}
+          </div>
+          <div className="shrink-0 text-right">
+            <p className={`numeral text-2xl leading-none ${shown.closes ? "text-gap-text" : "text-ink"}`}>{fraction(shown.counts, shown.closes)}</p>
+            <p className="mt-1 text-[11px] text-muted">{basis}</p>
           </div>
         </div>
+        <SkillBar className="mt-3" counts={shown.counts} closes={shown.closes} label={view.label} />
       </button>
     </li>
   );
 }
 
+function WhatIf({ items, selected, onSelect }: { items: RecommendationItem[]; selected: string | null; onSelect: (skill: string | null) => void }) {
+  const gaps = topGaps(items);
+  if (!gaps.length) return null;
+  return (
+    <section aria-labelledby="what-if-heading" className="animate-rise rounded-card border border-line bg-white px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h2 id="what-if-heading" className="flex items-center gap-1.5 font-display text-base font-semibold text-ink">
+          What if I learned
+          <Tip label="About what if I learned" align="left">
+            The most frequent gaps in the matches on this page. Select one to preview coverage; the order never changes.
+          </Tip>
+        </h2>
+        <div className="flex flex-wrap gap-1.5">
+          {gaps.map((gap) => (
+            <Chip key={gap.label} kind={selected === gap.label ? "preview" : "missing"} onClick={() => onSelect(selected === gap.label ? null : gap.label)}
+              pressed={selected === gap.label} title={`Gap in ${gap.count} of ${items.length}`}>
+              +{gap.label} <span className="numeral opacity-70">{gap.count}</span>
+            </Chip>
+          ))}
+        </div>
+        <p className="ml-auto text-sm font-medium text-gap-text" role="status" aria-live="polite">
+          {selected ? whatIfSummary(selected, items) : ""}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function summary(data: RecommendationList): string {
-  if (!data.results.length) return "No jobs to show.";
+  if (!data.results.length) return "0 matches";
   const first = (data.page - 1) * data.page_size + 1;
   const last = first + data.results.length - 1;
-  const folded = data.collapsed_duplicates ? ` · ${data.collapsed_duplicates} repeated postings in other locations shown once` : "";
-  return `Showing ${first}–${last} of ${data.total} best-matching jobs · ranked by similarity to your profile${folded}`;
+  return `${first}–${last} of ${data.total}`;
 }
 
 function Controls({ data, pageSize, onPageSize, onFilter, filterPending }: {
@@ -87,16 +107,22 @@ function Controls({ data, pageSize, onPageSize, onFilter, filterPending }: {
   const canFilter = Boolean(data?.has_work_entries_with_occupation);
   return (
     <>
-      <label className="flex items-center gap-2 text-sm text-ink" title="Hides jobs whose stated minimum is above your related experience. Jobs without a stated minimum or occupation are never hidden.">
-        <input
-          checked={Boolean(data?.hide_below_experience)}
-          className="h-4 w-4 accent-teal"
-          disabled={!canFilter || filterPending}
-          onChange={(event) => onFilter(event.target.checked)}
-          type="checkbox"
-        />
-        Hide jobs above my experience
-      </label>
+      <span className="flex items-center gap-1.5">
+        <label className="flex items-center gap-2 text-sm text-ink">
+          <input
+            checked={Boolean(data?.hide_below_experience)}
+            className="h-4 w-4 accent-ink"
+            disabled={!canFilter || filterPending}
+            onChange={(event) => onFilter(event.target.checked)}
+            type="checkbox"
+          />
+          Hide above my experience
+        </label>
+        <Tip label="About the experience filter" align="right">
+          Hides jobs whose stated minimum is above your related experience. Jobs without a stated minimum are never hidden.
+          {canFilter ? null : <> Needs <Link className="link" to="/profile#experience">work entries with an occupation</Link>.</>}
+        </Tip>
+      </span>
       <label className="flex items-center gap-2 text-sm text-ink">
         Per page
         <select className="field py-1.5" onChange={(event) => onPageSize(Number(event.target.value))} value={pageSize}>
@@ -112,6 +138,7 @@ function CandidateJobs({ accessToken }: { accessToken: string }) {
   const [params, setParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(RECOMMENDATION_PAGE_SIZES[0]);
+  const [preview, setPreview] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);
 
   const query = useQuery({
@@ -146,6 +173,7 @@ function CandidateJobs({ accessToken }: { accessToken: string }) {
 
   function changePage(next: number) {
     setPage(next);
+    setPreview(null);
     setParams({}, { replace: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -153,15 +181,18 @@ function CandidateJobs({ accessToken }: { accessToken: string }) {
   const pages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
 
   return (
-    <section className="space-y-6" aria-labelledby="jobs-heading">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <section className="space-y-5" aria-labelledby="jobs-heading">
+      <div className="flex animate-rise flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 id="jobs-heading" className="text-3xl font-semibold tracking-tight text-ink">Best-matching jobs</h1>
-          <p className="mt-1 text-sm text-muted" role="status">
-            {data ? summary(data) : "Loading your matches…"}
-            {data && data.unindexed_jobs > 0
-              ? ` · ${data.unindexed_jobs} active job${data.unindexed_jobs === 1 ? " is" : "s are"} still being prepared`
-              : ""}
+          <h1 id="jobs-heading" className="text-4xl font-semibold tracking-tight text-ink">Matches</h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-sm text-muted" role="status">
+            <span className="numeral text-ink">{data ? summary(data) : "…"}</span>
+            {data?.collapsed_duplicates ? <span>· {data.collapsed_duplicates} repeats folded</span> : null}
+            {data && data.unindexed_jobs > 0 ? <span>· {data.unindexed_jobs} preparing</span> : null}
+            <Tip label="About the ranking" align="left">
+              Ranked by similarity to your profile. Skill coverage explains each job and never changes the order.
+              The same posting in several locations is shown once.
+            </Tip>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -169,64 +200,59 @@ function CandidateJobs({ accessToken }: { accessToken: string }) {
             data={data}
             filterPending={filter.isPending}
             onFilter={(value) => filter.mutate(value)}
-            onPageSize={(size) => { setPageSize(size); setPage(1); setParams({}, { replace: true }); }}
+            onPageSize={(size) => { setPageSize(size); setPage(1); setPreview(null); setParams({}, { replace: true }); }}
             pageSize={pageSize}
           />
           <button className="btn-secondary" disabled={refresh.isPending} onClick={() => refresh.mutate()} type="button">
-            <RefreshCw size={16} aria-hidden="true" />
-            {refresh.isPending ? "Refreshing…" : "Refresh"}
+            <RefreshCw size={16} className={refresh.isPending ? "animate-spin" : ""} aria-hidden="true" />
+            Refresh
           </button>
         </div>
       </div>
 
       <ErrorText error={query.error ?? refresh.error ?? filter.error} />
-      {data && !data.has_work_entries_with_occupation && data.status === "ready" ? (
-        <p className="text-xs text-muted">
-          To hide jobs above your experience, <Link className="link" to="/profile#experience">add work entries with an occupation</Link>.
-        </p>
-      ) : null}
       {data?.hide_below_experience && data.hidden_by_experience ? (
         <Notice>
-          {data.hidden_by_experience} job{data.hidden_by_experience === 1 ? " is" : "s are"} hidden because the stated minimum is above your
-          related experience. Positions (#N of {data.total}) count only the jobs shown; jobs without a stated minimum are never hidden.
+          <span className="numeral">{data.hidden_by_experience}</span> hidden by the experience filter
         </Notice>
       ) : null}
 
       {query.isLoading ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="space-y-4">{[0, 1, 2].map((index) => <Skeleton key={index} className="h-44" />)}</div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          <div className="space-y-3">{[0, 1, 2, 3].map((index) => <Skeleton key={index} className="h-28" />)}</div>
           <Skeleton className="h-[32rem]" />
         </div>
       ) : data && data.status !== "ready" ? (
         <EmptyState
           icon={FileSearch}
-          title={data.status === "profile_not_indexed" ? "Your profile is being prepared" : "No matches yet"}
-          action={data.status === "profile_not_indexed" ? undefined : <Link className="btn-primary" to="/profile">Go to my profile</Link>}
+          title={data.status === "profile_not_indexed" ? "Preparing your profile" : "No matches yet"}
+          action={data.status === "profile_not_indexed" ? undefined : <Link className="btn-primary" to="/profile">My profile</Link>}
         >
           {data.message}
         </EmptyState>
       ) : data && data.results.length === 0 ? (
-        <EmptyState icon={FileSearch} title="No jobs to show">
-          {data.hide_below_experience ? "All jobs are hidden by the experience filter. Turn it off to see them." : "No jobs fit your profile yet. Try again after the next job update."}
+        <EmptyState icon={FileSearch} title="No matches">
+          {data.hide_below_experience ? "All hidden by the experience filter." : null}
         </EmptyState>
       ) : data && selected ? (
         <>
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <div className="space-y-4">
-              <CoverageLegend />
-              <ul className="space-y-4" aria-label="Jobs on this page">
-                {data.results.map((item) => (
-                  <JobListCard key={item.job_id} item={item} selected={item.job_id === selected.job_id} onSelect={() => select(item)} />
-                ))}
-              </ul>
-            </div>
+          <WhatIf items={data.results} selected={preview} onSelect={setPreview} />
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <ul className="space-y-3" aria-label="Matches on this page">
+              {data.results.map((item, index) => (
+                <JobListCard key={item.job_id} index={index} item={item} preview={preview}
+                  selected={item.job_id === selected.job_id} onSelect={() => select(item)} />
+              ))}
+            </ul>
             <div ref={detailRef} className="scroll-mt-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
               <JobDetailPanel
+                accessToken={accessToken}
                 item={selected}
+                preview={preview}
                 rankTotal={data.total}
                 extra={
-                  <details className="border-t border-line pt-4 text-sm">
-                    <summary className="cursor-pointer font-medium text-ink">All skills found in this posting</summary>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer font-medium text-ink">Evidence</summary>
                     <div className="mt-3">
                       <SkillReviewPanel accessToken={accessToken} canReview={false} liveJob={isLiveJobSource(selected.job.source)} ownerId={selected.job_id} ownerType="job" />
                     </div>
@@ -235,7 +261,7 @@ function CandidateJobs({ accessToken }: { accessToken: string }) {
               />
             </div>
           </div>
-          <Pager label="Job result pages" onPage={changePage} page={data.page} pages={pages} />
+          <Pager label="Result pages" onPage={changePage} page={data.page} pages={pages} />
         </>
       ) : null}
     </section>
@@ -306,10 +332,10 @@ function StaffJobs({ accessToken, isAdmin }: { accessToken: string; isAdmin: boo
 
   return (
     <section className="space-y-6" aria-labelledby="manage-jobs-heading">
-      <PageHeader title="Jobs" subtitle="Create, review and archive jobs." />
+      <PageHeader title="Jobs" />
       {isAdmin ? <LiveJobImportPanel accessToken={accessToken} /> : null}
       <form className="card" onSubmit={submit}>
-        <CardTitle id="manage-jobs-heading" aside={<BriefcaseBusiness size={20} className="text-teal" aria-hidden="true" />}>Create a job</CardTitle>
+        <CardTitle id="manage-jobs-heading">Create a job</CardTitle>
         <div className="grid gap-4 md:grid-cols-2">
           {(["title", "company", "location", "employment_type"] as const).map((field) => (
             <label key={field} className="text-sm text-ink">
@@ -323,7 +349,7 @@ function StaffJobs({ accessToken, isAdmin }: { accessToken: string; isAdmin: boo
           <textarea
             className="field mt-1 min-h-44 w-full"
             onChange={(event) => update("description", event.target.value)}
-            placeholder="Responsibilities, requirements and preferred skills"
+            placeholder="Paste the job ad"
             value={job.description}
           />
         </label>
@@ -333,7 +359,7 @@ function StaffJobs({ accessToken, isAdmin }: { accessToken: string; isAdmin: boo
         </button>
       </form>
 
-      <h2 className="text-xl font-semibold text-ink">All jobs</h2>
+      <h2 className="text-xl font-semibold text-ink">All jobs <span className="numeral text-muted">{jobs.data?.length ?? ""}</span></h2>
       {jobs.isLoading ? <div className="space-y-4">{[0, 1].map((index) => <Skeleton key={index} className="h-40" />)}</div> : null}
       {jobs.data?.map((item) => (
         <StaffJobCard
@@ -348,7 +374,7 @@ function StaffJobs({ accessToken, isAdmin }: { accessToken: string; isAdmin: boo
           <SkillReviewPanel accessToken={accessToken} canReview liveJob={isLiveJobSource(item.source)} ownerId={item.id} ownerType="job" />
         </StaffJobCard>
       ))}
-      {jobs.data?.length === 0 ? <EmptyState icon={BriefcaseBusiness} title="No jobs yet">Create the first job above.</EmptyState> : null}
+      {jobs.data?.length === 0 ? <EmptyState icon={BriefcaseBusiness} title="No jobs yet" /> : null}
     </section>
   );
 }
